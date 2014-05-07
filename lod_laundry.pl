@@ -1,4 +1,13 @@
-:- module(lod_laundry, []).
+:- module(
+  lod_laundry,
+  [
+    non_url_iris/5 % -NonUrlIris:ordset(iri)
+                   % -NumberOfNonUrlIris:nonneg
+                   % -UrlIris:orset(url)
+                   % -NumberOfNonUrlIris:nonneg
+                   % -PercentageOfNonUrlIris:between(0.0,1.0)
+  ]
+).
 
 /** <module> LOD laundry
 
@@ -6,14 +15,17 @@
 @version 2014/05
 */
 
+:- use_module(library(aggregate)).
 :- use_module(library(http/html_write)).
 :- use_module(library(http/http_dispatch)).
 :- use_module(library(http/http_json)).
 :- use_module(library(pairs)).
 :- use_module(library(semweb/rdf_db)).
 :- use_module(library(semweb/rdfs)).
+:- use_module(library(url)).
 
 :- use_module(html(html_table)).
+:- use_module(math(math_ext)).
 :- use_module(pl_web(html_pl_term)).
 :- use_module(rdf_file(rdf_file_db)).
 :- use_module(rdf_file(rdf_serial)).
@@ -280,4 +292,77 @@ lod_laundry_cell(Term) -->
   ]).
 lod_laundry_cell(Term) -->
   html_pl_term(Term).
+
+
+
+% STATISTICS %
+
+%! non_url_iris(
+%!   -NonUrlIris:ordset(iri),
+%!   -NumberOfNonUrlIris:nonneg,
+%!   -UrlIris:orset(url),
+%!   -NumberOfNonUrlIris:nonneg,
+%!   -PercentageOfNonUrlIris:between(0.0,1.0)
+%! ) is det.
+
+non_url_iris(NonUrlIris, NumberOfNonUrlIris, UrlIris, NumberOfUrlIris, Perc):-
+  aggregate_all(
+    set(NonUrlIri),
+    (
+      lod_url(NonUrlIri),
+      url_iri(Url, NonUrlIri),
+      Url \== NonUrlIri
+    ),
+    NonUrlIris
+  ),
+  length(NonUrlIris, NumberOfNonUrlIris),
+  
+  aggregate_all(
+    set(UrlIri),
+    (
+      lod_url(UrlIri),
+      url_iri(Url, UrlIri),
+      Url == UrlIri
+    ),
+    UrlIris
+  ),
+  length(UrlIris, NumberOfUrlIris),
+  
+  percentage(NumberOfNonUrlIris, NumberOfUrlIris, Perc).
+
+percentage(X, Y, Perc):-
+  div_zero(X, Y, Perc).
+
+
+number_of_urls(N):-
+  aggregate_all(
+    count,
+    lod_url(_),
+    N
+  ).
+
+
+%! http_status_codes(
+%!   -Triples:triple(between(200,599),nonneg,between(0.0,1.0))
+%! ) is det.
+
+http_status_codes(Triples):-
+  aggregate_all(
+    set(Status-Url),
+    (
+      rdf_string(Url, ap:status, S, messages),
+      atom_to_term(S, T, _),
+      T = error(_,context(_,status(Status,_)))
+    ),
+    Pairs1
+  ),
+  group_pairs_by_key(Pairs1, Pairs2),
+  pairs_keys_values(Pairs2, Keys, Values),
+  maplist(length, Values, ValuesSize),
+  pairs_keys_values(Pairs3, Keys, ValuesSize),
+  number_of_urls(N),
+  maplist(pair_to_triple(N), Pairs3, Triples).
+
+pair_to_triple(N, X-Y, X-Y-Z):-
+  percentage(Y, N, Z).
 
