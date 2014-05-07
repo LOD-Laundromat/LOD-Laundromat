@@ -1,0 +1,3 @@
+[submodule "Prolog-Library-Collection"]
+	path = Prolog-Library-Collection
+	url = https://github.com/wouterbeek/Prolog-Library-Collection.git
