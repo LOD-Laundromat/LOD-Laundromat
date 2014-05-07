@@ -211,20 +211,16 @@ lod_url_property(Url, md5, Md5):-
   url_md5_translation(Url, Md5).
 lod_url_property(Url, messages, Messages):-
   findall(
-    String,
+    Message2,
     (
       rdf_string(Url, ap:message, Message1, messages),
-      atom_to_term(Message1, message(Term,_,_), _),
-      message_to_string(Term, String)
-      %print_message_lines(atom(Message2), '', Lines)
+      abcd(Message1, Message2)
     ),
     Messages
   ),
   Messages \== [].
-lod_url_property(Url, status, Status3):-
-  rdf_string(Url, ap:status, Status1, messages),
-  atom_to_term(Status1, Status2, _),
-  convert_status(Status2, Status3).
+lod_url_property(Url, status, Status):-
+  once(rdf_string(Url, ap:status, Status, messages)).
 lod_url_property(Url, triples, Triples):-
   rdf_datatype(Url, ap:triples_without_dups, Triples, xsd:integer, messages).
 lod_url_property(Url, url, Url).
@@ -240,19 +236,12 @@ lod_property_content_type(Url, Mime):-
 lod_property_content_type(Url, Mime):-
   rdf_string(Url, ap:content_type, Mime, messages).
 
-convert_status(
-  error(existence_error(url,_),context(_,status(Code,Description))),
-  Status
-):- !,
-  format(atom(Status), 'HTTP error ~d: ~a', [Code,Description]).
-convert_status(error(socket_error(Status),_), Status):- !.
-convert_status(error(domain_error(sgml_option,anon_prefix(_)),_), no_rdfa):- !.
-convert_status(Status, Status):-
-  print_message(warning, verbatim(Status)).
-% DEB
-prolog:message(verbatim(Term)) -->
-  {term_to_atom(Term, Atom)},
-  [Atom].
+abcd(M1, M2):-
+  atom_to_term(M1, message(_,_,Lines), _),
+  with_output_to(
+    atom(M2),
+    print_message_lines(current_output, '', Lines)
+  ).
 
 
 %! ckan_resources// is det.
