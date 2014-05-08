@@ -78,6 +78,11 @@ init_datahub:-
   rdf_load_any([graph(datahub)], File).
 
 init_messages:-
+  rdf_graph(messages), !.
+init_messages:-
+  absolute_file_name(data(messages), File, [access(read),file_type(turtle)]),
+  rdf_load_any([graph(messages)], File), !.
+init_messages:-
   absolute_file_name(data('Output/messages.log'), File, [access(read)]),
   setup_call_cleanup(
     ensure_loaded(File),
@@ -102,10 +107,11 @@ cache_url_md5_translations.
 % Response to requesting a JSON description of all LOD URL.
 ll_web_home(Request):-
   memberchk(path_info('all.json'), Request), !,
-  findall(
-    Url=Dict,
+  aggregate_all(
+    set(Url=Dict),
     (
       lod_url(Url),
+      Url \== 'http://www.w3.org/1999/02/22-rdf-syntax-ns#',
       lod_url_dict(Url, Dict),
       print_message(informational, tick)
     ),
@@ -162,8 +168,8 @@ lod_url_dict(Url, Dict):-
 
 lod_urls -->
   {
-    findall(
-      [
+    aggregate_all(
+      set([
         Url-InternalLink-Url,
         ContentType,
         ContentLength,
@@ -171,20 +177,21 @@ lod_urls -->
         TIn,
         TOut,
         Format
-      ],
+      ]),
       (
-        rdf_string(Url, ap:content_type, ContentType, messages),
-        ignore(rdf_datatype(Url, ap:content_length,
-            ContentLength, xsd:integer, messages)),
-        ignore(rdf_string(Url, ap:last_modified, LastModified, messages)),
-        ignore(rdf_datatype(Url, ap:triples_with_dups,
-            TIn, xsd:integer, messages)),
-        ignore(rdf_datatype(Url, ap:triples_without_dups,
-            TOut, xsd:integer, messages)),
-        ignore(rdf_string(Url, ap:format, Format, messages)),
-        url_md5_translation(Url, Md5),
-        file_name_extension(Md5, json, File),
-        http_link_to_id(ll_web_home, path_postfix(File), InternalLink)
+        lod_url(Url),
+        once(rdf_string(Url, ap:content_type, ContentType, messages)),
+        once(ignore(rdf_datatype(Url, ap:content_length,
+            ContentLength, xsd:integer, messages))),
+        once(ignore(rdf_string(Url, ap:last_modified, LastModified, messages))),
+        once(ignore(rdf_datatype(Url, ap:triples_with_dups,
+            TIn, xsd:integer, messages))),
+        once(ignore(rdf_datatype(Url, ap:triples_without_dups,
+            TOut, xsd:integer, messages))),
+        once(ignore(rdf_string(Url, ap:format, Format, messages))),
+        once(url_md5_translation(Url, Md5)),
+        once(file_name_extension(Md5, json, File)),
+        once(http_link_to_id(ll_web_home, path_postfix(File), InternalLink))
       ),
       Rows
     )
@@ -214,16 +221,18 @@ lod_url_property(Url, content_length, ContentLength):-
 lod_url_property(Url, content_type, Mime):-
   lod_property_content_type(Url, Mime).
 lod_url_property(Url, duplicates, Duplicates):-
-  rdf_datatype(Url, ap:triples_with_dups, TIn, xsd:integer, messages),
-  rdf_datatype(Url, ap:triples_without_dups, TOut, xsd:integer, messages),
-  Duplicates is TIn - TOut.
+  once((
+    rdf_datatype(Url, ap:triples_with_dups, TIn, xsd:integer, messages),
+    rdf_datatype(Url, ap:triples_without_dups, TOut, xsd:integer, messages),
+    Duplicates is TIn - TOut
+  )).
 lod_url_property(Url, last_modified, LastModified):-
   rdf_string(Url, ap:last_modified, LastModified, messages).
 lod_url_property(Url, md5, Md5):-
-  url_md5_translation(Url, Md5).
+  once(url_md5_translation(Url, Md5)).
 lod_url_property(Url, messages, Messages):-
-  findall(
-    Message2,
+  aggregate_all(
+    set(Message2),
     (
       rdf_string(Url, ap:message, Message1, messages),
       abcd(Message1, Message2)
@@ -234,7 +243,7 @@ lod_url_property(Url, messages, Messages):-
 lod_url_property(Url, status, Status):-
   once(rdf_string(Url, ap:status, Status, messages)).
 lod_url_property(Url, triples, Triples):-
-  rdf_datatype(Url, ap:triples_without_dups, Triples, xsd:integer, messages).
+  once(rdf_datatype(Url, ap:triples_without_dups, Triples, xsd:integer, messages)).
 lod_url_property(Url, url, Url).
 
 lod_property_content_length(Url, ContentLength):-
@@ -316,7 +325,7 @@ non_url_iris(NonUrlIris, NumberOfNonUrlIris, UrlIris, NumberOfUrlIris, Perc):-
     NonUrlIris
   ),
   length(NonUrlIris, NumberOfNonUrlIris),
-  
+
   aggregate_all(
     set(UrlIri),
     (
@@ -327,7 +336,7 @@ non_url_iris(NonUrlIris, NumberOfNonUrlIris, UrlIris, NumberOfUrlIris, Perc):-
     UrlIris
   ),
   length(UrlIris, NumberOfUrlIris),
-  
+
   percentage(NumberOfNonUrlIris, NumberOfUrlIris, Perc).
 
 percentage(X, Y, Perc):-
