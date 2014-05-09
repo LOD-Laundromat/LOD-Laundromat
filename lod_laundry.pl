@@ -57,6 +57,8 @@ user:web_module('LOD Laundry', ll_web_home).
 
 :- multifile(prolog:message//1).
 
+:- discontiguous(lod_url_property/3).
+
 :- initialization(init_ll).
 
 %! init_ll is det.
@@ -80,18 +82,24 @@ init_datahub:-
 init_messages:-
   rdf_graph(messages), !.
 init_messages:-
-  absolute_file_name(data(messages), File, [access(read),file_type(turtle)]),
+  absolute_file_name(
+    data(messages),
+    File,
+    [access(read),file_errors(fail),file_type(turtle)]
+  ),
   rdf_load_any([graph(messages)], File), !.
 init_messages:-
-  absolute_file_name(data('Output/messages.log'), File, [access(read)]),
+  absolute_file_name(data('Output/messages.log'), FromFile, [access(read)]),
   setup_call_cleanup(
-    ensure_loaded(File),
+    ensure_loaded(FromFile),
     forall(
       rdf_triple(S, P, O),
       rdf_assert(S, P, O, messages)
     ),
-    unload_file(File)
-  ).
+    unload_file(FromFile)
+  ),
+  absolute_file_name(data(messages), ToFile, [access(write),file_type(turtle)]),
+  rdf_save([format(turtle)], messages, ToFile).
 
 cache_url_md5_translation(Url):-
   rdf_atom_md5(Url, 1, Md5),
@@ -169,26 +177,9 @@ lod_url_dict(Url, Dict):-
 lod_urls -->
   {
     aggregate_all(
-      set([
-        Url-InternalLink-Url,
-        ContentType,
-        ContentLength,
-        LastModified,
-        TIn,
-        TOut,
-        Format
-      ]),
+      set([Url-InternalLink-Url]),
       (
         lod_url(Url),
-        once(rdf_string(Url, ap:content_type, ContentType, messages)),
-        once(ignore(rdf_datatype(Url, ap:content_length,
-            ContentLength, xsd:integer, messages))),
-        once(ignore(rdf_string(Url, ap:last_modified, LastModified, messages))),
-        once(ignore(rdf_datatype(Url, ap:triples_with_dups,
-            TIn, xsd:integer, messages))),
-        once(ignore(rdf_datatype(Url, ap:triples_without_dups,
-            TOut, xsd:integer, messages))),
-        once(ignore(rdf_string(Url, ap:format, Format, messages))),
         once(url_md5_translation(Url, Md5)),
         once(file_name_extension(Md5, json, File)),
         once(http_link_to_id(ll_web_home, path_postfix(File), InternalLink))
@@ -200,36 +191,71 @@ lod_urls -->
     [header_column(true),header_row(true),indexed(true)],
     html('LOD files'),
     lod_laundry_cell,
-    [[
-      'Url',
-      'Content Type',
-      'Content Length',
-      'Last Modified',
-      'Triples with duplicates',
-      'Triples without duplicates',
-      'Format'
-    ]|Rows]
+    [['Url']|Rows]
   ).
 
 
 %! lod_url_property(+Url:url, +Name:atom, -Value) is det.
 
+%Archive.
+lod_url_property(Url, archive_entry_size, Size):-
+  once(rdf_datatype(Url, ap:size, Size, xsd:integer, messages)).
+lod_url_property(Url, from_archive, Md5):-
+  once((
+    rdf(Archive, ap:archive_contains, Url),
+    url_md5_translation(Archive, Md5)
+  )).
+lod_url_property(Url1, has_archive_entry, Md5s):-
+  findall(
+    Md5,
+    (
+      rdf(Url1, ap:archive_contains, Url2),
+      once(url_md5_translation(Url2, Md5))
+    ),
+    Md5s
+  ),
+  Md5s \== [].
+
+% Base IRI.
 lod_url_property(Url, base_iri, Base):-
   rdf(Url, ap:base_iri, Base).
-lod_url_property(Url, content_length, ContentLength):-
-  lod_property_content_length(Url, ContentLength).
-lod_url_property(Url, content_type, Mime):-
-  lod_property_content_type(Url, Mime).
-lod_url_property(Url, duplicates, Duplicates):-
-  once((
-    rdf_datatype(Url, ap:triples_with_dups, TIn, xsd:integer, messages),
-    rdf_datatype(Url, ap:triples_without_dups, TOut, xsd:integer, messages),
-    Duplicates is TIn - TOut
-  )).
-lod_url_property(Url, last_modified, LastModified):-
-  rdf_string(Url, ap:last_modified, LastModified, messages).
+
+% RDF.
+lod_url_property(Url, rdf, Dict):-
+  findall(
+    N-V,
+    rdf_property(Url, N, V),
+    Pairs
+  ),
+  Pairs \== [],
+  dict_pairs(Dict, rdf, Pairs).
+
+rdf_property(Url, duplicates, Duplicates):-
+  once(rdf_datatype(Url, ap:duplicates, Duplicates, xsd:integer, messages)).
+rdf_property(Url, triples, Triples):-
+  once(rdf_datatype(Url, ap:triples, Triples, xsd:integer, messages)).
+rdf_property(Url, serialization_format, Format):-
+  once(rdf_string(Url, ap:serialization_format, Format, messages)).
+
+% HTTP response.
+lod_url_property(Url, http_repsonse, Dict):-
+  findall(
+    Name-Value,
+    http_response_property(Url, Name, Value),
+    Pairs
+  ),
+  Pairs \== [],
+  dict_pairs(Dict, http_response, Pairs).
+
+% File extension.
+lod_url_property(Url, file_extension, FileExtension):-
+  once(rdf_string(Url, ap:file_extension, FileExtension, messages)).
+
+% MD5
 lod_url_property(Url, md5, Md5):-
   once(url_md5_translation(Url, Md5)).
+
+% Messages?
 lod_url_property(Url, messages, Messages):-
   aggregate_all(
     set(Message2),
@@ -240,22 +266,58 @@ lod_url_property(Url, messages, Messages):-
     Messages
   ),
   Messages \== [].
+
+% Exceptions
+lod_url_property(Url, exceptions, Dict):-
+  findall(
+    Kind-Exceptions,
+    kind_exceptions(Url, Kind, Exceptions),
+    Pairs1
+  ),
+  Pairs1 \== [],
+  group_pairs_by_key(Pairs1, Pairs2),
+  dict_pairs(Dict, exceptions, Pairs2).
+
+kind_exceptions(Url, Kind, Exception):-
+  once(rdf_string(Url, ap:exception, Atom, messages)),
+  atom_to_term(Atom, Term, _),
+  kind_exception(Term, Kind, Exception).
+
+kind_exception(error(socket_error('Host not found'),_), tcp, 'Host not found').
+kind_exception(error(socket_error('Try Again'),_), tcp, 'Try again?').
+kind_exception(error(existence_error(url,_),context(_,status(Status,_))), http, Status).
+%subkind_exception(
+
+% Status?
 lod_url_property(Url, status, Status):-
   once(rdf_string(Url, ap:status, Status, messages)).
-lod_url_property(Url, triples, Triples):-
-  once(rdf_datatype(Url, ap:triples_without_dups, Triples, xsd:integer, messages)).
+
+% Stream?
+lod_url_property(Url, stream, Dict):-
+  findall(
+    N-V,
+    stream_property(Url, N, V),
+    Pairs
+  ),
+  Pairs \== [],
+  dict_pairs(Dict, stream, Pairs).
+
+stream_property(Url, stream_byte_count, ByteCount):-
+  once(rdf_datatype(Url, ap:stream_byte_count, ByteCount, xsd:integer, messages)).
+stream_property(Url, stream_char_count, CharCount):-
+  once(rdf_datatype(Url, ap:stream_char_count, CharCount, xsd:integer, messages)).
+stream_property(Url, stream_line_count, LineCount):-
+  once(rdf_datatype(Url, ap:stream_line_count, LineCount, xsd:integer, messages)).
+
+% URL
 lod_url_property(Url, url, Url).
 
-lod_property_content_length(Url, ContentLength):-
-  rdf_datatype(Url, ap:size, ContentLength, xsd:integer, messages), !.
-lod_property_content_length(Url, ContentLength):-
-  rdf_datatype(Url, ap:content_length, ContentLength, xsd:integer, messages).
-
-lod_property_content_type(Url, Mime):-
-  rdf_string(Url, ap:rdf_serialization_format, Format, messages), !,
-  once(rdf_serialization(_, _, Format, [Mime|_], _)).
-lod_property_content_type(Url, Mime):-
-  rdf_string(Url, ap:content_type, Mime, messages).
+http_response_property(Url, http_content_length, ContentLength):-
+  once(rdf_datatype(Url, ap:http_content_length, ContentLength, xsd:integer, messages)).
+http_response_property(Url, http_content_type, ContentType):-
+  once(rdf_string(Url, ap:http_content_type, ContentType, messages)).
+http_response_property(Url, last_modified, LastModified):-
+  once(rdf_string(Url, ap:last_modified, LastModified, messages)).
 
 abcd(M1, M2):-
   atom_to_term(M1, message(_,_,Lines), _),
