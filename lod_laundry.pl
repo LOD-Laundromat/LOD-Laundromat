@@ -36,6 +36,8 @@
 :- use_module(server(web_ui)).
 :- use_module(xml(xml_namespace)).
 
+:- use_module(lwm(reply_json)).
+
 :- xml_register_namespace(ap, 'http://www.wouterbeek.com/ap.owl#').
 :- xml_register_namespace(ckan, 'http://www.wouterbeek.com/ckan#').
 
@@ -126,14 +128,14 @@ ll_web_home(Request):-
     NVPairs
   ),
   dict_create(Dict, all, NVPairs),
-  reply_json(Dict, [cors(true)]).
+  reply_json_dict(Dict, [cache(3600),cors(true)]).
 % Response to requesting a JSON description of a single LOD URL.
 ll_web_home(Request):-
   memberchk(path_info(Path), Request),
   file_name_extension(Md5, json, Path),
   url_md5_translation(Url, Md5), !,
   lod_url_dict(Url, Dict),
-  reply_json(Dict).
+  reply_json_dict(Dict, [cache(3600),cors(true)]).
 % Generic response.
 ll_web_home(_Request):-
   reply_html_page(
