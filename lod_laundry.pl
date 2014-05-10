@@ -154,9 +154,7 @@ prolog:message(tick) -->
 % Enumerates the LOD URLs that have been washed.
 
 lod_url(Url):-
-  rdfs_individual_of(Url, ap:'LOD-URL'),
-  % @tbd
-  Url \== 'http://aseg.cs.concordia.ca/secold/download/static/secold_v_001.tar'.
+  rdfs_individual_of(Url, ap:'LOD-URL').
 
 
 %! lod_url_dict(+Url:url, -Dict:dict) is det.
