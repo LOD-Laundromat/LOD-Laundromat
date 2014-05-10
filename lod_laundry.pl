@@ -31,6 +31,7 @@
 :- use_module(rdf_file(rdf_serial)).
 :- use_module(rdf_term(rdf_datatype)).
 :- use_module(rdf_term(rdf_string)).
+:- use_module(rdf_web(rdf_tabular)). % Debug tool.
 :- use_module(server(app_ui)). % HTML style.
 :- use_module(server(web_modules)). % Web module registration.
 :- use_module(server(web_ui)).
@@ -100,8 +101,8 @@ init_messages:-
     ),
     unload_file(FromFile)
   ),
-  absolute_file_name(data(messages), ToFile, [access(write),file_type(turtle)]),
-  rdf_save([format(turtle)], messages, ToFile).
+  absolute_file_name(data(messages), ToFile, [access(write),file_type(ntriples)]),
+  rdf_save([format(ntriples)], messages, ToFile).
 
 cache_url_md5_translation(Url):-
   rdf_atom_md5(Url, 1, Md5),
