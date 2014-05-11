@@ -26,6 +26,7 @@
 
 :- use_module(html(html_table)).
 :- use_module(math(math_ext)).
+:- use_module(os(datetime_ext)).
 :- use_module(pl_web(html_pl_term)).
 :- use_module(rdf_file(rdf_file_db)).
 :- use_module(rdf_file(rdf_serial)).
@@ -128,7 +129,9 @@ ll_web_home(Request):-
     ),
     NVPairs
   ),
-  dict_create(Dict, all, NVPairs),
+  dict_create(Results, results, NVPairs),
+  iso8601_dateTime(Now),
+  dict_create(Dict, all, [lastModifiedJson=Now,results=Results,scrapeAttempt=5]),
   reply_json_dict(Dict, [cache(3600),cors(true)]).
 % Response to requesting a JSON description of a single LOD URL.
 ll_web_home(Request):-
@@ -168,9 +171,7 @@ lod_url_dict(Url, Dict):-
     lod_url_property(Url, Name, Value),
     NVPairs
   ),
-  dict_create(Results, results, NVPairs),
-  url_md5_translation(Url, Md5),
-  dict_create(Dict, Md5, [results=Results,scrapeAttempt=5]).
+  dict_create(Dict, Url, NVPairs).
 
 
 %! lod_urls// is det.
