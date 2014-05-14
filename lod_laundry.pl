@@ -33,9 +33,8 @@
 :- use_module(rdf_term(rdf_datatype)).
 :- use_module(rdf_term(rdf_string)).
 :- use_module(rdf_web(rdf_tabular)). % Debug tool.
-:- use_module(server(app_ui)). % HTML style.
+:- use_module(server(app_ui)). % Web UI.
 :- use_module(server(web_modules)). % Web module registration.
-:- use_module(server(web_ui)).
 :- use_module(xml(xml_namespace)).
 
 :- use_module(lwm(reply_json)).
@@ -355,7 +354,7 @@ lod_laundry_cell(Term) -->
   html([
     \html_pl_term(InternalLink-Name),
     ' ',
-    \external_link(ExternalLink)
+    \html_external_link(ExternalLink)
   ]).
 lod_laundry_cell(Term) -->
   html_pl_term(Term).
