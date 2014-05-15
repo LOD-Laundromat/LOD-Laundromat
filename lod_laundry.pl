@@ -251,7 +251,7 @@ rdf_property(Url, syntaxErrors, Errors):-
 
 
 % HTTP response.
-lod_url_property(Url, httpRepsonse, Dict):-
+lod_url_property(Url, httpResponse, Dict):-
   findall(
     Name-Value,
     http_response_property(Url, Name, Value),
