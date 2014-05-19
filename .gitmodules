@@ -1,3 +1,8 @@
 [submodule "Prolog-Library-Collection"]
 	path = Prolog-Library-Collection
 	url = https://github.com/wouterbeek/Prolog-Library-Collection.git
+	branch = master
+[submodule "plRdf-Dev"]
+	path = plRdf-Dev
+	url = https://github.com/wouterbeek/plRdf-Dev.git
+	branch = master
