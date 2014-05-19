@@ -10,8 +10,14 @@ load_lwm:-
   file_directory_name(ThisFile, ThisDir),
   assert(user:file_search_path(lwm, ThisDir)),
   
+  % Data subdirectory.
+  directory_file_path(ThisDir, data, DataDir),
+  make_directory_path(DataDir),
+  
+  % File search paths.
   ensure_loaded(lwm(index)),
   
+  % Load submodules.
   load_plc(lwm),
   load_plHtml(lwm),
   load_plServer(lwm),
@@ -19,6 +25,7 @@ load_lwm:-
   load_plRdf(lwm),
   load_plRdfDev(lwm),
   
+  % Load the Web-based development environment.
   use_module(plDev(plDev)).
 
 
