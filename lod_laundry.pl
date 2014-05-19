@@ -24,18 +24,22 @@
 :- use_module(library(semweb/rdfs)).
 :- use_module(library(url)).
 
-:- use_module(html(html_table)).
 :- use_module(math(math_ext)).
 :- use_module(os(datetime_ext)).
-:- use_module(pl_web(html_pl_term)).
-:- use_module(rdf_file(rdf_file_db)).
-:- use_module(rdf_file(rdf_serial)).
-:- use_module(rdf_term(rdf_datatype)).
-:- use_module(rdf_term(rdf_string)).
-:- use_module(rdf_web(rdf_tabular)). % Debug tool.
-:- use_module(server(app_ui)). % Web UI.
-:- use_module(server(web_modules)). % Web module registration.
 :- use_module(xml(xml_namespace)).
+
+:- use_module(plHtml(html_table)).
+:- use_module(plHtml_pl(html_pl_term)).
+
+:- use_module(plServer(app_ui)). % Web UI.
+:- use_module(plServer(web_modules)). % Web module registration.
+
+:- use_module(plRdf_ser(rdf_file_db)).
+:- use_module(plRdf_ser(rdf_serial)).
+:- use_module(plRdf_term(rdf_datatype)).
+:- use_module(plRdf_term(rdf_string)).
+
+:- use_module(plRdfDev(rdf_tabular)). % Debug tool.
 
 :- use_module(lwm(reply_json)).
 
