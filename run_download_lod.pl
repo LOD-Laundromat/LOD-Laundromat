@@ -16,8 +16,8 @@ Initializes the downloading of LOD.
 
 :- use_module(library(filesex)).
 
-:- use_module(lod(download_lod)).
-:- use_module(lod(lod_urls)).
+:- use_module(lwm(download_lod)).
+:- use_module(lwm(lod_urls)).
 
 
 

@@ -17,6 +17,7 @@ load_lwm:-
   load_plServer(lwm),
   load_plDev(lwm),
   load_plRdf(lwm),
+  load_plRdfDev(lwm),
   
   use_module(plDev(plDev)).
 
@@ -57,6 +58,15 @@ load_plDev(Project):-
   assert(user:file_search_path(plDev, Spec)).
 load_plDev(_):-
   print_message(warning, no_plDev).
+
+load_plRdfDev(_):-
+  user:file_search_path(plRdfDev, _), !.
+load_plRdfDev(Project):-
+  Spec =.. [Project,'plRdf-Dev'],
+  absolute_file_name(Spec, _, [access(read),file_type(directory)]), !,
+  assert(user:file_search_path(plRdfDev, Spec)).
+load_plRdfDev(_):-
+  print_message(warning, no_plRdfDev).
 
 load_plRdf(_):-
   user:file_search_path(plRdf, _), !.
@@ -101,6 +111,13 @@ prolog:message(no_plDev) -->
 prolog:message(no_plRdf) -->
   [
     'The plRdf submodule is not present.', nl,
+    'Consider running the following from within the LOD-Washing-Machine directory:', nl,
+    '    git submodule init', nl,
+    '    git submodule update'
+  ].
+prolog:message(no_plRdfDev) -->
+  [
+    'The plRdfDev submodule is not present.', nl,
     'Consider running the following from within the LOD-Washing-Machine directory:', nl,
     '    git submodule init', nl,
     '    git submodule update'

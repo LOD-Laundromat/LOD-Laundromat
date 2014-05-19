@@ -23,13 +23,15 @@
 :- use_module(library(semweb/rdf_db)).
 :- use_module(library(thread)).
 
+:- use_module(ap(ap_db)).
 :- use_module(generics(uri_ext)).
 :- use_module(os(remote_ext)).
 :- use_module(os(unpack)).
 :- use_module(pl(pl_log)).
-:- use_module(rdf_file(rdf_ntriples_write)).
-:- use_module(rdf_file(rdf_serial)).
 :- use_module(void(void_db)). % XML namespace.
+
+:- use_module(plRdf_ser(rdf_ntriples_write)).
+:- use_module(plRdf_ser(rdf_serial)).
 
 :- dynamic(data_directory/1).
 

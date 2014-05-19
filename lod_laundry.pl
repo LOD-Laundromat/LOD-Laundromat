@@ -28,10 +28,10 @@
 :- use_module(os(datetime_ext)).
 :- use_module(xml(xml_namespace)).
 
+:- use_module(plHtml(html)).
+:- use_module(plHtml(html_pl_term)).
 :- use_module(plHtml(html_table)).
-:- use_module(plHtml_pl(html_pl_term)).
 
-:- use_module(plServer(app_ui)). % Web UI.
 :- use_module(plServer(web_modules)). % Web module registration.
 
 :- use_module(plRdf_ser(rdf_file_db)).
