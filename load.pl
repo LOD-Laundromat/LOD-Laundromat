@@ -13,6 +13,7 @@ load_lwm:-
   % Data subdirectory.
   directory_file_path(ThisDir, data, DataDir),
   make_directory_path(DataDir),
+  assert(user:file_search_path(data, DataDir)),
   
   % File search paths.
   ensure_loaded(lwm(index)),
