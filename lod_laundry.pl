@@ -39,7 +39,7 @@
 :- use_module(plRdf_term(rdf_datatype)).
 :- use_module(plRdf_term(rdf_string)).
 
-:- use_module(plRdfDev(rdf_tabular)). % Debug tool.
+:- use_module(plRdfDev_wui(rdf_tabular)). % Debug tool.
 
 :- use_module(lwm(reply_json)).
 

@@ -27,7 +27,9 @@ load_lwm:-
   load_plRdfDev(lwm),
   
   % Load the Web-based development environment.
-  use_module(plDev(plDev)).
+  use_module(plDev(plDev)),
+  
+  use_module(lwm(lod_laundry)).
 
 
 load_plc(_):-
