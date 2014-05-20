@@ -356,12 +356,12 @@ lod_laundry_cell(Term) -->
     Term = Name-InternalLink-ExternalLink
   }, !,
   html([
-    \html_pl_term(InternalLink-Name),
+    \html_link(InternalLink-Name),
     ' ',
     \html_external_link(ExternalLink)
   ]).
 lod_laundry_cell(Term) -->
-  html_pl_term(Term).
+  html_pl_term(plDev(.), Term).
 
 
 
