@@ -24,6 +24,7 @@
 :- use_module(library(semweb/rdfs)).
 :- use_module(library(url)).
 
+:- use_module(generics(db_ext)).
 :- use_module(math(math_ext)).
 :- use_module(os(datetime_ext)).
 :- use_module(xml(xml_namespace)).
@@ -66,7 +67,10 @@ user:web_module('LOD Laundry', ll_web_home).
 
 :- discontiguous(lod_url_property/3).
 
+:- db_add_novel(user:prolog_file_type(log, logging)).
+
 :- initialization(init_ll).
+
 
 %! init_ll is det.
 % Loads the triples from the messages log and the datahub scrape.
@@ -92,11 +96,15 @@ init_messages:-
   absolute_file_name(
     data(messages),
     File,
-    [access(read),file_errors(fail),file_type(turtle)]
+    [access(read),file_errors(fail),file_type(ntriples)]
   ),
   rdf_load_any([graph(messages)], File), !.
 init_messages:-
-  absolute_file_name(data('Output/messages.log'), FromFile, [access(read)]),
+  absolute_file_name(
+    data(messages),
+    FromFile,
+    [access(read),file_type(logging)]
+  ),
   setup_call_cleanup(
     ensure_loaded(FromFile),
     forall(

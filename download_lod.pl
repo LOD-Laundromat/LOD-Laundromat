@@ -24,6 +24,7 @@
 :- use_module(library(thread)).
 
 :- use_module(ap(ap_db)).
+:- use_module(generics(db_ext)).
 :- use_module(generics(uri_ext)).
 :- use_module(os(remote_ext)).
 :- use_module(os(unpack)).
@@ -35,7 +36,7 @@
 
 :- dynamic(data_directory/1).
 
-:- rdf_meta(store_triple(r,r,o)).
+:- rdf_meta(store_triple(r,r,o,+)).
 
 %! seen_dataset(?Url:url) is nondet.
 
@@ -53,7 +54,21 @@
 
 :- dynamic(finished/1).
 
-:- dynamic(rdf_triple/3).
+%! rdf_triple(
+%!   ?Subject:or([bnode,iri]),
+%!   ?Predicate:iri,
+%!   ?Object:or([bnode,iri,literal]),
+%!   ?DataDocument:url
+%! ) is nondet.
+% Since threads load data in RDF transactions with snapshots,
+% we cannot use the triple store for anything else during
+% the load-save cycle of a data document.
+% Therefore, we store triples that arise during this cycle
+% as thread-specific Prolog assertions.
+
+:- thread_local(rdf_triple/4).
+
+:- db_add_novel(user:prolog_file_type(log, logging)).
 
 
 
@@ -63,17 +78,7 @@ download_lod(Iris):-
 
 download_lod(Iri, messages):-
   absolute_file_name(data(.), DataDir, [access(write),file_type(directory)]),
-  download_lod(DataDir, Iri, 1),
-  absolute_file_name(data('Output/messages.log'), FromFile, [access(read)]),
-  setup_call_cleanup(
-    ensure_loaded(FromFile),
-    forall(
-      rdf_triple(S, P, O),
-      rdf_assert(S, P, O, messages)
-    ),
-    unload_file(FromFile)
-  ),
-  delete_file(FromFile).
+  download_lod(DataDir, Iri, 1).
 
 %! download_lod(
 %!   +DataDirectory:atom,
@@ -89,16 +94,19 @@ download_lod(DataDir, Iris, N):-
   read_lod_urls(DataDir),
 
   % Assert the data directory.
-  retractall(data_directory(_)),
-  assert(data_directory(DataDir)),
+  db_replace_novel(data_directory(DataDir), [e]),
+
+  % IRI -> URI
+  maplist(uri_iri, Uris1, Iris),
+
+  % Exclude URIs that were (succesfully or unsuccesfully) processed
+  % in the past.
+  exclude(finished, Uris1, Uris2),
+  exclude(failed, Uris2, Uris3),
 
   % Process the resources by authority.
   % This avoids being blocked by servers that do not allow
   % multiple simultaneous requests.
-
-  maplist(uri_iri, Uris1, Iris),
-  exclude(failed, Uris1, Uris2),
-  exclude(finished, Uris2, Uris3),
   findall(
     Authority-Uri,
     (
@@ -110,7 +118,8 @@ download_lod(DataDir, Iris, N):-
   ),
   group_pairs_by_key(Pairs1, Pairs2),
 
-  % Construct the set of goals.
+  % Construct the set of goals that will be distributed accross
+  % the given number of treads.
   findall(
     download_lod_authority(DataDir, Pair),
     member(Pair, Pairs2),
@@ -158,7 +167,7 @@ download_lod_authority(DataDir, _-Urls):-
 process_lod_files(DataDir):-
   % Take another LOD input from the pool.
   pick_input(Url), !,
-  store_triple(Url, rdf:type, ap:'LOD-URL'),
+  store_triple(Url, rdf:type, ap:'LOD-URL', ap),
 
   run_collect_messages(
     process_lod_file(Url, DataDir, OldStatus),
@@ -219,11 +228,13 @@ process_lod_file(Url0, DataDir, Status):-
   (
     Status == false
   -> !,
-    true
+    post_rdf_triples
   ;
     log_status(Url, Status),
     maplist(log_message(Url), Messages),
     print_message(informational, lod_downloaded_file(Url,X,Status,Messages)),
+    
+    post_rdf_triples,
     
     % Unpack the next entry by backtracking.
     fail
@@ -241,9 +252,9 @@ process_lod_file(_, _, true).
 process_rdf_file(Url, Read, UrlDir, Location):-
   % Guess the serialization format that is used in the given stream.
   rdf_guess_format([], Read, Location, Base, Format),
-  store_triple(Url, ap:serialization_format, literal(type(xsd:string,Format))),
+  store_triple(Url, ap:serialization_format, literal(type(xsd:string,Format)), ap),
   set_stream(Read, file_name(Base)),
-  %%%%store_triple(Url, ap:base_iri, Base),
+  %%%%store_triple(Url, ap:base_iri, Base, ap),
 
   % Load triples in any serialization format.
   rdf_load(
@@ -268,7 +279,7 @@ process_rdf_file(Url, Read, UrlDir, Location):-
 
   % Asssert some statistics for inclusion in the messages file.
   assert_number_of_triples(Url, Path, TIn, TOut),
-  store_void_triples,
+  store_void_triples(Url),
 
   % Make sure any VoID datadumps are considered as well.
   register_void_datasets.
@@ -285,9 +296,9 @@ process_rdf_file(Url, Read, UrlDir, Location):-
 %! ) is det.
 
 assert_number_of_triples(Url, Path, TIn, TOut):-
-  store_triple(Url, ap:triples, literal(type(xsd:integer,TOut))),
+  store_triple(Url, ap:triples, literal(type(xsd:integer,TOut)), ap),
   TDup is TIn - TOut,
-  store_triple(Url, ap:duplicates, literal(type(xsd:integer,TDup))),
+  store_triple(Url, ap:duplicates, literal(type(xsd:integer,TDup)), ap),
   print_message(informational, rdf_ntriples_written(Path,TDup,TOut)).
 
 
@@ -304,7 +315,7 @@ read_lod_urls(Kind, DataDir):-
   absolute_file_name(
     Kind,
     File,
-    [access(read),file_errors(fail),file_type(log),relative_to(DataDir)]
+    [access(read),file_errors(fail),file_type(logging),relative_to(DataDir)]
   ), !,
   ensure_loaded(File).
 read_lod_urls(_, _).
@@ -333,7 +344,7 @@ lod_resource_path(DataDir, Dataset, File, Path):-
 
 log_message(Dataset, Message):-
   with_output_to(atom(String), write_canonical_blobs(Message)),
-  store_triple(Dataset, ap:message, literal(type(xsd:string,String))).
+  store_triple(Dataset, ap:message, literal(type(xsd:string,String)), ap).
 
 
 %! log_status(+Dataset:iri, +Exception:compound) is det.
@@ -342,13 +353,19 @@ log_status(_, false):- !.
 log_status(_, true):- !.
 log_status(Dataset, exception(Error)):-
   with_output_to(atom(String), write_canonical_blobs(Error)),
-  store_triple(Dataset, ap:exception, literal(type(xsd:string,String))).
+  store_triple(Dataset, ap:exception, literal(type(xsd:string,String)), ap).
 
 
 %! pick_input(-Url:url) is nondet.
 
 pick_input(Url):-
   retract(todo_dataset(Url)).
+
+
+%! post_rdf_triples is det.
+
+post_rdf_triples:-
+  
 
 
 %! register_input(+Url:url) is det.
@@ -396,29 +413,29 @@ store_location_properties(Url1, Location, Url2):-
   ->
     Name = ArchiveEntry.get(name),
     atomic_list_concat([Url1,Name], '/', Url2),
-    store_triple(Url1, ap:archive_contains, Url2),
+    store_triple(Url1, ap:archive_contains, Url2, ap),
     ignore(store_triple(Url2, ap:format,
-        literal(type(xsd:string,ArchiveEntry.get(format))))),
+        literal(type(xsd:string,ArchiveEntry.get(format))), ap)),
     ignore(store_triple(Url2, ap:size,
-        literal(type(xsd:integer,ArchiveEntry.get(size))))),
-    store_triple(Url2, rdf:type, ap:'LOD-URL')
+        literal(type(xsd:integer,ArchiveEntry.get(size))), ap)),
+    store_triple(Url2, rdf:type, ap:'LOD-URL', ap)
   ;
     Url2 = Url1
   ),
   ignore(store_triple(Url2, ap:http_content_type,
-      literal(type(xsd:string,Location.get(content_type))))),
+      literal(type(xsd:string,Location.get(content_type))), ap)),
   ignore(store_triple(Url2, ap:http_content_length,
-      literal(type(xsd:integer,Location.get(content_length))))),
+      literal(type(xsd:integer,Location.get(content_length))), ap)),
   ignore(store_triple(Url2, ap:http_last_modified,
-      literal(type(xsd:string,Location.get(last_modified))))),
-  store_triple(Url2, ap:url, literal(type(xsd:string,Location.get(url)))),
+      literal(type(xsd:string,Location.get(last_modified))), ap)),
+  store_triple(Url2, ap:url, literal(type(xsd:string,Location.get(url))), ap),
 
   (
     location_base(Location, Base),
     file_name_extension(_, Ext, Base),
     Ext \== ''
   ->
-    store_triple(Url2, ap:file_extension, literal(type(xsd:string,Ext)))
+    store_triple(Url2, ap:file_extension, literal(type(xsd:string,Ext)), ap)
   ;
     true
   ).
@@ -434,7 +451,7 @@ store_stream_properties(Url, Stream):-
     (
       atomic_list_concat([stream,Field], '_', Name),
       rdf_global_id(ap:Name, Predicate),
-      store_triple(Url, Predicate, literal(type(xsd:integer,Value)))
+      store_triple(Url, Predicate, literal(type(xsd:integer,Value)), ap)
     )
   ).
 
@@ -442,31 +459,17 @@ store_stream_properties(Url, Stream):-
 %! store_triple(
 %!   +Subject:or([bnode,iri]),
 %!   +Predicate:iri,
-%!   +Object:or([bnode,iri,literal])
+%!   +Object:or([bnode,iri,literal]),
+%!   +Graph:atom
 %! ) is det.
 
-store_triple(S, P, O):-
-  with_mutex(
-    store_triple,
-    (
-      data_directory(DataDir),
-      absolute_file_name('messages.log', File, [relative_to(DataDir)]),
-      setup_call_cleanup(
-        remote_open(File, append, Stream),
-        (
-          writeq(Stream, rdf_triple(S, P, O)),
-          write(Stream, '.'),
-          nl(Stream)
-        ),
-        close(Stream)
-      )
-    )
-  ).
+store_triple(S, P, O, G):-
+  assert(rdf_triple(S, P, O, G)).
 
 
-%! store_void_triples is det.
+%! store_void_triples(+DataDocument:url) is det.
 
-store_void_triples:-
+store_void_triples(DataDocument):-
   aggregate_all(
     set(P),
     (
@@ -480,7 +483,7 @@ store_void_triples:-
       member(P, Ps),
       rdf(S, P, O)
     ),
-    store_triple(S, P, O)
+    store_triple(S, P, O, DataDocument)
   ).
 
 
@@ -494,7 +497,7 @@ write_lod_url(Kind, Url):-
       absolute_file_name(
         Kind,
         File,
-        [access(write),file_type(log),relative_to(DataDir)]
+        [access(write),file_type(logging),relative_to(DataDir)]
       ),
       setup_call_cleanup(
         open(File, append, Stream),
