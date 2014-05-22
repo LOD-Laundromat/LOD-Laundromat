@@ -24,7 +24,7 @@
 :- use_module(library(semweb/rdf_db)).
 :- use_module(library(thread)).
 
-:- use_module(ap(ap_db)).
+:- use_module(ap(ap_db)). % XML namespace.
 :- use_module(generics(db_ext)).
 :- use_module(generics(uri_ext)).
 :- use_module(os(remote_ext)).
@@ -234,9 +234,9 @@ process_lod_file(Url0, DataDir, Status):-
     log_status(Url, Status),
     maplist(log_message(Url), Messages),
     print_message(informational, lod_downloaded_file(Url,X,Status,Messages)),
-    
+
     post_rdf_triples,
-    
+
     % Unpack the next entry by backtracking.
     fail
   ).
@@ -365,25 +365,34 @@ pick_input(Url):-
 
 %! post_rdf_triples is det.
 
-post_rdf_triples(DataDoc):-
+post_rdf_triples:-
   sparql_url(Url),
   setup_call_cleanup(
     forall(
-      rdf_triple(S, P, O, DataDoc),
-      rdf_assert(S, P, O, DataDoc)
+      rdf_triple(S, P, O, _),
+      rdf_assert(S, P, O)
     ),
     (
-      with_output_to(codes(Codes), sparql_insert_data([graph(DataDoc)])),
+      with_output_to(codes(Codes), sparql_insert_data([])),
+atom_codes(Atom, Codes),
+format(user_output, '~w~n', [Atom]),
       http_post(Url, codes(Codes), Reply, []),
       format(user_output, '~w~n', [Reply])
     ),
     (
-      rdf_unload_graph(DataDoc),
+      rdf_retractall(_, _, _),
       retractall(rdf_triple(_, _, _, _))
     )
   ).
 
 sparql_url('http://stardog.lodlaundromat.ops.few.vu.nl/annex/laundromat/sparql/query').
+
+
+rdf_triple_debug:-
+  forall(
+    rdf_triple(S, P, O, G),
+    format(current_output, '<~w,~w,~w,~w>~n', [S,P,O,G])
+  ).
 
 
 %! register_input(+Url:url) is det.
