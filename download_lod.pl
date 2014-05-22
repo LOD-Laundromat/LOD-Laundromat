@@ -18,6 +18,7 @@
 
 :- use_module(library(aggregate)).
 :- use_module(library(apply)).
+:- use_module(library(http/http_client)).
 :- use_module(library(lists)).
 :- use_module(library(pairs)).
 :- use_module(library(semweb/rdf_db)).
@@ -364,8 +365,25 @@ pick_input(Url):-
 
 %! post_rdf_triples is det.
 
-post_rdf_triples:-
-  
+post_rdf_triples(DataDoc):-
+  sparql_url(Url),
+  setup_call_cleanup(
+    forall(
+      rdf_triple(S, P, O, DataDoc),
+      rdf_assert(S, P, O, DataDoc)
+    ),
+    (
+      with_output_to(codes(Codes), sparql_insert_data([graph(DataDoc)])),
+      http_post(Url, codes(Codes), Reply, []),
+      format(user_output, '~w~n', [Reply])
+    ),
+    (
+      rdf_unload_graph(DataDoc),
+      retractall(rdf_triple(_, _, _, _))
+    )
+  ).
+
+sparql_url('http://stardog.lodlaundromat.ops.few.vu.nl/annex/laundromat/sparql/query').
 
 
 %! register_input(+Url:url) is det.
