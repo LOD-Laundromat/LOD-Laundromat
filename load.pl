@@ -34,101 +34,66 @@ load_lwm:-
 
 load_plc(_):-
   user:file_search_path(plc, _), !.
-load_plc(Project):-
-  Spec =.. [Project,'Prolog-Library-Collection'],
+load_plc(Parent):-
+  Spec =.. [Parent,'Prolog-Library-Collection'],
   absolute_file_name(Spec, _, [access(read),file_type(directory)]), !,
   assert(user:file_search_path(plc, Spec)),
   ensure_loaded(plc(index)).
-load_plc(_):-
-  print_message(warning, no_plc).
+load_plc(Parent):-
+  print_message(warning, missing_submodule(plc,Parent)).
 
 load_plHtml(_):-
   user:file_search_path(plHtml, _), !.
-load_plHtml(Project):-
-  Spec =.. [Project,plHtml],
+load_plHtml(Parent):-
+  Spec =.. [Parent,plHtml],
   absolute_file_name(Spec, _, [access(read),file_type(directory)]), !,
   assert(user:file_search_path(plHtml, Spec)).
-load_plHtml(_):-
-  print_message(warning, no_plHtml).
+load_plHtml(Parent):-
+  print_message(warning, missing_submodule(plHtml,Parent)).
 
 load_plServer(_):-
   user:file_search_path(plServer, _), !.
-load_plServer(Project):-
-  Spec =.. [Project,plServer],
+load_plServer(Parent):-
+  Spec =.. [Parent,plServer],
   absolute_file_name(Spec, _, [access(read),file_type(directory)]), !,
   assert(user:file_search_path(plServer, Spec)).
-load_plServer(_):-
-  print_message(warning, no_plServer).
+load_plServer(Parent):-
+  print_message(warning, missing_submodule(plServer,Parent)).
 
 load_plDev(_):-
   user:file_search_path(plDev, _), !.
-load_plDev(Project):-
-  Spec =.. [Project,plDev],
+load_plDev(Parent):-
+  Spec =.. [Parent,plDev],
   absolute_file_name(Spec, _, [access(read),file_type(directory)]), !,
   assert(user:file_search_path(plDev, Spec)).
-load_plDev(_):-
-  print_message(warning, no_plDev).
+load_plDev(Parent):-
+  print_message(warning, missing_submodule(plDec,Parent)).
 
 load_plRdfDev(_):-
   user:file_search_path(plRdfDev, _), !.
-load_plRdfDev(Project):-
-  Spec =.. [Project,'plRdf-Dev'],
+load_plRdfDev(Parent):-
+  Spec =.. [Parent,'plRdf-Dev'],
   absolute_file_name(Spec, _, [access(read),file_type(directory)]), !,
   assert(user:file_search_path(plRdfDev, Spec)).
-load_plRdfDev(_):-
-  print_message(warning, no_plRdfDev).
+load_plRdfDev(Parent):-
+  print_message(warning, missing_submodule(plRdfDev,Parent)).
 
 load_plRdf(_):-
   user:file_search_path(plRdf, _), !.
-load_plRdf(Project):-
-  Spec =.. [Project,plRdf],
+load_plRdf(Parent):-
+  Spec =.. [Parent,plRdf],
   absolute_file_name(Spec, _, [access(read),file_type(directory)]), !,
   assert(user:file_search_path(plRdf, Spec)).
-load_plRdf(_):-
-  print_message(warning, no_plRdf).
+load_plRdf(Parent):-
+  print_message(warning, missing_submodule(plRdf,Parent)).
 
 
 :- multifile(prolog:message//1).
 
-prolog:message(no_plc) -->
+prolog:message(missing_submodule(Submodule,Parent)) -->
   [
-    'The Prolog-Library-Collection submodule is not present.', nl,
-    'Consider running the following from within the LOD-Washing-Machine directory:', nl,
-    '    git submodule init', nl,
-    '    git submodule update'
-  ].
-prolog:message(no_plHtml) -->
-  [
-    'The plHtml submodule is not present.', nl,
-    'Consider running the following from within the LOD-Washing-Machine directory:', nl,
-    '    git submodule init', nl,
-    '    git submodule update'
-  ].
-prolog:message(no_plServer) -->
-  [
-    'The plServer submodule is not present.', nl,
-    'Consider running the following from within the LOD-Washing-Machine directory:', nl,
-    '    git submodule init', nl,
-    '    git submodule update'
-  ].
-prolog:message(no_plDev) -->
-  [
-    'The plDev submodule is not present.', nl,
-    'Consider running the following from within the LOD-Washing-Machine directory:', nl,
-    '    git submodule init', nl,
-    '    git submodule update'
-  ].
-prolog:message(no_plRdf) -->
-  [
-    'The plRdf submodule is not present.', nl,
-    'Consider running the following from within the LOD-Washing-Machine directory:', nl,
-    '    git submodule init', nl,
-    '    git submodule update'
-  ].
-prolog:message(no_plRdfDev) -->
-  [
-    'The plRdfDev submodule is not present.', nl,
-    'Consider running the following from within the LOD-Washing-Machine directory:', nl,
+    'The ', Submodule, ' submodule is not present.', nl,
+    'Consider running the following from within the ', Parent, ' directory:', nl,
     '    git submodule init', nl,
     '    git submodule update'
   ].
