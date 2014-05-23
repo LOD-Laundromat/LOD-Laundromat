@@ -1,11 +1,9 @@
 :- module(
   download_lod,
   [
-    download_lod/1, % +URLs:or([iri,list(iri)])
-    download_lod/2, % +URLs:or([iri,list(iri)])
-                    % -Graph:atom
+    download_lod/1, % +Urls:or([iri,list(iri)])
     download_lod/3 % +Directory:or([atom,compound])
-                   % +URLs:or([iri,list(iri)])
+                   % +Urls:or([iri,list(iri)])
                    % +NumberOfThreads:nonneg
   ]
 ).
@@ -31,6 +29,7 @@
 :- use_module(os(unpack)).
 :- use_module(pl(pl_log)).
 :- use_module(void(void_db)). % XML namespace.
+:- use_module(xsd(xsd_dateTime_ext)).
 
 :- use_module(plRdf_ser(rdf_ntriples_write)).
 :- use_module(plRdf_ser(rdf_serial)).
@@ -77,10 +76,6 @@ download_lod(Iris):-
   absolute_file_name(data(.), DataDir, [access(write),file_type(directory)]),
   download_lod(DataDir, Iris, 1).
 
-download_lod(Iri, messages):-
-  absolute_file_name(data(.), DataDir, [access(write),file_type(directory)]),
-  download_lod(DataDir, Iri, 1).
-
 %! download_lod(
 %!   +DataDirectory:atom,
 %!   +Urls:or([iri,list(iri)]),
@@ -89,6 +84,7 @@ download_lod(Iri, messages):-
 
 download_lod(DataDir, Iris, N):-
   is_list(Iris), !,
+
   flag(number_of_processed_files, _, 0),
   flag(number_of_skipped_files, _, 0),
   flag(number_of_triples_written, _, 0),
@@ -156,22 +152,25 @@ download_lod_authority(DataDir, _-Urls):-
     (
       % Add another LOD input to the pool.
       register_input(Url),
-      process_lod_files(DataDir)
+      download_lod_files(DataDir)
     )
   ).
 
 
-%! process_lod_files(+DataDirectory:or([atom,compound])) is det.
+%! download_lod_files(+DataDirectory:or([atom,compound])) is det.
 % We log the status, all warnings, and all informational messages
 % that are emitted while processing a file.
 
-process_lod_files(DataDir):-
+download_lod_files(DataDir):-
   % Take another LOD input from the pool.
   pick_input(Url), !,
   store_triple(Url, rdf:type, ap:'LOD-URL', ap),
+  store_triple(Url, ap:scrape_version, literal(type(xsd:integer,6)), ap),
+  get_dateTime(DateTime),
+  store_triple(Url, ap:scrape_date, literal(type(xsd:dateTime,DateTime)), ap),
 
   run_collect_messages(
-    process_lod_file(Url, DataDir, OldStatus),
+    download_lod_file(Url, DataDir, OldStatus),
     Status,
     Messages
   ),
@@ -185,18 +184,18 @@ process_lod_files(DataDir):-
 
   write_lod_url(finished, Url),
 
-  process_lod_files(DataDir).
+  download_lod_files(DataDir).
 % No more inputs to pick.
-process_lod_files(_).
+download_lod_files(_).
 
 
-%! process_lod_file(
+%! download_lod_file(
 %!   +Url:url,
 %!   +DataDirectory:or([atom,compound]),
 %!   -Status:oneof([false,true])
 %! ) is det.
 
-process_lod_file(Url0, DataDir, Status):-
+download_lod_file(Url0, DataDir, Status):-
   % NON-DETERMINISTIC for multiple entries in one archive stream.
   unpack(Url0, Read, Location),
 
@@ -214,7 +213,7 @@ process_lod_file(Url0, DataDir, Status):-
   run_collect_messages(
     call_cleanup(
       rdf_transaction(
-        process_rdf_file(Url, Read, UrlDir, Location),
+        download_lod_file_transaction(Url, Read, UrlDir, Location),
         _,
         [snapshot(true)]
       ),
@@ -240,17 +239,17 @@ process_lod_file(Url0, DataDir, Status):-
     % Unpack the next entry by backtracking.
     fail
   ).
-process_lod_file(_, _, true).
+download_lod_file(_, _, true).
 
 
-%! process_rdf_file(
+%! download_lod_file_transaction(
 %!   +Url:url,
 %!   +Read:stream,
 %!   +UrlDirectory:atom,
 %!   +Location:dict
 %! ) is det.
 
-process_rdf_file(Url, Read, UrlDir, Location):-
+download_lod_file_transaction(Url, Read, UrlDir, Location):-
   % Guess the serialization format that is used in the given stream.
   rdf_guess_format([], Read, Location, Base, Format),
   store_triple(Url, ap:serialization_format, literal(type(xsd:string,Format)), ap),
@@ -322,25 +321,6 @@ read_lod_urls(Kind, DataDir):-
 read_lod_urls(_, _).
 
 
-%! lod_resource_path(
-%!   +DataDirectory:compound,
-%!   +Dataset:iri,
-%!   +File:atom,
-%!   -Path:atom
-%! ) is det.
-
-lod_resource_path(
-  remote(User,Machine,DataDir),
-  Dataset,
-  File,
-  remote(User,Machine,Path)
-):- !,
-  lod_resource_path(DataDir, Dataset, File, Path).
-lod_resource_path(DataDir, Dataset, File, Path):-
-  url_flat_directory(DataDir, Dataset, UrlDir),
-  directory_file_path(UrlDir, File, Path).
-
-
 %! log_message(+Dataset:iri, +Message:compound) is det.
 
 log_message(Dataset, Message):-
@@ -366,7 +346,7 @@ pick_input(Url):-
 %! post_rdf_triples is det.
 
 post_rdf_triples:-
-  sparql_url(Url),
+  sparql_update_url(Url),
   setup_call_cleanup(
     forall(
       rdf_triple(S, P, O, _),
@@ -374,9 +354,14 @@ post_rdf_triples:-
     ),
     (
       with_output_to(codes(Codes), sparql_insert_data([])),
-atom_codes(Atom, Codes),
-format(user_output, '~w~n', [Atom]),
-      http_post(Url, codes(Codes), Reply, []),
+atom_codes(Atom, Codes), %DEB
+format(user_output, '~w~n', [Atom]), %DEB
+      http_post(
+        Url,
+        codes('application/sparql-update', Codes),
+        Reply,
+        []
+      ),
       format(user_output, '~w~n', [Reply])
     ),
     (
@@ -385,13 +370,16 @@ format(user_output, '~w~n', [Atom]),
     )
   ).
 
-sparql_url('http://stardog.lodlaundromat.ops.few.vu.nl/annex/laundromat/sparql/query').
-
-
-rdf_triple_debug:-
-  forall(
-    rdf_triple(S, P, O, G),
-    format(current_output, '<~w,~w,~w,~w>~n', [S,P,O,G])
+sparql_update_url(Url):-
+  uri_components(
+    Url,
+    uri_components(
+      http,
+      'stardog.lodlaundromat.ops.few.vu.nl',
+      '/laundromat/update',
+      _,
+      _
+    )
   ).
 
 
@@ -584,9 +572,6 @@ number_of_duplicates_written(T) --> [' (~D dups)'-[T]].
 
 number_of_triples_written(0) --> !, [].
 number_of_triples_written(T) --> ['+~D'-[T]].
-
-number_yn(X) --> {var(X)}, !, [].
-number_yn(X) --> [' ~D'-[X]].
 
 prolog_status(false, Url) --> !,
   {write_lod_url(failed, Url)},
