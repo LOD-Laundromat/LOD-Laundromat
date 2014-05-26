@@ -38,7 +38,7 @@ load_lwm:-
   % Load the Web-based development environment.
   use_module(plDev(plDev)),
   
-  use_module(lwm(lod_laundry)).
+  use_module(lwm(run_lod_download)).
 
 
 load_plc(_):-

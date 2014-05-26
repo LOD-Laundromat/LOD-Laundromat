@@ -228,15 +228,13 @@ download_lod_file(Url0, DataDir, Status):-
   (
     Status == false
   -> !,
-    post_rdf_triples,
-gtrace,
+    post_rdf_triples
   ;
     log_status(Url, Status),
     maplist(log_message(Url), Messages),
     print_message(informational, lod_downloaded_file(Url,X,Status,Messages)),
 
     post_rdf_triples,
-gtrace,
     % Unpack the next entry by backtracking.
     fail
   ).
@@ -278,7 +276,7 @@ download_lod_file_transaction(Url, Read, UrlDir, Location):-
     close(Write)
   ),
 
-  % Asssert some statistics for inclusion in the messages file.
+  % Asssert some statistics.
   assert_number_of_triples(Url, Path, TIn, TOut),
   store_void_triples(Url),
 
@@ -347,7 +345,8 @@ pick_input(Url):-
 %! post_rdf_triples is det.
 
 post_rdf_triples:-
-  sparql_update_url(Url),
+gtrace,
+  sparql_update_url2(Url),
   setup_call_cleanup(
     forall(
       rdf_triple(S, P, O, _),
@@ -369,13 +368,24 @@ post_rdf_triples:-
     )
   ).
 
-sparql_update_url(Url):-
+sparql_update_url1(Url):-
   uri_components(
     Url,
     uri_components(
       http,
       'stardog.lodlaundromat.ops.few.vu.nl',
       '/laundromat/update',
+      _,
+      _
+    )
+  ).
+sparql_update_url2(Url):-
+  uri_components(
+    Url,
+    uri_components(
+      http,
+      'lodlaundry.wbeek.ops.few.vu.nl',
+      '/sparql/update',
       _,
       _
     )
