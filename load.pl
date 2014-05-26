@@ -2,6 +2,15 @@
 
 :- use_module(library(ansi_term)).
 
+:- dynamic(user:prolog/3).
+:- multifile(user:prolog/3).
+
+user:project(
+  'LOD-Washing-Machine',
+  'Where we clean other people\'s dirty data',
+  lwm
+).
+
 :- initialization(load_lwm).
 
 load_lwm:-
