@@ -16,6 +16,7 @@
 
 :- use_module(library(aggregate)).
 :- use_module(library(apply)).
+:- use_module(library(base64)).
 :- use_module(library(http/http_client)).
 :- use_module(library(lists)).
 :- use_module(library(pairs)).
@@ -345,7 +346,6 @@ pick_input(Url):-
 %! post_rdf_triples is det.
 
 post_rdf_triples:-
-gtrace,
   sparql_update_url2(Url),
   setup_call_cleanup(
     forall(
@@ -354,11 +354,12 @@ gtrace,
     ),
     (
       with_output_to(codes(Codes), sparql_insert_data([])),
+      http_auth(Auth),
       http_post(
         Url,
         codes('application/sparql-update', Codes),
         Reply,
-        []
+        [request_header('Authorization'=Auth)]
       ),
       format(user_output, '~w~n', [Reply])
     ),
@@ -367,6 +368,14 @@ gtrace,
       retractall(rdf_triple(_, _, _, _))
     )
   ).
+
+http_auth(Auth):-
+  http_auth(lwm, lwmlwm, Auth).
+
+http_auth(User, Password, Auth):-
+  atomic_list_concat([User,Password], ':', Plain),
+  base64(Plain, Encoded),
+  atomic_list_concat(['Basic',Encoded], ' ', Auth).
 
 sparql_update_url1(Url):-
   uri_components(
