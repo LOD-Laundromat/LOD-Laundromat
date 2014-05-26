@@ -36,6 +36,8 @@ load_lwm:-
   load_plRdfDev(lwm),
   
   % Load the Web-based development environment.
+  use_module(plServer(app_server)),
+  start_app_server([use_existing(true)]),
   use_module(plDev(plDev)),
   
   use_module(lwm(run_download_lod)).
