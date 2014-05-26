@@ -228,14 +228,15 @@ download_lod_file(Url0, DataDir, Status):-
   (
     Status == false
   -> !,
-    post_rdf_triples
+    post_rdf_triples,
+gtrace,
   ;
     log_status(Url, Status),
     maplist(log_message(Url), Messages),
     print_message(informational, lod_downloaded_file(Url,X,Status,Messages)),
 
     post_rdf_triples,
-
+gtrace,
     % Unpack the next entry by backtracking.
     fail
   ).
@@ -354,8 +355,6 @@ post_rdf_triples:-
     ),
     (
       with_output_to(codes(Codes), sparql_insert_data([])),
-atom_codes(Atom, Codes), %DEB
-format(user_output, '~w~n', [Atom]), %DEB
       http_post(
         Url,
         codes('application/sparql-update', Codes),
