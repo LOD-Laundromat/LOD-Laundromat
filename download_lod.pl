@@ -389,13 +389,14 @@ sparql_update_url1(Url):-
     )
   ).
 sparql_update_url2(Url):-
+  uri_query_components(Search, [format('rdf+xml')]),
   uri_components(
     Url,
     uri_components(
       http,
       'lodlaundry.wbeek.ops.few.vu.nl',
       '/sparql/update',
-      _,
+      Search,
       _
     )
   ).
