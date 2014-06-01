@@ -607,7 +607,7 @@ lod_url('http://download.bio2rdf.org/current/mgi/bio2rdf-mgi-statistics.nt.gz').
 lod_url('http://download.bio2rdf.org/current/mgi/mgi.nt.gz').
 lod_url('http://download.bio2rdf.org/current/omim/omim.nt.gz').
 lod_url('http://download.bio2rdf.org/release/1/genbank/').
-lod_url('http://download.bio2rdf.org/release/2/goa/goa_uniprot.nt.gz').
+%lod_url('http://download.bio2rdf.org/release/2/goa/goa_uniprot.nt.gz').
 lod_url('http://download.geonames.org/all-geonames-rdf.zip').
 lod_url('http://downloads.dbpedia.org/3.5.1/all_languages.tar').
 lod_url('http://downloads.dbpedia.org/3.5.1/dbpedia_3.5.1.owl.bz2').

@@ -2,10 +2,9 @@
 
 :- use_module(library(ansi_term)).
 
-:- multifile(user:prolog/3).
-:- dynamic(user:prolog/3).
-
-user:prolog(
+:- multifile(user:project/3).
+:- dynamic(user:project/3).
+user:project(
   'LOD-Washing-Machine',
   'Where we clean other people\'s dirty data',
   lwm
@@ -37,9 +36,11 @@ load_lwm:-
   load_plRdfDev(lwm),
   
   % Load the Web-based development environment.
+  use_module(plServer(app_server)),
+  start_app_server([use_existing(true)]),
   use_module(plDev(plDev)),
   
-  use_module(lwm(lod_laundry)).
+  use_module(lwm(run_download_lod)).
 
 
 load_plc(_):-

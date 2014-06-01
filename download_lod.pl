@@ -16,6 +16,7 @@
 
 :- use_module(library(aggregate)).
 :- use_module(library(apply)).
+:- use_module(library(base64)).
 :- use_module(library(http/http_client)).
 :- use_module(library(lists)).
 :- use_module(library(pairs)).
@@ -235,7 +236,6 @@ download_lod_file(Url0, DataDir, Status):-
     print_message(informational, lod_downloaded_file(Url,X,Status,Messages)),
 
     post_rdf_triples,
-
     % Unpack the next entry by backtracking.
     fail
   ).
@@ -277,7 +277,7 @@ download_lod_file_transaction(Url, Read, UrlDir, Location):-
     close(Write)
   ),
 
-  % Asssert some statistics for inclusion in the messages file.
+  % Asssert some statistics.
   assert_number_of_triples(Url, Path, TIn, TOut),
   store_void_triples(Url),
 
@@ -346,7 +346,7 @@ pick_input(Url):-
 %! post_rdf_triples is det.
 
 post_rdf_triples:-
-  sparql_update_url(Url),
+  sparql_update_url2(Url),
   setup_call_cleanup(
     forall(
       rdf_triple(S, P, O, _),
@@ -354,13 +354,12 @@ post_rdf_triples:-
     ),
     (
       with_output_to(codes(Codes), sparql_insert_data([])),
-atom_codes(Atom, Codes), %DEB
-format(user_output, '~w~n', [Atom]), %DEB
+      http_auth(Auth),
       http_post(
         Url,
         codes('application/sparql-update', Codes),
         Reply,
-        []
+        [request_header('Authorization'=Auth)]
       ),
       format(user_output, '~w~n', [Reply])
     ),
@@ -370,7 +369,15 @@ format(user_output, '~w~n', [Atom]), %DEB
     )
   ).
 
-sparql_update_url(Url):-
+http_auth(Auth):-
+  http_auth(lwm, lwmlwm, Auth).
+
+http_auth(User, Password, Auth):-
+  atomic_list_concat([User,Password], ':', Plain),
+  base64(Plain, Encoded),
+  atomic_list_concat(['Basic',Encoded], ' ', Auth).
+
+sparql_update_url1(Url):-
   uri_components(
     Url,
     uri_components(
@@ -378,6 +385,18 @@ sparql_update_url(Url):-
       'stardog.lodlaundromat.ops.few.vu.nl',
       '/laundromat/update',
       _,
+      _
+    )
+  ).
+sparql_update_url2(Url):-
+  uri_query_components(Search, [format('rdf+xml')]),
+  uri_components(
+    Url,
+    uri_components(
+      http,
+      'lodlaundry.wbeek.ops.few.vu.nl',
+      '/sparql/update',
+      Search,
       _
     )
   ).
