@@ -2,6 +2,15 @@
 
 :- use_module(library(ansi_term)).
 
+:- multifile(user:prolog/3).
+:- dynamic(user:prolog/3).
+
+user:prolog(
+  'LOD-Washing-Machine',
+  'Where we clean other people\'s dirty data',
+  lwm
+).
+
 :- initialization(load_lwm).
 
 load_lwm:-
@@ -9,6 +18,7 @@ load_lwm:-
   source_file(load_lwm, ThisFile),
   file_directory_name(ThisFile, ThisDir),
   assert(user:file_search_path(lwm, ThisDir)),
+  assert(user:file_search_path(project, ThisDir)),
   
   % Data subdirectory.
   directory_file_path(ThisDir, data, DataDir),
