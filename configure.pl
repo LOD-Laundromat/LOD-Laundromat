@@ -21,6 +21,8 @@ Configuration settings for project LOD-Washing-Machine.
 :- use_module(library(base64)).
 :- use_module(library(uri)).
 
+:- use_module(lwm(download_lod_generics)).
+
 
 
 %! endpoint(
@@ -53,14 +55,17 @@ endpoint(stardog, Url, false, true):-
       _
     )
   ).
-endpoint(virtuoso, Url, false, false):-
+endpoint(virtuoso, Url, true, false):-
+  scrape_version(Version),
+  uri_components(Graph, uri_components(http, laundromat, _, _, Version)),
+  uri_query_components(Search, ['using-graph-uri'=Graph]),
   uri_components(
     Url,
     uri_components(
       http,
       'virtuoso.lodlaundromat.ops.few.vu.nl',
       '/sparql',
-      _,
+      Search,
       _
     )
   ).

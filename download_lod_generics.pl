@@ -6,7 +6,8 @@
     has_finished/1, % +Url:url
     report_failed/1, % +Url:url
     report_finished/1, % +Url:url
-    set_data_directory/1 % +DataDirectory:atom
+    set_data_directory/1, % +DataDirectory:atom
+    scrape_version/1 % -Version:positive_integer
   ]
 ).
 
@@ -57,6 +58,9 @@ report_finished(Url):-
 set_data_directory(DataDir):-
   % Assert the data directory.
   db_replace_novel(data_directory(DataDir), [e]).
+
+
+scrape_version(7).
 
 
 

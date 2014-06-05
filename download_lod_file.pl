@@ -71,7 +71,9 @@ download_lod_files(DataDir):-
   % Take another LOD input from the pool.
   pick_input(Url), !,
   store_triple(Url, rdf:type, ap:'LOD-URL', ap),
-  store_triple(Url, ap:scrape_version, literal(type(xsd:integer,6)), ap),
+  scrape_version(Version),
+  store_triple(Url, ap:scrape_version, literal(type(xsd:integer,Version)),
+      ap),
   get_dateTime(DateTime),
   store_triple(Url, ap:scrape_date, literal(type(xsd:dateTime,DateTime)), ap),
 
