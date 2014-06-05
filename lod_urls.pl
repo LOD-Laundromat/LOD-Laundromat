@@ -1,6 +1,7 @@
 :- module(
   lod_urls,
   [
+    add_lod_url/1, % ?Url:url
     lod_url/1 % ?Url:url
   ]
 ).
@@ -8,10 +9,22 @@
 /** <module> LOD URLs
 
 @author Wouter Beek
-@version 2014/05
+@version 2014/05-2014/06
 */
 
+:- use_module(generics(db_ext)).
+
 :- dynamic(lod_url/1).
+
+
+
+%! add_lod_url(+Url:url) is det.
+
+add_lod_url(Url):-
+  db_add_novel(lod_url(Url)).
+
+
+%! lod_url(?Url:url) is nondet.
 
 %lod_url('ftp://ftp.uniprot.org/pub/databases/uniprot/current_release/rdf/taxonomy.rdf.gz').
 %lod_url('ftp://ftp.uniprot.org/pub/databases/uniprot/current_release/rdf/uniprot.rdf.gz').

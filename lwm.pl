@@ -3,8 +3,7 @@
   [
     lwm/2, % +Request:list
            % +HtmlStyle:atom
-    lwm_basket/2 % +Request:list
-                 % +HtmlStyle:atom
+    lwm_basket/1 % +Request:list
   ]
 ).
 
@@ -17,7 +16,11 @@
 :- use_module(library(aggregate)).
 :- use_module(library(http/html_write)).
 :- use_module(library(http/http_dispatch)).
+:- use_module(library(http/http_json)).
+:- use_module(library(http/http_parameters)).
 :- use_module(library(semweb/rdf_db)).
+
+:- use_module(generics(typecheck)).
 
 :- use_module(plHtml(html)).
 :- use_module(plHtml(html_pl_term)).
@@ -36,13 +39,25 @@
 
 
 % Response to requesting a JSON description of all LOD URL.
-lwm(_Request, HtmlStyle):-
+lwm(_, HtmlStyle):-
   reply_html_page(HtmlStyle, title('LOD Laundry'), html(\lod_urls)).
 
-lwm_basket(Request, HtmlStyle):-
-  gtrace,
-  writeln(Request),
-  reply_html_page(HtmlStyle, title('LOD Basket'), p(test)).
+
+lwm_basket(Request):-
+  (
+    http_parameters(Request, [url(Url, [])]),
+    is_url(Url)
+  ->
+    add_lod_url(Url),
+    
+    % HTTP status code 202 Accepted: The request has been accepted
+    % for processing, but the processing has not been completed.
+    reply_json(json{}, [status(202)])
+  ;
+    % HTTP status code 400 Bad Request: The request could not
+    % be understood by the server due to malformed syntax.
+    reply_json(json{}, [status(400)])
+  ).
 
 
 lod_urls -->

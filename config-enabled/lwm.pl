@@ -44,8 +44,6 @@ user:body(plTabular, Body) -->
 :- use_module(lwm(lwm)).
 lwm(Request):-
   lwm(Request, lwm).
-lwm_basket(Request):-
-  lwm_basket(Request, lwm).
 
 :- multifile(user:body//2).
 user:body(lwm, Body) -->
