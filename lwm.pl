@@ -1,4 +1,12 @@
-:- module(lod_laundry, []).
+:- module(
+  lod_laundry,
+  [
+    lwm/2, % +Request:list
+           % +HtmlStyle:atom
+    lwm_basket/2 % +Request:list
+                 % +HtmlStyle:atom
+  ]
+).
 
 /** <module> LOD laundry
 
@@ -21,9 +29,6 @@
 :- multifile(http:location/3).
    http:location(ll_web, root(ll), []).
 
-:- http_handler(ll_web(.), lwm, [prefix]).
-:- http_handler(ll_web(basket), lwm_basket, []).
-
 :- dynamic(url_md5_translation/2).
 
 :- initialization(cache_url_md5_translations).
@@ -31,12 +36,13 @@
 
 
 % Response to requesting a JSON description of all LOD URL.
-lwm(_):-
-  reply_html_page(app_style, title('LOD Laundry'), html(\lod_urls)).
+lwm(_Request, HtmlStyle):-
+  reply_html_page(HtmlStyle, title('LOD Laundry'), html(\lod_urls)).
 
-lwm_basket(Request):-
+lwm_basket(Request, HtmlStyle):-
   gtrace,
-  writeln(Request).
+  writeln(Request),
+  reply_html_page(HtmlStyle, title('LOD Basket'), p(test)).
 
 
 lod_urls -->
@@ -47,7 +53,7 @@ lod_urls -->
         lod_url(Url), %@tbd
         once(url_md5_translation(Url, Md5)),
         once(file_name_extension(Md5, json, File)),
-        once(http_link_to_id(ll_web_home, path_postfix(File), InternalLink))
+        once(http_link_to_id(lwm, path_postfix(File), InternalLink))
       ),
       Rows
     )

@@ -1,5 +1,5 @@
 :- module(
-  lod_laundry,
+  lod_laundry_old,
   [
     non_url_iris/5 % -NonUrlIris:ordset(iri)
                    % -NumberOfNonUrlIris:nonneg

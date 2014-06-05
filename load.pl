@@ -17,7 +17,3 @@
     plTabular
 ]).
 
-% Load the Web-based development environment.
-:- ensure_loaded(plTabular(set_default_http_handler)).
-:- use_module(lwm(run_download_lod)).
-

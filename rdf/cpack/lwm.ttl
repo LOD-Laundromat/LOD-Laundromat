@@ -1,0 +1,21 @@
+@prefix rdf:     <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix foaf:    <http://xmlns.com/foaf/0.1/> .
+@prefix cpack:   <http://cliopatria.swi-prolog.org/schema/cpack#> .
+
+<> a cpack:Package ;
+        cpack:packageName "lwm" ;
+        dcterms:title "LOD Washing Machine" ;
+        cpack:author [ a foaf:Person ;
+                       foaf:name "Wouter Beek" ;
+                       foaf:mbox <literal(me@wouterbeek.com)> ;
+                     ] ;
+        cpack:primaryRepository
+            [ a cpack:GitRepository ;
+              cpack:gitURL <https://github/LODLaundry/LOD-Washing-Machine.git>
+            ] ;
+        cpack:description
+"""
+LOD Washing Machine"
+""" .
