@@ -40,7 +40,7 @@ new_lod_url(Url2):-
 
 process_lod_urls:-
   init_process_lod_urls,
-  process_lod_loop.
+  thread_create(process_lod_loop, _, []).
 
 process_lod_loop:-
   % Pick one new URL to process.
