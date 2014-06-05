@@ -271,7 +271,7 @@ download_lod_file_transaction(Url, Read, UrlDir, Location):-
   ),
 
   % Save triples using the N-Triples serialization format.
-  directory_file_path(UrlDir, 'input.nt.gz', Path),
+  directory_file_path(UrlDir, 'clean.nt.gz', Path),
   setup_call_cleanup(
     remote_open(Path, append, Write, [filter(gzip)]),
     rdf_ntriples_write(Write, [bnode_base(Base),number_of_triples(TOut)]),
