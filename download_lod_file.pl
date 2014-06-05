@@ -88,7 +88,7 @@ download_lod_files(DataDir):-
     lod_skipped_file(Url,OldStatus,Status,Messages)
   ),
 
-  write_lod_url(finished, Url),
+  report_finished(Url),
 
   download_lod_files(DataDir).
 % No more input URLs to pick.
@@ -395,7 +395,7 @@ prolog:message(lod_downloaded_file(Url,X,Status,Messages)) -->
 
 prolog:message(lod_skipped_file(_,true,_,_)) --> !, [].
 prolog:message(lod_skipped_file(Url,false,_,_)) --> !,
-  {write_lod_url(failed, Url)},
+  {report_failed(Url)},
   [].
 prolog:message(lod_skipped_file(Url,_,Status,Messages)) -->
   {flag(number_of_skipped_files, X, X + 1)},
@@ -419,7 +419,7 @@ number_of_triples_written(0) --> !, [].
 number_of_triples_written(T) --> ['+~D'-[T]].
 
 prolog_status(false, Url) --> !,
-  {write_lod_url(failed, Url)},
+  {report_failed(Url)},
   [].
 prolog_status(true, _) --> !, [].
 prolog_status(exception(Error), _) -->
