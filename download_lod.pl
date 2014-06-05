@@ -11,12 +11,11 @@
 /** <module> Download LOD
 
 @author Wouter Beek
-@version 2014/03-2014/05
+@version 2014/03-2014/06
 */
 
 :- use_module(library(aggregate)).
 :- use_module(library(apply)).
-:- use_module(library(base64)).
 :- use_module(library(http/http_client)).
 :- use_module(library(lists)).
 :- use_module(library(pairs)).
@@ -34,6 +33,8 @@
 
 :- use_module(plRdf_ser(rdf_ntriples_write)).
 :- use_module(plRdf_ser(rdf_serial)).
+
+:- use_module(lwm(configure)).
 
 :- dynamic(data_directory/1).
 
@@ -346,7 +347,14 @@ pick_input(Url):-
 %! post_rdf_triples is det.
 
 post_rdf_triples:-
-  sparql_update_url2(Url),
+  endpoint(EndpointName, Url, true, _),
+  post_rdf_triples(EndpointName, Url),
+  fail.
+post_rdf_triples.
+
+%! post_rdf_triples(+EndpointName:atom, +Url:url) is det.
+
+post_rdf_triples(EndpointName, Url):-
   setup_call_cleanup(
     forall(
       rdf_triple(S, P, O, _),
@@ -354,50 +362,18 @@ post_rdf_triples:-
     ),
     (
       with_output_to(codes(Codes), sparql_insert_data([])),
-      http_auth(Auth),
+      endpoint_authentication(EndpointName, Authentication),
       http_post(
         Url,
         codes('application/sparql-update', Codes),
         Reply,
-        [request_header('Authorization'=Auth)]
+        Authentication
       ),
       format(user_output, '~w~n', [Reply])
     ),
     (
       rdf_retractall(_, _, _),
       retractall(rdf_triple(_, _, _, _))
-    )
-  ).
-
-http_auth(Auth):-
-  http_auth(lwm, lwmlwm, Auth).
-
-http_auth(User, Password, Auth):-
-  atomic_list_concat([User,Password], ':', Plain),
-  base64(Plain, Encoded),
-  atomic_list_concat(['Basic',Encoded], ' ', Auth).
-
-sparql_update_url1(Url):-
-  uri_components(
-    Url,
-    uri_components(
-      http,
-      'stardog.lodlaundromat.ops.few.vu.nl',
-      '/laundromat/update',
-      _,
-      _
-    )
-  ).
-sparql_update_url2(Url):-
-  uri_query_components(Search, [format('rdf+xml')]),
-  uri_components(
-    Url,
-    uri_components(
-      http,
-      'lodlaundry.wbeek.ops.few.vu.nl',
-      '/sparql/update',
-      Search,
-      _
     )
   ).
 
