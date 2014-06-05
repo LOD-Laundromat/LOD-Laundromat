@@ -60,7 +60,7 @@ set_data_directory(DataDir):-
   db_replace_novel(data_directory(DataDir), [e]).
 
 
-scrape_version(7).
+scrape_version('7').
 
 
 

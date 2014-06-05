@@ -56,7 +56,6 @@ endpoint(stardog, Url, false, true):-
     )
   ).
 endpoint(virtuoso, Url, true, false):-
-gtrace,
   scrape_version(Version),
   atom_number(Fragment, Version),
   uri_components(Graph, uri_components(http, laundromat, _, _, Fragment)),
