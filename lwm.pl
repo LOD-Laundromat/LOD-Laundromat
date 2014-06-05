@@ -28,10 +28,6 @@
 
 :- use_module(lwm(lod_urls)).
 
-:- dynamic(http:location/3).
-:- multifile(http:location/3).
-   http:location(ll_web, root(ll), []).
-
 :- dynamic(url_md5_translation/2).
 
 :- initialization(cache_url_md5_translations).
@@ -49,7 +45,7 @@ lwm_basket(Request):-
     is_url(Url)
   ->
     add_lod_url(Url),
-    
+
     % HTTP status code 202 Accepted: The request has been accepted
     % for processing, but the processing has not been completed.
     reply_json(json{}, [status(202)])
