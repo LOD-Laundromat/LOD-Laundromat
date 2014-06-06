@@ -18,6 +18,7 @@
 :- use_module(library(http/http_dispatch)).
 :- use_module(library(http/http_json)).
 :- use_module(library(http/http_parameters)).
+:- use_module(library(http/http_server_files)).
 :- use_module(library(semweb/rdf_db)).
 
 :- use_module(generics(typecheck)).
@@ -31,6 +32,12 @@
 :- dynamic(url_md5_translation/2).
 
 :- initialization(cache_url_md5_translations).
+
+:- http_handler(
+  cliopatria(lwm/clean),
+  serve_files_in_directory(data),
+  [prefix]
+).
 
 
 
