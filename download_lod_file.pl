@@ -1,7 +1,8 @@
 :- module(
   download_lod_file,
   [
-    download_lod_file/1 % +Url:url
+    download_lod_file/2 % +Url:url
+                        % +TimeAdded:nonneg
   ]
 ).
 
@@ -37,10 +38,6 @@
 
 :- thread_local(seen_dataset/1).
 
-%! todo_dataset(?Url:url) is nondet.
-
-:- thread_local(todo_dataset/1).
-
 %! rdf_triple(
 %!   ?Subject:or([bnode,iri]),
 %!   ?Predicate:iri,
@@ -57,8 +54,7 @@
 
 
 
-download_lod_file(Url):-
-  register_input(Url),
+download_lod_file(Url, TimeAdded):-
   data_directory(DataDir),
   download_lod_files(DataDir).
 
@@ -68,12 +64,9 @@ download_lod_file(Url):-
 % that are emitted while processing a file.
 
 download_lod_files(DataDir):-
-  % Take another LOD input from the pool.
-  pick_input(Url), !,
   store_triple(Url, rdf:type, ap:'LOD-URL', ap),
-  scrape_version(Version1),
-  atom_number(Version1, Version2),
-  store_triple(Url, ap:scrape_version, literal(type(xsd:integer,Version2)),
+  scrape_version(Version),
+  store_triple(Url, ap:scrape_version, literal(type(xsd:integer,Version)),
       ap),
   get_dateTime(DateTime),
   store_triple(Url, ap:scrape_date, literal(type(xsd:dateTime,DateTime)), ap),
@@ -226,15 +219,10 @@ log_status(Dataset, exception(Error)):-
   store_triple(Dataset, ap:exception, literal(type(xsd:string,String)), ap).
 
 
-%! pick_input(-Url:url) is nondet.
-
-pick_input(Url):-
-  retract(todo_dataset(Url)).
-
-
 %! post_rdf_triples is det.
 
 post_rdf_triples:-
+gtrace,
   endpoint(EndpointName, Url, true, _),
   post_rdf_triples(EndpointName, Url),
   fail.
@@ -255,22 +243,15 @@ post_rdf_triples(EndpointName, Url):-
         Url,
         codes('application/sparql-update', Codes),
         Reply,
-        Authentication
+        [request_header('Accept'='application/json')|Authentication]
       ),
-      format(user_output, '~w~n', [Reply])
+      print_message(informational, sent_to_endpoint(EndpointName,Reply))
     ),
     (
       rdf_retractall(_, _, _),
       retractall(rdf_triple(_, _, _, _))
     )
   ).
-
-
-%! register_input(+Url:url) is det.
-
-register_input(Url):-
-  assert(todo_dataset(Url)),
-  assert(seen_dataset(Url)).
 
 
 %! register_void_datasets is det.
@@ -288,7 +269,7 @@ register_void_datasets:-
   print_message(informational, found_void_lod_urls(Urls)),
   forall(
     member(Url, Urls),
-    register_input(Url)
+    add_to_lod_basket(Url)
   ).
 
 
@@ -414,6 +395,9 @@ prolog:message(rdf_ntriples_written(File,TDup,TOut)) -->
   ['] ['],
     remote_file(File),
   [']'].
+
+prolog:message(sent_to_endpoint(EndpointName,Reply)) -->
+  ['[',EndpointName,']',nl,Reply,nl].
 
 number_of_duplicates_written(0) --> !, [].
 number_of_duplicates_written(T) --> [' (~D dups)'-[T]].

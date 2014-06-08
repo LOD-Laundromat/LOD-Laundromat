@@ -16,17 +16,17 @@ Initializes the downloading of LOD.
 
 :- use_module(lwm(download_lod_file)).
 :- use_module(lwm(download_lod_generics)).
-:- use_module(lwm(lod_urls)).
+:- use_module(lwm(url_pool)).
 
 :- initialization(process_lod_urls).
 :- initialization(update_lod_urls).
 
 
 
-%! new_lod_url(-Url:url) is nondet.
+%! new_lod_url(-Url:url, -TimeAdded:nonneg) is nondet.
 
-new_lod_url(Url2):-
-  lod_url(Url1),
+new_lod_url(Url2, TimeAdded):-
+  current_pending_url(Url1, TimeAdded),
   
   % Make sure that it is a URL.
   uri_iri(Url2, Url1),
@@ -44,10 +44,10 @@ process_lod_urls:-
 
 process_lod_loop:-
   % Pick one new URL to process.
-  once(new_lod_url(Url)),
+  once(new_lod_url(Url, TimeAdded)),
 
   % Process the URL we picked.
-  download_lod_file(Url),
+  download_lod_file(Url, TimeAdded),
 
   % Intermittent loop.
   process_lod_loop.
@@ -62,7 +62,7 @@ process_lod_loop:-
 
 update_lod_urls:-
   % Run every minute.
-  intermittent_thread(use_module(lod_urls), fail, 60, _, []).
+  intermittent_thread(use_module(url_pool), fail, 60, _, []).
 
 
 

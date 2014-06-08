@@ -27,11 +27,9 @@
 :- use_module(plHtml(html_pl_term)).
 :- use_module(plHtml(html_table)).
 
-:- use_module(lwm(lod_urls)).
+:- use_module(lwm(url_pool)).
 
 :- dynamic(url_md5_translation/2).
-
-:- initialization(cache_url_md5_translations).
 
 :- http_handler(
   cliopatria(lwm/clean),
@@ -43,16 +41,7 @@
 
 % Response to requesting a JSON description of all LOD URL.
 lwm(_, HtmlStyle):-
-  reply_html_page(
-    HtmlStyle,
-    title('LOD Laundry'),
-    html([
-      h2('Processed URLs'),
-      \processed_urls,
-      h2('All URLs'),
-      \all_urls
-    ])
-  ).
+  reply_html_page(HtmlStyle, title('LOD Laundry'), pending_urls).
 
 
 lwm_basket(Request):-
@@ -60,7 +49,7 @@ lwm_basket(Request):-
     http_parameters(Request, [url(Url, [])]),
     is_url(Url)
   ->
-    add_lod_url(Url),
+    add_to_lod_basket(Url),
 
     % HTTP status code 202 Accepted: The request has been accepted
     % for processing, but the processing has not been completed.
@@ -72,33 +61,15 @@ lwm_basket(Request):-
   ).
 
 
-all_urls -->
+pending_urls -->
   {findall(
     [Url],
-    lod_url(Url),
+    current_pending_url(Url),
     Rows
   )},
   html_table(
     [header_column(true),header_row(true),indexed(true)],
-    html('All LOD URLs (processed and unprocessed)'),
-    [['Url']|Rows]
-  ).
-
-processed_urls -->
-  {aggregate_all(
-    set([Url-InternalLink-Url]),
-    (
-      lod_url(Url), %@tbd
-      once(url_md5_translation(Url, Md5)),
-      once(file_name_extension(Md5, json, File)),
-      once(http_link_to_id(lwm, path_postfix(File), InternalLink))
-    ),
-    Rows
-  )},
-  html_table(
-    [header_column(true),header_row(true),indexed(true)],
-    html('Cleaned LOD files'),
-    lod_laundry_cell,
+    html('The pending LOD URLs'),
     [['Url']|Rows]
   ).
 
@@ -114,18 +85,4 @@ lod_laundry_cell(Term) -->
   ]).
 lod_laundry_cell(Term) -->
   html_pl_term(plDev(.), Term).
-
-
-
-% INITIALIZATION
-
-cache_url_md5_translation(Url):-
-  rdf_atom_md5(Url, 1, Md5),
-  assert(url_md5_translation(Url, Md5)).
-
-cache_url_md5_translations:-
-  lod_url(Url),
-  cache_url_md5_translation(Url),
-  fail.
-cache_url_md5_translations.
 
