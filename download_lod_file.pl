@@ -1,12 +1,15 @@
 :- module(
-  download_lod_file,
+  lwm_cleaning,
   [
-    download_lod_file/2 % +Url:url
-                        % +TimeAdded:nonneg
+    clean_datadoc/3 % +Url:url
+                    % +Coordinate:list(nonneg)
+                    % +TimeAdded:nonneg
   ]
 ).
 
-/** <module> Download LOD
+/** <module> LOD Washing Machine: cleaning
+
+The cleaning process performed by the LOD Washing Machine.
 
 @author Wouter Beek
 @version 2014/03-2014/06
@@ -14,14 +17,15 @@
 
 :- use_module(library(aggregate)).
 :- use_module(library(apply)).
+:- use_module(library(archive)).
 :- use_module(library(http/http_client)).
 :- use_module(library(lists)).
 :- use_module(library(semweb/rdf_db)).
 
 :- use_module(ap(ap_db)). % XML namespace.
 :- use_module(generics(uri_ext)).
+:- use_module(os(archive_ext)).
 :- use_module(os(remote_ext)).
-:- use_module(os(unpack)).
 :- use_module(pl(pl_log)).
 :- use_module(void(void_db)). % XML namespace.
 :- use_module(xsd(xsd_dateTime_ext)).
@@ -29,67 +33,101 @@
 :- use_module(plRdf_ser(rdf_ntriples_write)).
 :- use_module(plRdf_ser(rdf_serial)).
 
-:- use_module(lwm(configure)).
-:- use_module(lwm(download_lod_generics)).
-
-:- rdf_meta(store_triple(r,r,o,+)).
+:- use_module(lwm(lod_basket)).
+:- use_module(lwm(lwm_generics)).
+:- use_module(lwm(lwm_history)).
+:- use_module(lwm(lwm_store_triple)).
 
 %! seen_dataset(?Url:url) is nondet.
 
 :- thread_local(seen_dataset/1).
 
-%! rdf_triple(
-%!   ?Subject:or([bnode,iri]),
-%!   ?Predicate:iri,
-%!   ?Object:or([bnode,iri,literal]),
-%!   ?DataDocument:url
-%! ) is nondet.
-% Since threads load data in RDF transactions with snapshots,
-% we cannot use the triple store for anything else during
-% the load-save cycle of a data document.
-% Therefore, we store triples that arise during this cycle
-% as thread-specific Prolog assertions.
-
-:- thread_local(rdf_triple/4).
 
 
+% Step 1: The URL may denote an archive.
+%         Look for the stream with the given coordinate.
 
-download_lod_file(Url, TimeAdded):-
-  data_directory(DataDir),
-  download_lod_files(DataDir).
+%! clean_datadoc(+Source:atom) is det.
 
-
-%! download_lod_files(+DataDirectory:or([atom,compound])) is det.
-% We log the status, all warnings, and all informational messages
-% that are emitted while processing a file.
-
-download_lod_files(DataDir):-
-  store_triple(Url, rdf:type, ap:'LOD-URL', ap),
-  scrape_version(Version),
-  store_triple(Url, ap:scrape_version, literal(type(xsd:integer,Version)),
-      ap),
-  get_dateTime(DateTime),
-  store_triple(Url, ap:scrape_date, literal(type(xsd:dateTime,DateTime)), ap),
+clean_datadoc(Md5-File, DateAdded):- !,
+  
+clean_datadoc(Url, DateAdded):-
+  url_to_md5(Url, Coord, Md5),
+  store_url(Md5, Url, Coord, DateAdded),
 
   run_collect_messages(
-    download_lod_file(Url, DataDir, OldStatus),
+    clean_datadoc0(Url, Coord, Md5),
     Status,
     Messages
   ),
-  log_status(Url, Status),
-  maplist(log_message(Url), Messages),
+  store_status(Md5, Status),
+  maplist(store_message(Md5), Messages),
 
-  print_message(
-    informational,
-    lod_skipped_file(Url,OldStatus,Status,Messages)
-  ),
+  report_finished(Url, Coord).
 
-  report_finished(Url),
 
-  download_lod_files(DataDir).
-% No more input URLs to pick.
-download_lod_files(_).
+clean_datadoc0(Url, Coord, Md5):-
+  download_dirty(Url, DirtyFile),
+  archive_extract(DirtyFile, _, EntryFiles),
+  maplist(add_pair(Md5), EntryFiles, Sources),
+  maplist(add_to_lod_basket, Sources).
 
+add_pair(X, Y, X-Y).
+
+
+%! clean_datastream(+Url:url, +Coordinate:list(nonneg), +Md5:atom, +Read:blob) is det.
+
+clean_datastream(Url, Coord, Md5, Read):-
+  % Open an archive on the given stream.
+  setup_call_cleanup(
+    archive_open(
+      Read,
+      Archive,
+      [close_parent(false),filter(all),format(all),format(raw)]
+    ),
+    clean_archive(Url, Coord, Md5, Archive),
+    archive_close(Archive)
+  ).
+
+
+%! clean_archive(+Url:url, +Coordinate:list(nonneg), +Md5:atom, +Archive:blob) is det.
+
+clean_archive(Url, [], Md5, Archive):- !,
+  archive_next_header(Archive, EntryName),
+  archive_open_entry(Archive, Read),
+  clean_datastream_logged(Url, Md5, EntryName, Read).
+clean_archive(Url, [H|T], Md5, Archive):-
+  % Scroll to the archive entry indicated by the given coordinate.
+  setup_call_cleanup(
+    archive_nth0_entry(H, Archive, EntryName, Read),
+    (
+      writeln(EntryName),
+      clean_datastream(Url, T, Md5, Read)
+    ),
+    close(Read)
+  ).
+
+
+
+% Step 2: We have a data stream.
+
+%! clean_datastream_logged(+Url:url, +Md5:atom, +Read:blob) is det.
+% This logs the status, all warnings, and all informational messages
+% that are emitted while processing a file.
+
+% The recusive contents of an archive are added to the LOD Basket.
+clean_datastream_logged(Url, Md5, _, Read):-
+  archive_tree_coords(Read, Coords),
+  Coords \== [], !,
+  store_archive_entries(Url, Md5, Coords),
+  maplist(add_to_lod_basket(Url), Coords).
+% Not an archive, proceed.
+clean_datastream_logged(_, _Md5, _, _Read):- !.
+  %%%%store_location_properties(Url0, Location, Url),
+
+
+/*
+clean_datastream(Md5, Read):-
 
 %! download_lod_file(
 %!   +Url:url,
@@ -98,11 +136,6 @@ download_lod_files(_).
 %! ) is det.
 
 download_lod_file(Url0, DataDir, Status):-
-  % NON-DETERMINISTIC for multiple entries in one archive stream.
-  unpack(Url0, Read, Location),
-
-  store_location_properties(Url0, Location, Url),
-
   print_message(informational, lod_download_start(X,Url)),
 
   % Make sure the remote directory exists.
@@ -132,8 +165,8 @@ download_lod_file(Url0, DataDir, Status):-
   -> !,
     post_rdf_triples
   ;
-    log_status(Url, Status),
-    maplist(log_message(Url), Messages),
+    store_status(Url, Status),
+    maplist(store_message(Url), Messages),
     print_message(informational, lod_downloaded_file(Url,X,Status,Messages)),
 
     post_rdf_triples,
@@ -179,80 +212,11 @@ download_lod_file_transaction(Url, Read, UrlDir, Location):-
   ),
 
   % Asssert some statistics.
-  assert_number_of_triples(Url, Path, TIn, TOut),
+  store_number_of_triples(Url, Path, TIn, TOut),
   store_void_triples(Url),
 
   % Make sure any VoID datadumps are considered as well.
   register_void_datasets.
-
-
-
-% HELPERS
-
-%! assert_number_of_triples(
-%!   +Url:url,
-%!   +Path:atom,
-%!   +ReadTriples:nonneg,
-%!   +WrittenTriples:nonneg
-%! ) is det.
-
-assert_number_of_triples(Url, Path, TIn, TOut):-
-  store_triple(Url, ap:triples, literal(type(xsd:integer,TOut)), ap),
-  TDup is TIn - TOut,
-  store_triple(Url, ap:duplicates, literal(type(xsd:integer,TDup)), ap),
-  print_message(informational, rdf_ntriples_written(Path,TDup,TOut)).
-
-
-%! log_message(+Dataset:iri, +Message:compound) is det.
-
-log_message(Dataset, Message):-
-  with_output_to(atom(String), write_canonical_blobs(Message)),
-  store_triple(Dataset, ap:message, literal(type(xsd:string,String)), ap).
-
-
-%! log_status(+Dataset:iri, +Exception:compound) is det.
-
-log_status(_, false):- !.
-log_status(_, true):- !.
-log_status(Dataset, exception(Error)):-
-  with_output_to(atom(String), write_canonical_blobs(Error)),
-  store_triple(Dataset, ap:exception, literal(type(xsd:string,String)), ap).
-
-
-%! post_rdf_triples is det.
-
-post_rdf_triples:-
-gtrace,
-  endpoint(EndpointName, Url, true, _),
-  post_rdf_triples(EndpointName, Url),
-  fail.
-post_rdf_triples.
-
-%! post_rdf_triples(+EndpointName:atom, +Url:url) is det.
-
-post_rdf_triples(EndpointName, Url):-
-  setup_call_cleanup(
-    forall(
-      rdf_triple(S, P, O, _),
-      rdf_assert(S, P, O)
-    ),
-    (
-      with_output_to(codes(Codes), sparql_insert_data([])),
-      endpoint_authentication(EndpointName, Authentication),
-      http_post(
-        Url,
-        codes('application/sparql-update', Codes),
-        Reply,
-        [request_header('Accept'='application/json')|Authentication]
-      ),
-      print_message(informational, sent_to_endpoint(EndpointName,Reply))
-    ),
-    (
-      rdf_retractall(_, _, _),
-      retractall(rdf_triple(_, _, _, _))
-    )
-  ).
-
 
 %! register_void_datasets is det.
 
@@ -269,176 +233,7 @@ register_void_datasets:-
   print_message(informational, found_void_lod_urls(Urls)),
   forall(
     member(Url, Urls),
-    add_to_lod_basket(Url)
+    add_to_lod_basket(Url, [])
   ).
-
-
-%! store_location_properties(+Url1:url, +Location:dict, -Url2:url) is det.
-
-store_location_properties(Url1, Location, Url2):-
-  (
-    Data1 = Location.get(data),
-    exclude(filter, Data1, Data2),
-    last(Data2, ArchiveEntry)
-  ->
-    Name = ArchiveEntry.get(name),
-    atomic_list_concat([Url1,Name], '/', Url2),
-    store_triple(Url1, ap:archive_contains, Url2, ap),
-    ignore(store_triple(Url2, ap:format,
-        literal(type(xsd:string,ArchiveEntry.get(format))), ap)),
-    ignore(store_triple(Url2, ap:size,
-        literal(type(xsd:integer,ArchiveEntry.get(size))), ap)),
-    store_triple(Url2, rdf:type, ap:'LOD-URL', ap)
-  ;
-    Url2 = Url1
-  ),
-  ignore(store_triple(Url2, ap:http_content_type,
-      literal(type(xsd:string,Location.get(content_type))), ap)),
-  ignore(store_triple(Url2, ap:http_content_length,
-      literal(type(xsd:integer,Location.get(content_length))), ap)),
-  ignore(store_triple(Url2, ap:http_last_modified,
-      literal(type(xsd:string,Location.get(last_modified))), ap)),
-  store_triple(Url2, ap:url, literal(type(xsd:string,Location.get(url))), ap),
-
-  (
-    location_base(Location, Base),
-    file_name_extension(_, Ext, Base),
-    Ext \== ''
-  ->
-    store_triple(Url2, ap:file_extension, literal(type(xsd:string,Ext)), ap)
-  ;
-    true
-  ).
-filter(filter(_)).
-
-
-%! store_stream_properties(+Url:url, +Stream:stream) is det.
-
-store_stream_properties(Url, Stream):-
-  stream_property(Stream, position(Position)),
-  forall(
-    stream_position_data(Field, Position, Value),
-    (
-      atomic_list_concat([stream,Field], '_', Name),
-      rdf_global_id(ap:Name, Predicate),
-      store_triple(Url, Predicate, literal(type(xsd:integer,Value)), ap)
-    )
-  ).
-
-
-%! store_triple(
-%!   +Subject:or([bnode,iri]),
-%!   +Predicate:iri,
-%!   +Object:or([bnode,iri,literal]),
-%!   +Graph:atom
-%! ) is det.
-
-store_triple(S, P, O, G):-
-  assert(rdf_triple(S, P, O, G)).
-
-
-%! store_void_triples(+DataDocument:url) is det.
-
-store_void_triples(DataDocument):-
-  aggregate_all(
-    set(P),
-    (
-      rdf_current_predicate(P),
-      rdf_global_id(void:_, P)
-    ),
-    Ps
-  ),
-  forall(
-    (
-      member(P, Ps),
-      rdf(S, P, O)
-    ),
-    store_triple(S, P, O, DataDocument)
-  ).
-
-
-
-% MESSAGES
-
-:- multifile(prolog:message/1).
-
-prolog:message(found_void_lod_urls([])) --> !.
-prolog:message(found_void_lod_urls([H|T])) -->
-  ['[VoID] Found: ',H,nl],
-  prolog:message(found_void_lod_urls(T)).
-
-prolog:message(lod_download_start(X,Url)) -->
-  {flag(number_of_processed_files, X, X + 1)},
-  ['[START ~D] [~w]'-[X,Url]].
-
-prolog:message(lod_downloaded_file(Url,X,Status,Messages)) -->
-  prolog_status(Status, Url),
-  prolog_messages(Messages),
-  ['[DONE ~D]'-[X]],
-  [nl,nl].
-
-prolog:message(lod_skipped_file(_,true,_,_)) --> !, [].
-prolog:message(lod_skipped_file(Url,false,_,_)) --> !,
-  {report_failed(Url)},
-  [].
-prolog:message(lod_skipped_file(Url,_,Status,Messages)) -->
-  {flag(number_of_skipped_files, X, X + 1)},
-  ['[SKIP ~D] '-[X],nl],
-  prolog_status(Status, Url),
-  prolog_messages(Messages).
-
-prolog:message(rdf_ntriples_written(File,TDup,TOut)) -->
-  ['['],
-    number_of_triples_written(TOut),
-    number_of_duplicates_written(TDup),
-    total_number_of_triples_written(TOut),
-  ['] ['],
-    remote_file(File),
-  [']'].
-
-prolog:message(sent_to_endpoint(EndpointName,Reply)) -->
-  ['[',EndpointName,']',nl,Reply,nl].
-
-number_of_duplicates_written(0) --> !, [].
-number_of_duplicates_written(T) --> [' (~D dups)'-[T]].
-
-number_of_triples_written(0) --> !, [].
-number_of_triples_written(T) --> ['+~D'-[T]].
-
-prolog_status(false, Url) --> !,
-  {report_failed(Url)},
-  [].
-prolog_status(true, _) --> !, [].
-prolog_status(exception(Error), _) -->
-  {print_message(error, Error)}.
-
-prolog_messages([]) --> !, [].
-prolog_messages([message(_,Kind,Lines)|T]) -->
-  ['  [~w] '-[Kind]],
-  prolog_lines(Lines),
-  [nl],
-  prolog_messages(T).
-
-prolog_lines([]) --> [].
-prolog_lines([H|T]) -->
-  [H],
-  prolog_lines(T).
-
-remote_file(remote(User,Machine,Path)) --> !,
-  [User,'@',Machine,':',Path].
-remote_file(File) -->
-  [File].
-
-total_number_of_triples_written(0) --> !, [].
-total_number_of_triples_written(T) -->
-  {
-    with_mutex(
-      number_of_triples_written,
-      (
-        flag(number_of_triples_written, All1, All1 + T),
-        All2 is All1 + T
-      )
-    )
-  },
-  [' (~D tot)'-[All2]].
+*/
 

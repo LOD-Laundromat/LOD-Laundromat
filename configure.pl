@@ -21,7 +21,7 @@ Configuration settings for project LOD-Washing-Machine.
 :- use_module(library(base64)).
 :- use_module(library(uri)).
 
-:- use_module(lwm(download_lod_generics)).
+:- use_module(lwm(lwm_generics)).
 
 
 
@@ -56,7 +56,7 @@ endpoint(stardog, Url, false, true):-
     )
   ).
 endpoint(virtuoso, Url, true, false):-
-  scrape_version(Version),
+  lwm_version(Version),
   atom_number(Fragment, Version),
   uri_components(Graph, uri_components(http, laundromat, _, _, Fragment)),
   uri_query_components(Search, ['using-graph-uri'=Graph]),

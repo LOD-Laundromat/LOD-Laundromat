@@ -1,13 +1,13 @@
 :- module(
   lod_basket,
   [
-    add_to_lod_basket/1, % +Url:url
-    current_pending_url/2, % ?Url:url
-                           % ?TimeAdded:nonneg
-    current_processed_url/3, % ?Url:url
-                             % ?TimeAdded:nonneg
-                             % ?TimeProcessed:nonneg
-    remove_url_from_pool/1 % +Url:url
+    add_source_to_basket/1, % +Source
+    current_pending_source/2, % ?Source
+                              % ?TimeAdded:nonneg
+    current_processed_source/3, % ?Source
+                                % ?TimeAdded:nonneg
+                                % ?TimeProcessed:nonneg
+    remove_source_from_basket/1 % +Source
   ]
 ).
 
@@ -24,80 +24,75 @@ The LOD basket for URLs that are to be processed by the LOD Washing Machine.
 :- use_module(generics(db_ext)).
 :- use_module(os(file_ext)).
 
-%! pending_url(?Url:url, ?TimeAdded:nonneg) is nondet.
+%! pending_source(?Source, ?TimeAdded:nonneg) is nondet.
 
-:- persistent(pending_url(url:atom,coord:list(nonneg),time_added:nonneg)).
+:- persistent(pending_source(source,time_added:nonneg)).
 
-%! processed_url(?Url:url, ?TimeAdded:nonneg, ?TimeProcessed:nonneg) is nondet.
+%! processed_source(?Source, ?TimeAdded:nonneg, ?TimeProcessed:nonneg) is nondet.
 
 :- persistent(
-  processed_url(
-    url:atom,
-    coord:list(nonneg),
-    time_added:nonneg,
-    time_processed:nonneg
-  )
+  processed_source(source,time_added:nonneg,time_processed:nonneg)
 ).
 
 :- db_add_novel(user:prolog_file_type(log, logging)).
 
-:- initialization(init_url_pool).
+:- initialization(lod_basket).
 
 
 
-%! add_to_lod_basket(+Url:url, +Coodinate:list(nonneg)) is det.
+%! add_source_to_basket(+Source) is det.
 
-add_to_lod_basket(Url, Coord):-
-  with_mutex(url_pool,
-    add_url_to_pool_under_mutex(Url, Coord)
+add_source_to_basket(Source, Coord):-
+  with_mutex(lod_baqsket,
+    add_source_to_basket_under_mutex(Source)
   ).
 
-add_url_to_pool_under_mutex(Url, Coord):-
-  processed_url(Url, _, _), !,
-  print_message(informational, already_processed(Url)).
-add_url_to_pool_under_mutex(Url):-
-  pending_url(Url, _), !,
-  print_message(informational, already_pending(Url)).
-add_url_to_pool_under_mutex(Url):-
+add_source_to_basket_under_mutex(Source):-
+  processed_url(Source, _, _), !,
+  print_message(informational, already_processed(Source)).
+add_source_to_basket_under_mutex(Source):-
+  pending_url(Source, _), !,
+  print_message(informational, already_pending(Source)).
+add_source_to_basket_under_mutex(Source):-
   get_time(TimeAdded),
-  assert_pending_url(Url, TimeAdded).
+  assert_pending_url(Source, TimeAdded).
 
 
-%! current_pending_url(?Url:url, ?TimeAdded:nonneg) is nondet.
+%! current_pending_source(?Source, ?TimeAdded:nonneg) is nondet.
 
-current_pending_url(Url, TimeAdded):-
-  with_mutex(url_pool,
-    pending_url(Url, TimeAdded)
+current_pending_source(Source, TimeAdded):-
+  with_mutex(lod_baqsket,
+    pending_source(Source, TimeAdded)
   ).
 
 
-%! current_processed_url(
-%!   ?Url:url,
-%!   ?TimeAdded:nonneg,
-%!   ?TimeProcessed:nonneg
-%! ) is nondet.
+%! current_processed_source(?Source, ?TimeAdded:nonneg, ?TimeProcessed:nonneg) is nondet.
 
-current_processed_url(Url, TimeAdded, TimeProcessed):-
-  with_mutex(url_pool,
-    processed_url(Url, TimeAdded, TimeProcessed)
+current_processed_source(Source, TimeAdded, TimeProcessed):-
+  with_mutex(lod_baqsket,
+    processed_source(Source, TimeAdded, TimeProcessed)
   ).
 
 
-% remove_url_from_pool(+Url:url) is det.
+% remove_source_from_basket(+Source) is det.
 
-remove_url_from_pool(Url):-
-  with_mutex(url_pool, (
-    retractall_pending_url(Url, TimeAdded),
+remove_source_from_basket(Source):-
+  with_mutex(lod_baqsket, (
+    retractall_pending_source(Source, TimeAdded),
     get_time(TimeProcessed),
-    assert_processed_url(Url, TimeAdded, TimeProcessed)
+    assert_processed_source(Source, TimeAdded, TimeProcessed)
   )).
 
 
 
 % Initialization
 
-init_url_pool:-
-  absolute_file_name(data(url_pool), File, [access(write),file_type(logging)]),
+lod_basket:-
+  absolute_file_name(
+    data(lod_basket),
+    File,
+    [access(write),file_type(logging)]
+  ),
   safe_db_attach(File).
 
 %! safe_db_attach(+File:atom) is det.
@@ -113,14 +108,14 @@ safe_db_attach(File):-
 
 % Messages
 
-prolog:message(already_pending(Url)) -->
-  cannot_add(Url),
+prolog:message(already_pending(Source)) -->
+  cannot_add(Source),
   ['already pending'].
 
-prolog:message(already_processed(Url)) -->
-  cannot_add(Url),
+prolog:message(already_processed(Source)) -->
+  cannot_add(Source),
   ['already processed'].
 
-cannot_add(Url) -->
-  ['Url ',Url,' cannot be added to the pool: '].
+cannot_add(Source) -->
+  ['Source ~w cannot be added to the pool: '-[Source]].
 

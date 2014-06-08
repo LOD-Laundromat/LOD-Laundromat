@@ -20,6 +20,7 @@
 :- use_module(library(http/http_parameters)).
 :- use_module(library(http/http_server_files)).
 :- use_module(library(semweb/rdf_db)).
+:- use_module(library(uri)).
 
 :- use_module(generics(typecheck)).
 
@@ -27,7 +28,7 @@
 :- use_module(plHtml(html_pl_term)).
 :- use_module(plHtml(html_table)).
 
-:- use_module(lwm(url_pool)).
+:- use_module(lwm(lod_basket)).
 
 :- dynamic(url_md5_translation/2).
 
@@ -46,10 +47,12 @@ lwm(_, HtmlStyle):-
 
 lwm_basket(Request):-
   (
-    http_parameters(Request, [url(Url, [])]),
-    is_url(Url)
+    http_parameters(Request, [url(Url1, [])]),
+    is_url(Url1)
   ->
-    add_to_lod_basket(Url),
+    % Make sure that it is a URL.
+    uri_iri(Url2, Url1),
+    add_to_lod_basket(Url2, []),
 
     % HTTP status code 202 Accepted: The request has been accepted
     % for processing, but the processing has not been completed.
@@ -63,14 +66,14 @@ lwm_basket(Request):-
 
 pending_urls -->
   {findall(
-    [Url],
-    current_pending_url(Url),
+    [Url,Coord,TimeAdded],
+    current_pending_url(Url, Coord, TimeAdded),
     Rows
   )},
   html_table(
     [header_column(true),header_row(true),indexed(true)],
     html('The pending LOD URLs'),
-    [['Url']|Rows]
+    [['Url','Archive coordinates','Time added']|Rows]
   ).
 
 lod_laundry_cell(Term) -->
