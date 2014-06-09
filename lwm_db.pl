@@ -29,7 +29,7 @@ init_lwm:-
   % Localhost.
   default_graph(DefaultGraph),
   uri_query_components(Search1, [format('rdf+xml'),'using-graph-uri'=DefaultGraph]),
-  uri_components(Url11, uri_components(http,'localhost:3020','/sparql',Search1,_)),
+  uri_components(Url11, uri_components(http,'localhost:3020','/sparql/',Search1,_)),
   sparql_register_endpoint(localhost, query, Url11),
   uri_components(Url12, uri_components(http,'localhost:3020','/sparql/update',Search1,_)),
   sparql_register_endpoint(localhost, update, Url12),

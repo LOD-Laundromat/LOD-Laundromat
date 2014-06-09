@@ -20,8 +20,6 @@ $ curl --data "url=http://acm.rkbexplorer.com/id/998550" http://lodlaundry.wbeek
 @version 2014/05-2014/06
 */
 
-:- use_module(generics(db_ext)).
-:- use_module(os(file_ext)).
 :- use_module(sparql(sparql_api)).
 
 :- use_module(lwm(lwm_db)).

@@ -13,14 +13,11 @@ See module [lwm_start_threaded] for the threaded version of this module.
 :- use_module(library(filesex)).
 :- use_module(library(semweb/rdf_db)).
 
-:- use_module(generics(thread_ext)).
-
 :- use_module(lwm(lod_basket)).
 :- use_module(lwm(lwm_cleaning)).
 :- use_module(lwm(lwm_generics)).
 
 :- initialization(run_washing_machine).
-:- initialization(refresh_lod_basket).
 
 
 
@@ -41,15 +38,6 @@ washing_machine_loop:-
 washing_machine_loop:-
   sleep(60),
   washing_machine_loop.
-
-
-%! refresh_lod_basket is det.
-% Starts the intermittent thread that keeps the contents
-% of the LOD Basket up-to-date.
-
-refresh_lod_basket:-
-  % Run every minute.
-  intermittent_thread(use_module(lod_basket), fail, 60, _, []).
 
 
 
@@ -74,6 +62,5 @@ init_washing_machine:-
   forall(
     rdf_graph(G),
     rdf_unload_graph(G)
-  ),
-  rdf_retractall(_, _, _).
+  ).
 

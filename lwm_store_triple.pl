@@ -48,19 +48,19 @@ the stored triples are sent in a SPARQL Update request
 
 store_archive_entries(_, _, []):- !.
 store_archive_entries(Url, Md5, Coords):-
-  store_triple(Md5, rdf:type, ap:'Archive', ap),
+  store_triple(ap-Md5, rdf:type, ap:'Archive', ap),
   maplist(store_archive_entry(Url, Md5), Coords).
 
 store_archive_entry(Url, FromMd5, _):-
   source_to_md5(Url, ToMd5),
-  store_triple(FromMd5, ap:contains_entry, ToMd5, ap).
+  store_triple(ap-FromMd5, ap:contains_entry, ToMd5, ap).
 
 
 %! store_finished(+Md5:atom) is det.
 
 store_finished(Md5):-
   get_dateTime(Now),
-  store_triple(Md5, ap:lwm_end, literal(type(xsd:dateTime,Now)), ap).
+  store_triple(ap-Md5, ap:lwm_end, literal(type(xsd:dateTime,Now)), ap).
 
 
 %! store_http(+Md5:atom, +HttpReplyHeaders:list(nvpair)) is det.
@@ -115,9 +115,14 @@ filter(filter(_)).
 %! store_lwm_start(+Md5:atom) is det.
 
 store_lwm_start(Md5):-
-  get_time(Start1),
-  posix_timestamp_to_xsd_dateTime(Start1, Start2),
-  store_triple(Md5, ap:lwm_start, literal(type(xsd:dateTime,Start2)), ap),
+  % Start date of processing by the LOD Washing Machine.
+  get_dateTime(Now),
+  store_triple(ap-Md5, ap:lwm_start, literal(type(xsd:dateTime,Now)), ap),
+  
+  % LOD Washing Machine version.
+  lwm_version(Version),
+  store_triple(Md5, ap:lwm_version, literal(type(xsd:integer,Version)), ap),
+  
   post_rdf_triples.
 
 
@@ -125,7 +130,7 @@ store_lwm_start(Md5):-
 
 store_message(Md5, Message):-
   with_output_to(atom(String), write_canonical_blobs(Message)),
-  store_triple(Md5, ap:message, literal(type(xsd:string,String)), ap).
+  store_triple(ap-Md5, ap:message, literal(type(xsd:string,String)), ap).
 
 
 %! store_number_of_triples(
@@ -146,7 +151,7 @@ store_number_of_triples(Url, Path, TIn, TOut):-
 
 store_status(Md5, Status):-
   with_output_to(atom(String), write_canonical_blobs(Status)),
-  store_triple(Md5, ap:status, literal(type(xsd:string,String)), ap).
+  store_triple(ap-Md5, ap:status, literal(type(xsd:string,String)), ap).
 
 
 %! store_stream_properties(+Url:url, +Stream:stream) is det.
@@ -173,28 +178,19 @@ store_stream_properties(Url, Stream):-
 %   - Date and time at which the URL was added to the LOD Basket.
 
 store_source(Md5Entry, Md5Url-EntryPath):- !,
-  store_triple(Md5Entry, rdf:type, 'ArchiveEntry', ap),
-  store_triple(Md5Entry, ap:entry_path, literal(type(xsd:string,EntryPath)), ap),
-  store_triple(Md5Url, ap:has_archive_entry, Md5Entry, ap),
+  store_triple(ap-Md5Entry, rdf:type, 'ArchiveEntry', ap),
+  store_triple(ap-Md5Entry, ap:entry_path, literal(type(xsd:string,EntryPath)), ap),
+  store_triple(ap-Md5Url, ap:has_archive_entry, ap:Md5Entry, ap),
   store_source0(Md5Entry).
 store_source(Md5, Url):-
-  store_triple(Md5, rdf:type, ap:'LOD-URL', ap),
-  store_triple(Md5, ap:url, Url, ap),
+  store_triple(ap-Md5, rdf:type, ap:'LOD-URL', ap),
+  store_triple(ap-Md5, ap:url, Url, ap),
   store_source0(Md5).
 
 store_source0(Md5):-
   % Datetime at which the URL was added to the LOD Basket.
   get_dateTime(Added),
-  store_triple(Md5, ap:added, literal(type(xsd:dateTime,Added)),
-      ap),
-
-  % LOD Washing Machine version.
-  lwm_version(Version),
-  store_triple(Md5, ap:lwm_version, literal(type(xsd:integer,Version)), ap),
-
-  % Start date of processing by the LOD Washing Machine.
-  get_dateTime(Now),
-  store_triple(Md5, ap:lwm_start, literal(type(xsd:dateTime,Now)), ap).
+  store_triple(ap-Md5, ap:added, literal(type(xsd:dateTime,Added)), ap).
 
 
 %! store_void_triples(+DataDocument:url) is det.

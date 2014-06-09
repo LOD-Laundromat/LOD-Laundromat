@@ -80,10 +80,7 @@ post_rdf_triples(Endpoint):-
       ),
       print_message(informational, sent_to_endpoint(Endpoint,Reply))
     ),
-    (
-      rdf_retractall(_, _, _),
-      retractall(rdf_triple(_, _, _, _))
-    )
+    retractall(rdf_triple(_, _, _, _))
   ).
 
 
@@ -94,6 +91,11 @@ post_rdf_triples(Endpoint):-
 %!   +Graph:atom
 %! ) is det.
 
-store_triple(S, P, O, G):-
-  assert(rdf_triple(S, P, O, G)).
+store_triple(S1, P1, O1, G):-
+  maplist(rdf_term_map, [S1,P1,O1], [S2,P2,O2]),
+  assert(rdf_triple(S2, P2, O2, G)).
+
+rdf_term_map(X-Y, Z):- !,
+  rdf_global_id(X:Y, Z).
+rdf_term_map(X, X).
 
