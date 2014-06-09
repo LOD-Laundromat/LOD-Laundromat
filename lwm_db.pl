@@ -30,9 +30,9 @@ init_lwm:-
   default_graph(DefaultGraph),
   uri_query_components(Search1, [format('rdf+xml'),'using-graph-uri'=DefaultGraph]),
   uri_components(Url11, uri_components(http,'localhost:3020','/sparql',Search1,_)),
-  sparql_register_endpoint(cliopatria, query, Url11),
+  sparql_register_endpoint(localhost, query, Url11),
   uri_components(Url12, uri_components(http,'localhost:3020','/sparql/update',Search1,_)),
-  sparql_register_endpoint(cliopatria, update, Url12),
+  sparql_register_endpoint(localhost, update, Url12),
   
   % Cliopatria.
   uri_components(Url21, uri_components(http,'lodlaundry.wbeek.ops.few.vu.nl','/sparql',Search1,_)),

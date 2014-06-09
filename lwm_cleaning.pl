@@ -36,7 +36,6 @@ The cleaning process performed by the LOD Washing Machine.
 
 :- use_module(lwm(lod_basket)).
 :- use_module(lwm(lwm_generics)).
-:- use_module(lwm(lwm_history)).
 :- use_module(lwm(lwm_store_triple)).
 
 %! seen_dataset(?Url:url) is nondet.
@@ -56,7 +55,6 @@ clean_datadoc(Md5):-
   store_status(Md5, Status),
   maplist(store_message(Md5), Messages),
 
-  report_finished(Md5),
   store_finished(Md5).
 
 

@@ -27,16 +27,6 @@ prolog:message(lod_downloaded_file(Url,X,Status,Messages)) -->
   ['[DONE ~D]'-[X]],
   [nl,nl].
 
-prolog:message(lod_skipped_file(_,true,_,_)) --> !, [].
-prolog:message(lod_skipped_file(Url,false,_,_)) --> !,
-  {report_failed(Url)},
-  [].
-prolog:message(lod_skipped_file(Url,_,Status,Messages)) -->
-  {flag(number_of_skipped_files, X, X + 1)},
-  ['[SKIP ~D] '-[X],nl],
-  prolog_status(Status, Url),
-  prolog_messages(Messages).
-
 prolog:message(rdf_ntriples_written(File,TDup,TOut)) -->
   ['['],
     number_of_triples_written(TOut),
@@ -55,10 +45,8 @@ number_of_duplicates_written(T) --> [' (~D dups)'-[T]].
 number_of_triples_written(0) --> !, [].
 number_of_triples_written(T) --> ['+~D'-[T]].
 
-prolog_status(false, Url) --> !,
-  {report_failed(Url)},
-  [].
-prolog_status(true, _) --> !, [].
+prolog_status(false, Url) --> !, ['false'].
+prolog_status(true, _) --> !, ['true'].
 prolog_status(exception(Error), _) -->
   {print_message(error, Error)}.
 

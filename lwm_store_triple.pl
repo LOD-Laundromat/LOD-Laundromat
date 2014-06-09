@@ -11,7 +11,7 @@
     store_message/2, % +Md5:atom
                      % +Message:compound
     store_status/2, % +Md5:atom
-                    % +Exception:compound
+                    % +Status:or([boolean,compound]))
     store_source/2 % +Md5:atom
                    % +Source
   ]
@@ -142,13 +142,11 @@ store_number_of_triples(Url, Path, TIn, TOut):-
   print_message(informational, rdf_ntriples_written(Path,TDup,TOut)).
 
 
-%! store_status(+Md5:atom, +Exception:compound) is det.
+%! store_status(+Md5:atom, +Status:or([boolean,compound])) is det.
 
-store_status(_, false):- !.
-store_status(_, true):- !.
-store_status(Md5, exception(Error)):-
-  with_output_to(atom(String), write_canonical_blobs(Error)),
-  store_triple(Md5, ap:exception, literal(type(xsd:string,String)), ap).
+store_status(Md5, Status):-
+  with_output_to(atom(String), write_canonical_blobs(Status)),
+  store_triple(Md5, ap:status, literal(type(xsd:string,String)), ap).
 
 
 %! store_stream_properties(+Url:url, +Stream:stream) is det.

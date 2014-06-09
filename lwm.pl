@@ -23,8 +23,7 @@
 :- use_module(library(uri)).
 
 :- use_module(generics(typecheck)).
-:- use_module(sparql(sparql_build)).
-:- use_module(sparql(sparql_ext)).
+:- use_module(sparql(sparql_api)).
 
 :- use_module(plHtml(html)).
 :- use_module(plHtml(html_pl_term)).
@@ -70,17 +69,12 @@ lwm_basket(Request):-
 
 pending_urls -->
   {
-    default_graph(DefaultGraph),
-    phrase(
-      sparql_formulate(_, DefaultGraph, [ap], select, true,
-        [url,entry_path,added],
+    once(lwm_endpoint(Endpoint)),
+    sparql_select(Endpoint, _, [ap], true, [url,entry_path,added],
         [rdf(Md5Url,ap:url,var(url)),
          rdf(Md5Url,ap:has_entry,Md5Entry),
          rdf(Md5Entry,ap:path,string(entry_path)),
-         rdf(Md5Entry,ap:added,var(added))], inf, _, _),
-      Query
-    ),
-    sparql_query(cliopatria, Query, _, Rows)
+         rdf(Md5Entry,ap:added,var(added))], inf, _, _, Rows)
   },
   html_table(
     [header_column(true),header_row(true),indexed(true)],

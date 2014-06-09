@@ -18,25 +18,10 @@ See module [lwm_start_threaded] for the threaded version of this module.
 :- use_module(lwm(download_lod_file)).
 :- use_module(lwm(lwm_basket)).
 :- use_module(lwm(lwm_generics)).
-:- use_module(lwm(lwm_history)).
 
 :- initialization(run_washing_machine).
 :- initialization(refresh_lod_basket).
 
-
-
-%! new_dirty_item(-Md5:atom) is nondet.
-% Pick a new dirty item from the LOD Basket.
-% We make sure that this item has not been washed before.
-
-new_dirty_item(Md5):-
-  pending_source(Md5),
-  
-  % Exclude URIs that were unsuccesfully processed in the past.
-  \+ has_failed(Md5),
-  
-  % Exclude URIs that were succesfully processed in the past.
-  \+ has_finished(Md5).
 
 
 run_washing_machine:-
@@ -44,8 +29,8 @@ run_washing_machine:-
   thread_create(washing_machine_loop, _, []).
 
 washing_machine_loop:-
-  % Pick one new URL to process.
-  once(new_dirty_item(Md5)),
+  % Pick a new source to process.
+  pending_source(Md5),
 
   % Process the URL we picked.
   clean_datadoc(Md5),
@@ -68,7 +53,7 @@ refresh_lod_basket:-
 
 
 
-% INITIALIZATION
+% Initialization
 
 init_washing_machine:-
   flag(number_of_processed_files, _, 0),

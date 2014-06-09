@@ -20,8 +20,6 @@ $ curl --data "url=http://acm.rkbexplorer.com/id/998550" http://lodlaundry.wbeek
 @version 2014/05-2014/06
 */
 
-:- use_module(library(persistency)).
-
 :- use_module(generics(db_ext)).
 :- use_module(os(file_ext)).
 :- use_module(sparql(sparql_api)).
@@ -30,18 +28,6 @@ $ curl --data "url=http://acm.rkbexplorer.com/id/998550" http://lodlaundry.wbeek
 :- use_module(lwm(lwm_generics)).
 :- use_module(lwm(lwm_store_triple)).
 :- use_module(lwm(noRdf_store)).
-
-%! pending_source(?Md5:atom) is nondet.
-
-:- persistent(pending_source(md5:atom)).
-
-%! processed_source(?Md5:atom) is nondet.
-
-:- persistent(processed_source(md5:atom)).
-
-:- db_add_novel(user:prolog_file_type(log, logging)).
-
-:- initialization(lod_basket).
 
 
 
@@ -58,8 +44,9 @@ add_source_to_basket_under_mutex(Source):-
   print_message(informational, already_pending(Source)).
 add_source_to_basket_under_mutex(Source):-
   source_to_md5(Source, Md5),
+gtrace,
   store_source(Md5, Source),
-  assert_pending_source(Md5).
+  post_rdf_triples.
 
 
 %! pending_source(?Md5:atom) is nondet.
@@ -68,29 +55,35 @@ pending_source(Md5):-
   with_mutex(lod_basket, pending_source_under_mutex(Md5)).
 
 pending_source_under_mutex(Md5):-
-  sparql_select(cliopatria, _, [ap], true, [md5],
+  once(lwm_endpoint(Endpoint)),
+  sparql_select(Endpoint, _, [ap], true, [md5],
       [rdf(var(md5),ap:added,_),not(rdf(var(md5),ap:lwm_start,_))],
       1, 0, _, [row(Md5)]).
-
-
 
 
 %! current_processed_source(?Md5:atom) is nondet.
 
 current_processed_source(Md5):-
-  with_mutex(lod_basket, processed_source(Md5)).
+  with_mutex(lod_basket, processed_source_under_mutex(Md5)).
+
+processed_source_under_mutex(Md5):-
+  once(lwm_endpoint(Endpoint)),
+  sparql_select(Endpoint, _, [ap], true, [md5],
+      [rdf(var(md5),ap:lwm_end,_)], 1, 0, _, [row(Md5)]).
 
 
 %! is_pending_source(+Source) is semidet.
 
 is_pending_source(Url-EntryPath):- !,
-  sparql_ask(cliopatria, _, [ap],
+  once(lwm_endpoint(Endpoint)),
+  sparql_ask(Endpoint, _, [ap],
       [rdf(var(md5_url),ap:url,Url),
        rdf(var(md5_url),ap:has_entry,var(md5_entry)),
        rdf(var(md5_entry),ap:path,string(EntryPath)),
        rdf(var(md5_entry),ap:added,var(added))]).
 is_pending_source(Url):-
-  sparql_ask(cliopatria, _, [ap],
+  once(lwm_endpoint(Endpoint)),
+  sparql_ask(Endpoint, _, [ap],
       [rdf(var(md5),ap:url,Url),
        rdf(var(md5),ap:added,var(added))]).
 
@@ -98,13 +91,15 @@ is_pending_source(Url):-
 %! is_processed_source(+Source) is semidet.
 
 is_processed_source(Url-EntryPath):- !,
-  sparql_ask(cliopatria, _, [ap],
+  once(lwm_endpoint(Endpoint)),
+  sparql_ask(Endpoint, _, [ap],
       [rdf(var(md5_url),ap:url,Url),
        rdf(var(md5_url),ap:has_entry,var(md5_entry)),
        rdf(var(md5_entry),ap:path,string(EntryPath)),
        rdf(var(md5_entry),ap:lwm_end,var(end))]).
 is_processed_source(Url):-
-  sparql_ask(cliopatria, _, [ap],
+  once(lwm_endpoint(Endpoint)),
+  sparql_ask(Endpoint, _, [ap],
       [rdf(var(md5),ap:url,Url),
        rdf(var(md5),ap:lwm_end,var(end))]).
 
@@ -113,31 +108,9 @@ is_processed_source(Url):-
 
 remove_source_from_basket(Md5):-
   with_mutex(lod_baqsket, (
-    retractall_pending_source(Md5),
     store_lwm_start(Md5),
-    assert_processed_source(Md5)
+    post_rdf_triples
   )).
-
-
-
-% Initialization
-
-lod_basket:-
-  absolute_file_name(
-    data(lod_basket),
-    File,
-    [access(write),file_type(logging)]
-  ),
-  safe_db_attach(File).
-
-%! safe_db_attach(+File:atom) is det.
-
-safe_db_attach(File):-
-  exists_file(File), !,
-  db_attach(File, []).
-safe_db_attach(File):-
-  touch_file(File),
-  safe_db_attach(File).
 
 
 
