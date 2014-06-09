@@ -22,8 +22,11 @@ Configuration settings for project LOD-Washing-Machine.
 :- use_module(library(uri)).
 
 :- use_module(sparql(sparql_db)).
+:- use_module(xml(xml_namespace)).
 
 :- use_module(lwm(lwm_generics)).
+
+:- xml_register_namespace(ap, 'http://www.wouterbeek.com/ap.owl#').
 
 :- sparql_register_remote(
   cliopatria,
