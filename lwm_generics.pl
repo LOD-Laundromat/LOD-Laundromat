@@ -2,13 +2,12 @@
   lwm_generics,
   [
     data_directory/1, % -DataDirectory:atom
-    download_dirty/2, % +Url:url
-                      % -DirtyFile:atom
+    default_graph/1, % -DefaultGraph:iri
+    lod_accept_header_value/1, % -Value
     lwm_version/1, % -Version:positive_integer
     set_data_directory/1, % +DataDirectory:atom
-    url_to_md5/3 % +Url:url
-                 % +Coordinate:list(nonneg)
-                 % -Md5:atom
+    source_to_md5/2 % +Source
+                    % -Md5:atom
   ]
 ).
 
@@ -24,10 +23,10 @@ Generic predicates that are used in the LOD download process.
 :- use_module(library(http/http_open)).
 :- use_module(library(option)).
 :- use_module(library(semweb/rdf_db)).
+:- use_module(library(uri)).
 
 :- use_module(generics(db_ext)).
 :- use_module(generics(uri_ext)).
-:- use_module(http(http_download)).
 
 %! data_directory(?DataDirectory:atom) is semidet.
 
@@ -37,37 +36,16 @@ Generic predicates that are used in the LOD download process.
 
 
 
-%! download_dirty(+Url:url, -DirtyFile:atom) is det.
+%! default_graph(-DefaultGraph:iri) is det.
 
-download_dirty(Url, DirtyFile):-
-  lod_accept_header_value(AcceptValue),
-  url_nested_file(data(.), Url, DirtyDir),
-  make_directory_path(DirtyDir),
-  directory_file_path(DirtyDir, data, DirtyFile),
-  download_to_file(
-    Url,
-    DirtyFile,
-    [cert_verify_hook(ssl_verify),
-     header(content_length, ContentLength),
-     header(content_type, ContentType),
-     header(last_modified, LastModified),
-     request_header('Accept'=AcceptValue)],
+default_graph(DefaultGraph):-
+  lwm_version(Version),
+  atom_number(Fragment, Version),
+  uri_components(
+    DefaultGraph,
+    uri_components(http, laundromat, _, _, Fragment)
   ).
 
-  setup_call_cleanup(
-    http_open_lod(
-    ),
-    (
-      store_http(
-        Md5,
-        [content_length(ContentLength),
-         content_type(ContentType),
-         last_modified(LastModified)]
-      ),
-      clean_datastream(Url, Coord, Md5, Read)
-    ),
-    close(Read)
-  ).
 
 lod_accept_header_value(Value):-
   findall(
@@ -123,9 +101,7 @@ set_data_directory(DataDir):-
   db_replace_novel(data_directory(DataDir), [e]).
 
 
-%! url_to_md5(+Url:url, +Coordinate:list(nonneg), -Md5:atom) is det.
-
-url_to_md5(Url, Coord, Md5):-
-  atomic_list_concat([Url|Coord], ' ', UrlCoord),
-  rdf_atom_md5(UrlCoord, 1, Md5).
+source_to_md5(Url-Files, Md5):- !,
+  atomic_list_concat([Url|Files], ' ', SourceName),
+  rdf_atom_md5(SourceName, 1, Md5).
 

@@ -1,9 +1,7 @@
 :- module(
   lwm_cleaning,
   [
-    clean_datadoc/3 % +Url:url
-                    % +Coordinate:list(nonneg)
-                    % +TimeAdded:nonneg
+    clean_datadoc/1 % +Md5:atom
   ]
 ).
 
@@ -24,9 +22,12 @@ The cleaning process performed by the LOD Washing Machine.
 
 :- use_module(ap(ap_db)). % XML namespace.
 :- use_module(generics(uri_ext)).
+:- use_module(http(http_download)).
 :- use_module(os(archive_ext)).
 :- use_module(os(remote_ext)).
 :- use_module(pl(pl_log)).
+:- use_module(sparql(sparql_build)).
+:- use_module(sparql(sparql_ext)).
 :- use_module(void(void_db)). % XML namespace.
 :- use_module(xsd(xsd_dateTime_ext)).
 
@@ -44,37 +45,84 @@ The cleaning process performed by the LOD Washing Machine.
 
 
 
-% Step 1: The URL may denote an archive.
-%         Look for the stream with the given coordinate.
+%! clean_datadoc(+Md5:atom) is det.
 
-%! clean_datadoc(+Source:atom) is det.
-
-clean_datadoc(Md5-File, DateAdded):- !,
-  
-clean_datadoc(Url, DateAdded):-
-  url_to_md5(Url, Coord, Md5),
-  store_url(Md5, Url, Coord, DateAdded),
-
+clean_datadoc(Md5):-
   run_collect_messages(
-    clean_datadoc0(Url, Coord, Md5),
+    clean_datadoc0(Md5),
     Status,
     Messages
   ),
   store_status(Md5, Status),
   maplist(store_message(Md5), Messages),
 
-  report_finished(Url, Coord).
+  report_finished(Md5),
+  store_finished(Md5).
 
 
-clean_datadoc0(Url, Coord, Md5):-
-  download_dirty(Url, DirtyFile),
-  archive_extract(DirtyFile, _, EntryFiles),
-  maplist(add_pair(Md5), EntryFiles, Sources),
-  maplist(add_to_lod_basket, Sources).
+%! clean_datadoc0(+Md5:atom) is det.
+
+clean_datadoc0(Md5):-
+  default_graph(DefaultGraph),
+  phrase(
+    sparql_formulate(_, DefaultGraph, [ap], select, true, [url,path],
+        [rdf(Md5,ap:path,var(path)),
+         rdf(var(md5_url),ap:has_entry,Md5),
+         rdf(var(md5_url),ap:url,var(url))], inf, _, _),
+    Query
+  ),
+  sparql_query(cliopatria, Query, _, [Url,Path]), !,
+  url_nested_file(data(.), Url, Dir1),
+  absolute_file_name(
+    Path,
+    Dir2,
+    [access(read),file_type(directory),relative_to(Dir1)]
+  ),
+  make_directory_path(Dir2),
+  directory_file_path(Dir2, data, File),
+  clean_datadoc0(Md5, File).
+clean_datadoc0(Md5):-
+  default_graph(DefaultGraph),
+  phrase(
+    sparql_formulate(_, DefaultGraph, [ap], select, true, [url],
+        [rdf(Md5,ap:url,var(url))], inf, _, _),
+    Query
+  ),
+  sparql_query(cliopatria, Query, _, [Url]), !,
+  url_nested_file(data(.), Url, Dir),
+  make_directory_path(Dir),
+  directory_file_path(Dir, data, File),
+
+  lod_accept_header_value(AcceptValue),
+  download_to_file(
+    Url,
+    File,
+    [cert_verify_hook(ssl_verify),
+     % Always redownload.
+     freshness_lifetime(0.0),
+     header(content_length, ContentLength),
+     header(content_type, ContentType),
+     header(last_modified, LastModified),
+     request_header('Accept'=AcceptValue)]
+  ),
+  store_http(
+    Md5,
+    [content_length(ContentLength),
+     content_type(ContentType),
+     last_modified(LastModified)]
+  ),
+  archive_extract2(File, _, EntryPaths),
+  maplist(add_pair(Url), EntryPaths, Sources),
+  maplist(add_source_to_basket, Sources),
+  clean_datadoc0(Md5, File).
+
+clean_datadoc0(Md5, File):-
+  maplist(writeln, [Md5,File]).
+
 
 add_pair(X, Y, X-Y).
 
-
+/*
 %! clean_datastream(+Url:url, +Coordinate:list(nonneg), +Md5:atom, +Read:blob) is det.
 
 clean_datastream(Url, Coord, Md5, Read):-
@@ -125,8 +173,6 @@ clean_datastream_logged(Url, Md5, _, Read):-
 clean_datastream_logged(_, _Md5, _, _Read):- !.
   %%%%store_location_properties(Url0, Location, Url),
 
-
-/*
 clean_datastream(Md5, Read):-
 
 %! download_lod_file(

@@ -1,5 +1,5 @@
 :- module(
-  configure,
+  lwm_db,
   [
     endpoint/4, % ?EndpointName:atom
                 % ?EndpointUrl:url
@@ -21,7 +21,16 @@ Configuration settings for project LOD-Washing-Machine.
 :- use_module(library(base64)).
 :- use_module(library(uri)).
 
+:- use_module(sparql(sparql_db)).
+
 :- use_module(lwm(lwm_generics)).
+
+:- sparql_register_remote(
+  cliopatria,
+  'lodlaundry.wbeek.ops.few.vu.nl',
+  default,
+  '/sparql'
+).
 
 
 
@@ -56,10 +65,8 @@ endpoint(stardog, Url, false, true):-
     )
   ).
 endpoint(virtuoso, Url, true, false):-
-  lwm_version(Version),
-  atom_number(Fragment, Version),
-  uri_components(Graph, uri_components(http, laundromat, _, _, Fragment)),
-  uri_query_components(Search, ['using-graph-uri'=Graph]),
+  default_graph(DefaultGraph),
+  uri_query_components(Search, ['using-graph-uri'=DefaultGraph]),
   uri_components(
     Url,
     uri_components(

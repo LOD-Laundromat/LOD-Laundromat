@@ -2,12 +2,9 @@
   lod_basket,
   [
     add_source_to_basket/1, % +Source
-    current_pending_source/2, % ?Source
-                              % ?TimeAdded:nonneg
-    current_processed_source/3, % ?Source
-                                % ?TimeAdded:nonneg
-                                % ?TimeProcessed:nonneg
-    remove_source_from_basket/1 % +Source
+    current_pending_source/1, % ?Md5:atom
+    current_processed_source/1, % ?Md5:atom
+    remove_source_from_basket/1 % +Md5:atom
   ]
 ).
 
@@ -23,16 +20,21 @@ The LOD basket for URLs that are to be processed by the LOD Washing Machine.
 
 :- use_module(generics(db_ext)).
 :- use_module(os(file_ext)).
+:- use_module(sparql(sparql_build)).
+:- use_module(sparql(sparql_ext)).
 
-%! pending_source(?Source, ?TimeAdded:nonneg) is nondet.
+:- use_module(lwm(lwm_db)).
+:- use_module(lwm(lwm_generics)).
+:- use_module(lwm(lwm_store_triple)).
+:- use_module(lwm(noRdf_store)).
 
-:- persistent(pending_source(source,time_added:nonneg)).
+%! pending_source(?Md5:atom) is nondet.
 
-%! processed_source(?Source, ?TimeAdded:nonneg, ?TimeProcessed:nonneg) is nondet.
+:- persistent(pending_source(md5:atom)).
 
-:- persistent(
-  processed_source(source,time_added:nonneg,time_processed:nonneg)
-).
+%! processed_source(?Md5:atom) is nondet.
+
+:- persistent(processed_source(md5:atom)).
 
 :- db_add_novel(user:prolog_file_type(log, logging)).
 
@@ -42,45 +44,89 @@ The LOD basket for URLs that are to be processed by the LOD Washing Machine.
 
 %! add_source_to_basket(+Source) is det.
 
-add_source_to_basket(Source, Coord):-
+add_source_to_basket(Source):-
   with_mutex(lod_baqsket,
     add_source_to_basket_under_mutex(Source)
   ).
 
 add_source_to_basket_under_mutex(Source):-
-  processed_url(Source, _, _), !,
+  is_processed_source(Source), !,
   print_message(informational, already_processed(Source)).
 add_source_to_basket_under_mutex(Source):-
-  pending_url(Source, _), !,
+  is_pending_source(Source), !,
   print_message(informational, already_pending(Source)).
 add_source_to_basket_under_mutex(Source):-
-  get_time(TimeAdded),
-  assert_pending_url(Source, TimeAdded).
+  source_to_md5(Source, Md5),
+  store_source(Md5, Source),
+  assert_pending_source(Md5).
 
 
-%! current_pending_source(?Source, ?TimeAdded:nonneg) is nondet.
+%! current_pending_source(?Md5:atom) is nondet.
 
-current_pending_source(Source, TimeAdded):-
-  with_mutex(lod_baqsket,
-    pending_source(Source, TimeAdded)
-  ).
+current_pending_source(Md5):-
+  with_mutex(lod_baqsket, pending_source(Md5)).
 
 
-%! current_processed_source(?Source, ?TimeAdded:nonneg, ?TimeProcessed:nonneg) is nondet.
+%! current_processed_source(?Md5:atom) is nondet.
 
-current_processed_source(Source, TimeAdded, TimeProcessed):-
-  with_mutex(lod_baqsket,
-    processed_source(Source, TimeAdded, TimeProcessed)
-  ).
+current_processed_source(Md5):-
+  with_mutex(lod_basket, processed_source(Md5)).
 
 
-% remove_source_from_basket(+Source) is det.
+%! is_pending_source(+Source) is semidet.
 
-remove_source_from_basket(Source):-
+is_pending_source(Url-EntryPath):- !,
+  default_graph(DefaultGraph),
+  phrase(
+    sparql_formulate_ask(_, DefaultGraph, [ap],
+        [rdf(var(md5_url),ap:url,Url),
+         rdf(var(md5_url),ap:has_entry,var(md5_entry)),
+         rdf(var(md5_entry),ap:path,string(EntryPath)),
+         rdf(var(md5_entry),ap:added,var(added))]),
+    Query
+  ),
+  sparql_query(cliopatria, Query, _, _).
+is_pending_source(Url):-
+  default_graph(DefaultGraph),
+  phrase(
+    sparql_formulate_ask(_, DefaultGraph, [ap],
+        [rdf(var(md5),ap:url,Url),
+         rdf(var(md5),ap:added,var(added))]),
+    Query
+  ), sparql_query(cliopatria, Query, _, _).
+
+
+%! is_processed_source(+Source) is semidet.
+
+is_processed_source(Url-EntryPath):- !,
+  default_graph(DefaultGraph),
+  phrase(
+    sparql_formulate_ask(_, DefaultGraph, [ap],
+        [rdf(var(md5_url),ap:url,Url),
+         rdf(var(md5_url),ap:has_entry,var(md5_entry)),
+         rdf(var(md5_entry),ap:path,string(EntryPath)),
+         rdf(var(md5_entry),ap:lwm_end,var(end))]),
+    Query
+  ),
+  sparql_query(cliopatria, Query, _, _).
+is_processed_source(Url):-
+  default_graph(DefaultGraph),
+  phrase(
+    sparql_formulate_ask(_, DefaultGraph, [ap],
+        [rdf(var(md5),ap:url,Url),
+         rdf(var(md5),ap:lwm_end,var(end))]),
+    Query
+  ),
+  sparql_query(cliopatria, Query, _, _).
+
+
+% remove_source_from_basket(+Md5:atom) is det.
+
+remove_source_from_basket(Md5):-
   with_mutex(lod_baqsket, (
-    retractall_pending_source(Source, TimeAdded),
-    get_time(TimeProcessed),
-    assert_processed_source(Source, TimeAdded, TimeProcessed)
+    retractall_pending_source(Md5),
+    store_lwm_start(Md5),
+    assert_processed_source(Md5)
   )).
 
 
@@ -108,14 +154,14 @@ safe_db_attach(File):-
 
 % Messages
 
-prolog:message(already_pending(Source)) -->
-  cannot_add(Source),
+prolog:message(already_pending(Md5)) -->
+  cannot_add(Md5),
   ['already pending'].
 
-prolog:message(already_processed(Source)) -->
-  cannot_add(Source),
+prolog:message(already_processed(Md5)) -->
+  cannot_add(Md5),
   ['already processed'].
 
-cannot_add(Source) -->
-  ['Source ~w cannot be added to the pool: '-[Source]].
+cannot_add(Md5) -->
+  ['MD5 ~w cannot be added to the pool: '-[Md5]].
 

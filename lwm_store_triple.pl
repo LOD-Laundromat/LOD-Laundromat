@@ -4,16 +4,16 @@
     store_archive_entries/3, % +Url:url
                              % +Md5:atom
                              % +Coordinates:list(list(nonneg))
+    store_finished/1, % +Md5:atom
     store_http/2, % +Md5:atom
                   % +HttpReplyHeaders:list(nvpair)
+    store_lwm_start/1, % +Md5:atom
     store_message/2, % +Md5:atom
                      % +Message:compound
     store_status/2, % +Md5:atom
                     % +Exception:compound
-    store_url/4 % +Md5:atom
-                % +Url:url
-                % +Coordinate:list(nonneg)
-                % +TimeAdded:nonneg
+    store_source/2 % +Md5:atom
+                   % +Source
   ]
 ).
 
@@ -34,6 +34,8 @@ the stored triples are sent in a SPARQL Update request
 :- use_module(library(semweb/rdf_db)).
 
 :- use_module(pl(pl_log)).
+:- use_module(sparql(sparql_build)).
+:- use_module(sparql(sparql_ext)).
 :- use_module(xsd(xsd_dateTime_ext)).
 
 :- use_module(lwm(lwm_generics)).
@@ -48,9 +50,16 @@ store_archive_entries(Url, Md5, Coords):-
   store_triple(Md5, rdf:type, ap:'Archive', ap),
   maplist(store_archive_entry(Url, Md5), Coords).
 
-store_archive_entry(Url, FromMd5, Coord):-
-  url_to_md5(Url, Coord, ToMd5),
+store_archive_entry(Url, FromMd5, _):-
+  source_to_md5(Url, ToMd5),
   store_triple(FromMd5, ap:contains_entry, ToMd5, ap).
+
+
+%! store_finished(+Md5:atom) is det.
+
+store_finished(Md5):-
+  get_dateTime(Now),
+  store_triple(Md5, ap:lwm_end, literal(type(xsd:dateTime,Now)), ap).
 
 
 %! store_http(+Md5:atom, +HttpReplyHeaders:list(nvpair)) is det.
@@ -102,6 +111,15 @@ store_location_properties(Url1, Location, Url2):-
 filter(filter(_)).
 
 
+%! store_lwm_start(+Md5:atom) is det.
+
+store_lwm_start(Md5):-
+  get_time(Start1),
+  posix_timestamp_to_xsd_dateTime(Start1, Start2),
+  store_triple(Md5, ap:lwm_start, literal(type(xsd:dateTime,Start2)), ap),
+  post_rdf_triples.
+
+
 %! store_message(+Md5:atom, +Message:compound) is det.
 
 store_message(Md5, Message):-
@@ -146,34 +164,36 @@ store_stream_properties(Url, Stream):-
   ).
 
 
-%! store_url(+Md5:atom, +Url:url, Coordinate:list(nonneg), +TimeAdded:nonneg) is det.
+%! store_source(+Md5:atom, +Source) is det.
 % Store the given URL plus coordinate as one of the items
 % that is cleaned by the LOD Washing Machine.
 %
 % This includes the following properties:
-%   - URL
-%   - Coordinate
 %   - LOD Washing Machine version
 %   - Start datetime of processing by the LOD Washing Machine.
-%   - Datetime at which the URL was added to the LOD Basket.
+%   - Date and time at which the URL was added to the LOD Basket.
 
-store_url(Md5, Url, Coord, TimeAdded1):-
-  store_triple(Md5, rdf:type, ap:'LOD-URL', ap),
-
-  % URL + coordinate.
-  store_triple(Md5, ap:url, Url, ap),
-  forall(
-    nth0(I, Coord, N),
-    (
-      atomic_list_concat([coord,I], '_', PName),
-      rdf_global_id(ap:PName, P),
-      store_triple(Md5, P, literal(type(xsd:integer,N)), ap)
-    )
+store_source(Md5Entry, Url-EntryPath):- !,
+  default_graph(DefaultGraph),
+  phrase(
+    sparql_formulate(_, DefaultGraph, [ap], select, true, [md5_url],
+        [rdf(var(md5_url),ap:url,Url)], inf, _, _),
+    Query
   ),
+  sparql_query(cliopatria, Query, _, [Md5Url]),
+  store_triple(Md5Entry, rdf:type, 'ArchiveEntry', ap),
+  store_triple(Md5Entry, ap:entry_path, literal(type(xsd:string,EntryPath)), ap),
+  store_triple(Md5Url, ap:has_archive_entry, Md5Entry, ap),
+  store_source0(Md5Entry).
+store_source(Md5, Url):-
+  store_triple(Md5, rdf:type, ap:'LOD-URL', ap),
+  store_triple(Md5, ap:url, Url, ap),
+  store_source0(Md5).
 
+store_source0(Md5):-
   % Datetime at which the URL was added to the LOD Basket.
-  posix_timestamp_to_xsd_dateTime(TimeAdded1, TimeAdded2),
-  store_triple(Md5, ap:time_added, literal(type(xsd:dateTime,TimeAdded2)),
+  get_dateTime(Added),
+  store_triple(Md5, ap:added, literal(type(xsd:dateTime,Added)),
       ap),
 
   % LOD Washing Machine version.
@@ -181,8 +201,8 @@ store_url(Md5, Url, Coord, TimeAdded1):-
   store_triple(Md5, ap:lwm_version, literal(type(xsd:integer,Version)), ap),
 
   % Start date of processing by the LOD Washing Machine.
-  get_dateTime(DateTime),
-  store_triple(Md5, ap:start_date, literal(type(xsd:dateTime,DateTime)), ap).
+  get_dateTime(Now),
+  store_triple(Md5, ap:lwm_start, literal(type(xsd:dateTime,Now)), ap).
 
 
 %! store_void_triples(+DataDocument:url) is det.

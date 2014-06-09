@@ -23,12 +23,16 @@
 :- use_module(library(uri)).
 
 :- use_module(generics(typecheck)).
+:- use_module(sparql(sparql_build)).
+:- use_module(sparql(sparql_ext)).
 
 :- use_module(plHtml(html)).
 :- use_module(plHtml(html_pl_term)).
 :- use_module(plHtml(html_table)).
 
 :- use_module(lwm(lod_basket)).
+:- use_module(lwm(lwm_db)).
+:- use_module(lwm(lwm_generics)).
 
 :- dynamic(url_md5_translation/2).
 
@@ -52,7 +56,7 @@ lwm_basket(Request):-
   ->
     % Make sure that it is a URL.
     uri_iri(Url2, Url1),
-    add_to_lod_basket(Url2, []),
+    add_source_to_basket(Url2-[]),
 
     % HTTP status code 202 Accepted: The request has been accepted
     % for processing, but the processing has not been completed.
@@ -65,15 +69,23 @@ lwm_basket(Request):-
 
 
 pending_urls -->
-  {findall(
-    [Url,Coord,TimeAdded],
-    current_pending_url(Url, Coord, TimeAdded),
-    Rows
-  )},
+  {
+    default_graph(DefaultGraph),
+    phrase(
+      sparql_formulate(_, DefaultGraph, [ap], select, true,
+        [url,entry_path,added],
+        [rdf(Md5Url,ap:url,var(url)),
+         rdf(Md5Url,ap:has_entry,Md5Entry),
+         rdf(Md5Entry,ap:path,string(entry_path)),
+         rdf(Md5Entry,ap:added,var(added))], inf, _, _),
+      Query
+    ),
+    sparql_query(cliopatria, Query, _, Rows)
+  },
   html_table(
     [header_column(true),header_row(true),indexed(true)],
-    html('The pending LOD URLs'),
-    [['Url','Archive coordinates','Time added']|Rows]
+    html('The pending LOD sources.'),
+    [['Url','Entry path','Time added']|Rows]
   ).
 
 lod_laundry_cell(Term) -->

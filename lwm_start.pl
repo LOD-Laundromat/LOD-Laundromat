@@ -25,22 +25,18 @@ See module [lwm_start_threaded] for the threaded version of this module.
 
 
 
-%! new_dirty_item(
-%!   -Url:url,
-%!   -Coordinate:list(nonneg),
-%!   -TimeAdded:nonneg
-%! ) is nondet.
+%! new_dirty_item(-Md5:atom) is nondet.
 % Pick a new dirty item from the LOD Basket.
 % We make sure that this item has not been washed before.
 
-new_dirty_item(Url, Coord, TimeAdded):-
-  current_pending_url(Url, Coord, TimeAdded),
+new_dirty_item(Md5):-
+  current_pending_source(Md5),
   
   % Exclude URIs that were unsuccesfully processed in the past.
-  \+ has_failed(Url, Coord),
+  \+ has_failed(Md5),
   
   % Exclude URIs that were succesfully processed in the past.
-  \+ has_finished(Url, Coord).
+  \+ has_finished(Md5).
 
 
 run_washing_machine:-
@@ -49,10 +45,10 @@ run_washing_machine:-
 
 washing_machine_loop:-
   % Pick one new URL to process.
-  once(new_dirty_item(Url, Coord, TimeAdded)),
+  once(new_dirty_item(Md5)),
 
   % Process the URL we picked.
-  clean_item(Url, Coord, TimeAdded),
+  clean_datadoc(Md5),
 
   % Intermittent loop.
   washing_machine_loop.

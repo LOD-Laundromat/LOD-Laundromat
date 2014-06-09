@@ -25,7 +25,7 @@ and at the same time send small RDF messages using SPARQL Update requests.
 
 :- use_module(plRdf_ser(rdf_ntriples_write)).
 
-:- use_module(lwm(configure)).
+:- use_module(lwm(lwm_db)).
 
 :- rdf_meta(store_triple(r,r,o,+)).
 

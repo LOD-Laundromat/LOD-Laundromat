@@ -1,14 +1,10 @@
 :- module(
   lwm_history,
   [
-    has_failed/2, % +Url:url
-                  % +Coordinate:list(nonneg)
-    has_finished/2, % +Url:url
-                    % +Coordinate:list(nonneg)
-    report_failed/2, % +Url:url
-                     % +Coordinate:list(nonneg)
-    report_finished/2 % +Url:url
-                      % +Coordinate:list(nonneg)
+    has_failed/1, % +Md5:atom
+    has_finished/1, % +Md5:atom
+    report_failed/1, % +Md5:atom
+    report_finished/1 % +Md5:atom
   ]
 ).
 
@@ -25,29 +21,29 @@
 
 :- db_add_novel(user:prolog_file_type(log, logging)).
 
-%! failed(?Url:url, ?Coordinate:list(nonneg)) is nondet.
+%! failed(?Md5:atom) is nondet.
 
-:- persistent(failed(url:atom,coordinate:list(nonneg))).
+:- persistent(failed(md5:atom)).
 
-%! finished(?Url:url, ?Coordinate:list(nonneg)) is nondet.
+%! finished(?Md5:atom) is nondet.
 
-:- persistent(finished(url:atom,coordinate:list(nonneg))).
+:- persistent(finished(md5:atom)).
 
 :- initialization(init_lwm_history).
 
 
 
-has_failed(Url, Coord):-
-  failed(Url, Coord).
+has_failed(Md5):-
+  with_mutex(lwm_history, failed(Md5)).
 
-has_finished(Url, Coord):-
-  finished(Url, Coord).
+has_finished(Md5):-
+  with_mutex(lwm_history, finished(Md5)).
 
-report_failed(Url, Coord):-
-  assert_failed(Url, Coord).
+report_failed(Md5):-
+  with_mutex(lwm_history, assert_failed(Md5)).
 
-report_finished(Url, Coord):-
-  assert_finished(Url, Coord).
+report_finished(Md5):-
+  with_mutex(lwm_history, assert_finished(Md5)).
 
 
 
@@ -60,7 +56,6 @@ init_lwm_history:-
   lwm_history_file(File),
   safe_db_attach(File).
 
-
 %! lwm_history_file(-File:atom) is det.
 
 lwm_history_file(File):-
@@ -69,7 +64,6 @@ lwm_history_file(File):-
     File,
     [access(write),file_type(logging)]
   ).
-
 
 %! safe_db_attach(+File:atom) is det.
 
