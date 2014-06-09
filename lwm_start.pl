@@ -30,7 +30,7 @@ See module [lwm_start_threaded] for the threaded version of this module.
 % We make sure that this item has not been washed before.
 
 new_dirty_item(Md5):-
-  current_pending_source(Md5),
+  pending_source(Md5),
   
   % Exclude URIs that were unsuccesfully processed in the past.
   \+ has_failed(Md5),

@@ -2,7 +2,7 @@
   lod_basket,
   [
     add_source_to_basket/1, % +Source
-    current_pending_source/1, % ?Md5:atom
+    pending_source/1, % ?Md5:atom
     current_processed_source/1, % ?Md5:atom
     remove_source_from_basket/1 % +Md5:atom
   ]
@@ -12,6 +12,10 @@
 
 The LOD basket for URLs that are to be processed by the LOD Washing Machine.
 
+~~~{.sh}
+$ curl --data "url=http://acm.rkbexplorer.com/id/998550" http://lodlaundry.wbeek.ops.few.vu.nl/lwm/basket
+~~~
+
 @author Wouter Beek
 @version 2014/05-2014/06
 */
@@ -20,8 +24,7 @@ The LOD basket for URLs that are to be processed by the LOD Washing Machine.
 
 :- use_module(generics(db_ext)).
 :- use_module(os(file_ext)).
-:- use_module(sparql(sparql_build)).
-:- use_module(sparql(sparql_ext)).
+:- use_module(sparql(sparql_api)).
 
 :- use_module(lwm(lwm_db)).
 :- use_module(lwm(lwm_generics)).
@@ -45,9 +48,7 @@ The LOD basket for URLs that are to be processed by the LOD Washing Machine.
 %! add_source_to_basket(+Source) is det.
 
 add_source_to_basket(Source):-
-  with_mutex(lod_baqsket,
-    add_source_to_basket_under_mutex(Source)
-  ).
+  with_mutex(lod_basket, add_source_to_basket_under_mutex(Source)).
 
 add_source_to_basket_under_mutex(Source):-
   is_processed_source(Source), !,
@@ -61,10 +62,17 @@ add_source_to_basket_under_mutex(Source):-
   assert_pending_source(Md5).
 
 
-%! current_pending_source(?Md5:atom) is nondet.
+%! pending_source(?Md5:atom) is nondet.
 
-current_pending_source(Md5):-
-  with_mutex(lod_baqsket, pending_source(Md5)).
+pending_source(Md5):-
+  with_mutex(lod_basket, pending_source_under_mutex(Md5)).
+
+pending_source_under_mutex(Md5):-
+  sparql_select(cliopatria, _, [ap], true, [md5],
+      [rdf(var(md5),ap:added,_),not(rdf(var(md5),ap:lwm_start,_))],
+      1, 0, _, [row(Md5)]).
+
+
 
 
 %! current_processed_source(?Md5:atom) is nondet.
@@ -76,48 +84,29 @@ current_processed_source(Md5):-
 %! is_pending_source(+Source) is semidet.
 
 is_pending_source(Url-EntryPath):- !,
-  default_graph(DefaultGraph),
-  phrase(
-    sparql_formulate_ask(_, DefaultGraph, [ap],
-        [rdf(var(md5_url),ap:url,Url),
-         rdf(var(md5_url),ap:has_entry,var(md5_entry)),
-         rdf(var(md5_entry),ap:path,string(EntryPath)),
-         rdf(var(md5_entry),ap:added,var(added))]),
-    Query
-  ),
-  sparql_query(cliopatria, Query, _, _).
+  sparql_ask(cliopatria, _, [ap],
+      [rdf(var(md5_url),ap:url,Url),
+       rdf(var(md5_url),ap:has_entry,var(md5_entry)),
+       rdf(var(md5_entry),ap:path,string(EntryPath)),
+       rdf(var(md5_entry),ap:added,var(added))]).
 is_pending_source(Url):-
-  default_graph(DefaultGraph),
-  phrase(
-    sparql_formulate_ask(_, DefaultGraph, [ap],
-        [rdf(var(md5),ap:url,Url),
-         rdf(var(md5),ap:added,var(added))]),
-    Query
-  ), sparql_query(cliopatria, Query, _, _).
+  sparql_ask(cliopatria, _, [ap],
+      [rdf(var(md5),ap:url,Url),
+       rdf(var(md5),ap:added,var(added))]).
 
 
 %! is_processed_source(+Source) is semidet.
 
 is_processed_source(Url-EntryPath):- !,
-  default_graph(DefaultGraph),
-  phrase(
-    sparql_formulate_ask(_, DefaultGraph, [ap],
-        [rdf(var(md5_url),ap:url,Url),
-         rdf(var(md5_url),ap:has_entry,var(md5_entry)),
-         rdf(var(md5_entry),ap:path,string(EntryPath)),
-         rdf(var(md5_entry),ap:lwm_end,var(end))]),
-    Query
-  ),
-  sparql_query(cliopatria, Query, _, _).
+  sparql_ask(cliopatria, _, [ap],
+      [rdf(var(md5_url),ap:url,Url),
+       rdf(var(md5_url),ap:has_entry,var(md5_entry)),
+       rdf(var(md5_entry),ap:path,string(EntryPath)),
+       rdf(var(md5_entry),ap:lwm_end,var(end))]).
 is_processed_source(Url):-
-  default_graph(DefaultGraph),
-  phrase(
-    sparql_formulate_ask(_, DefaultGraph, [ap],
-        [rdf(var(md5),ap:url,Url),
-         rdf(var(md5),ap:lwm_end,var(end))]),
-    Query
-  ),
-  sparql_query(cliopatria, Query, _, _).
+  sparql_ask(cliopatria, _, [ap],
+      [rdf(var(md5),ap:url,Url),
+       rdf(var(md5),ap:lwm_end,var(end))]).
 
 
 % remove_source_from_basket(+Md5:atom) is det.

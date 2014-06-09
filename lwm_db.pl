@@ -1,12 +1,8 @@
 :- module(
   lwm_db,
   [
-    endpoint/4, % ?EndpointName:atom
-                % ?EndpointUrl:url
-                % ?Enabled:boolean
-                % ?Authentication:boolean
-    endpoint_authentication/2 % +EndpointName:atom
-                              % -Authentication:list(nvpair)
+    lwm_endpoint/1, % ?Endpoint:atom
+    lwm_endpoint_authentication/1 % -Authentication:list(nvpair)
   ]
 ).
 
@@ -28,84 +24,43 @@ Configuration settings for project LOD-Washing-Machine.
 
 :- xml_register_namespace(ap, 'http://www.wouterbeek.com/ap.owl#').
 
-:- sparql_register_remote(
-  cliopatria,
-  'lodlaundry.wbeek.ops.few.vu.nl',
-  default,
-  '/sparql'
-).
-
-
-
-%! endpoint(
-%!   ?EndpointName:atom,
-%!   ?EndpointUrl:url,
-%!   ?Enabled:boolean,
-%!   ?Authentication:boolean
-%! ) is nondet.
-
-endpoint(cliopatria, Url, true, true):-
-  uri_query_components(Search, [format('rdf+xml')]),
-  uri_components(
-    Url,
-    uri_components(
-      http,
-      'lodlaundry.wbeek.ops.few.vu.nl',
-      '/sparql/update',
-      Search,
-      _
-    )
-  ).
-endpoint(stardog, Url, false, true):-
-  uri_components(
-    Url,
-    uri_components(
-      http,
-      'stardog.lodlaundromat.ops.few.vu.nl',
-      '/laundromat/update',
-      _,
-      _
-    )
-  ).
-endpoint(virtuoso, Url, true, false):-
+:- initialization(init_lwm).
+init_lwm:-
+  % Localhost.
   default_graph(DefaultGraph),
-  uri_query_components(Search, ['using-graph-uri'=DefaultGraph]),
-  uri_components(
-    Url,
-    uri_components(
-      http,
-      'virtuoso.lodlaundromat.ops.few.vu.nl',
-      '/sparql',
-      Search,
-      _
-    )
-  ).
+  uri_query_components(Search1, [format('rdf+xml'),'using-graph-uri'=DefaultGraph]),
+  uri_components(Url11, uri_components(http,'localhost:3020','/sparql',Search1,_)),
+  sparql_register_endpoint(cliopatria, query, Url11),
+  uri_components(Url12, uri_components(http,'localhost:3020','/sparql/update',Search1,_)),
+  sparql_register_endpoint(cliopatria, update, Url12),
+  
+  % Cliopatria.
+  uri_components(Url21, uri_components(http,'lodlaundry.wbeek.ops.few.vu.nl','/sparql',Search1,_)),
+  sparql_register_endpoint(cliopatria, query, Url21),
+  uri_components(Url22, uri_components(http,'lodlaundry.wbeek.ops.few.vu.nl','/sparql/update',Search1,_)),
+  sparql_register_endpoint(cliopatria, update, Url22),
+  
+  % Virtuoso.
+  uri_query_components(Search3, ['using-graph-uri'=DefaultGraph]),
+  uri_components(Url3, uri_components(http,'virtuoso.lodlaundromat.ops.few.vu.nl','/sparql',Search3,_)),
+  sparql_register_endpoint(virtuoso, Url3).
 
 
-%! endpoint_authentication(
-%!   +EndpointName:atom,
-%!   -Authentication:list(nvpair)
-%! ) is det.
+lwm_endpoint(localhost).
+%lwm_endpoint(cliopatria).
+%lwm_endpoint(virtuoso).
 
-endpoint_authentication(
-  EndpointName,
-  [request_header('Authorization'=Authentication)]
-):-
-  endpoint(EndpointName, _, _, true), !,
+
+%! lwm_endpoint_authentication(-Authentication:list(nvpair)) is det.
+
+lwm_endpoint_authentication([request_header('Authorization'=Authentication)]):-
   user(User),
   password(Password),
   atomic_list_concat([User,Password], ':', Plain),
   base64(Plain, Encoded),
   atomic_list_concat(['Basic',Encoded], ' ', Authentication).
-endpoint_authentication(_, []).
-
-
-%! password(-Password:atom) is det.
 
 password(lwmlwm).
-
-
-%! user(-User:name) is det.
 
 user(lwm).
 

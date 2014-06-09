@@ -46,8 +46,8 @@ prolog:message(rdf_ntriples_written(File,TDup,TOut)) -->
     remote_file(File),
   [']'].
 
-prolog:message(sent_to_endpoint(EndpointName,Reply)) -->
-  ['[',EndpointName,']',nl,Reply,nl].
+prolog:message(sent_to_endpoint(Endpoint,Reply)) -->
+  ['[',Endpoint,']',nl,Reply,nl].
 
 number_of_duplicates_written(0) --> !, [].
 number_of_duplicates_written(T) --> [' (~D dups)'-[T]].

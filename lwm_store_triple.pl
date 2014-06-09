@@ -174,14 +174,7 @@ store_stream_properties(Url, Stream):-
 %   - Start datetime of processing by the LOD Washing Machine.
 %   - Date and time at which the URL was added to the LOD Basket.
 
-store_source(Md5Entry, Url-EntryPath):- !,
-  default_graph(DefaultGraph),
-  phrase(
-    sparql_formulate(_, DefaultGraph, [ap], select, true, [md5_url],
-        [rdf(var(md5_url),ap:url,Url)], inf, _, _),
-    Query
-  ),
-  sparql_query(cliopatria, Query, _, [Md5Url]),
+store_source(Md5Entry, Md5Url-EntryPath):- !,
   store_triple(Md5Entry, rdf:type, 'ArchiveEntry', ap),
   store_triple(Md5Entry, ap:entry_path, literal(type(xsd:string,EntryPath)), ap),
   store_triple(Md5Url, ap:has_archive_entry, Md5Entry, ap),

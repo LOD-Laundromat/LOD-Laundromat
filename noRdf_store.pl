@@ -23,6 +23,8 @@ and at the same time send small RDF messages using SPARQL Update requests.
 :- use_module(library(http/http_client)).
 :- use_module(library(semweb/rdf_db)).
 
+:- use_module(sparql(sparql_db)).
+
 :- use_module(plRdf_ser(rdf_ntriples_write)).
 
 :- use_module(lwm(lwm_db)).
@@ -52,14 +54,15 @@ and at the same time send small RDF messages using SPARQL Update requests.
 % of the update request.
 
 post_rdf_triples:-
-  endpoint(EndpointName, Url, true, _),
-  post_rdf_triples(EndpointName, Url),
+  lwm_endpoint(Endpoint),
+  post_rdf_triples(Endpoint),
   fail.
 post_rdf_triples.
 
-%! post_rdf_triples(+EndpointName:atom, +Url:url) is det.
+%! post_rdf_triples(+EndpointName:atom) is det.
 
-post_rdf_triples(EndpointName, Url):-
+post_rdf_triples(Endpoint):-
+  sparql_endpoint(Endpoint, update, Location),
   setup_call_cleanup(
     forall(
       rdf_triple(S, P, O, _),
@@ -67,14 +70,14 @@ post_rdf_triples(EndpointName, Url):-
     ),
     (
       with_output_to(codes(Codes), sparql_insert_data([])),
-      endpoint_authentication(EndpointName, Authentication),
+      lwm_endpoint_authentication(Authentication),
       http_post(
-        Url,
+        Location,
         codes('application/sparql-update', Codes),
         Reply,
         [request_header('Accept'='application/json')|Authentication]
       ),
-      print_message(informational, sent_to_endpoint(EndpointName,Reply))
+      print_message(informational, sent_to_endpoint(Endpoint,Reply))
     ),
     (
       rdf_retractall(_, _, _),

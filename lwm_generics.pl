@@ -101,7 +101,9 @@ set_data_directory(DataDir):-
   db_replace_novel(data_directory(DataDir), [e]).
 
 
-source_to_md5(Url-Files, Md5):- !,
-  atomic_list_concat([Url|Files], ' ', SourceName),
-  rdf_atom_md5(SourceName, 1, Md5).
+source_to_md5(Md5Url-EntryPath, Md5Entry):- !,
+  atomic_list_concat([Md5Url,EntryPath], ' ', Temp),
+  rdf_atom_md5(Temp, 1, Md5Entry).
+source_to_md5(Url, Md5):-
+  rdf_atom_md5(Url, 1, Md5).
 

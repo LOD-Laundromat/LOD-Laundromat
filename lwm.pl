@@ -51,12 +51,12 @@ lwm(_, HtmlStyle):-
 
 lwm_basket(Request):-
   (
-    http_parameters(Request, [url(Url1, [])]),
+    catch(http_parameters(Request, [url(Url1, [])]), _, fail),
     is_url(Url1)
   ->
     % Make sure that it is a URL.
     uri_iri(Url2, Url1),
-    add_source_to_basket(Url2-[]),
+    add_source_to_basket(Url2),
 
     % HTTP status code 202 Accepted: The request has been accepted
     % for processing, but the processing has not been completed.
