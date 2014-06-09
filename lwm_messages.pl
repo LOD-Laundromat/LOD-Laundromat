@@ -45,7 +45,7 @@ number_of_duplicates_written(T) --> [' (~D dups)'-[T]].
 number_of_triples_written(0) --> !, [].
 number_of_triples_written(T) --> ['+~D'-[T]].
 
-prolog_status(false, Url) --> !, ['false'].
+prolog_status(false, _) --> !, ['false'].
 prolog_status(true, _) --> !, ['true'].
 prolog_status(exception(Error), _) -->
   {print_message(error, Error)}.

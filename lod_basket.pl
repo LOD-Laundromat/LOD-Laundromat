@@ -44,7 +44,6 @@ add_source_to_basket_under_mutex(Source):-
   print_message(informational, already_pending(Source)).
 add_source_to_basket_under_mutex(Source):-
   source_to_md5(Source, Md5),
-gtrace,
   store_source(Md5, Source),
   post_rdf_triples.
 
@@ -57,7 +56,8 @@ pending_source(Md5):-
 pending_source_under_mutex(Md5):-
   once(lwm_endpoint(Endpoint)),
   sparql_select(Endpoint, _, [ap], true, [md5],
-      [rdf(var(md5),ap:added,_),not(rdf(var(md5),ap:lwm_start,_))],
+      [rdf(var(md5),ap:added,var(added)),
+       not([rdf(var(md5),ap:lwm_start,var(start))])],
       1, 0, _, [row(Md5)]).
 
 
