@@ -72,7 +72,7 @@ pending_urls -->
     once(lwm_endpoint(Endpoint)),
     sparql_select(Endpoint, _, [lwm], true, [url,entry_path,added],
         [rdf(var(md5url),lwm:url,var(url)),
-         rdf(var(md5url),lwm:has_entry,var(md5ent)),
+         rdf(var(md5url),lwm:contains_entry,var(md5ent)),
          rdf(var(md5ent),lwm:path,literal(xsd:string,entry_path)),
          rdf(var(md5ent),lwm:added,var(added))], inf, _, _, Rows)
   },

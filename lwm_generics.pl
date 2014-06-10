@@ -5,9 +5,7 @@
     default_graph/1, % -DefaultGraph:iri
     lod_accept_header_value/1, % -Value
     lwm_version/1, % -Version:positive_integer
-    set_data_directory/1, % +DataDirectory:atom
-    source_to_md5/2 % +Source
-                    % -Md5:atom
+    set_data_directory/1 % +DataDirectory:atom
   ]
 ).
 
@@ -99,11 +97,4 @@ lwm_version(8).
 set_data_directory(DataDir):-
   % Assert the data directory.
   db_replace_novel(data_directory(DataDir), [e]).
-
-
-source_to_md5(Md5Url-EntryPath, EntryMd5):- !,
-  atomic_list_concat([Md5Url,EntryPath], ' ', Temp),
-  rdf_atom_md5(Temp, 1, EntryMd5).
-source_to_md5(Url, Md5):-
-  rdf_atom_md5(Url, 1, Md5).
 

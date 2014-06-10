@@ -5,12 +5,12 @@
     store_archive_entry/3, % +ParentMd5:atom
                            % +EntryPath:atom
                            % +EntryProperties:list(nvpair)
-    store_finished/1, % +Md5:atom
+    store_end/1, % +Md5:atom
     store_http/4, % +Md5:atom
                   % ?ContentLength:nonneg
                   % ?ContentType:atom
                   % ?LastModified:nonneg
-    store_lwm_start/1, % +Md5:atom
+    store_start/1, % +Md5:atom
     store_message/2, % +Md5:atom
                      % +Message:compound
     store_status/2, % +Md5:atom
@@ -52,8 +52,8 @@ the stored triples are sent in a SPARQL Update request
 
 store_added(Md5):-
   get_dateTime(Added),
-  store_triple(lwm-Md5, lwm:added, literal(type(xsd:dateTime,Added)), ap).
-
+  store_triple(lwm-Md5, lwm:added, literal(type(xsd:dateTime,Added)), ap),
+  post_rdf_triples.
 
 %! store_archive_entry(
 %!   +ParentMd5:atom,
@@ -62,7 +62,8 @@ store_added(Md5):-
 %! ) is det.
 
 store_archive_entry(ParentMd5, EntryPath, EntryProperties1):-
-  atomic_list_concat([ParentMd5,EntryPath], ' ', EntryMd5),
+  atomic_list_concat([ParentMd5,EntryPath], ' ', Temp),
+  rdf_atom_md5(Temp, 1, EntryMd5),
   store_triple(lwm-EntryMd5, rdf:type, lwm:'ArchiveEntry', ap),
   store_triple(lwm-EntryMd5, lwm:md5, literal(type(xsd:string,EntryMd5)), ap),
   store_triple(lwm-EntryMd5, lwm:path, literal(type(xsd:string,EntryPath)),
@@ -82,16 +83,17 @@ store_archive_entry(ParentMd5, EntryPath, EntryProperties1):-
 
   selectchk(filetype(ArchiveFileType), EntryProperties3, []),
   store_triple(lwm-EntryMd5, lwm:archive_file_type,
-      literal(type(ArchiveFileType)), ap),
+      literal(type(xsd:string,ArchiveFileType)), ap),
 
   store_added(EntryMd5).
 
 
-%! store_finished(+Md5:atom) is det.
+%! store_end(+Md5:atom) is det.
 
-store_finished(Md5):-
+store_end(Md5):-
   get_dateTime(Now),
-  store_triple(lwm-Md5, lwm:lwm_end, literal(type(xsd:dateTime,Now)), ap).
+  store_triple(lwm-Md5, lwm:end, literal(type(xsd:dateTime,Now)), ap),
+  post_rdf_triples.
 
 
 %! store_http(
@@ -159,12 +161,12 @@ store_location_properties(Url1, Location, Url2):-
 filter(filter(_)).
 
 
-%! store_lwm_start(+Md5:atom) is det.
+%! store_start(+Md5:atom) is det.
 
-store_lwm_start(Md5):-
+store_start(Md5):-
   % Start date of processing by the LOD Washing Machine.
   get_dateTime(Now),
-  store_triple(lwm-Md5, lwm:lwm_start, literal(type(xsd:dateTime,Now)), ap),
+  store_triple(lwm-Md5, lwm:start, literal(type(xsd:dateTime,Now)), ap),
 
   % LOD Washing Machine version.
   lwm_version(Version),

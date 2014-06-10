@@ -58,8 +58,7 @@ clean(Md5):-
   store_status(Md5, Status),
   maplist(store_message(Md5), Messages),
 
-  store_finished(Md5),
-  post_rdf_triples.
+  store_end(Md5).
 
 
 %! clean_datadoc0(+Md5:atom) is det.
@@ -70,10 +69,10 @@ clean_md5(Md5):-
   sparql_select(Endpoint, _, [lwm], true, [md5,path],
         [rdf(var(md5ent),lwm:md5,literal(xsd:string,Md5)),
          rdf(var(md5ent),lwm:path,var(path)),
-         rdf(var(md5url),lwm:has_entry,var(md5ent)),
+         rdf(var(md5url),lwm:contains_entry,var(md5ent)),
          rdf(var(md5url),lwm:md5,var(md5))],
-        inf, _, _, [[Md5Literal,EntryPath]]),
-  rdf_literal(Md5Literal, ParentMd5, _), !,
+        inf, _, _, [[ParentMd50,EntryPath0]]),
+  maplist(rdf_literal, [ParentMd50,EntryPath0], [ParentMd5,EntryPath], _), !,
 
   % Move the entry file from the parent directory into
   % an MD5 directory of its own.
@@ -81,6 +80,7 @@ clean_md5(Md5):-
   relative_file_path(EntryFile1, Md5ParentDir, EntryPath),
   md5_to_dir(Md5, Md5Dir),
   relative_file_path(EntryFile2, Md5Dir, EntryPath),
+  create_file_directory(EntryFile2),
   mv(EntryFile1, EntryFile2),
 
   clean_file(Md5, EntryFile2).
@@ -109,22 +109,30 @@ clean_md5(Md5):-
      request_header('Accept'=AcceptValue)]
   ),
 
+  % Store the file size of the dirty file.
+  size_file(File, ByteSize),
+  store_triple(lwm-Md5, lwm:size, literal(type(xsd:integer,ByteSize)), ap),
+
   % Store HTTP statistics.
   store_http(Md5, ContentLength, ContentType, LastModified),
 
   clean_file(Md5, File).
 
 
-clean_file(Md5, File):-
-  archive_extract2(File, _, EntryPairs),
+clean_file(Md5, File1):-
+  archive_extract2(File1, _, EntryPairs),
 
   (
     EntryPairs = [data-EntryProperties],
     memberchk(format(raw),EntryProperties)
   ->
-    clean_datafile(Md5, File)
+    file_alternative(File1, _, dirty, _, File2),
+    mv(File1, File2),
+    clean_datafile(Md5, File2),
+    % :-(
+    delete_file(File2)
   ;
-    pairs_keys_values(EntryPaths, EntryPaths, EntryProperties1),
+    pairs_keys_values(EntryPairs, EntryPaths, EntryProperties1),
     maplist(
       selectchk(format(ArchiveFormat)),
       EntryProperties1,
@@ -137,6 +145,7 @@ clean_file(Md5, File):-
 
 
 clean_datafile(Md5, File):-
+gtrace,
   maplist(writeln, [Md5,File]).
 
 

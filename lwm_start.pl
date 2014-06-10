@@ -52,10 +52,6 @@ init_washing_machine:-
   absolute_file_name(data(.), DataDir, [access(write),file_type(directory)]),
   set_data_directory(DataDir),
 
-  % Make sure the output directory is there.
-  directory_file_path(DataDir, 'Output', OutputDir),
-  make_directory_path(OutputDir),
-
   % Each file is loaded in an RDF serialization + snapshot.
   % These inherit the triples that are not in an RDF serialization.
   % We therefore have to clear all such triples before we begin.

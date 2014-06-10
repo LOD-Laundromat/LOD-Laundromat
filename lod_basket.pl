@@ -20,6 +20,8 @@ $ curl --data "url=http://acm.rkbexplorer.com/id/998550" http://lodlaundry.wbeek
 @version 2014/05-2014/06
 */
 
+:- use_module(library(semweb/rdf_db)).
+
 :- use_module(sparql(sparql_api)).
 
 :- use_module(plRdf_term(rdf_literal)).
@@ -27,7 +29,6 @@ $ curl --data "url=http://acm.rkbexplorer.com/id/998550" http://lodlaundry.wbeek
 :- use_module(lwm(lwm_db)).
 :- use_module(lwm(lwm_generics)).
 :- use_module(lwm(lwm_store_triple)).
-:- use_module(lwm(noRdf_store)).
 
 
 
@@ -35,7 +36,7 @@ $ curl --data "url=http://acm.rkbexplorer.com/id/998550" http://lodlaundry.wbeek
 
 add_to_basket(Url):-
   with_mutex(lod_basket, (
-    source_to_md5(Url, Md5),
+    rdf_atom_md5(Url, 1, Md5),
     (
       is_cleaned(Md5)
     ->
@@ -45,8 +46,7 @@ add_to_basket(Url):-
     ->
       print_message(informational, already_pending(Url))
     ;
-      store_url(Md5, Url),
-      post_rdf_triples
+      store_url(Md5, Url)
     )
   )).
 
@@ -57,7 +57,7 @@ get_cleaned(Md5):-
   with_mutex(lod_basket, (
     once(lwm_endpoint(Endpoint)),
     sparql_select(Endpoint, _, [lwm], true, [md5],
-        [rdf(var(md5res),lwm:lwm_end,var(end)),
+        [rdf(var(md5res),lwm:end,var(end)),
          rdf(var(md5res),lwm:md5,var(md5))], 1, 0, _, [[Literal]]),
     rdf_literal(Literal, Md5, _)
   )).
@@ -70,7 +70,8 @@ get_pending(Md5):-
     once(lwm_endpoint(Endpoint)),
     sparql_select(Endpoint, _, [lwm], true, [md5],
         [rdf(var(md5res),lwm:added,var(added)),
-         not([rdf(var(md5res),lwm:lwm_start,var(start))]),
+	 not([rdf(var(md5res),lwm:end,var(end))]),
+         not([rdf(var(md5res),lwm:start,var(start))]),
          rdf(var(md5res),lwm:md5,var(md5))],
         1, 0, _, [[Literal]]),
     rdf_literal(Literal, Md5, _)
@@ -83,8 +84,8 @@ is_cleaned(Md5):-
   with_mutex(lod_basket, (
     once(lwm_endpoint(Endpoint)),
     sparql_ask(Endpoint, _, [lwm],
-        [rdf(var(md5),lwm:md5,literal(type(xsd:string,Md5))),
-         rdf(var(md5),lwm:lwm_end,var(end))])
+        [rdf(var(md5),lwm:md5,literal(xsd:string,Md5)),
+         rdf(var(md5),lwm:end,var(end))])
   )).
 
 
@@ -94,9 +95,9 @@ is_pending(Md5):-
   with_mutex(lod_basket, (
     once(lwm_endpoint(Endpoint)),
     sparql_ask(Endpoint, _, [lwm],
-        [rdf(var(md5),lwm:md5,literal(type(xsd:string,Md5))),
+        [rdf(var(md5),lwm:md5,literal(xsd:string,Md5)),
          rdf(var(md5),lwm:added,var(added)),
-         not([rdf(var(md5),lwm:lwm_start,var(start))])])
+         not([rdf(var(md5),lwm:start,var(start))])])
   )).
 
 
@@ -104,8 +105,7 @@ is_pending(Md5):-
 
 remove_from_basket(Md5):-
   with_mutex(lod_baqsket, (
-    store_lwm_start(Md5),
-    post_rdf_triples
+    store_start(Md5)
   )).
 
 
