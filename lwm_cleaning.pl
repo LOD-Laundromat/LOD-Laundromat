@@ -20,6 +20,8 @@ The cleaning process performed by the LOD Washing Machine.
 :- use_module(library(lists)).
 :- use_module(library(pairs)).
 :- use_module(library(semweb/rdf_db)).
+:- use_module(library(uri)).
+:- use_module(library(zlib)).
 
 :- use_module(generics(uri_ext)).
 :- use_module(http(http_download)).
@@ -124,7 +126,9 @@ clean_md5(Md5):-
 
 
 clean_file(Md5, File1):-
-  archive_extract2(File1, _, EntryPairs),
+  % Extract archive.
+  archive_extract(File1, _, ArchiveFilters, EntryPairs),
+  store_archive_filters(Md5, ArchiveFilters),
 
   (
     EntryPairs = [data-EntryProperties],
@@ -149,37 +153,44 @@ clean_file(Md5, File1):-
 
 
 clean_datafile(Md5, File):-
-gtrace,
   setup_call_cleanup(
     open(File, read, Read),
     (
-      store_stream(Md5,Read),
       rdf_transaction(
         clean_datastream(Md5, File, Read),
         _,
         [snapshot(true)]
-      )
+      ),
+      store_stream(Md5,Read)
     ),
     close(Read)
   ).
 
 
 clean_datastream(Md5, File, Read):-
-  % @tbd Location?
-  Base = 'http://www.wouterbeek.com/lwm.owl#',
-  
+  Scheme = http,
+  Authority = 'lodlaundromat.com',
+  atomic_list_concat(['',Md5], '/', Path1),
+  atomic_concat(Path1, '#', Path2),
+  uri_components(Base, uri_components(Scheme,Authority,Path2,_,_)),
+
+  % File extension.
+  file_name_extensions(_, FileExtensions, base),
+  atomic_list_concat(FileExtensions, '.', FileExtension),
+  store_triple(lwm-Md5, lwm:file_extension,
+      literal(type(xsd:string,FileExtension)), ap),
+
   % Guess serialization format.
   rdf_guess_format(Read, Format, []),
   store_triple(lwm-Md5, lwm:serialization_format,
       literal(type(xsd:string,Format)), ap),
-  
+
   % Load triples in serialization format.
-  % @tbd Add `base_uri(Location.base)`.
   rdf_load(
     stream(Read),
-    [format(Format),register_namespaces(false)]
+    [base_uri(Base),format(Format),register_namespaces(false)]
   ),
-  
+
   % We are not in between loading and saving the data.
   % This means that we can count the number of triples,
   % including duplicates.
@@ -188,16 +199,19 @@ clean_datastream(Md5, File, Read):-
     rdf(_, _, _, _),
     TIn
   ),
-  
+
   % Save triples using the N-Triples serialization format.
   file_directory_name(File, Dir),
   directory_file_path(Dir, 'clean.nt.gz', Path),
   setup_call_cleanup(
-    open(Path, append, Write, [filter(gzip)]),
-    rdf_ntriples_write(Write, [bnode_base(Base),number_of_triples(TOut)]),
+    gzopen(Path, write, Write),
+    rdf_ntriples_write(
+      Write,
+      [bnode_base(Scheme-Authority-Md5),number_of_triples(TOut)]
+    ),
     close(Write)
   ),
-  
+
   % Asssert some statistics.
   store_number_of_triples(Md5, Path, TIn, TOut),
   store_void_triples,

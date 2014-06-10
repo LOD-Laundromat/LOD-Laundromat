@@ -22,8 +22,8 @@ prolog:message(start_cleaning(X,Md5)) -->
   ['[START ~D] [~w]'-[X,Md5]].
 
 prolog:message(end_cleaning(X,Md5,Status,Messages)) -->
-  status(Status),
-  messages(Messages),
+  status(Status), [nl],
+  messages(Messages), [nl],
   ['[DONE ~D] [~w]'-[X,Md5]],
   [nl,nl].
 

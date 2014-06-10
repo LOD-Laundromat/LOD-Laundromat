@@ -17,8 +17,6 @@ See module [lwm_start_threaded] for the threaded version of this module.
 :- use_module(lwm(lwm_cleaning)).
 :- use_module(lwm(lwm_generics)).
 
-%%%%:- initialization(run_washing_machine).
-
 
 
 run_washing_machine:-
@@ -26,9 +24,13 @@ run_washing_machine:-
   thread_create(washing_machine_loop, _, []).
 
 washing_machine_loop:-
+  % Debug.
+  flag(loop, X, X + 1),
+  writeln(X),
+  
   % Pick a new source to process.
-  get_pending(Md5),
-
+  remove_from_basket(Md5),
+  
   % Process the URL we picked.
   clean(Md5),
 
@@ -36,7 +38,7 @@ washing_machine_loop:-
   washing_machine_loop.
 % Done for now. Check whether there are new jobs in one minute.
 washing_machine_loop:-
-  sleep(60),
+  sleep(1),
   washing_machine_loop.
 
 

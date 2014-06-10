@@ -5,6 +5,8 @@
     store_archive_entry/3, % +ParentMd5:atom
                            % +EntryPath:atom
                            % +EntryProperties:list(nvpair)
+    store_archive_filters/2, % +Md5:atom
+                             % +ArchiveFilters:list(atom)
     store_end/1, % +Md5:atom
     store_http/4, % +Md5:atom
                   % ?ContentLength:nonneg
@@ -63,6 +65,7 @@ store_added(Md5):-
   store_triple(lwm-Md5, lwm:added, literal(type(xsd:dateTime,Added)), ap),
   post_rdf_triples.
 
+
 %! store_archive_entry(
 %!   +ParentMd5:atom,
 %!   +EntryPath:atom,
@@ -94,6 +97,20 @@ store_archive_entry(ParentMd5, EntryPath, EntryProperties1):-
       literal(type(xsd:string,ArchiveFileType)), ap),
 
   store_added(EntryMd5).
+
+
+%! store_archive_filters(+Md5:atom, +ArchiveFilters:list(atom)) is det.
+
+store_archive_filters(_, []):- !.
+store_archive_filters(Md5, ArchiveFilters):-
+  forall(
+    nth0(I, ArchiveFilters, ArchiveFilter),
+    (
+      atomic_list_concat([archive_filter,I], '_', P),
+      store_triple(lwm-Md5, lwm-P, literal(type(xsd:string,ArchiveFilter)),
+          ap)
+    )
+  ).
 
 
 %! store_end(+Md5:atom) is det.
@@ -130,60 +147,6 @@ store_http(Md5, ContentLength, ContentType, LastModified):-
   ).
 
 
-%! store_location_properties(+Url1:url, +Location:dict, -Url2:url) is det.
-
-store_location_properties(Url1, Location, Url2):-
-  (
-    Data1 = Location.get(data),
-    exclude(filter, Data1, Data2),
-    last(Data2, ArchiveEntry)
-  ->
-    Name = ArchiveEntry.get(name),
-    atomic_list_concat([Url1,Name], '/', Url2),
-    store_triple(Url1, lwm:archive_contains, Url2, ap),
-    ignore(store_triple(Url2, lwm:format,
-        literal(type(xsd:string,ArchiveEntry.get(format))), ap)),
-    ignore(store_triple(Url2, lwm:size,
-        literal(type(xsd:integer,ArchiveEntry.get(size))), ap)),
-    store_triple(Url2, rdf:type, lwm:'LOD-URL', ap)
-  ;
-    Url2 = Url1
-  ),
-  ignore(store_triple(Url2, lwm:http_content_type,
-      literal(type(xsd:string,Location.get(content_type))), ap)),
-  ignore(store_triple(Url2, lwm:http_content_length,
-      literal(type(xsd:integer,Location.get(content_length))), ap)),
-  ignore(store_triple(Url2, lwm:http_last_modified,
-      literal(type(xsd:string,Location.get(last_modified))), ap)),
-  store_triple(Url2, lwm:url, literal(type(xsd:string,Location.get(url))), ap),
-
-  (
-    location_base(Location, Base),
-    file_name_extension(_, Ext, Base),
-    Ext \== ''
-  ->
-    store_triple(Url2, lwm:file_extension, literal(type(xsd:string,Ext)), ap)
-  ;
-    true
-  ).
-filter(filter(_)).
-
-
-%! store_start(+Md5:atom) is det.
-
-store_start(Md5):-
-  % Start date of processing by the LOD Washing Machine.
-  get_dateTime(Now),
-  store_triple(lwm-Md5, lwm:start, literal(type(xsd:dateTime,Now)), ap),
-
-  % LOD Washing Machine version.
-  lwm_version(Version),
-  store_triple(lwm-Md5, lwm:lwm_version, literal(type(xsd:integer,Version)),
-      ap),
-
-  post_rdf_triples.
-
-
 %! store_message(+Md5:atom, +Message:compound) is det.
 
 store_message(Md5, Message):-
@@ -205,6 +168,21 @@ store_number_of_triples(Md5, Path, TIn, TOut):-
   print_message(informational, rdf_ntriples_written(Path,TDup,TOut)).
 
 
+%! store_start(+Md5:atom) is det.
+
+store_start(Md5):-
+  % Start date of processing by the LOD Washing Machine.
+  get_dateTime(Now),
+  store_triple(lwm-Md5, lwm:start, literal(type(xsd:dateTime,Now)), ap),
+
+  % LOD Washing Machine version.
+  lwm_version(Version),
+  store_triple(lwm-Md5, lwm:lwm_version, literal(type(xsd:integer,Version)),
+      ap),
+
+  post_rdf_triples.
+
+
 %! store_status(+Md5:atom, +Status:or([boolean,compound])) is det.
 
 store_status(Md5, Status):-
@@ -216,14 +194,18 @@ store_status(Md5, Status):-
 
 store_stream(Md5, Stream):-
   stream_property(Stream, position(Position)),
-  forall(
-    stream_position_data(Field, Position, Value),
-    (
-      atomic_list_concat([stream,Field], '_', Property),
-      store_triple(lwm-Md5, lwm-Property, literal(type(xsd:integer,Value)),
-          ap)
-    )
-  ).
+  
+  stream_position_data(byte_count, Position, ByteCount),
+  store_triple(lwm-Md5, lwm:byte_count, literal(type(xsd:integer,ByteCount)),
+      ap),
+  
+  stream_position_data(char_count, Position, CharCount),
+  store_triple(lwm-Md5, lwm:char_count, literal(type(xsd:integer,CharCount)),
+      ap),
+
+  stream_position_data(line_count, Position, LineCount),
+  store_triple(lwm-Md5, lwm:line_count, literal(type(xsd:integer,LineCount)),
+      ap).
 
 
 %! store_url(+Md5:atom, +Url:url) is det.

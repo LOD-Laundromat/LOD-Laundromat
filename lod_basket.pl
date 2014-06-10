@@ -103,10 +103,11 @@ is_pending(Md5):-
   )).
 
 
-% remove_from_basket(+Md5:atom) is det.
+% remove_from_basket(-Md5:atom) is det.
 
 remove_from_basket(Md5):-
   with_mutex(lod_baqsket, (
+    get_pending(Md5),
     store_start(Md5)
   )).
 

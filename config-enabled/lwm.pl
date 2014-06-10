@@ -19,11 +19,6 @@
      spacing(next_argument)]
   ).
 
-:- use_module(library(debug)).
-:- use_module(library(swi_ide)).
-:- debug(sparql_api).
-:- prolog_ide(debug_monitor).
-
 :- use_module(library(http/html_head)).
 :- use_module(library(http/http_dispatch)).
 
@@ -73,7 +68,4 @@ lwm(Request):-
 user:body(lwm, Body) -->
   html_requires(plTabular),
   user:body(cliopatria(default), Body).
-
-:- use_module(lwm(lwm_start)).
-:- lwm_start:init_washing_machine.
 
