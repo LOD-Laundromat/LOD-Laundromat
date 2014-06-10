@@ -5,8 +5,10 @@
                              % +Md5:atom
                              % +Coordinates:list(list(nonneg))
     store_finished/1, % +Md5:atom
-    store_http/2, % +Md5:atom
-                  % +HttpReplyHeaders:list(nvpair)
+    store_http/4, % +Md5:atom
+                  % ?ContentLength:nonneg
+                  % ?ContentType:atom
+                  % ?LastModified:nonneg
     store_lwm_start/1, % +Md5:atom
     store_message/2, % +Md5:atom
                      % +Message:compound
@@ -33,6 +35,7 @@ the stored triples are sent in a SPARQL Update request
 :- use_module(library(lists)).
 :- use_module(library(semweb/rdf_db)).
 
+:- use_module(pl(pl_control)).
 :- use_module(pl(pl_log)).
 :- use_module(xsd(xsd_dateTime_ext)).
 
@@ -61,14 +64,30 @@ store_finished(Md5):-
   store_triple(lwm-Md5, lwm:lwm_end, literal(type(xsd:dateTime,Now)), ap).
 
 
-%! store_http(+Md5:atom, +HttpReplyHeaders:list(nvpair)) is det.
+%! store_http(
+%!   +Md5:atom,
+%!   ?ContentLength:nonneg,
+%!   ?ContentType:atom,
+%!   ?LastModified:nonneg
+%! ) is det.
 
-store_http(Md5, NVPairs):-
-  maplist(store_nvpair(Md5), NVPairs).
-
-store_nvpair(S, NVPair):-
-  NVPair =.. [P,O],
-  store_triple(S, P, O, ap).
+store_http(Md5, ContentLength, ContentType, LastModified):-
+  unless(
+    ContentLength == '',
+    store_triple(lwm-Md5, lwm:content_length,
+        literal(type(xsd:integer,ContentLength)), ap)
+  ),
+  unless(
+    ContentType == '',
+    store_triple(lwm-Md5, lwm:content_type,
+        literal(type(xsd:string,ContentType)), ap)
+  ),
+  % @tbd Store as xsd:dateTime
+  unless(
+    LastModified == '',
+    store_triple(lwm-Md5, lwm:last_modified,
+        literal(type(xsd:string,LastModified)), ap)
+  ).
 
 
 %! store_location_properties(+Url1:url, +Location:dict, -Url2:url) is det.
@@ -116,11 +135,12 @@ store_lwm_start(Md5):-
   % Start date of processing by the LOD Washing Machine.
   get_dateTime(Now),
   store_triple(lwm-Md5, lwm:lwm_start, literal(type(xsd:dateTime,Now)), ap),
-  
+
   % LOD Washing Machine version.
   lwm_version(Version),
-  store_triple(Md5, lwm:lwm_version, literal(type(xsd:integer,Version)), ap),
-  
+  store_triple(lwm-Md5, lwm:lwm_version, literal(type(xsd:integer,Version)),
+      ap),
+
   post_rdf_triples.
 
 
@@ -177,7 +197,8 @@ store_stream_properties(Url, Stream):-
 
 store_source(Md5Entry, Md5Url-EntryPath):- !,
   store_triple(lwm-Md5Entry, rdf:type, 'ArchiveEntry', ap),
-  store_triple(lwm-Md5Entry, lwm:entry_path, literal(type(xsd:string,EntryPath)), ap),
+  store_triple(lwm-Md5Entry, lwm:entry_path,
+      literal(type(xsd:string,EntryPath)), ap),
   store_triple(lwm-Md5Url, lwm:has_archive_entry, lwm:Md5Entry, ap),
   store_source0(Md5Entry).
 store_source(Md5, Url):-
@@ -186,6 +207,9 @@ store_source(Md5, Url):-
   store_source0(Md5).
 
 store_source0(Md5):-
+  % Md5.
+  store_triple(lwm-Md5, lwm:md5, literal(type(xsd:string,Md5)), ap),
+
   % Datetime at which the URL was added to the LOD Basket.
   get_dateTime(Added),
   store_triple(lwm-Md5, lwm:added, literal(type(xsd:dateTime,Added)), ap).

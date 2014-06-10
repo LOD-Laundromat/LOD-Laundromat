@@ -75,5 +75,5 @@ user:body(lwm, Body) -->
   user:body(cliopatria(default), Body).
 
 :- use_module(lwm(lwm_start)).
-lwm_start:init_washing_machine.
+:- lwm_start:init_washing_machine.
 

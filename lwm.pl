@@ -71,10 +71,10 @@ pending_urls -->
   {
     once(lwm_endpoint(Endpoint)),
     sparql_select(Endpoint, _, [lwm], true, [url,entry_path,added],
-        [rdf(Md5Url,lwm:url,var(url)),
-         rdf(Md5Url,lwm:has_entry,Md5Entry),
-         rdf(Md5Entry,lwm:path,string(entry_path)),
-         rdf(Md5Entry,lwm:added,var(added))], inf, _, _, Rows)
+        [rdf(var(md5url),lwm:url,var(url)),
+         rdf(var(md5url),lwm:has_entry,var(md5ent)),
+         rdf(var(md5ent),lwm:path,literal(xsd:string,entry_path)),
+         rdf(var(md5ent),lwm:added,var(added))], inf, _, _, Rows)
   },
   html_table(
     [header_column(true),header_row(true),indexed(true)],

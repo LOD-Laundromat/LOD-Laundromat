@@ -1,7 +1,7 @@
 :- module(
   lwm_cleaning,
   [
-    clean_datadoc/1 % +Md5:atom
+    clean/1 % +Md5:atom
   ]
 ).
 
@@ -23,6 +23,7 @@ The cleaning process performed by the LOD Washing Machine.
 :- use_module(generics(uri_ext)).
 :- use_module(http(http_download)).
 :- use_module(os(archive_ext)).
+:- use_module(os(file_ext)).
 :- use_module(os(remote_ext)).
 :- use_module(pl(pl_log)).
 :- use_module(sparql(sparql_api)).
@@ -31,11 +32,13 @@ The cleaning process performed by the LOD Washing Machine.
 
 :- use_module(plRdf_ser(rdf_ntriples_write)).
 :- use_module(plRdf_ser(rdf_serial)).
+:- use_module(plRdf_term(rdf_literal)).
 
 :- use_module(lwm(lod_basket)).
 :- use_module(lwm(lwm_db)).
 :- use_module(lwm(lwm_generics)).
 :- use_module(lwm(lwm_store_triple)).
+:- use_module(lwm(noRdf_store)).
 
 %! seen_dataset(?Url:url) is nondet.
 
@@ -43,45 +46,55 @@ The cleaning process performed by the LOD Washing Machine.
 
 
 
-%! clean_datadoc(+Md5:atom) is det.
+%! clean(+Md5:atom) is det.
 
-clean_datadoc(Md5):-
+clean(Md5):-
   run_collect_messages(
-    clean_datadoc0(Md5),
+    clean_md5(Md5),
     Status,
     Messages
   ),
   store_status(Md5, Status),
   maplist(store_message(Md5), Messages),
 
-  store_finished(Md5).
+  store_finished(Md5),
+  post_rdf_triples.
 
 
 %! clean_datadoc0(+Md5:atom) is det.
 
-clean_datadoc0(Md5):-
+% The given Md5 denote an archive entry.
+clean_md5(Md5):-
   once(lwm_endpoint(Endpoint)),
-  sparql_select(Endpoint, _, [lwm], true, [url,path],
-        [rdf(Md5,lwm:path,var(path)),
-         rdf(var(md5_url),lwm:has_entry,Md5),
-         rdf(var(md5_url),lwm:url,var(url))], inf, _, _, [Url,Path]), !,
-  url_nested_file(data(.), Url, Dir1),
-  absolute_file_name(
-    Path,
-    Dir2,
-    [access(read),file_type(directory),relative_to(Dir1)]
-  ),
-  make_directory_path(Dir2),
-  directory_file_path(Dir2, data, File),
-  clean_datadoc0(Md5, File).
-clean_datadoc0(Md5):-
+  sparql_select(Endpoint, _, [lwm], true, [md5,path],
+        [rdf(var(md5ent),lwm:md5,literal(xsd:string,Md5)),
+         rdf(var(md5ent),lwm:path,var(path)),
+         rdf(var(md5url),lwm:has_entry,var(md5ent)),
+         rdf(var(md5url),lwm:md5,var(md5))],
+        inf, _, _, [[Md5Literal,EntryPath]]),
+  rdf_literal(Md5Literal, Md5Parent, _), !,
+
+  % Move the entry file from the parent directory into
+  % an MD5 directory of its own.
+  md5_to_dir(Md5Parent, Md5ParentDir),
+  relative_file_path(EntryFile1, Md5ParentDir, EntryPath),
+  md5_to_dir(Md5, Md5Dir),
+  relative_file_path(EntryFile2, Md5Dir, EntryPath),
+  mv(EntryFile1, EntryFile2),
+
+  clean_file(Md5, EntryFile2).
+% The given Md5 denotes a URL.
+clean_md5(Md5):-
   once(lwm_endpoint(Endpoint)),
   sparql_select(Endpoint, _, [lwm], true, [url],
-      [rdf(Md5,lwm:url,var(url))], inf, _, _, [Url]), !,
-  url_nested_file(data(.), Url, Dir),
-  make_directory_path(Dir),
-  directory_file_path(Dir, data, File),
+      [rdf(var(md5res),lwm:url,var(url)),
+       rdf(var(md5res),lwm:md5,literal(xsd:string,Md5))],inf, _, _, [[Url]]), !,
 
+  % Create a directory for the dirty version of the given Md5.
+  md5_to_dir(Md5, Md5Dir),
+
+  % Download the dirty file for the given Md5.
+  directory_file_path(Md5Dir, dirty, File),
   lod_accept_header_value(AcceptValue),
   download_to_file(
     Url,
@@ -94,22 +107,45 @@ clean_datadoc0(Md5):-
      header(last_modified, LastModified),
      request_header('Accept'=AcceptValue)]
   ),
-  store_http(
-    Md5,
-    [content_length(ContentLength),
-     content_type(ContentType),
-     last_modified(LastModified)]
-  ),
-  archive_extract2(File, _, EntryPaths),
-  maplist(add_pair(Url), EntryPaths, Sources),
-  maplist(add_source_to_basket, Sources),
-  clean_datadoc0(Md5, File).
 
-clean_datadoc0(Md5, File):-
+  % Store HTTP statistics.
+  store_http(Md5, ContentLength, ContentType, LastModified),
+
+  clean_file(Md5, File).
+
+
+clean_file(Md5, File):-
+  archive_extract2(File, _, EntryPaths),
+
+  (
+    EntryPaths = [data-Properties],
+    memberchk(format(raw),Properties)
+  ->
+    clean_datafile(Md5, File)
+  ;
+    % @tbd Add all entry properties.
+    maplist(add_entry_to_basket(Md5), EntryPaths)
+  ).
+
+
+clean_datafile(Md5, File):-
   maplist(writeln, [Md5,File]).
 
 
-add_pair(X, Y, X-Y).
+
+% Helpers
+
+add_entry_to_basket(Md5, EntryPath):-
+  add_source_to_basket(Md5-EntryPath).
+
+
+%! md5_to_dir(+Md5:atom, -Md5Directory:atom) is det.
+
+md5_to_dir(Md5, Md5Dir):-
+  absolute_file_name(data(.), DataDir, [access(write),file_type(directory)]),
+  directory_file_path(DataDir, Md5, Md5Dir),
+  make_directory_path(Md5Dir).
+
 
 /*
 %! clean_datastream(+Url:url, +Coordinate:list(nonneg), +Md5:atom, +Read:blob) is det.

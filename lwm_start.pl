@@ -30,7 +30,7 @@ washing_machine_loop:-
   pending_source(Md5),
 
   % Process the URL we picked.
-  clean_datadoc(Md5),
+  clean(Md5),
 
   % Intermittent loop.
   washing_machine_loop.
@@ -62,5 +62,6 @@ init_washing_machine:-
   forall(
     rdf_graph(G),
     rdf_unload_graph(G)
-  ).
+  ),
+  rdf_retractall(_, _, _, _).
 
