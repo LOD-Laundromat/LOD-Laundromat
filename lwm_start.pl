@@ -27,7 +27,7 @@ run_washing_machine:-
 
 washing_machine_loop:-
   % Pick a new source to process.
-  pending_source(Md5),
+  get_pending(Md5),
 
   % Process the URL we picked.
   clean(Md5),

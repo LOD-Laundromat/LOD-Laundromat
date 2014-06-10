@@ -55,7 +55,7 @@ lwm_basket(Request):-
   ->
     % Make sure that it is a URL.
     uri_iri(Url2, Url1),
-    add_source_to_basket(Url2),
+    add_to_basket(Url2),
 
     % HTTP status code 202 Accepted: The request has been accepted
     % for processing, but the processing has not been completed.

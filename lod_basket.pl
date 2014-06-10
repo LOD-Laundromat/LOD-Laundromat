@@ -1,10 +1,10 @@
 :- module(
   lod_basket,
   [
-    add_source_to_basket/1, % +Source
-    cleaned_source/1, % -Md5:atom
-    pending_source/1, % -Md5:atom
-    remove_source_from_basket/1 % +Md5:atom
+    add_to_basket/1, % +Url:url
+    get_cleaned/1, % -Md5:atom
+    get_pending/1, % -Md5:atom
+    remove_from_basket/1 % +Md5:atom
   ]
 ).
 
@@ -31,87 +31,78 @@ $ curl --data "url=http://acm.rkbexplorer.com/id/998550" http://lodlaundry.wbeek
 
 
 
-%! add_source_to_basket(+Source) is det.
+%! add_to_basket(+Source) is det.
 
-add_source_to_basket(Source):-
-  with_mutex(lod_basket, add_source_to_basket_under_mutex(Source)).
-
-add_source_to_basket_under_mutex(Source):-
-  is_processed_source(Source), !,
-  print_message(informational, already_processed(Source)).
-add_source_to_basket_under_mutex(Source):-
-  is_pending_source(Source), !,
-  print_message(informational, already_pending(Source)).
-add_source_to_basket_under_mutex(Source):-
-  source_to_md5(Source, Md5),
-  store_source(Md5, Source),
-  post_rdf_triples.
-
-
-%! cleaned_source(-Md5:atom) is nondet.
-
-cleaned_source(Md5):-
-  with_mutex(lod_basket, cleaned_source_under_mutex(Md5)).
-
-cleaned_source_under_mutex(Md5):-
-  once(lwm_endpoint(Endpoint)),
-  sparql_select(Endpoint, _, [lwm], true, [md5],
-      [rdf(var(md5res),lwm:lwm_end,var(end)),
-       rdf(var(md5res),lwm:md5,var(md5))], 1, 0, _, [[Literal]]),
-  rdf_literal(Literal, Md5, _).
+add_to_basket(Url):-
+  with_mutex(lod_basket, (
+    source_to_md5(Url, Md5),
+    (
+      is_cleaned(Md5)
+    ->
+      print_message(informational, already_processed(Url))
+    ;
+      is_pending(Md5)
+    ->
+      print_message(informational, already_pending(Url))
+    ;
+      store_url(Md5, Url),
+      post_rdf_triples
+    )
+  )).
 
 
+%! get_cleaned(-Md5:atom) is nondet.
 
-%! pending_source(-Md5:atom) is nondet.
-
-pending_source(Md5):-
-  with_mutex(lod_basket, pending_source_under_mutex(Md5)).
-
-pending_source_under_mutex(Md5):-
-  once(lwm_endpoint(Endpoint)),
-  sparql_select(Endpoint, _, [lwm], true, [md5],
-      [rdf(var(md5res),lwm:added,var(added)),
-       not([rdf(var(md5res),lwm:lwm_start,var(start))]),
-       rdf(var(md5res),lwm:md5,var(md5))],
-      1, 0, _, [[Literal]]),
-  rdf_literal(Literal, Md5, _).
+get_cleaned(Md5):-
+  with_mutex(lod_basket, (
+    once(lwm_endpoint(Endpoint)),
+    sparql_select(Endpoint, _, [lwm], true, [md5],
+        [rdf(var(md5res),lwm:lwm_end,var(end)),
+         rdf(var(md5res),lwm:md5,var(md5))], 1, 0, _, [[Literal]]),
+    rdf_literal(Literal, Md5, _)
+  )).
 
 
-%! is_pending_source(+Source) is semidet.
+%! get_pending(-Md5:atom) is nondet.
 
-is_pending_source(Url-EntryPath):- !,
-  once(lwm_endpoint(Endpoint)),
-  sparql_ask(Endpoint, _, [lwm],
-      [rdf(var(md5_url),lwm:url,Url),
-       rdf(var(md5_url),lwm:has_entry,var(md5_entry)),
-       rdf(var(md5_entry),lwm:path,literal(xsd:string,EntryPath)),
-       rdf(var(md5_entry),lwm:added,var(added))]).
-is_pending_source(Url):-
-  once(lwm_endpoint(Endpoint)),
-  sparql_ask(Endpoint, _, [lwm],
-      [rdf(var(md5),lwm:url,Url),
-       rdf(var(md5),lwm:added,var(added))]).
+get_pending(Md5):-
+  with_mutex(lod_basket, (
+    once(lwm_endpoint(Endpoint)),
+    sparql_select(Endpoint, _, [lwm], true, [md5],
+        [rdf(var(md5res),lwm:added,var(added)),
+         not([rdf(var(md5res),lwm:lwm_start,var(start))]),
+         rdf(var(md5res),lwm:md5,var(md5))],
+        1, 0, _, [[Literal]]),
+    rdf_literal(Literal, Md5, _)
+  )).
 
 
-%! is_processed_source(+Source) is semidet.
+%! is_cleaned(+Md5:atom) is semidet.
 
-is_processed_source(Url-EntryPath):- !,
-  once(lwm_endpoint(Endpoint)),
-  sparql_ask(Endpoint, _, [lwm],
-      [rdf(var(md5_url),lwm:url,Url),
-       rdf(var(md5_url),lwm:has_entry,var(md5_entry)),
-       rdf(var(md5_entry),lwm:path,literal(xsd:string,EntryPath)),
-       rdf(var(md5_entry),lwm:lwm_end,var(end))]).
-is_processed_source(Url):-
-  once(lwm_endpoint(Endpoint)),
-  sparql_ask(Endpoint, _, [lwm],
-      [rdf(var(md5),lwm:url,Url),
-       rdf(var(md5),lwm:lwm_end,var(end))]).
+is_cleaned(Md5):-
+  with_mutex(lod_basket, (
+    once(lwm_endpoint(Endpoint)),
+    sparql_ask(Endpoint, _, [lwm],
+        [rdf(var(md5),lwm:md5,literal(type(xsd:string,Md5))),
+         rdf(var(md5),lwm:lwm_end,var(end))])
+  )).
 
 
-% remove_source_from_basket(+Md5:atom) is det.
+%! is_pending(+Md5:atom) is semidet.
 
-remove_source_from_basket(Md5):-
+is_pending(Md5):-
+  with_mutex(lod_basket, (
+    once(lwm_endpoint(Endpoint)),
+    sparql_ask(Endpoint, _, [lwm],
+        [rdf(var(md5),lwm:md5,literal(type(xsd:string,Md5))),
+         rdf(var(md5),lwm:added,var(added)),
+         not([rdf(var(md5),lwm:lwm_start,var(start))])])
+  )).
+
+
+% remove_from_basket(+Md5:atom) is det.
+
+remove_from_basket(Md5):-
   with_mutex(lod_baqsket, (
     store_lwm_start(Md5),
     post_rdf_triples

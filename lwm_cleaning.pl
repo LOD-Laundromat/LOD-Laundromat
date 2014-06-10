@@ -18,6 +18,7 @@ The cleaning process performed by the LOD Washing Machine.
 :- use_module(library(archive)).
 :- use_module(library(http/http_client)).
 :- use_module(library(lists)).
+:- use_module(library(pairs)).
 :- use_module(library(semweb/rdf_db)).
 
 :- use_module(generics(uri_ext)).
@@ -72,11 +73,11 @@ clean_md5(Md5):-
          rdf(var(md5url),lwm:has_entry,var(md5ent)),
          rdf(var(md5url),lwm:md5,var(md5))],
         inf, _, _, [[Md5Literal,EntryPath]]),
-  rdf_literal(Md5Literal, Md5Parent, _), !,
+  rdf_literal(Md5Literal, ParentMd5, _), !,
 
   % Move the entry file from the parent directory into
   % an MD5 directory of its own.
-  md5_to_dir(Md5Parent, Md5ParentDir),
+  md5_to_dir(ParentMd5, Md5ParentDir),
   relative_file_path(EntryFile1, Md5ParentDir, EntryPath),
   md5_to_dir(Md5, Md5Dir),
   relative_file_path(EntryFile2, Md5Dir, EntryPath),
@@ -115,16 +116,23 @@ clean_md5(Md5):-
 
 
 clean_file(Md5, File):-
-  archive_extract2(File, _, EntryPaths),
+  archive_extract2(File, _, EntryPairs),
 
   (
-    EntryPaths = [data-Properties],
-    memberchk(format(raw),Properties)
+    EntryPairs = [data-EntryProperties],
+    memberchk(format(raw),EntryProperties)
   ->
     clean_datafile(Md5, File)
   ;
-    % @tbd Add all entry properties.
-    maplist(add_entry_to_basket(Md5), EntryPaths)
+    pairs_keys_values(EntryPaths, EntryPaths, EntryProperties1),
+    maplist(
+      selectchk(format(ArchiveFormat)),
+      EntryProperties1,
+      EntryProperties2
+    ),
+    store_triple(lwm-Md5, lwm:archive_format,
+        literal(type(xsd:string,ArchiveFormat)), ap),
+    maplist(store_archive_entry(Md5), EntryPaths, EntryProperties2)
   ).
 
 
@@ -134,10 +142,6 @@ clean_datafile(Md5, File):-
 
 
 % Helpers
-
-add_entry_to_basket(Md5, EntryPath):-
-  add_source_to_basket(Md5-EntryPath).
-
 
 %! md5_to_dir(+Md5:atom, -Md5Directory:atom) is det.
 

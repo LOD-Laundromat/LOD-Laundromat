@@ -1,9 +1,10 @@
 :- module(
   lwm_store_triple,
   [
-    store_archive_entries/3, % +Url:url
-                             % +Md5:atom
-                             % +Coordinates:list(list(nonneg))
+    store_added/1, % +Md5:atom
+    store_archive_entry/3, % +ParentMd5:atom
+                           % +EntryPath:atom
+                           % +EntryProperties:list(nvpair)
     store_finished/1, % +Md5:atom
     store_http/4, % +Md5:atom
                   % ?ContentLength:nonneg
@@ -14,8 +15,8 @@
                      % +Message:compound
     store_status/2, % +Md5:atom
                     % +Status:or([boolean,compound]))
-    store_source/2 % +Md5:atom
-                   % +Source
+    store_url/2 % +Md5:atom
+                % +Url:url
   ]
 ).
 
@@ -39,22 +40,51 @@ the stored triples are sent in a SPARQL Update request
 :- use_module(pl(pl_log)).
 :- use_module(xsd(xsd_dateTime_ext)).
 
+:- use_module(lwm(lod_basket)).
 :- use_module(lwm(lwm_db)).
 :- use_module(lwm(lwm_generics)).
 :- use_module(lwm(noRdf_store)).
 
 
 
-%! store_archive_entries(+Url, +Md5:atom, +Coordinates:list(list(nonneg))) is det.
+%! store_added(+Md5:atom) is det.
+% Datetime at which the URL was added to the LOD Basket.
 
-store_archive_entries(_, _, []):- !.
-store_archive_entries(Url, Md5, Coords):-
-  store_triple(lwm-Md5, rdf:type, lwm:'Archive', ap),
-  maplist(store_archive_entry(Url, Md5), Coords).
+store_added(Md5):-
+  get_dateTime(Added),
+  store_triple(lwm-Md5, lwm:added, literal(type(xsd:dateTime,Added)), ap).
 
-store_archive_entry(Url, FromMd5, _):-
-  source_to_md5(Url, ToMd5),
-  store_triple(lwm-FromMd5, lwm:contains_entry, ToMd5, ap).
+
+%! store_archive_entry(
+%!   +ParentMd5:atom,
+%!   +EntryPath:atom,
+%!   +EntryProperties:list(nvpair)
+%! ) is det.
+
+store_archive_entry(ParentMd5, EntryPath, EntryProperties1):-
+  atomic_list_concat([ParentMd5,EntryPath], ' ', EntryMd5),
+  store_triple(lwm-EntryMd5, rdf:type, lwm:'ArchiveEntry', ap),
+  store_triple(lwm-EntryMd5, lwm:md5, literal(type(xsd:string,EntryMd5)), ap),
+  store_triple(lwm-EntryMd5, lwm:path, literal(type(xsd:string,EntryPath)),
+      ap),
+
+  store_triple(lwm-ParentMd5, rdf:type, lwm:'Archive', ap),
+  store_triple(lwm-ParentMd5, lwm:contains_entry, lwm-EntryMd5, ap),
+
+  selectchk(mtime(LastModified), EntryProperties1, EntryProperties2),
+  % @tbd Store as xsd:dateTime.
+  store_triple(lwm-EntryMd5, lwm:archive_last_modified,
+      literal(type(xsd:integer,LastModified)), ap),
+
+  selectchk(size(ByteSize), EntryProperties2, EntryProperties3),
+  store_triple(lwm-EntryMd5, lwm:archive_size,
+      literal(type(xsd:integer,ByteSize)), ap),
+
+  selectchk(filetype(ArchiveFileType), EntryProperties3, []),
+  store_triple(lwm-EntryMd5, lwm:archive_file_type,
+      literal(type(ArchiveFileType)), ap),
+
+  store_added(EntryMd5).
 
 
 %! store_finished(+Md5:atom) is det.
@@ -186,33 +216,13 @@ store_stream_properties(Url, Stream):-
   ).
 
 
-%! store_source(+Md5:atom, +Source) is det.
-% Store the given URL plus coordinate as one of the items
-% that is cleaned by the LOD Washing Machine.
-%
-% This includes the following properties:
-%   - LOD Washing Machine version
-%   - Start datetime of processing by the LOD Washing Machine.
-%   - Date and time at which the URL was added to the LOD Basket.
+%! store_url(+Md5:atom, +Url:url) is det.
 
-store_source(Md5Entry, Md5Url-EntryPath):- !,
-  store_triple(lwm-Md5Entry, rdf:type, 'ArchiveEntry', ap),
-  store_triple(lwm-Md5Entry, lwm:entry_path,
-      literal(type(xsd:string,EntryPath)), ap),
-  store_triple(lwm-Md5Url, lwm:has_archive_entry, lwm:Md5Entry, ap),
-  store_source0(Md5Entry).
-store_source(Md5, Url):-
-  store_triple(lwm-Md5, rdf:type, lwm:'LOD-URL', ap),
-  store_triple(lwm-Md5, lwm:url, Url, ap),
-  store_source0(Md5).
-
-store_source0(Md5):-
-  % Md5.
+store_url(Md5, Url):-
+  store_triple(lwm-Md5, rdf:type, lwm:'URL', ap),
   store_triple(lwm-Md5, lwm:md5, literal(type(xsd:string,Md5)), ap),
-
-  % Datetime at which the URL was added to the LOD Basket.
-  get_dateTime(Added),
-  store_triple(lwm-Md5, lwm:added, literal(type(xsd:dateTime,Added)), ap).
+  store_triple(lwm-Md5, lwm:url, Url, ap),
+  store_added(Md5).
 
 
 %! store_void_triples(+DataDocument:url) is det.
