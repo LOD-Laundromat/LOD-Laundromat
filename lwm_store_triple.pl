@@ -10,13 +10,20 @@
                   % ?ContentLength:nonneg
                   % ?ContentType:atom
                   % ?LastModified:nonneg
-    store_start/1, % +Md5:atom
     store_message/2, % +Md5:atom
                      % +Message:compound
+    store_number_of_triples/4, % +Md5:atom
+                               % +Path:atom
+                               % +ReadTriples:nonneg
+                               % +WrittenTriples:nonneg
+    store_start/1, % +Md5:atom
     store_status/2, % +Md5:atom
                     % +Status:or([boolean,compound]))
-    store_url/2 % +Md5:atom
-                % +Url:url
+    store_stream/2, % +Md5:atom
+                    % +Stream:stream
+    store_url/2, % +Md5:atom
+                 % +Url:url
+    store_void_triples/0
   ]
 ).
 
@@ -43,6 +50,7 @@ the stored triples are sent in a SPARQL Update request
 :- use_module(lwm(lod_basket)).
 :- use_module(lwm(lwm_db)).
 :- use_module(lwm(lwm_generics)).
+:- use_module(lwm(lwm_messages)).
 :- use_module(lwm(noRdf_store)).
 
 
@@ -184,16 +192,16 @@ store_message(Md5, Message):-
 
 
 %! store_number_of_triples(
-%!   +Url:url,
+%!   +Md5:atom,
 %!   +Path:atom,
 %!   +ReadTriples:nonneg,
 %!   +WrittenTriples:nonneg
 %! ) is det.
 
-store_number_of_triples(Url, Path, TIn, TOut):-
-  store_triple(Url, lwm:triples, literal(type(xsd:integer,TOut)), ap),
+store_number_of_triples(Md5, Path, TIn, TOut):-
+  store_triple(lwm-Md5, lwm:triples, literal(type(xsd:integer,TOut)), ap),
   TDup is TIn - TOut,
-  store_triple(Url, lwm:duplicates, literal(type(xsd:integer,TDup)), ap),
+  store_triple(lwm-Md5, lwm:duplicates, literal(type(xsd:integer,TDup)), ap),
   print_message(informational, rdf_ntriples_written(Path,TDup,TOut)).
 
 
@@ -204,16 +212,16 @@ store_status(Md5, Status):-
   store_triple(lwm-Md5, lwm:status, literal(type(xsd:string,String)), ap).
 
 
-%! store_stream_properties(+Url:url, +Stream:stream) is det.
+%! store_stream(+Md5:atom, +Stream:stream) is det.
 
-store_stream_properties(Url, Stream):-
+store_stream(Md5, Stream):-
   stream_property(Stream, position(Position)),
   forall(
     stream_position_data(Field, Position, Value),
     (
-      atomic_list_concat([stream,Field], '_', Name),
-      rdf_global_id(lwm:Name, Predicate),
-      store_triple(Url, Predicate, literal(type(xsd:integer,Value)), ap)
+      atomic_list_concat([stream,Field], '_', Property),
+      store_triple(lwm-Md5, lwm-Property, literal(type(xsd:integer,Value)),
+          ap)
     )
   ).
 
@@ -227,9 +235,9 @@ store_url(Md5, Url):-
   store_added(Md5).
 
 
-%! store_void_triples(+DataDocument:url) is det.
+%! store_void_triples is det.
 
-store_void_triples(DataDocument):-
+store_void_triples:-
   aggregate_all(
     set(P),
     (
@@ -243,6 +251,6 @@ store_void_triples(DataDocument):-
       member(P, Ps),
       rdf(S, P, O)
     ),
-    store_triple(S, P, O, DataDocument)
+    store_triple(S, P, O, ap)
   ).
 

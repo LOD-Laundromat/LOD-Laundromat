@@ -12,19 +12,19 @@ Informational messages for the LOD Washing Machine.
 
 
 
-prolog:message(found_void_lod_urls([])) --> !.
-prolog:message(found_void_lod_urls([H|T])) -->
+prolog:message(found_void_datadumps([])) --> !.
+prolog:message(found_void_datadumps([H|T])) -->
   ['[VoID] Found: ',H,nl],
-  prolog:message(found_void_lod_urls(T)).
+  prolog:message(found_void_datadumps(T)).
 
-prolog:message(lod_download_start(X,Url)) -->
+prolog:message(start_cleaning(X,Md5)) -->
   {flag(number_of_processed_files, X, X + 1)},
-  ['[START ~D] [~w]'-[X,Url]].
+  ['[START ~D] [~w]'-[X,Md5]].
 
-prolog:message(lod_downloaded_file(Url,X,Status,Messages)) -->
-  prolog_status(Status, Url),
-  prolog_messages(Messages),
-  ['[DONE ~D]'-[X]],
+prolog:message(end_cleaning(X,Md5,Status,Messages)) -->
+  status(Status),
+  messages(Messages),
+  ['[DONE ~D] [~w]'-[X,Md5]],
   [nl,nl].
 
 prolog:message(rdf_ntriples_written(File,TDup,TOut)) -->
@@ -45,22 +45,22 @@ number_of_duplicates_written(T) --> [' (~D dups)'-[T]].
 number_of_triples_written(0) --> !, [].
 number_of_triples_written(T) --> ['+~D'-[T]].
 
-prolog_status(false, _) --> !, ['false'].
-prolog_status(true, _) --> !, ['true'].
-prolog_status(exception(Error), _) -->
+status(false) --> !, ['false'].
+status(true) --> !, ['true'].
+status(exception(Error)) -->
   {print_message(error, Error)}.
 
-prolog_messages([]) --> !, [].
-prolog_messages([message(_,Kind,Lines)|T]) -->
+messages([]) --> !, [].
+messages([message(_,Kind,Lines)|T]) -->
   ['  [~w] '-[Kind]],
-  prolog_lines(Lines),
+  lines(Lines),
   [nl],
-  prolog_messages(T).
+  messages(T).
 
-prolog_lines([]) --> [].
-prolog_lines([H|T]) -->
+lines([]) --> [].
+lines([H|T]) -->
   [H],
-  prolog_lines(T).
+  lines(T).
 
 remote_file(remote(User,Machine,Path)) --> !,
   [User,'@',Machine,':',Path].

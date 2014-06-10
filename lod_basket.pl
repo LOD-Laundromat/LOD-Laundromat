@@ -4,6 +4,8 @@
     add_to_basket/1, % +Url:url
     get_cleaned/1, % -Md5:atom
     get_pending/1, % -Md5:atom
+    is_cleaned/1, % +Md5:atom
+    is_pending/1, % +Md5:atom
     remove_from_basket/1 % +Md5:atom
   ]
 ).
