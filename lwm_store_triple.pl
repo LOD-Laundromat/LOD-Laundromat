@@ -34,8 +34,6 @@ the stored triples are sent in a SPARQL Update request
 :- use_module(library(semweb/rdf_db)).
 
 :- use_module(pl(pl_log)).
-:- use_module(sparql(sparql_build)).
-:- use_module(sparql(sparql_ext)).
 :- use_module(xsd(xsd_dateTime_ext)).
 
 :- use_module(lwm(lwm_db)).

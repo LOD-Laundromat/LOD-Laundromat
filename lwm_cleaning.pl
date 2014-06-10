@@ -25,8 +25,7 @@ The cleaning process performed by the LOD Washing Machine.
 :- use_module(os(archive_ext)).
 :- use_module(os(remote_ext)).
 :- use_module(pl(pl_log)).
-:- use_module(sparql(sparql_build)).
-:- use_module(sparql(sparql_ext)).
+:- use_module(sparql(sparql_api)).
 :- use_module(void(void_db)). % XML namespace.
 :- use_module(xsd(xsd_dateTime_ext)).
 
@@ -34,6 +33,7 @@ The cleaning process performed by the LOD Washing Machine.
 :- use_module(plRdf_ser(rdf_serial)).
 
 :- use_module(lwm(lod_basket)).
+:- use_module(lwm(lwm_db)).
 :- use_module(lwm(lwm_generics)).
 :- use_module(lwm(lwm_store_triple)).
 
@@ -60,15 +60,11 @@ clean_datadoc(Md5):-
 %! clean_datadoc0(+Md5:atom) is det.
 
 clean_datadoc0(Md5):-
-  default_graph(DefaultGraph),
-  phrase(
-    sparql_formulate(_, DefaultGraph, [ap], select, true, [url,path],
+  once(lwm_endpoint(Endpoint)),
+  sparql_select(Endpoint, _, [lwm], true, [url,path],
         [rdf(Md5,lwm:path,var(path)),
          rdf(var(md5_url),lwm:has_entry,Md5),
-         rdf(var(md5_url),lwm:url,var(url))], inf, _, _),
-    Query
-  ),
-  sparql_query(cliopatria, Query, _, [Url,Path]), !,
+         rdf(var(md5_url),lwm:url,var(url))], inf, _, _, [Url,Path]), !,
   url_nested_file(data(.), Url, Dir1),
   absolute_file_name(
     Path,
@@ -79,13 +75,9 @@ clean_datadoc0(Md5):-
   directory_file_path(Dir2, data, File),
   clean_datadoc0(Md5, File).
 clean_datadoc0(Md5):-
-  default_graph(DefaultGraph),
-  phrase(
-    sparql_formulate(_, DefaultGraph, [ap], select, true, [url],
-        [rdf(Md5,lwm:url,var(url))], inf, _, _),
-    Query
-  ),
-  sparql_query(cliopatria, Query, _, [Url]), !,
+  once(lwm_endpoint(Endpoint)),
+  sparql_select(Endpoint, _, [lwm], true, [url],
+      [rdf(Md5,lwm:url,var(url))], inf, _, _, [Url]), !,
   url_nested_file(data(.), Url, Dir),
   make_directory_path(Dir),
   directory_file_path(Dir, data, File),

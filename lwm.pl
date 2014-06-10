@@ -70,7 +70,7 @@ lwm_basket(Request):-
 pending_urls -->
   {
     once(lwm_endpoint(Endpoint)),
-    sparql_select(Endpoint, _, [ap], true, [url,entry_path,added],
+    sparql_select(Endpoint, _, [lwm], true, [url,entry_path,added],
         [rdf(Md5Url,lwm:url,var(url)),
          rdf(Md5Url,lwm:has_entry,Md5Entry),
          rdf(Md5Entry,lwm:path,string(entry_path)),
