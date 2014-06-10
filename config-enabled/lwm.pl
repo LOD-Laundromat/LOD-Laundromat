@@ -21,7 +21,7 @@
 
 :- use_module(library(debug)).
 :- use_module(library(swi_ide)).
-:- debug(sparql_ext).
+:- debug(sparql_api).
 :- prolog_ide(debug_monitor).
 
 :- use_module(library(http/html_head)).
@@ -37,7 +37,7 @@ cliopatria:menu_item(600=places/plTabular, plTabular).
 :- ensure_loaded('../load').
 
 
-:- http_handler(cliopatria(plTabular), rdf_tabular, []).
+:- http_handler(cliopatria(plTabular), rdf_tabular, [id(plTabular)]).
 :- http_handler(cliopatria(lwm), lwm, []).
 :- http_handler(cliopatria(lwm/basket), lwm_basket, []).
 
@@ -75,4 +75,5 @@ user:body(lwm, Body) -->
   user:body(cliopatria(default), Body).
 
 :- use_module(lwm(lwm_start)).
+lwm_start:init_washing_machine.
 

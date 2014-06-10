@@ -22,7 +22,7 @@ Configuration settings for project LOD-Washing-Machine.
 
 :- use_module(lwm(lwm_generics)).
 
-:- xml_register_namespace(ap, 'http://www.wouterbeek.com/ap.owl#').
+:- xml_register_namespace(lwm, 'http://www.lwm.com/lwm.owl#').
 
 :- initialization(init_lwm).
 init_lwm:-

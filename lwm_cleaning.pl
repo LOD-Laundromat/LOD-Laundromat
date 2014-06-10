@@ -20,7 +20,6 @@ The cleaning process performed by the LOD Washing Machine.
 :- use_module(library(lists)).
 :- use_module(library(semweb/rdf_db)).
 
-:- use_module(ap(ap_db)). % XML namespace.
 :- use_module(generics(uri_ext)).
 :- use_module(http(http_download)).
 :- use_module(os(archive_ext)).
@@ -64,9 +63,9 @@ clean_datadoc0(Md5):-
   default_graph(DefaultGraph),
   phrase(
     sparql_formulate(_, DefaultGraph, [ap], select, true, [url,path],
-        [rdf(Md5,ap:path,var(path)),
-         rdf(var(md5_url),ap:has_entry,Md5),
-         rdf(var(md5_url),ap:url,var(url))], inf, _, _),
+        [rdf(Md5,lwm:path,var(path)),
+         rdf(var(md5_url),lwm:has_entry,Md5),
+         rdf(var(md5_url),lwm:url,var(url))], inf, _, _),
     Query
   ),
   sparql_query(cliopatria, Query, _, [Url,Path]), !,
@@ -83,7 +82,7 @@ clean_datadoc0(Md5):-
   default_graph(DefaultGraph),
   phrase(
     sparql_formulate(_, DefaultGraph, [ap], select, true, [url],
-        [rdf(Md5,ap:url,var(url))], inf, _, _),
+        [rdf(Md5,lwm:url,var(url))], inf, _, _),
     Query
   ),
   sparql_query(cliopatria, Query, _, [Url]), !,
@@ -230,9 +229,9 @@ download_lod_file(_, _, true).
 download_lod_file_transaction(Url, Read, UrlDir, Location):-
   % Guess the serialization format that is used in the given stream.
   rdf_guess_format([], Read, Location, Base, Format),
-  store_triple(Url, ap:serialization_format, literal(type(xsd:string,Format)), ap),
+  store_triple(Url, lwm:serialization_format, literal(type(xsd:string,Format)), ap),
   set_stream(Read, file_name(Base)),
-  %%%%store_triple(Url, ap:base_iri, Base, ap),
+  %%%%store_triple(Url, lwm:base_iri, Base, ap),
 
   % Load triples in any serialization format.
   rdf_load(

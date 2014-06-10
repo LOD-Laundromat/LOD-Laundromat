@@ -48,19 +48,19 @@ the stored triples are sent in a SPARQL Update request
 
 store_archive_entries(_, _, []):- !.
 store_archive_entries(Url, Md5, Coords):-
-  store_triple(ap-Md5, rdf:type, ap:'Archive', ap),
+  store_triple(lwm-Md5, rdf:type, lwm:'Archive', ap),
   maplist(store_archive_entry(Url, Md5), Coords).
 
 store_archive_entry(Url, FromMd5, _):-
   source_to_md5(Url, ToMd5),
-  store_triple(ap-FromMd5, ap:contains_entry, ToMd5, ap).
+  store_triple(lwm-FromMd5, lwm:contains_entry, ToMd5, ap).
 
 
 %! store_finished(+Md5:atom) is det.
 
 store_finished(Md5):-
   get_dateTime(Now),
-  store_triple(ap-Md5, ap:lwm_end, literal(type(xsd:dateTime,Now)), ap).
+  store_triple(lwm-Md5, lwm:lwm_end, literal(type(xsd:dateTime,Now)), ap).
 
 
 %! store_http(+Md5:atom, +HttpReplyHeaders:list(nvpair)) is det.
@@ -83,29 +83,29 @@ store_location_properties(Url1, Location, Url2):-
   ->
     Name = ArchiveEntry.get(name),
     atomic_list_concat([Url1,Name], '/', Url2),
-    store_triple(Url1, ap:archive_contains, Url2, ap),
-    ignore(store_triple(Url2, ap:format,
+    store_triple(Url1, lwm:archive_contains, Url2, ap),
+    ignore(store_triple(Url2, lwm:format,
         literal(type(xsd:string,ArchiveEntry.get(format))), ap)),
-    ignore(store_triple(Url2, ap:size,
+    ignore(store_triple(Url2, lwm:size,
         literal(type(xsd:integer,ArchiveEntry.get(size))), ap)),
-    store_triple(Url2, rdf:type, ap:'LOD-URL', ap)
+    store_triple(Url2, rdf:type, lwm:'LOD-URL', ap)
   ;
     Url2 = Url1
   ),
-  ignore(store_triple(Url2, ap:http_content_type,
+  ignore(store_triple(Url2, lwm:http_content_type,
       literal(type(xsd:string,Location.get(content_type))), ap)),
-  ignore(store_triple(Url2, ap:http_content_length,
+  ignore(store_triple(Url2, lwm:http_content_length,
       literal(type(xsd:integer,Location.get(content_length))), ap)),
-  ignore(store_triple(Url2, ap:http_last_modified,
+  ignore(store_triple(Url2, lwm:http_last_modified,
       literal(type(xsd:string,Location.get(last_modified))), ap)),
-  store_triple(Url2, ap:url, literal(type(xsd:string,Location.get(url))), ap),
+  store_triple(Url2, lwm:url, literal(type(xsd:string,Location.get(url))), ap),
 
   (
     location_base(Location, Base),
     file_name_extension(_, Ext, Base),
     Ext \== ''
   ->
-    store_triple(Url2, ap:file_extension, literal(type(xsd:string,Ext)), ap)
+    store_triple(Url2, lwm:file_extension, literal(type(xsd:string,Ext)), ap)
   ;
     true
   ).
@@ -117,11 +117,11 @@ filter(filter(_)).
 store_lwm_start(Md5):-
   % Start date of processing by the LOD Washing Machine.
   get_dateTime(Now),
-  store_triple(ap-Md5, ap:lwm_start, literal(type(xsd:dateTime,Now)), ap),
+  store_triple(lwm-Md5, lwm:lwm_start, literal(type(xsd:dateTime,Now)), ap),
   
   % LOD Washing Machine version.
   lwm_version(Version),
-  store_triple(Md5, ap:lwm_version, literal(type(xsd:integer,Version)), ap),
+  store_triple(Md5, lwm:lwm_version, literal(type(xsd:integer,Version)), ap),
   
   post_rdf_triples.
 
@@ -130,7 +130,7 @@ store_lwm_start(Md5):-
 
 store_message(Md5, Message):-
   with_output_to(atom(String), write_canonical_blobs(Message)),
-  store_triple(ap-Md5, ap:message, literal(type(xsd:string,String)), ap).
+  store_triple(lwm-Md5, lwm:message, literal(type(xsd:string,String)), ap).
 
 
 %! store_number_of_triples(
@@ -141,9 +141,9 @@ store_message(Md5, Message):-
 %! ) is det.
 
 store_number_of_triples(Url, Path, TIn, TOut):-
-  store_triple(Url, ap:triples, literal(type(xsd:integer,TOut)), ap),
+  store_triple(Url, lwm:triples, literal(type(xsd:integer,TOut)), ap),
   TDup is TIn - TOut,
-  store_triple(Url, ap:duplicates, literal(type(xsd:integer,TDup)), ap),
+  store_triple(Url, lwm:duplicates, literal(type(xsd:integer,TDup)), ap),
   print_message(informational, rdf_ntriples_written(Path,TDup,TOut)).
 
 
@@ -151,7 +151,7 @@ store_number_of_triples(Url, Path, TIn, TOut):-
 
 store_status(Md5, Status):-
   with_output_to(atom(String), write_canonical_blobs(Status)),
-  store_triple(ap-Md5, ap:status, literal(type(xsd:string,String)), ap).
+  store_triple(lwm-Md5, lwm:status, literal(type(xsd:string,String)), ap).
 
 
 %! store_stream_properties(+Url:url, +Stream:stream) is det.
@@ -162,7 +162,7 @@ store_stream_properties(Url, Stream):-
     stream_position_data(Field, Position, Value),
     (
       atomic_list_concat([stream,Field], '_', Name),
-      rdf_global_id(ap:Name, Predicate),
+      rdf_global_id(lwm:Name, Predicate),
       store_triple(Url, Predicate, literal(type(xsd:integer,Value)), ap)
     )
   ).
@@ -178,19 +178,19 @@ store_stream_properties(Url, Stream):-
 %   - Date and time at which the URL was added to the LOD Basket.
 
 store_source(Md5Entry, Md5Url-EntryPath):- !,
-  store_triple(ap-Md5Entry, rdf:type, 'ArchiveEntry', ap),
-  store_triple(ap-Md5Entry, ap:entry_path, literal(type(xsd:string,EntryPath)), ap),
-  store_triple(ap-Md5Url, ap:has_archive_entry, ap:Md5Entry, ap),
+  store_triple(lwm-Md5Entry, rdf:type, 'ArchiveEntry', ap),
+  store_triple(lwm-Md5Entry, lwm:entry_path, literal(type(xsd:string,EntryPath)), ap),
+  store_triple(lwm-Md5Url, lwm:has_archive_entry, lwm:Md5Entry, ap),
   store_source0(Md5Entry).
 store_source(Md5, Url):-
-  store_triple(ap-Md5, rdf:type, ap:'LOD-URL', ap),
-  store_triple(ap-Md5, ap:url, Url, ap),
+  store_triple(lwm-Md5, rdf:type, lwm:'LOD-URL', ap),
+  store_triple(lwm-Md5, lwm:url, Url, ap),
   store_source0(Md5).
 
 store_source0(Md5):-
   % Datetime at which the URL was added to the LOD Basket.
   get_dateTime(Added),
-  store_triple(ap-Md5, ap:added, literal(type(xsd:dateTime,Added)), ap).
+  store_triple(lwm-Md5, lwm:added, literal(type(xsd:dateTime,Added)), ap).
 
 
 %! store_void_triples(+DataDocument:url) is det.

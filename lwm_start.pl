@@ -17,7 +17,7 @@ See module [lwm_start_threaded] for the threaded version of this module.
 :- use_module(lwm(lwm_cleaning)).
 :- use_module(lwm(lwm_generics)).
 
-:- initialization(run_washing_machine).
+%%%%:- initialization(run_washing_machine).
 
 
 

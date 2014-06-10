@@ -54,8 +54,8 @@ pending_source(Md5):-
 pending_source_under_mutex(Md5):-
   once(lwm_endpoint(Endpoint)),
   sparql_select(Endpoint, _, [ap], true, [md5],
-      [rdf(var(md5),ap:added,var(added)),
-       not([rdf(var(md5),ap:lwm_start,var(start))])],
+      [rdf(var(md5),lwm:added,var(added)),
+       not([rdf(var(md5),lwm:lwm_start,var(start))])],
       1, 0, _, [row(Md5)]).
 
 
@@ -67,7 +67,7 @@ current_processed_source(Md5):-
 processed_source_under_mutex(Md5):-
   once(lwm_endpoint(Endpoint)),
   sparql_select(Endpoint, _, [ap], true, [md5],
-      [rdf(var(md5),ap:lwm_end,_)], 1, 0, _, [row(Md5)]).
+      [rdf(var(md5),lwm:lwm_end,_)], 1, 0, _, [row(Md5)]).
 
 
 %! is_pending_source(+Source) is semidet.
@@ -75,15 +75,15 @@ processed_source_under_mutex(Md5):-
 is_pending_source(Url-EntryPath):- !,
   once(lwm_endpoint(Endpoint)),
   sparql_ask(Endpoint, _, [ap],
-      [rdf(var(md5_url),ap:url,Url),
-       rdf(var(md5_url),ap:has_entry,var(md5_entry)),
-       rdf(var(md5_entry),ap:path,string(EntryPath)),
-       rdf(var(md5_entry),ap:added,var(added))]).
+      [rdf(var(md5_url),lwm:url,Url),
+       rdf(var(md5_url),lwm:has_entry,var(md5_entry)),
+       rdf(var(md5_entry),lwm:path,string(EntryPath)),
+       rdf(var(md5_entry),lwm:added,var(added))]).
 is_pending_source(Url):-
   once(lwm_endpoint(Endpoint)),
   sparql_ask(Endpoint, _, [ap],
-      [rdf(var(md5),ap:url,Url),
-       rdf(var(md5),ap:added,var(added))]).
+      [rdf(var(md5),lwm:url,Url),
+       rdf(var(md5),lwm:added,var(added))]).
 
 
 %! is_processed_source(+Source) is semidet.
@@ -91,15 +91,15 @@ is_pending_source(Url):-
 is_processed_source(Url-EntryPath):- !,
   once(lwm_endpoint(Endpoint)),
   sparql_ask(Endpoint, _, [ap],
-      [rdf(var(md5_url),ap:url,Url),
-       rdf(var(md5_url),ap:has_entry,var(md5_entry)),
-       rdf(var(md5_entry),ap:path,string(EntryPath)),
-       rdf(var(md5_entry),ap:lwm_end,var(end))]).
+      [rdf(var(md5_url),lwm:url,Url),
+       rdf(var(md5_url),lwm:has_entry,var(md5_entry)),
+       rdf(var(md5_entry),lwm:path,string(EntryPath)),
+       rdf(var(md5_entry),lwm:lwm_end,var(end))]).
 is_processed_source(Url):-
   once(lwm_endpoint(Endpoint)),
   sparql_ask(Endpoint, _, [ap],
-      [rdf(var(md5),ap:url,Url),
-       rdf(var(md5),ap:lwm_end,var(end))]).
+      [rdf(var(md5),lwm:url,Url),
+       rdf(var(md5),lwm:lwm_end,var(end))]).
 
 
 % remove_source_from_basket(+Md5:atom) is det.

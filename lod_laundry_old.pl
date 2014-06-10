@@ -171,7 +171,7 @@ prolog:message(tick) -->
 % Enumerates the LOD URLs that have been washed.
 
 lod_url(Url):-
-  rdfs_individual_of(Url, ap:'LOD-URL').
+  rdfs_individual_of(Url, lwm:'LOD-URL').
 
 
 %! lod_url_dict(+Url:url, -Dict:dict) is det.
@@ -213,20 +213,20 @@ lod_urls -->
 
 %Archive.
 lod_url_property(Url, archiveEntry_size, Size):-
-  once(rdf_datatype(Url, ap:size, Size, xsd:integer, messages)).
+  once(rdf_datatype(Url, lwm:size, Size, xsd:integer, messages)).
 lod_url_property(Url, fromArchive, Archive):-
-  once(rdf(Archive, ap:archive_contains, Url)).
+  once(rdf(Archive, lwm:archive_contains, Url)).
 lod_url_property(Url1, hasArchiveEntry, Urls):-
   findall(
     Url2,
-    rdf(Url1, ap:archive_contains, Url2),
+    rdf(Url1, lwm:archive_contains, Url2),
     Urls
   ),
   Urls \== [].
 
 % Base IRI.
 lod_url_property(Url, baseIri, Base):-
-  rdf(Url, ap:base_iri, Base).
+  rdf(Url, lwm:base_iri, Base).
 
 % RDF.
 lod_url_property(Url, rdf, Dict):-
@@ -239,17 +239,17 @@ lod_url_property(Url, rdf, Dict):-
   dict_pairs(Dict, rdf, Pairs).
 
 rdf_property(Url, duplicates, Duplicates):-
-  once(rdf_datatype(Url, ap:duplicates, Duplicates, xsd:integer, messages)).
+  once(rdf_datatype(Url, lwm:duplicates, Duplicates, xsd:integer, messages)).
 rdf_property(Url, triples, Triples):-
-  once(rdf_datatype(Url, ap:triples, Triples, xsd:integer, messages)).
+  once(rdf_datatype(Url, lwm:triples, Triples, xsd:integer, messages)).
 rdf_property(Url, serializationFormat, Format):-
-  once(rdf_string(Url, ap:serialization_format, Format, messages)).
+  once(rdf_string(Url, lwm:serialization_format, Format, messages)).
 % Syntax errors
 rdf_property(Url, syntaxErrors, Errors):-
   aggregate_all(
     set(Error2),
     (
-      rdf_string(Url, ap:message, Error1, messages),
+      rdf_string(Url, lwm:message, Error1, messages),
       atom_to_term(Error1, message(Term,_,Lines), _),
       \+ Term = error(_,_),
       with_output_to(
@@ -274,7 +274,7 @@ lod_url_property(Url, httpResponse, Dict):-
 
 % File.
 lod_url_property(Url, fileExtension, FileExtension):-
-  once(rdf_string(Url, ap:file_extension, FileExtension, messages)).
+  once(rdf_string(Url, lwm:file_extension, FileExtension, messages)).
 
 % MD5
 lod_url_property(Url, md5, Md5):-
@@ -292,7 +292,7 @@ lod_url_property(Url, exceptions, Dict):-
   dict_pairs(Dict, exceptions, Pairs2).
 
 kind_exceptions(Url, Kind, Exception):-
-  once(rdf_string(Url, ap:exception, Atom, messages)),
+  once(rdf_string(Url, lwm:exception, Atom, messages)),
   atom_to_term(Atom, Term, _),
   kind_exception(Term, Kind, Exception).
 
@@ -304,7 +304,7 @@ kind_exception(error(type_error(xml_dom,DOM),_), syntax, Atom):-
 
 % Status?
 lod_url_property(Url, status, Status):-
-  once(rdf_string(Url, ap:status, Status, messages)).
+  once(rdf_string(Url, lwm:status, Status, messages)).
 
 % Stream?
 lod_url_property(Url, stream, Dict):-
@@ -317,21 +317,21 @@ lod_url_property(Url, stream, Dict):-
   dict_pairs(Dict, stream, Pairs).
 
 stream_property(Url, byteCount, ByteCount):-
-  once(rdf_datatype(Url, ap:stream_byte_count, ByteCount, xsd:integer, messages)).
+  once(rdf_datatype(Url, lwm:stream_byte_count, ByteCount, xsd:integer, messages)).
 stream_property(Url, charCount, CharCount):-
-  once(rdf_datatype(Url, ap:stream_char_count, CharCount, xsd:integer, messages)).
+  once(rdf_datatype(Url, lwm:stream_char_count, CharCount, xsd:integer, messages)).
 stream_property(Url, lineCount, LineCount):-
-  once(rdf_datatype(Url, ap:stream_line_count, LineCount, xsd:integer, messages)).
+  once(rdf_datatype(Url, lwm:stream_line_count, LineCount, xsd:integer, messages)).
 
 % URL
 lod_url_property(Url, url, Url).
 
 http_response_property(Url, contentLength, ContentLength):-
-  once(rdf_datatype(Url, ap:http_content_length, ContentLength, xsd:integer, messages)).
+  once(rdf_datatype(Url, lwm:http_content_length, ContentLength, xsd:integer, messages)).
 http_response_property(Url, contentType, ContentType):-
-  once(rdf_string(Url, ap:http_content_type, ContentType, messages)).
+  once(rdf_string(Url, lwm:http_content_type, ContentType, messages)).
 http_response_property(Url, lastModified, LastModified):-
-  once(rdf_string(Url, ap:http_last_modified, LastModified, messages)).
+  once(rdf_string(Url, lwm:http_last_modified, LastModified, messages)).
 
 
 %! ckan_resources// is det.
@@ -428,7 +428,7 @@ http_status_codes(Triples):-
   aggregate_all(
     set(Status-Url),
     (
-      rdf_string(Url, ap:status, S, messages),
+      rdf_string(Url, lwm:status, S, messages),
       atom_to_term(S, T, _),
       T = error(_,context(_,status(Status,_)))
     ),
