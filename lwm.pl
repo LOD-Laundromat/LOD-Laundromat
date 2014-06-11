@@ -14,6 +14,7 @@
 */
 
 :- use_module(library(http/html_write)).
+:- use_module(library(http/http_dirindex)).
 :- use_module(library(http/http_dispatch)).
 :- use_module(library(http/http_json)).
 :- use_module(library(http/http_parameters)).
@@ -22,7 +23,6 @@
 
 :- use_module(generics(row_ext)).
 :- use_module(generics(typecheck)).
-:- use_module(sparql(sparql_api)).
 
 :- use_module(plHtml(html)).
 :- use_module(plHtml(html_pl_term)).
@@ -34,11 +34,7 @@
 
 :- dynamic(url_md5_translation/2).
 
-:- http_handler(
-  cliopatria(lwm/clean),
-  serve_files_in_directory(data),
-  [prefix]
-).
+:- http_handler(cliopatria(data), serve_files_in_directory(data), [prefix]).
 
 
 
