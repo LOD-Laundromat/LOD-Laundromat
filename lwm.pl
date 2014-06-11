@@ -40,7 +40,7 @@
 
 % Response to requesting a JSON description of all LOD URL.
 lwm(_, HtmlStyle):-
-  reply_html_page(HtmlStyle, title('LOD Laundry'), pending_urls).
+  reply_html_page(HtmlStyle, title('LOD Laundry'), \sources).
 
 
 lwm_basket(Request):-
@@ -62,22 +62,23 @@ lwm_basket(Request):-
   ).
 
 
-pending_urls -->
+sources -->
   {
     once(lwm_endpoint(Endpoint)),
-    lwm_sparql_select(Endpoint, _, [lwm], true, [md5res-md5,added],
+    lwm_sparql_select(Endpoint, _, [lwm], true, [md5res,md5,added,start,end],
         [rdf(var(md5res),lwm:added,var(added)),
-         not([rdf(var(md5res),lwm:end,var(end))]),
-         not([rdf(var(md5res),lwm:start,var(start))]),
+         optional([rdf(var(md5res),lwm:end,var(end))]),
+         optional([rdf(var(md5res),lwm:start,var(start))]),
          rdf(var(md5res),lwm:md5,var(md5))],
-        inf, _, _, Rows1),
-    maplist(row_to_list, Rows1, Rows2)
+        inf, _, _, Rows)
   },
   rdf_html_table(
     [header_column(true),header_row(true),indexed(true)],
-    html('The pending LOD sources.'),
-    [['Source','Time added']|Rows2]
+    html('Overview of LOD sources.'),
+    [['Source','Time added','Time started','Time ended']|Rows]
   ).
+
+
 
 lod_laundry_cell(Term) -->
   {

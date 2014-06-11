@@ -15,7 +15,7 @@
 
 
 :- http_handler(cliopatria(plTabular), rdf_tabular, [id(plTabular)]).
-:- http_handler(cliopatria(lwm), lwm, []).
+:- http_handler(cliopatria(lwm), lwm, [prefix]).
 :- http_handler(cliopatria(basket), lwm_basket, []).
 
 
