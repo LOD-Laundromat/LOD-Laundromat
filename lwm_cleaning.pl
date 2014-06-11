@@ -129,7 +129,13 @@ clean_file(Md5, File1):-
     memberchk(format(raw),EntryProperties)
   ->
     file_alternative(File1, _, dirty, _, File2),
-    mv(File1, File2),
+    (
+      File1 == File2
+    ->
+      true
+    ;
+      mv(File1, File2)
+    ),
     clean_datafile(Md5, File2),
     % :-(
     delete_file(File2)

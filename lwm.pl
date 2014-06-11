@@ -80,7 +80,7 @@ sources -->
          optional([rdf(var(md5res),lwm:end,var(end))]),
          optional([rdf(var(md5res),lwm:start,var(start))]),
          rdf(var(md5res),lwm:md5,var(md5))],
-        inf, _, _, Rows)
+        250, _, _, Rows)
   },
   rdf_html_table(
     [header_column(true),header_row(true),indexed(true)],
