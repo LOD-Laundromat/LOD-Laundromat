@@ -46,8 +46,8 @@ init_lwm:-
   sparql_register_endpoint(virtuoso, Url3).
 
 
-lwm_endpoint(localhost).
-%lwm_endpoint(cliopatria).
+%lwm_endpoint(localhost).
+lwm_endpoint(cliopatria).
 %lwm_endpoint(virtuoso).
 
 
