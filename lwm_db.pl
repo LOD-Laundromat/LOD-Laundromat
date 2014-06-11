@@ -33,13 +33,13 @@ init_lwm:-
   sparql_register_endpoint(localhost, query, Url11),
   uri_components(Url12, uri_components(http,'localhost:3040','/sparql/update',Search1,_)),
   sparql_register_endpoint(localhost, update, Url12),
-  
+
   % Cliopatria.
-  uri_components(Url21, uri_components(http,'lodlaundry.wbeek.ops.few.vu.nl','/sparql',Search1,_)),
+  uri_components(Url21, uri_components(http,'lodlaundry.wbeek.ops.few.vu.nl','/sparql/',Search1,_)),
   sparql_register_endpoint(cliopatria, query, Url21),
   uri_components(Url22, uri_components(http,'lodlaundry.wbeek.ops.few.vu.nl','/sparql/update',Search1,_)),
   sparql_register_endpoint(cliopatria, update, Url22),
-  
+
   % Virtuoso.
   uri_query_components(Search3, ['using-graph-uri'=DefaultGraph]),
   uri_components(Url3, uri_components(http,'virtuoso.lodlaundromat.ops.few.vu.nl','/sparql',Search3,_)),
