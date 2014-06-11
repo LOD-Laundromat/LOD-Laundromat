@@ -4,7 +4,23 @@
     lwm_endpoint/1, % ?Endpoint:atom
     lwm_endpoint/2, % ?Endpoint:atom
                     % -Options:list(nvpair)
-    lwm_endpoint_authentication/1 % -Authentication:list(nvpair)
+    lwm_endpoint_authentication/1, % -Authentication:list(nvpair)
+    lwm_sparql_ask/4, % +Endpoint:atom
+                      % ?Regime:oneof([owl])
+                      % +Prefixes:list(atom)
+                      % +Bbps:or([compound,list(compound)])
+    lwm_sparql_select/10, % +Endpoint:atom
+                          % ?Regime:oneof([owl])
+                          % +Prefixes:list(atom)
+                          % +Distinct:boolean
+                          % +Variables:list(atom)
+                          % +BGPs:or([compound,list(compound)])
+                          % ?Limit:or([nonneg,oneof([inf])])
+                          % ?Offset:nonneg
+                          % ?Order:pair(oneof([asc]),list(atom))
+                          % -Result:list(list)
+    lwm_sparql_update/2 % +Endpoint:atom
+                        % +Triples:list(list(or([bnode,iri,literal])))
   ]
 ).
 
@@ -19,6 +35,7 @@ Configuration settings for project LOD-Washing-Machine.
 :- use_module(library(base64)).
 :- use_module(library(uri)).
 
+:- use_module(sparql(sparql_api)).
 :- use_module(sparql(sparql_db)).
 :- use_module(xml(xml_namespace)).
 
@@ -70,4 +87,42 @@ lwm_endpoint_authentication([request_header('Authorization'=Authentication)]):-
 password(lwmlwm).
 
 user(lwm).
+
+
+lwm_sparql_ask(Endpoint, Regime, Prefixes, Bbps):-
+  lwm_endpoint(Endpoint, Options),
+  sparql_ask(Endpoint, Regime, Prefixes, Bbps, Options).
+
+
+lwm_sparql_select(
+  Endpoint,
+  Regime,
+  Prefixes,
+  Distinct,
+  Variables,
+  BGPs,
+  Limit,
+  Offset,
+  Order,
+  Result
+):-
+  lwm_endpoint(Endpoint, Options),
+  sparql_select(
+    Endpoint,
+    Regime,
+    Prefixes,
+    Distinct,
+    Variables,
+    BGPs,
+    Limit,
+    Offset,
+    Order,
+    Result,
+    Options
+  ).
+
+
+lwm_sparql_update(Endpoint, Triples):-
+  lwm_endpoint(Endpoint, Options),
+  sparql_update(Endpoint, Triples, Options).
 

@@ -55,7 +55,7 @@ add_to_basket(Url):-
 get_cleaned(Md5):-
   with_mutex(lod_basket, (
     once(lwm_endpoint(Endpoint)),
-    sparql_select(Endpoint, _, [lwm], true, [md5],
+    lwm_sparql_select(Endpoint, _, [lwm], true, [md5],
         [rdf(var(md5res),lwm:end,var(end)),
          rdf(var(md5res),lwm:md5,var(md5))], 1, 0, _, [[Literal]]),
     rdf_literal(Literal, Md5, _)
@@ -68,7 +68,7 @@ get_pending(Md5):-
   with_mutex(lod_basket, (
     once(lwm_endpoint(Endpoint)),
     catch(
-      sparql_select(Endpoint, _, [lwm], true, [md5],
+      lwm_sparql_select(Endpoint, _, [lwm], true, [md5],
           [rdf(var(md5res),lwm:added,var(added)),
            not([rdf(var(md5res),lwm:end,var(end))]),
            not([rdf(var(md5res),lwm:start,var(start))]),
@@ -86,7 +86,7 @@ get_pending(Md5):-
 is_cleaned(Md5):-
   with_mutex(lod_basket, (
     once(lwm_endpoint(Endpoint)),
-    sparql_ask(Endpoint, _, [lwm],
+    lwm_sparql_ask(Endpoint, _, [lwm],
         [rdf(var(md5),lwm:md5,literal(xsd:string,Md5)),
          rdf(var(md5),lwm:end,var(end))])
   )).
@@ -97,7 +97,7 @@ is_cleaned(Md5):-
 is_pending(Md5):-
   with_mutex(lod_basket, (
     once(lwm_endpoint(Endpoint)),
-    sparql_ask(Endpoint, _, [lwm],
+    lwm_sparql_ask(Endpoint, _, [lwm],
         [rdf(var(md5),lwm:md5,literal(xsd:string,Md5)),
          rdf(var(md5),lwm:added,var(added)),
          not([rdf(var(md5),lwm:start,var(start))])])

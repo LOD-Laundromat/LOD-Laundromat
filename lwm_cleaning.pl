@@ -66,7 +66,7 @@ clean(Md5):-
 % The given Md5 denote an archive entry.
 clean_md5(Md5):-
   once(lwm_endpoint(Endpoint)),
-  sparql_select(Endpoint, _, [lwm], true, [md5,path],
+  lwm_sparql_select(Endpoint, _, [lwm], true, [md5,path],
         [rdf(var(md5ent),lwm:md5,literal(xsd:string,Md5)),
          rdf(var(md5ent),lwm:path,var(path)),
          rdf(var(md5url),lwm:contains_entry,var(md5ent)),
@@ -87,9 +87,10 @@ clean_md5(Md5):-
 % The given Md5 denotes a URL.
 clean_md5(Md5):-
   once(lwm_endpoint(Endpoint)),
-  sparql_select(Endpoint, _, [lwm], true, [url],
+  lwm_sparql_select(Endpoint, _, [lwm], true, [url],
       [rdf(var(md5res),lwm:url,var(url)),
-       rdf(var(md5res),lwm:md5,literal(xsd:string,Md5))],inf, _, _, [[Url]]), !,
+       rdf(var(md5res),lwm:md5,literal(xsd:string,Md5))],
+      inf, _, _, [[Url]]), !,
 
   % Create a directory for the dirty version of the given Md5.
   md5_to_dir(Md5, Md5Dir),
