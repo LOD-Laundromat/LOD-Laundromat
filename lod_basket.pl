@@ -27,7 +27,6 @@ $ curl --data "url=http://acm.rkbexplorer.com/id/998550" http://lodlaundry.wbeek
 :- use_module(plRdf_term(rdf_literal)).
 
 :- use_module(lwm(lwm_db)).
-:- use_module(lwm(lwm_generics)).
 :- use_module(lwm(lwm_store_triple)).
 
 
