@@ -1,4 +1,9 @@
-:- module(lwm_start, []).
+:- module(
+  lwm_start,
+  [
+    run_washing_machine/0
+  ]
+).
 
 /** <module> LOD Washing Machine: start
 

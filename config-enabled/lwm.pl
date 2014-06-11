@@ -1,35 +1,17 @@
 :- module(conf_lwm, []).
 
-:- use_module(library(ansi_term)).
-:- use_module(library(portray_text)).
-:- portray_text(true).
-:- set_prolog_flag(backquoted_string, true).
-:- set_prolog_flag(
-    toplevel_print_options,
-    [backquoted_string(true),
-     max_depth(9999),
-     portray(true),
-     spacing(next_argument)]
-  ).
-:- set_prolog_flag(
-    debugger_print_options,
-    [backquoted_string(true),
-     max_depth(9999),
-     portray(true),
-     spacing(next_argument)]
-  ).
-
 :- use_module(library(http/html_head)).
 :- use_module(library(http/http_dispatch)).
 
 
 :- use_module(cliopatria(hooks)).
+   cliopatria:menu_item(500=places/lwm, 'LOD Washing Machine').
+   cliopatria:menu_item(600=places/plTabular, plTabular).
 
-cliopatria:menu_item(500=places/lwm, 'LOD Washing Machine').
-cliopatria:menu_item(600=places/plTabular, plTabular).
 
-
+:- ensure_loaded('../debug').
 :- ensure_loaded('../load').
+:- use_module(lwm(lwm)).
 
 
 :- http_handler(cliopatria(plTabular), rdf_tabular, [id(plTabular)]).
@@ -37,13 +19,8 @@ cliopatria:menu_item(600=places/plTabular, plTabular).
 :- http_handler(cliopatria(lwm/basket), lwm_basket, []).
 
 
-:- dynamic(user:file_search_path/2).
-:- multifile(user:file_search_path/2).
-   user:file_search_path(css, lwm('web/css')).
 
-
-
-% PL_TABULAR
+% plTabular
 
 :- use_module(plTabular(rdf_tabular)).
 rdf_tabular(Request):-
@@ -58,7 +35,7 @@ user:body(plTabular, Body) -->
 
 
 
-% LOD-WASHING-MACHINE
+% LOD-Washing-Machine
 
 :- use_module(lwm(lwm)).
 lwm(Request):-

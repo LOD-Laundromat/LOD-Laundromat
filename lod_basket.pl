@@ -72,7 +72,7 @@ get_pending(Md5):-
     once(lwm_endpoint(Endpoint)),
     sparql_select(Endpoint, _, [lwm], true, [md5],
         [rdf(var(md5res),lwm:added,var(added)),
-	 not([rdf(var(md5res),lwm:end,var(end))]),
+         not([rdf(var(md5res),lwm:end,var(end))]),
          not([rdf(var(md5res),lwm:start,var(start))]),
          rdf(var(md5res),lwm:md5,var(md5))],
         1, 0, _, [[Literal]]),
@@ -106,7 +106,7 @@ is_pending(Md5):-
 % remove_from_basket(-Md5:atom) is det.
 
 remove_from_basket(Md5):-
-  with_mutex(lod_baqsket, (
+  with_mutex(lod_basket, (
     get_pending(Md5),
     store_start(Md5)
   )).

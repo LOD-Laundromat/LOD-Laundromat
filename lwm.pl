@@ -22,12 +22,14 @@
 :- use_module(library(semweb/rdf_db)).
 :- use_module(library(uri)).
 
+:- use_module(generics(row_ext)).
 :- use_module(generics(typecheck)).
 :- use_module(sparql(sparql_api)).
 
 :- use_module(plHtml(html)).
 :- use_module(plHtml(html_pl_term)).
-:- use_module(plHtml(html_table)).
+
+:- use_module(plTabular(rdf_html_table)).
 
 :- use_module(lwm(lod_basket)).
 :- use_module(lwm(lwm_db)).
@@ -70,16 +72,19 @@ lwm_basket(Request):-
 pending_urls -->
   {
     once(lwm_endpoint(Endpoint)),
-    sparql_select(Endpoint, _, [lwm], true, [url,entry_path,added],
-        [rdf(var(md5url),lwm:url,var(url)),
-         rdf(var(md5url),lwm:contains_entry,var(md5ent)),
-         rdf(var(md5ent),lwm:path,literal(xsd:string,entry_path)),
-         rdf(var(md5ent),lwm:added,var(added))], inf, _, _, Rows)
+gtrace,
+    sparql_select(Endpoint, _, [lwm], true, [md5res-md5,added],
+        [rdf(var(md5res),lwm:added,var(added)),
+         not([rdf(var(md5res),lwm:end,var(end))]),
+         not([rdf(var(md5res),lwm:start,var(start))]),
+         rdf(var(md5res),lwm:md5,var(md5))],
+        inf, _, _, Rows1),
+    maplist(row_to_list, Rows1, Rows2)
   },
-  html_table(
+  rdf_html_table(
     [header_column(true),header_row(true),indexed(true)],
     html('The pending LOD sources.'),
-    [['Url','Entry path','Time added']|Rows]
+    [['Source','Time added']|Rows2]
   ).
 
 lod_laundry_cell(Term) -->
