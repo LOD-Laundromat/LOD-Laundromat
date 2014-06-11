@@ -41,7 +41,6 @@ the stored triples are sent in a SPARQL Update request
 */
 
 :- use_module(library(aggregate)).
-:- use_module(library(apply)).
 :- use_module(library(lists)).
 :- use_module(library(semweb/rdf_db)).
 
@@ -49,8 +48,6 @@ the stored triples are sent in a SPARQL Update request
 :- use_module(pl(pl_log)).
 :- use_module(xsd(xsd_dateTime_ext)).
 
-:- use_module(lwm(lod_basket)).
-:- use_module(lwm(lwm_db)).
 :- use_module(lwm(lwm_generics)).
 :- use_module(lwm(lwm_messages)).
 :- use_module(lwm(noRdf_store)).
@@ -194,11 +191,11 @@ store_status(Md5, Status):-
 
 store_stream(Md5, Stream):-
   stream_property(Stream, position(Position)),
-  
+
   stream_position_data(byte_count, Position, ByteCount),
   store_triple(lwm-Md5, lwm:byte_count, literal(type(xsd:integer,ByteCount)),
       ap),
-  
+
   stream_position_data(char_count, Position, CharCount),
   store_triple(lwm-Md5, lwm:char_count, literal(type(xsd:integer,CharCount)),
       ap),
