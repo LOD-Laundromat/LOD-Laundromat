@@ -15,14 +15,13 @@
 
 :- use_module(library(http/html_write)).
 :- use_module(library(http/http_cors)).
-:- use_module(library(http/http_dirindex)).
 :- use_module(library(http/http_dispatch)).
 :- use_module(library(http/http_json)).
 :- use_module(library(http/http_parameters)).
 :- use_module(library(http/http_server_files)).
+:- use_module(library(http/http_session)).
 :- use_module(library(uri)).
 
-:- use_module(generics(row_ext)).
 :- use_module(generics(typecheck)).
 
 :- use_module(plHtml(html)).
