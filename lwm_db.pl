@@ -3,7 +3,7 @@
   [
     lwm_endpoint/1, % ?Endpoint:atom
     lwm_endpoint/2, % ?Endpoint:atom
-                    % -AuthenticationOptions:list(nvpair)
+                    % -Options:list(nvpair)
     lwm_endpoint_authentication/1 % -Authentication:list(nvpair)
   ]
 ).
@@ -51,11 +51,11 @@ init_lwm:-
 lwm_endpoint(Endpoint):-
   lwm_endpoint(Endpoint, _).
 
-%lwm_endpoint(localhost, Options):-
-%  lwm_endpoint_authentication(Options).
-lwm_endpoint(virtuoso, []).
-%lwm_endpoint(cliopatria, Options).
-%  lwm_endpoint_authentication(Options).
+%lwm_endpoint(localhost, [update_method(direct)|AuthOpts]):-
+%  lwm_endpoint_authentication(AuthOpts).
+lwm_endpoint(virtuoso, [update_method(url_encoded)]).
+%lwm_endpoint(cliopatria, [update_method(direct)|AuthOpts]):-
+%  lwm_endpoint_authentication(AuthOpts).
 
 
 %! lwm_endpoint_authentication(-Authentication:list(nvpair)) is det.
