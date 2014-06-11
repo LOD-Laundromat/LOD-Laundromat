@@ -15,7 +15,6 @@ See module [lwm_start_threaded] for the threaded version of this module.
 @version 2014/03-2014/06
 */
 
-:- use_module(library(filesex)).
 :- use_module(library(semweb/rdf_db)).
 
 :- use_module(lwm(lod_basket)).
@@ -32,10 +31,10 @@ washing_machine_loop:-
   % Debug.
   flag(loop, X, X + 1),
   writeln(X),
-  
+
   % Pick a new source to process.
-  remove_from_basket(Md5),
-  
+  catch(remove_from_basket(Md5), E, writeln(E)),
+
   % Process the URL we picked.
   clean(Md5),
 

@@ -72,7 +72,6 @@ lwm_basket(Request):-
 pending_urls -->
   {
     once(lwm_endpoint(Endpoint)),
-gtrace,
     sparql_select(Endpoint, _, [lwm], true, [md5res-md5,added],
         [rdf(var(md5res),lwm:added,var(added)),
          not([rdf(var(md5res),lwm:end,var(end))]),

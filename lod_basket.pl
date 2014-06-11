@@ -2,8 +2,6 @@
   lod_basket,
   [
     add_to_basket/1, % +Url:url
-    get_cleaned/1, % -Md5:atom
-    get_pending/1, % -Md5:atom
     is_cleaned/1, % +Md5:atom
     is_pending/1, % +Md5:atom
     remove_from_basket/1 % +Md5:atom
@@ -70,12 +68,16 @@ get_cleaned(Md5):-
 get_pending(Md5):-
   with_mutex(lod_basket, (
     once(lwm_endpoint(Endpoint)),
-    sparql_select(Endpoint, _, [lwm], true, [md5],
-        [rdf(var(md5res),lwm:added,var(added)),
-         not([rdf(var(md5res),lwm:end,var(end))]),
-         not([rdf(var(md5res),lwm:start,var(start))]),
-         rdf(var(md5res),lwm:md5,var(md5))],
-        1, 0, _, [[Literal]]),
+    catch(
+      sparql_select(Endpoint, _, [lwm], true, [md5],
+          [rdf(var(md5res),lwm:added,var(added)),
+           not([rdf(var(md5res),lwm:end,var(end))]),
+           not([rdf(var(md5res),lwm:start,var(start))]),
+           rdf(var(md5res),lwm:md5,var(md5))],
+          1, 0, _, [[Literal]]),
+      error(socket_error('Connection refused'),_),
+      fail
+    ),
     rdf_literal(Literal, Md5, _)
   )).
 

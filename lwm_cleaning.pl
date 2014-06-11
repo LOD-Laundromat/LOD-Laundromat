@@ -15,27 +15,21 @@ The cleaning process performed by the LOD Washing Machine.
 
 :- use_module(library(aggregate)).
 :- use_module(library(apply)).
-:- use_module(library(archive)).
-:- use_module(library(http/http_client)).
 :- use_module(library(lists)).
 :- use_module(library(pairs)).
 :- use_module(library(semweb/rdf_db)).
 :- use_module(library(uri)).
 :- use_module(library(zlib)).
 
-:- use_module(generics(uri_ext)).
 :- use_module(http(http_download)).
 :- use_module(os(archive_ext)).
 :- use_module(os(file_ext)).
-:- use_module(os(remote_ext)).
 :- use_module(pl(pl_log)).
 :- use_module(sparql(sparql_api)).
 :- use_module(void(void_db)). % XML namespace.
-:- use_module(xsd(xsd_dateTime_ext)).
 
 :- use_module(plRdf_ser(rdf_detect)).
 :- use_module(plRdf_ser(rdf_ntriples_write)).
-:- use_module(plRdf_ser(rdf_serial)).
 :- use_module(plRdf_term(rdf_literal)).
 
 :- use_module(lwm(lod_basket)).
