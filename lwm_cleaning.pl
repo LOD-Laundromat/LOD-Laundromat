@@ -25,7 +25,6 @@ The cleaning process performed by the LOD Washing Machine.
 :- use_module(os(archive_ext)).
 :- use_module(os(file_ext)).
 :- use_module(pl(pl_log)).
-:- use_module(sparql(sparql_api)).
 :- use_module(void(void_db)). % XML namespace.
 
 :- use_module(plRdf_ser(rdf_detect)).
