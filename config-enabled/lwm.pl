@@ -43,6 +43,6 @@ lwm(Request):-
 
 :- multifile(user:body//2).
 user:body(lwm, Body) -->
-  html_requires(plTabular),
+  %%%%html_requires(plTabular),
   user:body(cliopatria(default), Body).
 
