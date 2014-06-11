@@ -60,11 +60,8 @@ post_rdf_triples:-
       Triples
     ),
     forall(
-      lwm_endpoint(Endpoint),
-      (
-        lwm_endpoint_authentication(AuthenticationOptions),
-        sparql_update(Endpoint, Triples, AuthenticationOptions)
-      )
+      lwm_endpoint(Endpoint, AuthenticationOptions),
+      sparql_update(Endpoint, Triples, AuthenticationOptions)
     ),
     retractall(rdf_triple(_, _, _, _))
   ).

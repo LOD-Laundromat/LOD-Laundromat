@@ -163,7 +163,7 @@ clean_datafile(Md5, File):-
 
 clean_datastream(Md5, File, Read):-
   Scheme = http,
-  Authority = 'lodlaundromat.com',
+  Authority = 'lodlaundromat.org',
   atomic_list_concat(['',Md5], '/', Path1),
   atomic_concat(Path1, '#', Path2),
   uri_components(Base, uri_components(Scheme,Authority,Path2,_,_)),

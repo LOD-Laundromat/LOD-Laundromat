@@ -41,7 +41,7 @@ default_graph(DefaultGraph):-
   atom_number(Fragment, Version),
   uri_components(
     DefaultGraph,
-    uri_components(http, laundromat, _, _, Fragment)
+    uri_components(http, 'lodlaundromat.org', _, _, Fragment)
   ).
 
 

@@ -2,6 +2,8 @@
   lwm_db,
   [
     lwm_endpoint/1, % ?Endpoint:atom
+    lwm_endpoint/2, % ?Endpoint:atom
+                    % -AuthenticationOptions:list(nvpair)
     lwm_endpoint_authentication/1 % -Authentication:list(nvpair)
   ]
 ).
@@ -22,7 +24,7 @@ Configuration settings for project LOD-Washing-Machine.
 
 :- use_module(lwm(lwm_generics)).
 
-:- xml_register_namespace(lwm, 'http://www.lwm.com/lwm.owl#').
+:- xml_register_namespace(lwm, 'http://lodlaundromat.org/vocab#').
 
 :- initialization(init_lwm).
 init_lwm:-
@@ -35,7 +37,7 @@ init_lwm:-
   sparql_register_endpoint(localhost, update, Url12),
   
   % Cliopatria.
-  uri_components(Url21, uri_components(http,'lodlaundry.wbeek.ops.few.vu.nl','/sparql',Search1,_)),
+  uri_components(Url21, uri_components(http,'lodlaundry.wbeek.ops.few.vu.nl','/sparql/',Search1,_)),
   sparql_register_endpoint(cliopatria, query, Url21),
   uri_components(Url22, uri_components(http,'lodlaundry.wbeek.ops.few.vu.nl','/sparql/update',Search1,_)),
   sparql_register_endpoint(cliopatria, update, Url22),
@@ -46,9 +48,14 @@ init_lwm:-
   sparql_register_endpoint(virtuoso, Url3).
 
 
-%lwm_endpoint(localhost).
-lwm_endpoint(cliopatria).
-%lwm_endpoint(virtuoso).
+lwm_endpoint(Endpoint):-
+  lwm_endpoint(Endpoint, _).
+
+%lwm_endpoint(localhost, Options):-
+%  lwm_endpoint_authentication(Options).
+lwm_endpoint(virtuoso, []).
+%lwm_endpoint(cliopatria, Options).
+%  lwm_endpoint_authentication(Options).
 
 
 %! lwm_endpoint_authentication(-Authentication:list(nvpair)) is det.
