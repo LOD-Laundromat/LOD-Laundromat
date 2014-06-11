@@ -61,7 +61,7 @@ post_rdf_triples:-
     ),
     forall(
       lwm_endpoint(Endpoint, Options),
-      sparql_update(Endpoint, Triples, Options)
+      sparql_update(Endpoint, insert, Triples, Options)
     ),
     retractall(rdf_triple(_, _, _, _))
   ).

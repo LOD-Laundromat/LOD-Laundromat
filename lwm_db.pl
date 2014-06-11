@@ -9,6 +9,7 @@
                       % ?Regime:oneof([owl])
                       % +Prefixes:list(atom)
                       % +Bbps:or([compound,list(compound)])
+    lwm_sparql_drop/1, % +Endpoint:atom
     lwm_sparql_select/10, % +Endpoint:atom
                           % ?Regime:oneof([owl])
                           % +Prefixes:list(atom)
@@ -19,7 +20,8 @@
                           % ?Offset:nonneg
                           % ?Order:pair(oneof([asc]),list(atom))
                           % -Result:list(list)
-    lwm_sparql_update/2 % +Endpoint:atom
+    lwm_sparql_update/3 % +Endpoint:atom
+                        % +Mode:oneof([delete,insert])
                         % +Triples:list(list(or([bnode,iri,literal])))
   ]
 ).
@@ -96,6 +98,12 @@ lwm_sparql_ask(Endpoint, Regime, Prefixes, Bbps):-
   sparql_ask(Endpoint, Regime, Prefixes, Bbps, Options).
 
 
+lwm_sparql_drop(Endpoint):-
+  lwm_endpoint(Endpoint, Options),
+  option(default_graph(DefaultGraph), Options),
+  sparql_drop(Endpoint, DefaultGraph, Options).
+
+
 lwm_sparql_select(
   Endpoint,
   Regime,
@@ -124,7 +132,7 @@ lwm_sparql_select(
   ).
 
 
-lwm_sparql_update(Endpoint, Triples):-
+lwm_sparql_update(Endpoint, Mode, Triples):-
   lwm_endpoint(Endpoint, Options),
-  sparql_update(Endpoint, Triples, Options).
+  sparql_update(Endpoint, Mode, Triples, Options).
 
