@@ -46,22 +46,19 @@ Configuration settings for project LOD-Washing-Machine.
 :- initialization(init_lwm).
 init_lwm:-
   % Localhost.
-  default_graph(DefaultGraph),
-  uri_query_components(Search1, [format('rdf+xml'),'using-graph-uri'=DefaultGraph]),
-  uri_components(Url11, uri_components(http,'localhost:3040','/sparql/',Search1,_)),
+  uri_components(Url11, uri_components(http,'localhost:3040','/sparql/',_,_)),
   sparql_register_endpoint(localhost, query, Url11),
-  uri_components(Url12, uri_components(http,'localhost:3040','/sparql/update',Search1,_)),
+  uri_components(Url12, uri_components(http,'localhost:3040','/sparql/update',_,_)),
   sparql_register_endpoint(localhost, update, Url12),
 
   % Cliopatria.
-  uri_components(Url21, uri_components(http,'lodlaundry.wbeek.ops.few.vu.nl','/sparql/',Search1,_)),
+  uri_components(Url21, uri_components(http,'lodlaundry.wbeek.ops.few.vu.nl','/sparql/',_,_)),
   sparql_register_endpoint(cliopatria, query, Url21),
-  uri_components(Url22, uri_components(http,'lodlaundry.wbeek.ops.few.vu.nl','/sparql/update',Search1,_)),
+  uri_components(Url22, uri_components(http,'lodlaundry.wbeek.ops.few.vu.nl','/sparql/update',_,_)),
   sparql_register_endpoint(cliopatria, update, Url22),
 
   % Virtuoso.
-  uri_query_components(Search3, ['using-graph-uri'=DefaultGraph]),
-  uri_components(Url3, uri_components(http,'virtuoso.lodlaundromat.ops.few.vu.nl','/sparql',Search3,_)),
+  uri_components(Url3, uri_components(http,'virtuoso.lodlaundromat.ops.few.vu.nl','/sparql',_,_)),
   sparql_register_endpoint(virtuoso, Url3).
 
 
@@ -70,7 +67,12 @@ lwm_endpoint(Endpoint):-
 
 %lwm_endpoint(localhost, [update_method(direct)|AuthOpts]):-
 %  lwm_endpoint_authentication(AuthOpts).
-lwm_endpoint(virtuoso, [update_method(url_encoded)]).
+lwm_endpoint(
+  virtuoso,
+  [default_graph(DefaultGraph),update_method(url_encoded)]
+):-
+  default_graph(DefaultGraph).
+
 %lwm_endpoint(cliopatria, [update_method(direct)|AuthOpts]):-
 %  lwm_endpoint_authentication(AuthOpts).
 
