@@ -14,6 +14,7 @@
 */
 
 :- use_module(library(http/html_write)).
+:- use_module(library(http/http_cors)).
 :- use_module(library(http/http_dirindex)).
 :- use_module(library(http/http_dispatch)).
 :- use_module(library(http/http_json)).
@@ -34,7 +35,11 @@
 
 :- dynamic(url_md5_translation/2).
 
-:- http_handler(cliopatria(data), serve_files_in_directory(data), [prefix]).
+:- http_handler(
+  cliopatria(data),
+  serve_files_in_directory_with_cors(data),
+  [prefix]
+).
 
 
 
@@ -44,6 +49,7 @@ lwm(_, HtmlStyle):-
 
 
 lwm_basket(Request):-
+  cors_enable,
   (
     catch(http_parameters(Request, [url(Url1, [])]), _, fail),
     is_url(Url1)
@@ -60,6 +66,11 @@ lwm_basket(Request):-
     % be understood by the server due to malformed syntax.
     reply_json(json{}, [status(400)])
   ).
+
+
+serve_files_in_directory_with_cors(Alias, Request):-
+  cors_enable,
+  serve_files_in_directory(Alias, Request).
 
 
 sources -->
