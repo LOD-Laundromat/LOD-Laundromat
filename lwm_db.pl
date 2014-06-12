@@ -1,6 +1,10 @@
 :- module(
   lwm_db,
   [
+    lwm_base/2, % +Md5:atom
+                % -Base:triple(atom)
+    lwm_bnode_base/2, % +Md5:atom
+                      % -Base:triple(atom)
     lwm_endpoint/1, % ?Endpoint:atom
     lwm_endpoint/2, % ?Endpoint:atom
                     % -Options:list(nvpair)
@@ -64,6 +68,28 @@ init_lwm:-
   sparql_register_endpoint(virtuoso, Url3).
 
 
+%! lwm_authortity(?Authortity:atom) is semidet.
+
+lwm_authortity('lodlaundromat.org').
+
+
+%! lwm_base(+Md5:atom, -Base:triple(atom)) is det.
+
+lwm_base(Md5, Base):-
+  lwm_scheme(Scheme),
+  lwm_authortity(Authority),
+  atomic_list_concat(['',Md5], '/', Path1),
+  atomic_concat(Path1, '#', Path2),
+  uri_components(Base, uri_components(Scheme,Authority,Path2,_,_)).
+
+
+%! lwm_bnode_base(+Md5:atom, -Base:triple(atom)) is det.
+
+lwm_bnode_base(Md5, Scheme-Authority-Md5):-
+  lwm_scheme(Scheme),
+  lwm_authortity(Authority).
+
+
 lwm_endpoint(Endpoint):-
   lwm_endpoint(Endpoint, _).
 
@@ -82,15 +108,19 @@ lwm_endpoint(
 %! lwm_endpoint_authentication(-Authentication:list(nvpair)) is det.
 
 lwm_endpoint_authentication([request_header('Authorization'=Authentication)]):-
-  user(User),
-  password(Password),
+  lwm_user(User),
+  lwm_password(Password),
   atomic_list_concat([User,Password], ':', Plain),
   base64(Plain, Encoded),
   atomic_list_concat(['Basic',Encoded], ' ', Authentication).
 
-password(lwmlwm).
 
-user(lwm).
+lwm_password(lwmlwm).
+
+
+%! lwm_scheme(?Scheme:atom) is semidet.
+
+lwm_scheme(http).
 
 
 lwm_sparql_ask(Endpoint, Regime, Prefixes, Bbps):-
@@ -135,4 +165,7 @@ lwm_sparql_select(
 lwm_sparql_update(Endpoint, Mode, Triples):-
   lwm_endpoint(Endpoint, Options),
   sparql_update(Endpoint, Mode, Triples, Options).
+
+
+lwm_user(lwm).
 

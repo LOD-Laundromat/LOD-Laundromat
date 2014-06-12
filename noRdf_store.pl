@@ -1,7 +1,7 @@
 :- module(
   noRdf_store,
   [
-    post_rdf_triples/0,
+    post_rdf_triples/1, % +Md5:atom
     store_triple/4 % +Subject:or([bnode,iri])
                    % +Predicate:iri
                    % +Object:or([bnode,iri,literal])
@@ -21,6 +21,7 @@ and at the same time send small RDF messages using SPARQL Update requests.
 */
 
 :- use_module(library(http/http_client)).
+:- use_module(library(option)).
 :- use_module(library(semweb/rdf_db)).
 
 :- use_module(sparql(sparql_api)).
@@ -46,13 +47,13 @@ and at the same time send small RDF messages using SPARQL Update requests.
 
 
 
-%! post_rdf_triples is det.
+%! post_rdf_triples(+Md5:atom) is det.
 % Sends a SPARQL Update requests to the SPARQL endpoints that are
 % registered and enabled.
 % The thread-local rdf_triple/4 statements form the contents
 % of the update request.
 
-post_rdf_triples:-
+post_rdf_triples(Md5):-
   setup_call_cleanup(
     aggregate_all(
       set([S,P,O]),
@@ -60,8 +61,14 @@ post_rdf_triples:-
       Triples
     ),
     forall(
-      lwm_endpoint(Endpoint, Options),
-      sparql_update(Endpoint, insert, Triples, Options)
+      lwm_endpoint(Endpoint, Options1),
+      (
+        % HACK
+        lwm_bnode_base(Md5, BNodeBase),
+        merge_options([bnode_base(BNodeBase)], Options1, Options2),
+        
+        sparql_update(Endpoint, insert, Triples, Options2)
+      )
     ),
     retractall(rdf_triple(_, _, _, _))
   ).
