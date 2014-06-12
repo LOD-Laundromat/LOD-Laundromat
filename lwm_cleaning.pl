@@ -229,7 +229,7 @@ find_void_datasets(Urls):-
     set(Url),
     (
       rdf(_, void:dataDump, Url),
-      % @tbd Create a shortcur for this: only a single SPARQL query,
+      % @tbd Create a shortcut for this: only a single SPARQL query,
       % matching `lwm:added`.
       \+ is_cleaned(Md5),
       \+ is_pending(Md5)
