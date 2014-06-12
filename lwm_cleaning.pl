@@ -238,13 +238,14 @@ register_void_datasets:-
     set(Url),
     (
       rdf(_, void:dataDump, Url),
-      % @tbd Create a shortcur for this: only a single SPARQL query,
+      % @tbd Create a shortcut for this: only a single SPARQL query,
       % matching `lwm:added`.
       \+ is_cleaned(Md5),
       \+ is_pending(Md5)
     ),
     Urls
   ),
+(Urls == [] -> true ; gtrace),
   print_message(informational, found_void_datadumps(Urls)),
   maplist(add_to_basket, Urls).
 
