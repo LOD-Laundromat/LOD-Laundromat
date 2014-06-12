@@ -168,12 +168,6 @@ clean_datafile(Md5, File):-
 
 
 clean_datastream(Md5, File, Read):-
-  Scheme = http,
-  Authority = 'lodlaundromat.org',
-  atomic_list_concat(['',Md5], '/', Path1),
-  atomic_concat(Path1, '#', Path2),
-  uri_components(Base, uri_components(Scheme,Authority,Path2,_,_)),
-
   % File extension.
   file_name_extensions(_, FileExtensions, base),
   atomic_list_concat(FileExtensions, '.', FileExtension),
@@ -186,6 +180,7 @@ clean_datastream(Md5, File, Read):-
       literal(type(xsd:string,Format)), ap),
 
   % Load triples in serialization format.
+  lwm_base(Md5, Base),
   rdf_load(
     stream(Read),
     [base_uri(Base),format(Format),register_namespaces(false)]
@@ -203,11 +198,12 @@ clean_datastream(Md5, File, Read):-
   % Save triples using the N-Triples serialization format.
   file_directory_name(File, Dir),
   directory_file_path(Dir, 'clean.nt.gz', Path),
+  lwm_bnode_base(Md5, BNodeBase),
   setup_call_cleanup(
     gzopen(Path, write, Write),
     rdf_ntriples_write(
       Write,
-      [bnode_base(Scheme-Authority-Md5),number_of_triples(TOut)]
+      [bnode_base(BNodeBase),number_of_triples(TOut)]
     ),
     close(Write)
   ),
