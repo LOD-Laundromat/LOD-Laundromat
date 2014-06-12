@@ -157,17 +157,20 @@ clean_datafile(Md5, File):-
     open(File, read, Read),
     (
       rdf_transaction(
-        clean_datastream(Md5, File, Read),
+        clean_datastream(Md5, File, Read, VoidUrls),
         _,
         [snapshot(true)]
       ),
       store_stream(Md5,Read)
     ),
     close(Read)
-  ).
+  ),
+  % We add the new VoID URLs to the LOD Basket
+  % after the RDF transaction closes.
+  maplist(add_to_basket, VoidUrls).
 
 
-clean_datastream(Md5, File, Read):-
+clean_datastream(Md5, File, Read, VoidUrls):-
   % File extension.
   file_name_extensions(_, FileExtensions, base),
   atomic_list_concat(FileExtensions, '.', FileExtension),
@@ -213,23 +216,15 @@ clean_datastream(Md5, File, Read):-
   store_void_triples,
 
   % Make sure any VoID datadumps are added to the LOD Basket.
-  register_void_datasets.
+  find_void_datasets(VoidUrls).
 
 
 
 % Helpers
 
-%! md5_to_dir(+Md5:atom, -Md5Directory:atom) is det.
+%! find_void_datasets(-VoidUrls:list(url)) is det.
 
-md5_to_dir(Md5, Md5Dir):-
-  absolute_file_name(data(.), DataDir, [access(write),file_type(directory)]),
-  directory_file_path(DataDir, Md5, Md5Dir),
-  make_directory_path(Md5Dir).
-
-
-%! register_void_datasets is det.
-
-register_void_datasets:-
+find_void_datasets(Urls):-
   aggregate_all(
     set(Url),
     (
@@ -241,6 +236,14 @@ register_void_datasets:-
     ),
     Urls
   ),
-  print_message(informational, found_void_datadumps(Urls)),
-  maplist(add_to_basket, Urls).
+(Urls == [] -> true ; gtrace), %DEB
+  print_message(informational, found_void_datadumps(Urls)).
+
+
+%! md5_to_dir(+Md5:atom, -Md5Directory:atom) is det.
+
+md5_to_dir(Md5, Md5Dir):-
+  absolute_file_name(data(.), DataDir, [access(write),file_type(directory)]),
+  directory_file_path(DataDir, Md5, Md5Dir),
+  make_directory_path(Md5Dir).
 
