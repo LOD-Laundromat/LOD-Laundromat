@@ -131,7 +131,7 @@ lwm_sparql_ask(Endpoint, Regime, Prefixes, Bbps):-
 lwm_sparql_drop(Endpoint):-
   lwm_endpoint(Endpoint, Options),
   option(default_graph(DefaultGraph), Options),
-  sparql_drop(Endpoint, DefaultGraph, Options).
+  sparql_drop_graph(Endpoint, DefaultGraph, Options).
 
 
 lwm_sparql_select(

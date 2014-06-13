@@ -21,3 +21,6 @@
 [submodule "plTabular"]
 	path = plTabular
 	url = https://github.com/wouterbeek/plTabular.git
+[submodule "plSparql"]
+	path = plSparql
+	url = https://github.com/wouterbeek/plSparql.git
