@@ -14,6 +14,7 @@
     plHtml,
     plRdf,
     plServer,
+    plSparql,
     plTabular
 ]).
 

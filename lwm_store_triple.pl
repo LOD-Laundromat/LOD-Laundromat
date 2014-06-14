@@ -60,7 +60,7 @@ the stored triples are sent in a SPARQL Update request
 store_added(Md5):-
   get_dateTime(Added),
   store_triple(lwm-Md5, lwm:added, literal(type(xsd:dateTime,Added)), ap),
-  post_rdf_triples(Md5).
+  post_rdf_triples.
 
 
 %! store_archive_entry(
@@ -115,7 +115,7 @@ store_archive_filters(Md5, ArchiveFilters):-
 store_end(Md5):-
   get_dateTime(Now),
   store_triple(lwm-Md5, lwm:end, literal(type(xsd:dateTime,Now)), ap),
-  post_rdf_triples(Md5).
+  post_rdf_triples.
 
 
 %! store_http(
@@ -177,7 +177,7 @@ store_start(Md5):-
   store_triple(lwm-Md5, lwm:lwm_version, literal(type(xsd:integer,Version)),
       ap),
 
-  post_rdf_triples(Md5).
+  post_rdf_triples.
 
 
 %! store_status(+Md5:atom, +Status:or([boolean,compound])) is det.
