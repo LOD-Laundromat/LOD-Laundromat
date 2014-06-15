@@ -48,9 +48,9 @@ Configuration settings for project LOD-Washing-Machine.
 :- initialization(init_lwm).
 init_lwm:-
   % Localhost.
-  uri_components(Url11, uri_components(http,'localhost:3040','/sparql/',_,_)),
+  uri_components(Url11, uri_components(http,'localhost:3020','/sparql/',_,_)),
   sparql_register_endpoint(localhost, query, Url11),
-  uri_components(Url12, uri_components(http,'localhost:3040','/sparql/update',_,_)),
+  uri_components(Url12, uri_components(http,'localhost:3020','/sparql/update',_,_)),
   sparql_register_endpoint(localhost, update, Url12),
 
   % Cliopatria.
@@ -89,14 +89,13 @@ lwm_bnode_base(Md5, Scheme-Authority-Md5):-
 lwm_endpoint(Endpoint):-
   lwm_endpoint(Endpoint, _).
 
-%lwm_endpoint(localhost, [update_method(direct)|AuthOpts]):-
-%  lwm_endpoint_authentication(AuthOpts).
-lwm_endpoint(
-  virtuoso,
-  [default_graph(DefaultGraph),update_method(url_encoded)]
-):-
-  default_graph(DefaultGraph).
-
+lwm_endpoint(localhost, [update_method(direct)|AuthOpts]):-
+  lwm_endpoint_authentication(AuthOpts).
+%lwm_endpoint(
+%  virtuoso,
+%  [default_graph(DefaultGraph),update_method(url_encoded)]
+%):-
+%  default_graph(DefaultGraph).
 %lwm_endpoint(cliopatria, [update_method(direct)|AuthOpts]):-
 %  lwm_endpoint_authentication(AuthOpts).
 
