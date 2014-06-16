@@ -6,6 +6,8 @@
 :- ensure_loaded(debug).
 :- ensure_loaded(load).
 
+:- debug(sparql_request).
+
 :- use_module(lwm(lwm_start)).
 :- run_washing_machine.
 
