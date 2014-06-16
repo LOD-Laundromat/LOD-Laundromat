@@ -18,7 +18,6 @@ The cleaning process performed by the LOD Washing Machine.
 :- use_module(library(lists)).
 :- use_module(library(pairs)).
 :- use_module(library(semweb/rdf_db)).
-:- use_module(library(uri)).
 :- use_module(library(zlib)).
 
 :- use_module(http(http_download)).
@@ -53,6 +52,7 @@ clean(Md5):-
     Status,
     Messages
   ),
+  %%%%(Messages == [] -> true ; gtrace), % DEB
   store_status(Md5, Status),
   maplist(store_message(Md5), Messages),
 
