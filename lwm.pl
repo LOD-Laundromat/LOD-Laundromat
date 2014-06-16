@@ -58,9 +58,9 @@ datadoc_overview -->
     h2('Cleaned'),
     \cleaned_datadocs,
     h2('Cleaning'),
-    \cleaning_datadocs,
-    h2('To be cleaned'),
-    \pending_datadocs
+    \cleaning_datadocs
+    %h2('To be cleaned'),
+    %\pending_datadocs
   ]).
 
 cleaned_datadocs -->
@@ -73,11 +73,7 @@ cleaned_datadocs -->
         rdf(Md5res, lwm:added, Added),
         rdf_string(Md5res, lwm:md5, Md5, _),
         datadoc_location(Md5, Location),
-        (
-          rdf_datatype(Md5res, lwm:triples, Triples, xsd:integer, _), !
-        ;
-          Triples = 0
-        )
+	number_of_triples(Md5res, Triples)
       ),
       Pairs
     )
@@ -178,3 +174,9 @@ datadoc_location(Md5, Location):-
   atomic_list_concat([Md5,'clean.nt.gz'], '/', Path),
   http_link_to_id(clean, path_postfix(Path), Location).
 
+
+%! number_of_triples(+Md5res:iri, -Triples:nonneg) is det.
+
+number_of_triples(Md5res, Triples):-
+  rdf_datatype(Md5res, lwm:triples, Triples, xsd:integer, _), !.
+number_of_triples(_, 0).
