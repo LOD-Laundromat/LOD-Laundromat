@@ -89,15 +89,15 @@ lwm_bnode_base(Md5, Scheme-Authority-Md5):-
 lwm_endpoint(Endpoint):-
   lwm_endpoint(Endpoint, _).
 
-lwm_endpoint(localhost, [update_method(direct)|AuthOpts]):-
-  lwm_endpoint_authentication(AuthOpts).
-%lwm_endpoint(
-%  virtuoso,
-%  [default_graph(DefaultGraph),update_method(url_encoded)]
-%):-
-%  default_graph(DefaultGraph).
-%lwm_endpoint(cliopatria, [update_method(direct)|AuthOpts]):-
+%lwm_endpoint(localhost, [update_method(direct)|AuthOpts]):-
 %  lwm_endpoint_authentication(AuthOpts).
+lwm_endpoint(cliopatria, [update_method(direct)|AuthOpts]):-
+  lwm_endpoint_authentication(AuthOpts).
+lwm_endpoint(
+  virtuoso,
+  [default_graph(DefaultGraph),update_method(url_encoded)]
+):-
+  default_graph(DefaultGraph).
 
 
 %! lwm_endpoint_authentication(-Authentication:list(nvpair)) is det.
