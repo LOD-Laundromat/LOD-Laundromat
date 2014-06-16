@@ -62,15 +62,15 @@ clean(Md5):-
 
 %! clean_datadoc0(+Md5:atom) is det.
 
-% The given Md5 denote an archive entry.
+% The given MD5 denotes an archive entry.
 clean_md5(Md5):-
   once(lwm_endpoint(Endpoint)),
-  lwm_sparql_select(Endpoint, _, [lwm], true, [md5,path],
-        [rdf(var(md5ent),lwm:md5,literal(xsd:string,Md5)),
-         rdf(var(md5ent),lwm:path,var(path)),
-         rdf(var(md5url),lwm:contains_entry,var(md5ent)),
-         rdf(var(md5url),lwm:md5,var(md5))],
-        inf, _, _, [[ParentMd50,EntryPath0]]),
+  lwm_sparql_select(Endpoint, [lwm], [md5,path],
+      [rdf(var(md5ent),lwm:md5,literal(xsd:string,Md5)),
+       rdf(var(md5ent),lwm:path,var(path)),
+       rdf(var(md5url),lwm:contains_entry,var(md5ent)),
+       rdf(var(md5url),lwm:md5,var(md5))],
+      [[ParentMd50,EntryPath0]], [distinct(true)]),
   maplist(rdf_literal, [ParentMd50,EntryPath0], [ParentMd5,EntryPath], _), !,
 
   % Move the entry file from the parent directory into
@@ -83,13 +83,13 @@ clean_md5(Md5):-
   mv(EntryFile1, EntryFile2),
 
   clean_file(Md5, EntryFile2).
-% The given Md5 denotes a URL.
+% The given MD5 denotes a URL.
 clean_md5(Md5):-
   once(lwm_endpoint(Endpoint)),
-  lwm_sparql_select(Endpoint, _, [lwm], true, [url],
+  lwm_sparql_select(Endpoint, [lwm], [url],
       [rdf(var(md5res),lwm:url,var(url)),
        rdf(var(md5res),lwm:md5,literal(xsd:string,Md5))],
-      inf, _, _, [[Url]]), !,
+      [[Url]], [distinct(true)]), !,
 
   % Create a directory for the dirty version of the given Md5.
   md5_to_dir(Md5, Md5Dir),
@@ -218,10 +218,6 @@ clean_datastream(Md5, File, Read, VoidUrls):-
   % Make sure any VoID datadumps are added to the LOD Basket.
   find_void_datasets(VoidUrls).
 
-
-
-% Helpers
-
 %! find_void_datasets(-VoidUrls:list(url)) is det.
 
 find_void_datasets(Urls):-
@@ -238,6 +234,9 @@ find_void_datasets(Urls):-
   ),
   print_message(informational, found_void_datadumps(Urls)).
 
+
+
+% Helpers
 
 %! md5_to_dir(+Md5:atom, -Md5Directory:atom) is det.
 

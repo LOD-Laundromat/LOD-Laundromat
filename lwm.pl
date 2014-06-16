@@ -78,13 +78,13 @@ serve_files_in_directory_with_cors(Alias, Request):-
 sources -->
   {
     once(lwm_endpoint(Endpoint)),
-    lwm_sparql_select(Endpoint, _, [lwm], true, [md5,triples,added,start,end],
+    lwm_sparql_select(Endpoint, [lwm], [md5,triples,added,start,end],
         [rdf(var(md5res),lwm:added,var(added)),
          optional([rdf(var(md5res),lwm:end,var(end))]),
          optional([rdf(var(md5res),lwm:start,var(start))]),
          rdf(var(md5res),lwm:md5,var(md5)),
 	 rdf(var(md5res),lwm:triples,var(triples))],
-        250, _, _, Rows1),
+        Rows1, [distinct(true),limit(250)]),
     findall(
       [Location-Md5|T],
       (

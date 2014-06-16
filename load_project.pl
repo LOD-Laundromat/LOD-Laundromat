@@ -16,16 +16,19 @@ Generic code for loading a project:
   * Load the index of subprojects onto the file search path.
 
 @author Wouter Beek
-@version 2014/05/27
+@version 2014/06/13
 */
 
-:- use_module(library(ansi_term)).
+:- use_module(library(ansi_term)). % Colorized terminal messages.
 :- use_module(library(apply)).
+
+:- multifile(user:project/2).
+:- multifile(user:project/3).
 
 
 
 load_project(ChildProjects):-
-  user:project(_, _, ParentFsp),
+  parent_alias(ParentFsp),
 
   % Entry point.
   source_file(load_project(_), ThisFile),
@@ -38,7 +41,7 @@ load_project(ChildProjects):-
 
   % Load the root of submodules onto the file search path.
   maplist(load_subproject(ParentFsp), ChildProjects),
-  
+
   % Load the index into the file search path.
   load_project_index(ParentFsp).
 
@@ -77,8 +80,21 @@ load_subproject_file_search_path(_, ChildFsp, ChildDir):-
 
 load_project_index(Fsp):-
   Spec =.. [Fsp,index],
-  absolute_file_name(Spec, File, [access(read),file_type(prolog)]),
+  absolute_file_name(
+    Spec,
+    File,
+    [access(read),file_errors(fail),file_type(prolog)]
+  ), !,
   ensure_loaded(File).
+load_project_index(_).
+
+
+%! parent_alias(-ParentFsp:atom) is det.
+
+parent_alias(ParentFsp):-
+  user:project(_, _, ParentFsp), !.
+parent_alias(ParentFsp):-
+  user:project(ParentFsp, _).
 
 
 %! set_data_subdirectory(+ParentDirectory:atom) is det.

@@ -10,23 +10,17 @@
                     % -Options:list(nvpair)
     lwm_endpoint_authentication/1, % -Authentication:list(nvpair)
     lwm_sparql_ask/4, % +Endpoint:atom
-                      % ?Regime:oneof([owl])
                       % +Prefixes:list(atom)
                       % +Bbps:or([compound,list(compound)])
-    lwm_sparql_drop/1, % +Endpoint:atom
-    lwm_sparql_select/10, % +Endpoint:atom
-                          % ?Regime:oneof([owl])
-                          % +Prefixes:list(atom)
-                          % +Distinct:boolean
-                          % +Variables:list(atom)
-                          % +BGPs:or([compound,list(compound)])
-                          % ?Limit:or([nonneg,oneof([inf])])
-                          % ?Offset:nonneg
-                          % ?Order:pair(oneof([asc]),list(atom))
-                          % -Result:list(list)
-    lwm_sparql_update/3 % +Endpoint:atom
-                        % +Mode:oneof([delete,insert])
-                        % +Triples:list(list(or([bnode,iri,literal])))
+                      % +Options:list(nvpair)
+    lwm_sparql_drop/2, % +Endpoint:atom
+                       % +Options:list(nvpair)
+    lwm_sparql_select/6 % +Endpoint:atom
+                        % +Prefixes:list(atom)
+                        % +Variables:list(atom)
+                        % +Bgps:or([compound,list(compound)])
+                        % -Result:list(list)
+                        % +Options:list(nvpair)
   ]
 ).
 
@@ -39,11 +33,13 @@ Configuration settings for project LOD-Washing-Machine.
 */
 
 :- use_module(library(base64)).
+:- use_module(library(option)).
 :- use_module(library(uri)).
 
-:- use_module(sparql(sparql_api)).
-:- use_module(sparql(sparql_db)).
 :- use_module(xml(xml_namespace)).
+
+:- use_module(plSparql(sparql_api)).
+:- use_module(plSparql(sparql_db)).
 
 :- use_module(lwm(lwm_generics)).
 
@@ -52,9 +48,9 @@ Configuration settings for project LOD-Washing-Machine.
 :- initialization(init_lwm).
 init_lwm:-
   % Localhost.
-  uri_components(Url11, uri_components(http,'localhost:3040','/sparql/',_,_)),
+  uri_components(Url11, uri_components(http,'localhost:3020','/sparql/',_,_)),
   sparql_register_endpoint(localhost, query, Url11),
-  uri_components(Url12, uri_components(http,'localhost:3040','/sparql/update',_,_)),
+  uri_components(Url12, uri_components(http,'localhost:3020','/sparql/update',_,_)),
   sparql_register_endpoint(localhost, update, Url12),
 
   % Cliopatria.
@@ -95,14 +91,13 @@ lwm_endpoint(Endpoint):-
 
 %lwm_endpoint(localhost, [update_method(direct)|AuthOpts]):-
 %  lwm_endpoint_authentication(AuthOpts).
+lwm_endpoint(cliopatria, [update_method(direct)|AuthOpts]):-
+  lwm_endpoint_authentication(AuthOpts).
 lwm_endpoint(
   virtuoso,
   [default_graph(DefaultGraph),update_method(url_encoded)]
 ):-
   default_graph(DefaultGraph).
-
-%lwm_endpoint(cliopatria, [update_method(direct)|AuthOpts]):-
-%  lwm_endpoint_authentication(AuthOpts).
 
 
 %! lwm_endpoint_authentication(-Authentication:list(nvpair)) is det.
@@ -118,53 +113,26 @@ lwm_endpoint_authentication([request_header('Authorization'=Authentication)]):-
 lwm_password(lwmlwm).
 
 
-%! lwm_scheme(?Scheme:atom) is semidet.
-
 lwm_scheme(http).
 
 
-lwm_sparql_ask(Endpoint, Regime, Prefixes, Bbps):-
-  lwm_endpoint(Endpoint, Options),
-  sparql_ask(Endpoint, Regime, Prefixes, Bbps, Options).
+lwm_sparql_ask(Endpoint, Prefixes, Bbps, Options1):-
+  lwm_endpoint(Endpoint, Options2),
+  merge_options(Options1, Options2, Options3),
+  sparql_ask(Endpoint, Prefixes, Bbps, Options3).
 
 
-lwm_sparql_drop(Endpoint):-
-  lwm_endpoint(Endpoint, Options),
-  option(default_graph(DefaultGraph), Options),
-  sparql_drop(Endpoint, DefaultGraph, Options).
+lwm_sparql_drop(Endpoint, Options1):-
+  lwm_endpoint(Endpoint, Options2),
+  merge_options(Options1, Options2, Options3),
+  option(default_graph(DefaultGraph), Options3),
+  sparql_drop_graph(Endpoint, DefaultGraph, Options3).
 
 
-lwm_sparql_select(
-  Endpoint,
-  Regime,
-  Prefixes,
-  Distinct,
-  Variables,
-  BGPs,
-  Limit,
-  Offset,
-  Order,
-  Result
-):-
-  lwm_endpoint(Endpoint, Options),
-  sparql_select(
-    Endpoint,
-    Regime,
-    Prefixes,
-    Distinct,
-    Variables,
-    BGPs,
-    Limit,
-    Offset,
-    Order,
-    Result,
-    Options
-  ).
-
-
-lwm_sparql_update(Endpoint, Mode, Triples):-
-  lwm_endpoint(Endpoint, Options),
-  sparql_update(Endpoint, Mode, Triples, Options).
+lwm_sparql_select(Endpoint, Prefixes, Variables, Bgps, Result, Options1):-
+  lwm_endpoint(Endpoint, Options2),
+  merge_options(Options1, Options2, Options3),
+  sparql_select(Endpoint, Prefixes, Variables, Bgps, Result, Options3).
 
 
 lwm_user(lwm).
