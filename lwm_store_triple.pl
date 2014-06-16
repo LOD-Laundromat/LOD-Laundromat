@@ -25,7 +25,7 @@
                     % +Stream:stream
     store_url/2, % +Md5:atom
                  % +Url:url
-    store_void_triples/0
+    store_void_triples/1 % +Md5:atom
   ]
 ).
 
@@ -214,9 +214,9 @@ store_url(Md5, Url):-
   store_added(Md5).
 
 
-%! store_void_triples is det.
+%! store_void_triples(+Md5:atom) is det.
 
-store_void_triples:-
+store_void_triples(Md5):-
   aggregate_all(
     set(P),
     (
@@ -230,6 +230,6 @@ store_void_triples:-
       member(P, Ps),
       rdf(S, P, O)
     ),
-    store_triple(S, P, O, ap)
+    store_triple(S, P, O, Md5)
   ).
 

@@ -213,7 +213,7 @@ clean_datastream(Md5, File, Read, VoidUrls):-
 
   % Asssert some statistics.
   store_number_of_triples(Md5, Path, TIn, TOut),
-  store_void_triples,
+  store_void_triples(Md5),
 
   % Make sure any VoID datadumps are added to the LOD Basket.
   find_void_datasets(VoidUrls).

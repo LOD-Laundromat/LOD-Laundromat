@@ -56,8 +56,8 @@ and at the same time send small RDF messages using SPARQL Update requests.
 post_rdf_triples:-
   setup_call_cleanup(
     aggregate_all(
-      set([S,P,O]),
-      rdf_triple(S, P, O, _),
+      set([S,P,O,G]),
+      rdf_triple(S, P, O, G),
       Triples
     ),
     forall(
