@@ -72,14 +72,17 @@ cleaned_datadocs -->
         rdf(Md5res, lwm:start, Started),
         rdf(Md5res, lwm:added, Added),
         rdf_string(Md5res, lwm:md5, Md5, _),
-	datadoc_location(Md5, Location),
-        (rdf_datatype(Md5res, lwm:triples, Triples, xsd:integer, _), ! ; Triples = 0)
+        datadoc_location(Md5, Location),
+        (
+          rdf_datatype(Md5res, lwm:triples, Triples, xsd:integer, _), !
+        ;
+          Triples = 0
+        )
       ),
       Pairs
     )
   },
-  rdf_html_table_pairs(Pairs).
-
+  rdf_html_table_pairs(Pairs, [summation_row(true)]).
 
 cleaning_datadocs -->
   {
@@ -87,48 +90,30 @@ cleaning_datadocs -->
       set(Started-[Location-Md5,Added,Started]),
       (
         rdf(Md5res, lwm:start, Started),
-	\+ rdf(Md5res, lwm:end, _),
-	rdf(Md5res, lwm:added, Added),
+        \+ rdf(Md5res, lwm:end, _),
+        rdf(Md5res, lwm:added, Added),
         rdf_string(Md5res, lwm:md5, Md5, _),
-	datadoc_location(Md5, Location)
+        datadoc_location(Md5, Location)
       ),
       Pairs
     )
   },
-  rdf_html_table_pairs(Pairs).
-
+  rdf_html_table_pairs(Pairs, [summation_row(true)]).
 
 pending_datadocs -->
   {
     aggregate_all(
       set(Added-[Location-Md5,Added]),
       (
-	rdf(Md5res, lwm:added, Added),
-	\+ rdf(Md5res, lwm:start, _),
+        rdf(Md5res, lwm:added, Added),
+        \+ rdf(Md5res, lwm:start, _),
         rdf_string(Md5res, lwm:md5, Md5, _),
-	datadoc_location(Md5, Location)
+        datadoc_location(Md5, Location)
       ),
       Pairs
     )
   },
-  rdf_html_table_pairs(Pairs).
-
-
-rdf_html_table_pairs(Pairs1) -->
-  {
-    keysort(Pairs1, Pairs2),
-    reverse(Pairs2, Pairs3),
-    findall(
-      Row,
-      member(_-Row, Pairs3),
-      Rows
-    )
-  },
-  rdf_html_table(
-    [header_column(true),header_row(true),indexed(true)],
-    html('Overview of LOD sources.'),
-    [['Source','Time added','Time started','Time ended']|Rows]
-  ).
+  rdf_html_table_pairs(Pairs, [summation_row(true)]).
 
 
 lwm_basket(Request):-
@@ -156,6 +141,9 @@ serve_files_in_directory_with_cors(Alias, Request):-
   serve_files_in_directory(Alias, Request).
 
 
+
+% Legacy: SPARQL
+
 sources -->
   {
     once(lwm_endpoint(Endpoint)),
@@ -164,14 +152,14 @@ sources -->
          optional([rdf(var(md5res),lwm:end,var(end))]),
          optional([rdf(var(md5res),lwm:start,var(start))]),
          rdf(var(md5res),lwm:md5,var(md5)),
-	 rdf(var(md5res),lwm:triples,var(triples))],
+         rdf(var(md5res),lwm:triples,var(triples))],
         Rows1, [distinct(true),limit(250)]),
     findall(
       [Location-Md5|T],
       (
         member([Md5Literal|T], Rows1),
-	rdf_literal(Md5Literal, Md5, _),
-	datadoc_location(Md5, Location)
+        rdf_literal(Md5Literal, Md5, _),
+        datadoc_location(Md5, Location)
       ),
       Rows2
     )
@@ -184,20 +172,9 @@ sources -->
 
 
 
-lod_laundry_cell(Term) -->
-  {
-    nonvar(Term),
-    Term = Name-InternalLink-ExternalLink
-  }, !,
-  html([
-    \html_link(InternalLink-Name),
-    ' ',
-    \html_external_link(ExternalLink)
-  ]).
-lod_laundry_cell(Term) -->
-  html_pl_term(plDev(.), Term).
-
+% Helpers
 
 datadoc_location(Md5, Location):-
   atomic_list_concat([Md5,'clean.nt.gz'], '/', Path),
   http_link_to_id(clean, path_postfix(Path), Location).
+
