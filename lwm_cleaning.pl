@@ -236,7 +236,6 @@ find_void_datasets(Urls):-
     ),
     Urls
   ),
-(Urls == [] -> true ; gtrace), %DEB
   print_message(informational, found_void_datadumps(Urls)).
 
 

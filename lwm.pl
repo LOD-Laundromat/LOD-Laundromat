@@ -19,13 +19,16 @@
 :- use_module(library(http/http_json)).
 :- use_module(library(http/http_parameters)).
 :- use_module(library(http/http_server_files)).
-:- use_module(library(http/http_session)).
+:- use_module(library(http/http_session)). % HTTP session support.
+:- use_module(library(lists)).
 :- use_module(library(uri)).
 
 :- use_module(generics(typecheck)).
 
 :- use_module(plHtml(html)).
 :- use_module(plHtml(html_pl_term)).
+
+:- use_module(plRdf_term(rdf_literal)).
 
 :- use_module(plTabular(rdf_html_table)).
 
@@ -37,7 +40,7 @@
 :- http_handler(
   cliopatria(data),
   serve_files_in_directory_with_cors(data),
-  [prefix]
+  [id(clean),prefix]
 ).
 
 
@@ -75,17 +78,28 @@ serve_files_in_directory_with_cors(Alias, Request):-
 sources -->
   {
     once(lwm_endpoint(Endpoint)),
-    lwm_sparql_select(Endpoint, _, [lwm], true, [md5res,md5,added,start,end],
+    lwm_sparql_select(Endpoint, _, [lwm], true, [md5,triples,added,start,end],
         [rdf(var(md5res),lwm:added,var(added)),
          optional([rdf(var(md5res),lwm:end,var(end))]),
          optional([rdf(var(md5res),lwm:start,var(start))]),
-         rdf(var(md5res),lwm:md5,var(md5))],
-        250, _, _, Rows)
+         rdf(var(md5res),lwm:md5,var(md5)),
+	 rdf(var(md5res),lwm:triples,var(triples))],
+        250, _, _, Rows1),
+    findall(
+      [Location-Md5|T],
+      (
+        member([Md5Literal|T], Rows1),
+	rdf_literal(Md5Literal, Md5, _),
+	atomic_list_concat([Md5,'clean.nt.gz'], '/', Path),
+	http_link_to_id(clean, path_postfix(Path), Location)
+      ),
+      Rows2
+    )
   },
   rdf_html_table(
     [header_column(true),header_row(true),indexed(true)],
     html('Overview of LOD sources.'),
-    [['Source','Time added','Time started','Time ended']|Rows]
+    [['Source','Time added','Time started','Time ended']|Rows2]
   ).
 
 
