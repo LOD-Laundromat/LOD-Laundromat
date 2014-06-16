@@ -13,6 +13,7 @@
 @version 2014/05-2014/06
 */
 
+:- use_module(library(aggregate)).
 :- use_module(library(http/html_write)).
 :- use_module(library(http/http_cors)).
 :- use_module(library(http/http_dispatch)).
@@ -20,6 +21,7 @@
 :- use_module(library(http/http_parameters)).
 :- use_module(library(http/http_server_files)).
 :- use_module(library(http/http_session)). % HTTP session support.
+:- use_module(library(semweb/rdf_db)).
 :- use_module(library(lists)).
 :- use_module(library(uri)).
 
@@ -28,7 +30,9 @@
 :- use_module(plHtml(html)).
 :- use_module(plHtml(html_pl_term)).
 
+:- use_module(plRdf_term(rdf_datatype)).
 :- use_module(plRdf_term(rdf_literal)).
+:- use_module(plRdf_term(rdf_string)).
 
 :- use_module(plTabular(rdf_html_table)).
 
@@ -47,7 +51,84 @@
 
 % Response to requesting a JSON description of all LOD URL.
 lwm(_, HtmlStyle):-
-  reply_html_page(HtmlStyle, title('LOD Laundry'), \sources).
+  reply_html_page(HtmlStyle, title('LOD Laundry'), \datadoc_overview).
+
+datadoc_overview -->
+  html([
+    h2('Cleaned'),
+    \cleaned_datadocs,
+    h2('Cleaning'),
+    \cleaning_datadocs,
+    h2('To be cleaned'),
+    \pending_datadocs
+  ]).
+
+cleaned_datadocs -->
+  {
+    aggregate_all(
+      set(Triples-[Location-Md5,Triples,Added,Started,Ended]),
+      (
+        rdf(Md5res, lwm:end, Ended),
+        rdf(Md5res, lwm:start, Started),
+        rdf(Md5res, lwm:added, Added),
+        rdf_string(Md5res, lwm:md5, Md5, _),
+	datadoc_location(Md5, Location),
+        (rdf_datatype(Md5res, lwm:triples, Triples, xsd:integer, _), ! ; Triples = 0)
+      ),
+      Pairs
+    )
+  },
+  rdf_html_table_pairs(Pairs).
+
+
+cleaning_datadocs -->
+  {
+    aggregate_all(
+      set(Started-[Location-Md5,Added,Started]),
+      (
+        rdf(Md5res, lwm:start, Started),
+	\+ rdf(Md5res, lwm:end, _),
+	rdf(Md5res, lwm:added, Added),
+        rdf_string(Md5res, lwm:md5, Md5, _),
+	datadoc_location(Md5, Location)
+      ),
+      Pairs
+    )
+  },
+  rdf_html_table_pairs(Pairs).
+
+
+pending_datadocs -->
+  {
+    aggregate_all(
+      set(Added-[Location-Md5,Added]),
+      (
+	rdf(Md5res, lwm:added, Added),
+	\+ rdf(Md5res, lwm:start, _),
+        rdf_string(Md5res, lwm:md5, Md5, _),
+	datadoc_location(Md5, Location)
+      ),
+      Pairs
+    )
+  },
+  rdf_html_table_pairs(Pairs).
+
+
+rdf_html_table_pairs(Pairs1) -->
+  {
+    keysort(Pairs1, Pairs2),
+    reverse(Pairs2, Pairs3),
+    findall(
+      Row,
+      member(_-Row, Pairs3),
+      Rows
+    )
+  },
+  rdf_html_table(
+    [header_column(true),header_row(true),indexed(true)],
+    html('Overview of LOD sources.'),
+    [['Source','Time added','Time started','Time ended']|Rows]
+  ).
 
 
 lwm_basket(Request):-
@@ -90,8 +171,7 @@ sources -->
       (
         member([Md5Literal|T], Rows1),
 	rdf_literal(Md5Literal, Md5, _),
-	atomic_list_concat([Md5,'clean.nt.gz'], '/', Path),
-	http_link_to_id(clean, path_postfix(Path), Location)
+	datadoc_location(Md5, Location)
       ),
       Rows2
     )
@@ -117,3 +197,7 @@ lod_laundry_cell(Term) -->
 lod_laundry_cell(Term) -->
   html_pl_term(plDev(.), Term).
 
+
+datadoc_location(Md5, Location):-
+  atomic_list_concat([Md5,'clean.nt.gz'], '/', Path),
+  http_link_to_id(clean, path_postfix(Path), Location).
