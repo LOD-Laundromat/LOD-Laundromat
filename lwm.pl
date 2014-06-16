@@ -98,7 +98,7 @@ cleaning_datadocs -->
       Pairs
     )
   },
-  rdf_html_table_pairs(Pairs, [summation_row(true)]).
+  rdf_html_table_pairs(Pairs, []).
 
 pending_datadocs -->
   {
@@ -113,7 +113,7 @@ pending_datadocs -->
       Pairs
     )
   },
-  rdf_html_table_pairs(Pairs, [summation_row(true)]).
+  rdf_html_table_pairs(Pairs, []).
 
 
 lwm_basket(Request):-
