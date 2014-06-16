@@ -111,7 +111,7 @@ clean_md5(Md5):-
 
   % Store the file size of the dirty file.
   size_file(File, ByteSize),
-  store_triple(lwm-Md5, lwm:size, literal(type(xsd:integer,ByteSize))),
+  store_triple(lwm-Md5, lwm-size, literal(type(xsd-integer,ByteSize))),
 
   % Store HTTP statistics.
   store_http(Md5, ContentLength, ContentType, LastModified),
@@ -146,8 +146,8 @@ clean_file(Md5, File1):-
       EntryProperties1,
       EntryProperties2
     ),
-    store_triple(lwm-Md5, lwm:archive_format,
-        literal(type(xsd:string,ArchiveFormat))),
+    store_triple(lwm-Md5, lwm-archive_format,
+        literal(type(xsd-string,ArchiveFormat))),
     maplist(store_archive_entry(Md5), EntryPaths, EntryProperties2)
   ).
 
@@ -174,13 +174,13 @@ clean_datastream(Md5, File, Read, VoidUrls):-
   % File extension.
   file_name_extensions(_, FileExtensions, base),
   atomic_list_concat(FileExtensions, '.', FileExtension),
-  store_triple(lwm-Md5, lwm:file_extension,
-      literal(type(xsd:string,FileExtension))),
+  store_triple(lwm-Md5, lwm-file_extension,
+      literal(type(xsd-string,FileExtension))),
 
   % Guess serialization format.
   rdf_guess_format(Read, Format, []),
-  store_triple(lwm-Md5, lwm:serialization_format,
-      literal(type(xsd:string,Format))),
+  store_triple(lwm-Md5, lwm-serialization_format,
+      literal(type(xsd-string,Format))),
 
   % Load triples in serialization format.
   lwm_base(Md5, Base),
