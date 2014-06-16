@@ -59,7 +59,7 @@ the stored triples are sent in a SPARQL Update request
 
 store_added(Md5):-
   get_dateTime(Added),
-  store_triple(lwm-Md5, lwm:added, literal(type(xsd:dateTime,Added)), ap),
+  store_triple(lwm-Md5, lwm:added, literal(type(xsd:dateTime,Added))),
   post_rdf_triples.
 
 
@@ -72,26 +72,25 @@ store_added(Md5):-
 store_archive_entry(ParentMd5, EntryPath, EntryProperties1):-
   atomic_list_concat([ParentMd5,EntryPath], ' ', Temp),
   rdf_atom_md5(Temp, 1, EntryMd5),
-  store_triple(lwm-EntryMd5, rdf:type, lwm:'ArchiveEntry', ap),
-  store_triple(lwm-EntryMd5, lwm:md5, literal(type(xsd:string,EntryMd5)), ap),
-  store_triple(lwm-EntryMd5, lwm:path, literal(type(xsd:string,EntryPath)),
-      ap),
+  store_triple(lwm-EntryMd5, rdf:type, lwm:'ArchiveEntry'),
+  store_triple(lwm-EntryMd5, lwm:md5, literal(type(xsd:string,EntryMd5))),
+  store_triple(lwm-EntryMd5, lwm:path, literal(type(xsd:string,EntryPath))),
 
-  store_triple(lwm-ParentMd5, rdf:type, lwm:'Archive', ap),
-  store_triple(lwm-ParentMd5, lwm:contains_entry, lwm-EntryMd5, ap),
+  store_triple(lwm-ParentMd5, rdf:type, lwm:'Archive'),
+  store_triple(lwm-ParentMd5, lwm:contains_entry, lwm-EntryMd5),
 
   selectchk(mtime(LastModified), EntryProperties1, EntryProperties2),
   % @tbd Store as xsd:dateTime.
   store_triple(lwm-EntryMd5, lwm:archive_last_modified,
-      literal(type(xsd:integer,LastModified)), ap),
+      literal(type(xsd:integer,LastModified))),
 
   selectchk(size(ByteSize), EntryProperties2, EntryProperties3),
   store_triple(lwm-EntryMd5, lwm:archive_size,
-      literal(type(xsd:integer,ByteSize)), ap),
+      literal(type(xsd:integer,ByteSize))),
 
   selectchk(filetype(ArchiveFileType), EntryProperties3, []),
   store_triple(lwm-EntryMd5, lwm:archive_file_type,
-      literal(type(xsd:string,ArchiveFileType)), ap),
+      literal(type(xsd:string,ArchiveFileType))),
 
   store_added(EntryMd5).
 
@@ -104,8 +103,7 @@ store_archive_filters(Md5, ArchiveFilters):-
     nth0(I, ArchiveFilters, ArchiveFilter),
     (
       atomic_list_concat([archive_filter,I], '_', P),
-      store_triple(lwm-Md5, lwm-P, literal(type(xsd:string,ArchiveFilter)),
-          ap)
+      store_triple(lwm-Md5, lwm-P, literal(type(xsd:string,ArchiveFilter)))
     )
   ).
 
@@ -114,7 +112,7 @@ store_archive_filters(Md5, ArchiveFilters):-
 
 store_end(Md5):-
   get_dateTime(Now),
-  store_triple(lwm-Md5, lwm:end, literal(type(xsd:dateTime,Now)), ap),
+  store_triple(lwm-Md5, lwm:end, literal(type(xsd:dateTime,Now))),
   post_rdf_triples.
 
 
@@ -129,18 +127,18 @@ store_http(Md5, ContentLength, ContentType, LastModified):-
   unless(
     ContentLength == '',
     store_triple(lwm-Md5, lwm:content_length,
-        literal(type(xsd:integer,ContentLength)), ap)
+        literal(type(xsd:integer,ContentLength)))
   ),
   unless(
     ContentType == '',
     store_triple(lwm-Md5, lwm:content_type,
-        literal(type(xsd:string,ContentType)), ap)
+        literal(type(xsd:string,ContentType)))
   ),
   % @tbd Store as xsd:dateTime
   unless(
     LastModified == '',
     store_triple(lwm-Md5, lwm:last_modified,
-        literal(type(xsd:string,LastModified)), ap)
+        literal(type(xsd:string,LastModified)))
   ).
 
 
@@ -148,7 +146,7 @@ store_http(Md5, ContentLength, ContentType, LastModified):-
 
 store_message(Md5, Message):-
   with_output_to(atom(String), write_canonical_blobs(Message)),
-  store_triple(lwm-Md5, lwm:message, literal(type(xsd:string,String)), ap).
+  store_triple(lwm-Md5, lwm:message, literal(type(xsd:string,String))).
 
 
 %! store_number_of_triples(
@@ -159,9 +157,9 @@ store_message(Md5, Message):-
 %! ) is det.
 
 store_number_of_triples(Md5, Path, TIn, TOut):-
-  store_triple(lwm-Md5, lwm:triples, literal(type(xsd:integer,TOut)), ap),
+  store_triple(lwm-Md5, lwm:triples, literal(type(xsd:integer,TOut))),
   TDup is TIn - TOut,
-  store_triple(lwm-Md5, lwm:duplicates, literal(type(xsd:integer,TDup)), ap),
+  store_triple(lwm-Md5, lwm:duplicates, literal(type(xsd:integer,TDup))),
   print_message(informational, rdf_ntriples_written(Path,TDup,TOut)).
 
 
@@ -170,12 +168,11 @@ store_number_of_triples(Md5, Path, TIn, TOut):-
 store_start(Md5):-
   % Start date of processing by the LOD Washing Machine.
   get_dateTime(Now),
-  store_triple(lwm-Md5, lwm:start, literal(type(xsd:dateTime,Now)), ap),
+  store_triple(lwm-Md5, lwm:start, literal(type(xsd:dateTime,Now))),
 
   % LOD Washing Machine version.
   lwm_version(Version),
-  store_triple(lwm-Md5, lwm:lwm_version, literal(type(xsd:integer,Version)),
-      ap),
+  store_triple(lwm-Md5, lwm:lwm_version, literal(type(xsd:integer,Version))),
 
   post_rdf_triples.
 
@@ -184,7 +181,7 @@ store_start(Md5):-
 
 store_status(Md5, Status):-
   with_output_to(atom(String), write_canonical_blobs(Status)),
-  store_triple(lwm-Md5, lwm:status, literal(type(xsd:string,String)), ap).
+  store_triple(lwm-Md5, lwm:status, literal(type(xsd:string,String))).
 
 
 %! store_stream(+Md5:atom, +Stream:stream) is det.
@@ -193,24 +190,21 @@ store_stream(Md5, Stream):-
   stream_property(Stream, position(Position)),
 
   stream_position_data(byte_count, Position, ByteCount),
-  store_triple(lwm-Md5, lwm:byte_count, literal(type(xsd:integer,ByteCount)),
-      ap),
+  store_triple(lwm-Md5, lwm:byte_count, literal(type(xsd:integer,ByteCount))),
 
   stream_position_data(char_count, Position, CharCount),
-  store_triple(lwm-Md5, lwm:char_count, literal(type(xsd:integer,CharCount)),
-      ap),
+  store_triple(lwm-Md5, lwm:char_count, literal(type(xsd:integer,CharCount))),
 
   stream_position_data(line_count, Position, LineCount),
-  store_triple(lwm-Md5, lwm:line_count, literal(type(xsd:integer,LineCount)),
-      ap).
+  store_triple(lwm-Md5, lwm:line_count, literal(type(xsd:integer,LineCount))).
 
 
 %! store_url(+Md5:atom, +Url:url) is det.
 
 store_url(Md5, Url):-
-  store_triple(lwm-Md5, rdf:type, lwm:'URL', ap),
-  store_triple(lwm-Md5, lwm:md5, literal(type(xsd:string,Md5)), ap),
-  store_triple(lwm-Md5, lwm:url, Url, ap),
+  store_triple(lwm-Md5, rdf:type, lwm:'URL'),
+  store_triple(lwm-Md5, lwm:md5, literal(type(xsd:string,Md5))),
+  store_triple(lwm-Md5, lwm:url, Url),
   store_added(Md5).
 
 

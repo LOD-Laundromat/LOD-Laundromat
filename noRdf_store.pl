@@ -2,6 +2,9 @@
   noRdf_store,
   [
     post_rdf_triples/0,
+    store_triple/3, % +Subject:or([bnode,iri])
+                    % +Predicate:iri
+                    % +Object:or([bnode,iri,literal])
     store_triple/4 % +Subject:or([bnode,iri])
                    % +Predicate:iri
                    % +Object:or([bnode,iri,literal])
@@ -34,8 +37,13 @@ and at the same time send small RDF messages using SPARQL Update requests.
 %! rdf_triple(
 %!   ?Subject:or([bnode,iri]),
 %!   ?Predicate:iri,
+%!   ?Object:or([bnode,iri,literal])
+%! ) is nondet.
+%! rdf_triple(
+%!   ?Subject:or([bnode,iri]),
+%!   ?Predicate:iri,
 %!   ?Object:or([bnode,iri,literal]),
-%!   ?DataDocument:url
+%!   ?Graph:atom
 %! ) is nondet.
 % Since threads load data in RDF transactions with snapshots,
 % we cannot use the triple store for anything else during
@@ -43,6 +51,7 @@ and at the same time send small RDF messages using SPARQL Update requests.
 % Therefore, we store triples that arise during this cycle
 % as thread-specific Prolog assertions.
 
+:- thread_local(rdf_triple/3).
 :- thread_local(rdf_triple/4).
 
 
@@ -50,14 +59,14 @@ and at the same time send small RDF messages using SPARQL Update requests.
 %! post_rdf_triples is det.
 % Sends a SPARQL Update requests to the SPARQL endpoints that are
 % registered and enabled.
-% The thread-local rdf_triple/4 statements form the contents
+% The thread-local rdf_triple/[3,4] statements form the contents
 % of the update request.
 
 post_rdf_triples:-
   setup_call_cleanup(
     aggregate_all(
-      set([S,P,O,G]),
-      rdf_triple(S, P, O, G),
+      set(Triple),
+      rdf_triple(Triple),
       Triples
     ),
     forall(
@@ -67,6 +76,22 @@ post_rdf_triples:-
     retractall(rdf_triple(_, _, _, _))
   ).
 
+
+rdf_triple([S,P,O]):-
+  rdf_triple(S, P, O).
+rdf_triple([S,P,O,G]):-
+  rdf_triple(S, P, O, G).
+
+
+%! store_triple(
+%!   +Subject:or([bnode,iri]),
+%!   +Predicate:iri,
+%!   +Object:or([bnode,iri,literal])
+%! ) is det.
+
+store_triple(S1, P1, O1):-
+  maplist(rdf_term_map, [S1,P1,O1], [S2,P2,O2]),
+  assert(rdf_triple(S2, P2, O2)).
 
 %! store_triple(
 %!   +Subject:or([bnode,iri]),
@@ -78,6 +103,7 @@ post_rdf_triples:-
 store_triple(S1, P1, O1, G):-
   maplist(rdf_term_map, [S1,P1,O1], [S2,P2,O2]),
   assert(rdf_triple(S2, P2, O2, G)).
+
 
 rdf_term_map(X-Y, Z):- !,
   rdf_global_id(X:Y, Z).
