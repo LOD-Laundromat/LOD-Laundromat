@@ -1,7 +1,7 @@
 :- module(
   noRdf_store,
   [
-    post_rdf_triples/0,
+    post_rdf_triples/1, % +Md5:atom
     store_triple/3, % +Subject
                     % +Predicate
                     % +Object
@@ -55,13 +55,14 @@ and at the same time send small RDF messages using SPARQL Update requests.
 
 
 
-%! post_rdf_triples is det.
+%! post_rdf_triples(+Md5:atom) is det.
 % Sends a SPARQL Update requests to the SPARQL endpoints that are
 % registered and enabled.
 % The thread-local rdf_triple/[3,4] statements form the contents
 % of the update request.
 
-post_rdf_triples:-
+post_rdf_triples(Md5):-
+  lwm_bnode_base(Md5, BNodeBase),
   setup_call_cleanup(
     aggregate_all(
       set(Triple),
@@ -71,7 +72,11 @@ post_rdf_triples:-
     forall(
       lwm_endpoint(Endpoint, Options1),
       (
-        merge_options([reset_bnode_map(false)], Options1, Options2),
+        merge_options(
+          [bnode_base(BNodeBase),reset_bnode_map(false)],
+          Options1,
+          Options2
+        ),
         sparql_insert_data(Endpoint, Triples, Options2)
       )
     ),
