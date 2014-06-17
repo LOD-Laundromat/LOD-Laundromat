@@ -121,7 +121,7 @@ rdf_term_map(X, X).
 versioned_graph(G1, G2):-
   lwm_bnode_base(G1, Scheme-Authority-Hash1),
   lwm_version(Version),
-  atomic_concat([Hash1,Version], '#', Path1),
+  atomic_list_concat([Hash1,Version], '#', Path1),
   atomic_list_concat(['',Path1], '/', Path2),
   uri_components(G2, uri_components(Scheme,Authority,Path2,_,_)).
 

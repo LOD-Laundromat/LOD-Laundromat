@@ -47,15 +47,15 @@ The cleaning process performed by the LOD Washing Machine.
 
 clean(Md5):-
   print_message(informational, start_cleaning(X,Md5)),
+  
   run_collect_messages(
     clean_md5(Md5),
     Status,
     Messages
   ),
-  %%%%(Messages == [] -> true ; gtrace), % DEB
   store_status(Md5, Status),
   maplist(store_message(Md5), Messages),
-
+  
   store_end(Md5),
   print_message(informational, end_cleaning(X,Md5,Status,Messages)).
 
