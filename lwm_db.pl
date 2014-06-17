@@ -101,13 +101,21 @@ lwm_default_graph(DefaultGraph):-
 lwm_endpoint(Endpoint):-
   lwm_endpoint(Endpoint, _).
 
-%lwm_endpoint(localhost, [update_method(direct)|AuthOpts]):-
+%lwm_endpoint(
+%  localhost,
+%  [named_graph(DefualtGraph),update_method(direct)|AuthOpts]
+%):-
+%  lwm_default_graph(DefaultGraph),
 %  lwm_endpoint_authentication(AuthOpts).
-lwm_endpoint(cliopatria, [update_method(direct)|AuthOpts]):-
+lwm_endpoint(
+  cliopatria,
+  [named_graph(DefaultGraph),update_method(direct)|AuthOpts]
+):-
+  lwm_default_graph(DefaultGraph),
   lwm_endpoint_authentication(AuthOpts).
 %lwm_endpoint(
 %  virtuoso,
-%  [default_graph(DefaultGraph),update_method(url_encoded)]
+%  [named_graph(DefaultGraph),update_method(url_encoded)]
 %):-
 %  lwm_default_graph(DefaultGraph).
 
