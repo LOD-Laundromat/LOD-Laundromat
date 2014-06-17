@@ -26,6 +26,7 @@ and at the same time send small RDF messages using SPARQL Update requests.
 :- use_module(library(http/http_client)).
 :- use_module(library(option)).
 :- use_module(library(semweb/rdf_db)).
+:- use_module(library(uri)).
 
 :- use_module(plSparql(sparql_api)).
 
@@ -117,6 +118,9 @@ rdf_term_map(X, X).
 %! versioned_graph(+Graph:atom, -VersionedGraph:atom) is det.
 
 versioned_graph(G1, G2):-
+  lwm_bnode_base(G1, Scheme-Authority-Hash1),
   lwm_version(Version),
-  atomic_list_concat([G1,Version], '-', G2).
+  atomic_concat([Hash1,Version], '#', Path1),
+  atomic_list_concat(['',Path1], '/', Path2),
+  uri_components(G2, uri_components(Scheme,Authority,Path2,_,_)).
 

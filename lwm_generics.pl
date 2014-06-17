@@ -2,7 +2,6 @@
   lwm_generics,
   [
     data_directory/1, % -DataDirectory:atom
-    default_graph/1, % -DefaultGraph:iri
     lod_accept_header_value/1, % -Value
     lwm_version/1, % -Version:positive_integer
     set_data_directory/1 % +DataDirectory:atom
@@ -32,17 +31,6 @@ Generic predicates that are used in the LOD download process.
 
 :- public(ssl_verify/5).
 
-
-
-%! default_graph(-DefaultGraph:iri) is det.
-
-default_graph(DefaultGraph):-
-  lwm_version(Version),
-  atom_number(Fragment, Version),
-  uri_components(
-    DefaultGraph,
-    uri_components(http, 'lodlaundromat.org', _, _, Fragment)
-  ).
 
 
 lod_accept_header_value(Value):-
