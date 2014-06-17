@@ -30,6 +30,7 @@ and at the same time send small RDF messages using SPARQL Update requests.
 :- use_module(plSparql(sparql_api)).
 
 :- use_module(lwm(lwm_db)).
+:- use_module(lwm(lwm_generics)).
 :- use_module(lwm(lwm_messages)).
 
 %! rdf_triple(
@@ -68,8 +69,11 @@ post_rdf_triples:-
       Triples
     ),
     forall(
-      lwm_endpoint(Endpoint, Options),
-      sparql_insert_data(Endpoint, Triples, Options)
+      lwm_endpoint(Endpoint, Options1),
+      (
+        merge_options([reset_bnode_map(false)], Options1, Options2),
+        sparql_insert_data(Endpoint, Triples, Options2)
+      )
     ),
     (
       retractall(rdf_triple(_, _, _)),
@@ -92,9 +96,10 @@ store_triple(S1, P1, O1):-
 
 %! store_triple(+Subject, +Predicate, +Object, +Graph) is det.
 
-store_triple(S1, P1, O1, G):-
+store_triple(S1, P1, O1, G1):-
   maplist(rdf_term_map, [S1,P1,O1], [S2,P2,O2]),
-  assert(rdf_triple(S2, P2, O2, G)).
+  versioned_graph(G1, G2),
+  assert(rdf_triple(S2, P2, O2, G2)).
 
 
 rdf_term_map(X-Y, Z):- !,
@@ -102,4 +107,11 @@ rdf_term_map(X-Y, Z):- !,
 rdf_term_map(literal(type(X-Y,Q)), literal(type(Z,Q))):- !,
   rdf_global_id(X:Y, Z).
 rdf_term_map(X, X).
+
+
+%! versioned_graph(+Graph:atom, -VersionedGraph:atom) is det.
+
+versioned_graph(G1, G2):-
+  lwm_version(Version),
+  atomic_list_concat([G1,Version], '-', G2).
 
