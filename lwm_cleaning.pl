@@ -47,7 +47,7 @@ The cleaning process performed by the LOD Washing Machine.
 
 clean(Md5):-
   print_message(informational, start_cleaning(X,Md5)),
-  
+
   run_collect_messages(
     clean_md5(Md5),
     Status,
@@ -55,7 +55,7 @@ clean(Md5):-
   ),
   store_status(Md5, Status),
   maplist(store_message(Md5), Messages),
-  
+
   store_end(Md5),
   print_message(informational, end_cleaning(X,Md5,Status,Messages)).
 
@@ -82,7 +82,7 @@ clean_md5(Md5):-
   create_file_directory(EntryFile2),
   mv(EntryFile1, EntryFile2),
 
-  clean_file(Md5, EntryFile2).
+  clean_file(Md5, EntryFile2, archive_entry).
 % The given MD5 denotes a URL.
 clean_md5(Md5):-
   once(lwm_endpoint(Endpoint)),
@@ -116,17 +116,21 @@ clean_md5(Md5):-
   % Store HTTP statistics.
   store_http(Md5, ContentLength, ContentType, LastModified),
 
-  clean_file(Md5, File).
+  clean_file(Md5, File, ContentType).
 
 
-clean_file(Md5, File1):-
+clean_file(Md5, File1, ContentType):-
   % Extract archive.
   archive_extract(File1, _, ArchiveFilters, EntryPairs),
   store_archive_filters(Md5, ArchiveFilters),
 
   (
-    EntryPairs = [data-EntryProperties],
-    memberchk(format(raw),EntryProperties)
+    (
+      EntryPairs == []
+    ;
+      EntryPairs = [data-EntryProperties],
+      memberchk(format(raw),EntryProperties)
+    )
   ->
     file_alternative(File1, _, dirty, _, File2),
     (
@@ -136,7 +140,7 @@ clean_file(Md5, File1):-
     ;
       mv(File1, File2)
     ),
-    clean_datafile(Md5, File2),
+    clean_datafile(Md5, File2, ContentType),
     % :-(
     delete_file(File2)
   ;
@@ -152,12 +156,12 @@ clean_file(Md5, File1):-
   ).
 
 
-clean_datafile(Md5, File):-
+clean_datafile(Md5, File, ContentType):-
   setup_call_cleanup(
     open(File, read, Read),
     (
       rdf_transaction(
-        clean_datastream(Md5, File, Read, VoidUrls),
+        clean_datastream(Md5, File, Read, ContentType, VoidUrls),
         _,
         [snapshot(true)]
       ),
@@ -170,7 +174,7 @@ clean_datafile(Md5, File):-
   maplist(add_to_basket, VoidUrls).
 
 
-clean_datastream(Md5, File, Read, VoidUrls):-
+clean_datastream(Md5, File, Read, ContentType, VoidUrls):-
   % File extension.
   file_name_extensions(_, FileExtensions, base),
   atomic_list_concat(FileExtensions, '.', FileExtension),
@@ -178,7 +182,7 @@ clean_datastream(Md5, File, Read, VoidUrls):-
       literal(type(xsd-string,FileExtension))),
 
   % Guess serialization format.
-  rdf_guess_format(Read, Format, []),
+  rdf_guess_format(Md5, Read, FileExtension, ContentType, Format),
   store_triple(lwm-Md5, lwm-serialization_format,
       literal(type(xsd-string,Format))),
 
@@ -244,4 +248,36 @@ md5_to_dir(Md5, Md5Dir):-
   absolute_file_name(data(.), DataDir, [access(write),file_type(directory)]),
   directory_file_path(DataDir, Md5, Md5Dir),
   make_directory_path(Md5Dir).
+
+
+%! rdf_guess_format(
+%!   +Md5:atom,
+%!   +Read:blob,
+%!   +FileExtension:atom,
+%!   +ContentType:atom,
+%!   -Format:atom
+%! ) is semidet.
+
+rdf_guess_format(_, Read, FileExtension, _, Format):-
+  rdf_db:rdf_file_type(FileExtension, SuggestedFormat),
+  rdf_guess_format(Read, Format, [format(SuggestedFormat)]), !.
+rdf_guess_format(_, Read, _, ContentType, Format):-
+  rdf_content_type(ContentType, SuggestedFormat),
+  rdf_guess_format(Read, Format, [format(SuggestedFormat)]), !.
+rdf_guess_format(Md5, _, _, _, _):-
+  throw(error(no_rdf(Md5))).
+
+rdf_content_type('text/rdf',      xml).
+rdf_content_type('text/xml',      xml).
+rdf_content_type('text/rdf+xml',    xml).
+rdf_content_type('application/rdf+xml',    xml).
+rdf_content_type('application/x-turtle',  turtle).
+rdf_content_type('application/turtle',    turtle).
+rdf_content_type('application/trig',    trig).
+rdf_content_type('application/n-triples', ntriples).
+rdf_content_type('application/n-quads',   nquads).
+rdf_content_type('text/turtle',      turtle).
+rdf_content_type('text/rdf+n3',      turtle).  % Bit dubious
+rdf_content_type('text/html',      html).
+rdf_content_type('application/xhtml+xml', xhtml).
 
