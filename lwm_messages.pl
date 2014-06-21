@@ -23,13 +23,11 @@ prolog:message(found_void_datadumps([H|T])) -->
   ['[VoID] Found: ',H,nl],
   prolog:message(found_void_datadumps(T)).
 
-prolog:message(rdf_ntriples_written(File,TDup,TOut)) -->
+prolog:message(rdf_ntriples_written(TDup,TOut)) -->
   ['['],
     number_of_triples_written(TOut),
     number_of_duplicates_written(TDup),
     total_number_of_triples_written(TOut),
-  ['] ['],
-    remote_file(File),
   [']'].
 
 prolog:message(sent_to_endpoint(Endpoint,Reply)) -->

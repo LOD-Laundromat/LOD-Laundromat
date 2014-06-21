@@ -14,8 +14,7 @@
                   % ?LastModified:nonneg
     store_message/2, % +Md5:atom
                      % +Message:compound
-    store_number_of_triples/4, % +Md5:atom
-                               % +Path:atom
+    store_number_of_triples/3, % +Md5:atom
                                % +ReadTriples:nonneg
                                % +WrittenTriples:nonneg
     store_start/1, % +Md5:atom
@@ -150,16 +149,15 @@ store_message(Md5, Message):-
 
 %! store_number_of_triples(
 %!   +Md5:atom,
-%!   +Path:atom,
 %!   +ReadTriples:nonneg,
 %!   +WrittenTriples:nonneg
 %! ) is det.
 
-store_number_of_triples(Md5, Path, TIn, TOut):-
+store_number_of_triples(Md5, TIn, TOut):-
   store_triple(lwm-Md5, lwm-triples, literal(type(xsd-integer,TOut))),
   TDup is TIn - TOut,
   store_triple(lwm-Md5, lwm-duplicates, literal(type(xsd-integer,TDup))),
-  print_message(informational, rdf_ntriples_written(Path,TDup,TOut)).
+  print_message(informational, rdf_ntriples_written(TDup,TOut)).
 
 
 %! store_start(+Md5:atom) is det.

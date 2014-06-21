@@ -201,20 +201,20 @@ clean_datastream(Md5, File, Read, ContentType, VoidUrls):-
     rdf(_, _, _, _),
     TIn
   ),
-  
+
   % Save the data in a cleaned format.
   save_all_data_to_file(Md5, File, TOut),
-  
+
   % Store statistics about the number of (duplicate) triples.
-  store_number_of_triples(Md5, Path, TIn, TOut),
-  
+  store_number_of_triples(Md5, TIn, TOut),
+
   % Store metadata in a separate file.
   % Notice that we use the blank node store
   % that was created by writing all data.
   save_metadata_to_file(Md5, File, TMeta),
   store_triple(lwm-Md5, lwm-number_of_meta_triples,
       literal(type(xsd-integer,TMeta)), lwm),
-  
+
   % Make sure any VoID datadumps are added to the LOD Basket.
   find_void_datasets(VoidUrls).
 
@@ -246,6 +246,12 @@ md5_to_dir(Md5, Md5Dir):-
   make_directory_path(Md5Dir).
 
 
+%! save_all_data_to_file(
+%!   +Md5:atom,
+%!   +File:atom,
+%!   -NumberOfTriples:nonneg
+%! ) is det.
+
 save_all_data_to_file(Md5, File, NumberOfTriples):-
   file_directory_name(File, Dir),
   directory_file_path(Dir, 'clean.nt.gz', Path),
@@ -254,7 +260,7 @@ save_all_data_to_file(Md5, File, NumberOfTriples):-
     gzopen(Path, write, Write),
     rdf_ntriples_write(
       Write,
-      [bnode_base(BNodeBase),number_of_triples(TOut)]
+      [bnode_base(BNodeBase),number_of_triples(NumberOfTriples)]
     ),
     close(Write)
   ).
@@ -274,25 +280,11 @@ save_metadata_to_file(Md5, File, NumberOfTriples):-
     gzopen(Path, write, Write),
     rdf_ntriples_write(
       Write,
-      [bnode_base(BNodeBase),number_of_triples(NumberOfTriples)]
+      [bnode_base(BNodeBase),
+       filter(metadata),
+       number_of_triples(NumberOfTriples)]
     ),
     close(Write)
-  ).
-store_metadata:-
-  aggregate_all(
-    set(P),
-    (
-      rdf_current_predicate(P),
-      rdf_global_id(void:_, P)
-    ),
-    Ps
-  ),
-  forall(
-    (
-      member(P, Ps),
-      rdf(S, P, O)
-    ),
-    store_triple(S, P, O, ap)
   ).
 
 
@@ -312,6 +304,9 @@ rdf_guess_format(_, Read, _, ContentType, Format):-
   rdf_guess_format(Read, Format, [format(SuggestedFormat)]), !.
 rdf_guess_format(Md5, _, _, _, _):-
   throw(error(no_rdf(Md5))).
+
+
+%! rdf_content_type(?ContentType:atom, ?Format:atom) is nondet.
 
 rdf_content_type('text/rdf',      xml).
 rdf_content_type('text/xml',      xml).
