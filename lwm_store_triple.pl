@@ -24,7 +24,6 @@
                     % +Status:or([boolean,compound]))
     store_stream/2, % +Md5:atom
                     % +Stream:stream
-    store_unpacked/1, % +Md5:atom
     store_url/2 % +Md5:atom
                 % +Url:url
   ]
@@ -213,13 +212,6 @@ store_stream(Md5, Stream):-
 
   stream_position_data(line_count, Position, LineCount),
   store_triple(lwm-Md5, lwm-line_count, literal(type(xsd-integer,LineCount))).
-
-
-%! store_unpacked(+Md5:atom) is det.
-
-store_unpacked(Md5):-
-  get_dateTime(Now),
-  store_triple(lwm-Md5, lwm-unpacked, literal(type(xsd-dateTime,Now))).
 
 
 %! store_url(+Md5:atom, +Url:url) is det.

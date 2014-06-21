@@ -150,8 +150,7 @@ unpack_file(Md5, File1):-
       mv(File1, File2)
     ),
     
-    % The file is now ready for cleaning.
-    store_unpacked(Md5),
+    % The file is now ready for cleaning!
     
     % :-(
     delete_file(File2)
