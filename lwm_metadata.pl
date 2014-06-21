@@ -79,7 +79,8 @@ metadata_scrape(Md5):-
     close(Write)
   ),
   store_triple(lwm-Md5, lwm-number_of_meta_triples,
-      literal(type(xsd-integer,NumberOfTriples)), lwm).
+      literal(type(xsd-integer,NumberOfTriples)), lwm),
+  post_rdf_triples(Md5).
 
 
 %! save_metadata_triples(
