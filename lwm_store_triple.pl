@@ -14,6 +14,7 @@
                   % ?LastModified:nonneg
     store_message/2, % +Md5:atom
                      % +Message:compound
+    store_metadata/0,
     store_number_of_triples/4, % +Md5:atom
                                % +Path:atom
                                % +ReadTriples:nonneg
@@ -23,9 +24,8 @@
                     % +Status:or([boolean,compound]))
     store_stream/2, % +Md5:atom
                     % +Stream:stream
-    store_url/2, % +Md5:atom
-                 % +Url:url
-    store_void_triples/0
+    store_url/2 % +Md5:atom
+                % +Url:url
   ]
 ).
 
@@ -212,24 +212,4 @@ store_url(Md5, Url):-
   store_triple(lwm-Md5, lwm:md5, literal(type(xsd:string,Md5)), ap),
   store_triple(lwm-Md5, lwm:url, Url, ap),
   store_added(Md5).
-
-
-%! store_void_triples is det.
-
-store_void_triples:-
-  aggregate_all(
-    set(P),
-    (
-      rdf_current_predicate(P),
-      rdf_global_id(void:_, P)
-    ),
-    Ps
-  ),
-  forall(
-    (
-      member(P, Ps),
-      rdf(S, P, O)
-    ),
-    store_triple(S, P, O, ap)
-  ).
 

@@ -197,24 +197,20 @@ clean_datastream(Md5, File, Read, VoidUrls):-
     rdf(_, _, _, _),
     TIn
   ),
-
-  % Save triples using the N-Triples serialization format.
-  file_directory_name(File, Dir),
-  directory_file_path(Dir, 'clean.nt.gz', Path),
-  lwm_bnode_base(Md5, BNodeBase),
-  setup_call_cleanup(
-    gzopen(Path, write, Write),
-    rdf_ntriples_write(
-      Write,
-      [bnode_base(BNodeBase),number_of_triples(TOut)]
-    ),
-    close(Write)
-  ),
-
-  % Asssert some statistics.
+  
+  % Save the data in a cleaned format.
+  save_all_data_to_file(Md5, File, TOut),
+  
+  % Store statistics about the number of (duplicate) triples.
   store_number_of_triples(Md5, Path, TIn, TOut),
-  store_void_triples,
-
+  
+  % Store metadata in a separate file.
+  % Notice that we use the blank node store
+  % that was created by writing all data.
+  save_metadata_to_file(Md5, File, TMeta),
+  store_triple(lwm-Md5, lwm-number_of_meta_triples,
+      literal(type(xsd-integer,TMeta)), lwm),
+  
   % Make sure any VoID datadumps are added to the LOD Basket.
   find_void_datasets(VoidUrls).
 
@@ -244,4 +240,53 @@ md5_to_dir(Md5, Md5Dir):-
   absolute_file_name(data(.), DataDir, [access(write),file_type(directory)]),
   directory_file_path(DataDir, Md5, Md5Dir),
   make_directory_path(Md5Dir).
+
+save_all_data_to_file(Md5, File, NumberOfTriples):-
+  file_directory_name(File, Dir),
+  directory_file_path(Dir, 'clean.nt.gz', Path),
+  lwm_bnode_base(Md5, BNodeBase),
+  setup_call_cleanup(
+    gzopen(Path, write, Write),
+    rdf_ntriples_write(
+      Write,
+      [bnode_base(BNodeBase),number_of_triples(TOut)]
+    ),
+    close(Write)
+  ).
+
+
+%! save_metadata_to_file(
+%!   +Md5:atom,
+%!   +File:atom,
+%!   -NumberOfTriples:nonneg
+%! ) is det.
+
+save_metadata_to_file(Md5, File, NumberOfTriples):-
+  file_directory_name(File, Dir),
+  directory_file_path(Dir, 'metadata.nt.gz', Path),
+  lwm_bnode_base(Md5, BNodeBase),
+  setup_call_cleanup(
+    gzopen(Path, write, Write),
+    rdf_ntriples_write(
+      Write,
+      [bnode_base(BNodeBase),number_of_triples(NumberOfTriples)]
+    ),
+    close(Write)
+  ).
+store_metadata:-
+  aggregate_all(
+    set(P),
+    (
+      rdf_current_predicate(P),
+      rdf_global_id(void:_, P)
+    ),
+    Ps
+  ),
+  forall(
+    (
+      member(P, Ps),
+      rdf(S, P, O)
+    ),
+    store_triple(S, P, O, ap)
+  ).
 
