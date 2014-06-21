@@ -14,12 +14,21 @@
     lwm_endpoint/2, % ?Endpoint:atom
                     % -Options:list(nvpair)
     lwm_endpoint_authentication/1, % -Authentication:list(nvpair)
+    lwm_sparql_ask/3, % +Prefixes:list(atom)
+                      % +Bbps:or([compound,list(compound)])
+                      % +Options:list(nvpair)
     lwm_sparql_ask/4, % +Endpoint:atom
                       % +Prefixes:list(atom)
                       % +Bbps:or([compound,list(compound)])
                       % +Options:list(nvpair)
+    lwm_sparql_drop/1, % +Options:list(nvpair)
     lwm_sparql_drop/2, % +Endpoint:atom
                        % +Options:list(nvpair)
+    lwm_sparql_select/5, % +Prefixes:list(atom)
+                         % +Variables:list(atom)
+                         % +Bgps:or([compound,list(compound)])
+                         % -Result:list(list)
+                         % +Options:list(nvpair)
     lwm_sparql_select/6, % +Endpoint:atom
                          % +Prefixes:list(atom)
                          % +Variables:list(atom)
@@ -202,11 +211,19 @@ lwm_password(lwmlwm).
 lwm_scheme(http).
 
 
+lwm_sparql_ask(Prefixes, Bbps, Options):-
+  once(lwm_endpoint(Endpoint)),
+  lwm_sparql_ask(Endpoint, Prefixes, Bbps, Options).
+
 lwm_sparql_ask(Endpoint, Prefixes, Bbps, Options1):-
   lwm_endpoint(Endpoint, Options2),
   merge_options(Options1, Options2, Options3),
   sparql_ask(Endpoint, Prefixes, Bbps, Options3).
 
+
+lwm_sparql_drop(Options):-
+  once(lwm_endpoint(Endpoint)),
+  lwm_sparql_drop(Endpoint, Options).
 
 lwm_sparql_drop(Endpoint, Options1):-
   lwm_endpoint(Endpoint, Options2),
@@ -214,6 +231,10 @@ lwm_sparql_drop(Endpoint, Options1):-
   option(default_graph(DefaultGraph), Options3),
   sparql_drop_graph(Endpoint, DefaultGraph, Options3).
 
+
+lwm_sparql_select(Prefixes, Variables, Bgps, Result, Options):-
+  once(lwm_endpoint(Endpoint)),
+  lwm_sparql_select(Endpoint, Prefixes, Variables, Bgps, Result, Options).
 
 lwm_sparql_select(Endpoint, Prefixes, Variables, Bgps, Result, Options1):-
   lwm_endpoint(Endpoint, Options2),

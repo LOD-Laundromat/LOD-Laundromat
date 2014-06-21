@@ -50,9 +50,8 @@ metadata_scrape_loop:-
 %! get_datadoc(-Md5:atom) is det.
 
 get_datadoc(Md5):-
-  once(lwm_endpoint(Endpoint)),
   catch(
-    lwm_sparql_select(Endpoint, [lwm], [md5],
+    lwm_sparql_select([lwm], [md5],
         [rdf(var(md5res),lwm:end,var(end)),
          rdf(var(md5res),lwm:triples,var(triples)),
          rdf(var(md5res),lwm:md5,var(md5))],

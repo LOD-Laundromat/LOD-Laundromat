@@ -7,7 +7,8 @@
                            % +EntryProperties:list(nvpair)
     store_archive_filters/2, % +Md5:atom
                              % +ArchiveFilters:list(atom)
-    store_end/1, % +Md5:atom
+    store_end_clean/1, % +Md5:atom
+    store_end_unpack/1, % +Md5:atom
     store_http/4, % +Md5:atom
                   % ?ContentLength:nonneg
                   % ?ContentType:atom
@@ -17,11 +18,13 @@
     store_number_of_triples/3, % +Md5:atom
                                % +ReadTriples:nonneg
                                % +WrittenTriples:nonneg
-    store_start/1, % +Md5:atom
+    store_start_clean/1, % +Md5:atom
+    store_start_unpack/1, % +Md5:atom
     store_status/2, % +Md5:atom
                     % +Status:or([boolean,compound]))
     store_stream/2, % +Md5:atom
                     % +Stream:stream
+    store_unpacked/1, % +Md5:atom
     store_url/2 % +Md5:atom
                 % +Url:url
   ]
@@ -106,11 +109,19 @@ store_archive_filters(Md5, ArchiveFilters):-
   ).
 
 
-%! store_end(+Md5:atom) is det.
+%! store_end_clean(+Md5:atom) is det.
 
-store_end(Md5):-
+store_end_clean(Md5):-
   get_dateTime(Now),
-  store_triple(lwm-Md5, lwm-end, literal(type(xsd-dateTime,Now))),
+  store_triple(lwm-Md5, lwm-end_clean, literal(type(xsd-dateTime,Now))),
+  post_rdf_triples(Md5).
+
+
+%! store_end_unpack(+Md5:atom) is det.
+
+store_end_unpack(Md5):-
+  get_dateTime(Now),
+  store_triple(lwm-Md5, lwm-end_unpack, literal(type(xsd-dateTime,Now))),
   post_rdf_triples(Md5).
 
 
@@ -160,16 +171,24 @@ store_number_of_triples(Md5, TIn, TOut):-
   print_message(informational, rdf_ntriples_written(TDup,TOut)).
 
 
-%! store_start(+Md5:atom) is det.
+%! store_start_clean(+Md5:atom) is det.
 
-store_start(Md5):-
-  % Start date of processing by the LOD Washing Machine.
+store_start_clean(Md5):-
+  store_lwm_version(Md5),
+
   get_dateTime(Now),
-  store_triple(lwm-Md5, lwm-start, literal(type(xsd-dateTime,Now))),
+  store_triple(lwm-Md5, lwm-start_clean, literal(type(xsd-dateTime,Now))),
 
-  % LOD Washing Machine version.
-  lwm_version(Version),
-  store_triple(lwm-Md5, lwm-lwm_version, literal(type(xsd-integer,Version))),
+  post_rdf_triples(Md5).
+
+
+%! store_start_unpack(+Md5:atom) is det.
+
+store_start_unpack(Md5):-
+  store_lwm_version(Md5),
+
+  get_dateTime(Now),
+  store_triple(lwm-Md5, lwm-start_unpack, literal(type(xsd-dateTime,Now))),
 
   post_rdf_triples(Md5).
 
@@ -196,6 +215,13 @@ store_stream(Md5, Stream):-
   store_triple(lwm-Md5, lwm-line_count, literal(type(xsd-integer,LineCount))).
 
 
+%! store_unpacked(+Md5:atom) is det.
+
+store_unpacked(Md5):-
+  get_dateTime(Now),
+  store_triple(lwm-Md5, lwm-unpacked, literal(type(xsd-dateTime,Now))).
+
+
 %! store_url(+Md5:atom, +Url:url) is det.
 
 store_url(Md5, Url):-
@@ -203,4 +229,11 @@ store_url(Md5, Url):-
   store_triple(lwm-Md5, lwm-md5, literal(type(xsd-string,Md5))),
   store_triple(lwm-Md5, lwm-url, Url),
   store_added(Md5).
+
+
+%! store_lwm_version(+Md5:atom) is det.
+
+store_lwm_version(Md5):-
+  lwm_version(Version),
+  store_triple(lwm-Md5, lwm-lwm_version, literal(type(xsd-integer,Version))).
 

@@ -1,7 +1,7 @@
 :- module(
-  lwm_cleaning,
+  lwm_clean,
   [
-    clean/1 % +Md5:atom
+    lwm_clean_loop/0
   ]
 ).
 
@@ -36,15 +36,26 @@ The cleaning process performed by the LOD Washing Machine.
 :- use_module(lwm(lwm_store_triple)).
 :- use_module(lwm(noRdf_store)).
 
-%! seen_dataset(?Url:url) is nondet.
-
-:- thread_local(seen_dataset/1).
 
 
+lwm_clean_loop:-
+  % Pick a new source to process.
+  catch(pick_unpacked(Md5), E, writeln(E)),
 
-%! clean(+Md5:atom) is det.
+  % Process the URL we picked.
+  lwm_clean(Md5),
 
-clean(Md5):-
+  % Intermittent loop.
+  lwm_clean_loop.
+% Done for now. Check whether there are new jobs in one seconds.
+lwm_clean_loop:-
+  sleep(1),
+  lwm_clean_loop.
+
+
+%! lwm_clean(+Md5:atom) is det.
+
+lwm_clean(Md5):-
   print_message(informational, start_cleaning(X,Md5)),
 
   run_collect_messages(
@@ -55,107 +66,25 @@ clean(Md5):-
   store_status(Md5, Status),
   maplist(store_message(Md5), Messages),
 
-  store_end(Md5),
+  store_end_clean(Md5),
   print_message(informational, end_cleaning(X,Md5,Status,Messages)).
 
 
-%! clean_datadoc0(+Md5:atom) is det.
+%! clean_md5(+Md5:atom) is det.
 
-% The given MD5 denotes an archive entry.
 clean_md5(Md5):-
-  once(lwm_endpoint(Endpoint)),
-  lwm_sparql_select(Endpoint, [lwm], [md5,path],
-      [rdf(var(md5ent),lwm:md5,literal(xsd:string,Md5)),
-       rdf(var(md5ent),lwm:path,var(path)),
-       rdf(var(md5url),lwm:contains_entry,var(md5ent)),
-       rdf(var(md5url),lwm:md5,var(md5))],
-      [[ParentMd50,EntryPath0]], [distinct(true)]),
-  maplist(rdf_literal, [ParentMd50,EntryPath0], [ParentMd5,EntryPath], _), !,
-
-  % Move the entry file from the parent directory into
-  % an MD5 directory of its own.
-  md5_to_dir(ParentMd5, Md5ParentDir),
-  relative_file_path(EntryFile1, Md5ParentDir, EntryPath),
+  % Construct the file name belonging to the given MD5.
   md5_to_dir(Md5, Md5Dir),
-  relative_file_path(EntryFile2, Md5Dir, EntryPath),
-  create_file_directory(EntryFile2),
-  mv(EntryFile1, EntryFile2),
-
-  clean_file(Md5, EntryFile2, archive_entry).
-% The given MD5 denotes a URL.
-clean_md5(Md5):-
-  once(lwm_endpoint(Endpoint)),
-  lwm_sparql_select(Endpoint, [lwm], [url],
-      [rdf(var(md5res),lwm:url,var(url)),
-       rdf(var(md5res),lwm:md5,literal(xsd:string,Md5))],
-      [[Url]], [distinct(true)]), !,
-
-  % Create a directory for the dirty version of the given Md5.
-  md5_to_dir(Md5, Md5Dir),
-
-  % Download the dirty file for the given Md5.
   directory_file_path(Md5Dir, dirty, File),
-  lod_accept_header_value(AcceptValue),
-  download_to_file(
-    Url,
-    File,
-    [cert_verify_hook(ssl_verify),
-     % Always redownload.
-     freshness_lifetime(0.0),
-     header(content_length, ContentLength),
-     header(content_type, ContentType),
-     header(last_modified, LastModified),
-     request_header('Accept'=AcceptValue)]
-  ),
-
-  % Store the file size of the dirty file.
-  size_file(File, ByteSize),
-  store_triple(lwm-Md5, lwm-size, literal(type(xsd-integer,ByteSize))),
-
-  % Store HTTP statistics.
-  store_http(Md5, ContentLength, ContentType, LastModified),
-
-  clean_file(Md5, File, ContentType).
-
-
-clean_file(Md5, File1, ContentType):-
-  % Extract archive.
-  archive_extract(File1, _, ArchiveFilters, EntryPairs),
-  store_archive_filters(Md5, ArchiveFilters),
-
-  (
-    (
-      EntryPairs == []
-    ;
-      EntryPairs = [data-EntryProperties],
-      memberchk(format(raw),EntryProperties)
-    )
-  ->
-    file_alternative(File1, _, dirty, _, File2),
-    (
-      File1 == File2
-    ->
-      true
-    ;
-      mv(File1, File2)
-    ),
-    clean_datafile(Md5, File2, ContentType),
-    % :-(
-    delete_file(File2)
-  ;
-    pairs_keys_values(EntryPairs, EntryPaths, EntryProperties1),
-    maplist(
-      selectchk(format(ArchiveFormat)),
-      EntryProperties1,
-      EntryProperties2
-    ),
-    store_triple(lwm-Md5, lwm-archive_format,
-        literal(type(xsd-string,ArchiveFormat))),
-    maplist(store_archive_entry(Md5), EntryPaths, EntryProperties2)
-  ).
-
-
-clean_datafile(Md5, File, ContentType):-
+  
+  % Retrieve the content type that was previously determined.
+  lwm_sparql_select([lwm], [content_type],
+      [rdf(var(md5res),lwm:md5,literal(xsd:string,Md5)),
+       rdf(var(md5res),lwm:content_type,var(content_type))],
+      [[Literal]], [limit(1)]),
+  rdf_literal(Literal, ContentType, _),
+  
+  % Clean the data document in an RDF transaction.
   setup_call_cleanup(
     open(File, read, Read),
     (
@@ -168,33 +97,42 @@ clean_datafile(Md5, File, ContentType):-
     ),
     close(Read)
   ),
-  % We add the new VoID URLs to the LOD Basket
-  % after the RDF transaction closes.
+  
+  % Add the new VoID URLs to the LOD Basket.
   maplist(add_to_basket, VoidUrls).
 
 
+%! clean_datastream(
+%!   +Md5:atom,
+%!   +File:atom,
+%!   +Read:blob,
+%!   +ContentType:atom,
+%!   -VoidUrls:ordset(url)
+%! ) is det.
+
 clean_datastream(Md5, File, Read, ContentType, VoidUrls):-
-  % File extension.
+  % Store the file extension.
   file_name_extensions(_, FileExtensions, base),
   atomic_list_concat(FileExtensions, '.', FileExtension),
   store_triple(lwm-Md5, lwm-file_extension,
       literal(type(xsd-string,FileExtension))),
 
-  % Guess serialization format.
+  % Guess the RDF serialization format,
+  % using the content type and the file extension as suggestions.
   rdf_guess_format(Md5, Read, FileExtension, ContentType, Format),
   store_triple(lwm-Md5, lwm-serialization_format,
       literal(type(xsd-string,Format))),
 
-  % Load triples in serialization format.
+  % Load all triples by parsing the data document
+  % according to the guessed RDF serialization format.
   lwm_base(Md5, Base),
   rdf_load(
     stream(Read),
     [base_uri(Base),format(Format),register_namespaces(false)]
   ),
 
-  % We are not in between loading and saving the data.
-  % This means that we can count the number of triples,
-  % including duplicates.
+  % In between loading and saving the data,
+  % we count the number of triples, including the number of duplicates.
   aggregate_all(
     count,
     rdf(_, _, _, _),
@@ -210,7 +148,11 @@ clean_datastream(Md5, File, Read, ContentType, VoidUrls):-
   % Make sure any VoID datadumps are added to the LOD Basket.
   find_void_datasets(VoidUrls).
 
-%! find_void_datasets(-VoidUrls:list(url)) is det.
+
+
+% Helpers
+
+%! find_void_datasets(-VoidUrls:ordset(url)) is det.
 
 find_void_datasets(Urls):-
   aggregate_all(
@@ -219,16 +161,13 @@ find_void_datasets(Urls):-
       rdf(_, void:dataDump, Url),
       % @tbd Create a shortcut for this: only a single SPARQL query,
       % matching `lwm:added`.
-      \+ is_cleaned(Md5),
-      \+ is_pending(Md5)
+      \+ cleaned(Md5),
+      \+ pending(Md5)
     ),
     Urls
   ),
   print_message(informational, found_void_datadumps(Urls)).
 
-
-
-% Helpers
 
 %! rdf_content_type(?ContentType:atom, ?Format:atom) is nondet.
 

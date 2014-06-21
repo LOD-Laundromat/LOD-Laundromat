@@ -17,37 +17,16 @@ See module [lwm_start_threaded] for the threaded version of this module.
 
 :- use_module(library(semweb/rdf_db)).
 
-:- use_module(lwm(lod_basket)).
-:- use_module(lwm(lwm_cleaning)).
+:- use_module(lwm(lwm_clean)).
 :- use_module(lwm(lwm_generics)).
+:- use_module(lwm(lwm_unpack)).
 
 
 
 run_washing_machine:-
   init_washing_machine,
-  thread_create(washing_machine_loop, _, []).
-
-washing_machine_loop:-
-  % Debug.
-  flag(lwm_start, X, X + 1),
-  writeln(X),
-
-  % Pick a new source to process.
-  catch(remove_from_basket(Md5), E, writeln(E)),
-
-  % Process the URL we picked.
-  clean(Md5),
-
-  % Intermittent loop.
-  washing_machine_loop.
-% Done for now. Check whether there are new jobs in one minute.
-washing_machine_loop:-
-  sleep(1),
-  washing_machine_loop.
-
-
-
-% Initialization
+  thread_create(lwm_unpack_loop, _, []),
+  thread_create(lwm_clean_loop, _, []).
 
 init_washing_machine:-
   flag(number_of_processed_files, _, 0),
