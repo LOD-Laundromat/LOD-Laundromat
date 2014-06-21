@@ -5,6 +5,7 @@
                 % -Base:triple(atom)
     lwm_bnode_base/2, % +Md5:atom
                       % -Base:triple(atom)
+    lwm_default_graph/1, % -DefaultGraph:iri
     lwm_endpoint/1, % ?Endpoint:atom
     lwm_endpoint/2, % ?Endpoint:atom
                     % -Options:list(nvpair)
@@ -86,18 +87,29 @@ lwm_bnode_base(Md5, Scheme-Authority-Md5):-
   lwm_authortity(Authority).
 
 
+%! lwm_default_graph(-DefaultGraph:iri) is det.
+
+lwm_default_graph(DefaultGraph):-
+  lwm_version(Version),
+  atom_number(Fragment, Version),
+  uri_components(
+    DefaultGraph,
+    uri_components(http, 'lodlaundromat.org', _, _, Fragment)
+  ).
+
+
 lwm_endpoint(Endpoint):-
   lwm_endpoint(Endpoint, _).
 
-lwm_endpoint(localhost, [update_method(direct)|AuthOpts]):-
+%lwm_endpoint(localhost, [update_method(direct)|AuthOpts]):-
+%  lwm_endpoint_authentication(AuthOpts).
+lwm_endpoint(cliopatria, [update_method(direct)|AuthOpts]):-
   lwm_endpoint_authentication(AuthOpts).
 %lwm_endpoint(
 %  virtuoso,
-%  [default_graph(DefaultGraph),update_method(url_encoded)]
+%  [named_graph(DefaultGraph),update_method(url_encoded)]
 %):-
-%  default_graph(DefaultGraph).
-%lwm_endpoint(cliopatria, [update_method(direct)|AuthOpts]):-
-%  lwm_endpoint_authentication(AuthOpts).
+%  lwm_default_graph(DefaultGraph).
 
 
 %! lwm_endpoint_authentication(-Authentication:list(nvpair)) is det.
