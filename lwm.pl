@@ -37,7 +37,7 @@
 :- use_module(plTabular(rdf_html_table)).
 
 :- use_module(lwm(lod_basket)).
-:- use_module(lwm(lwm_db)).
+:- use_module(lwm(lwm_generics)).
 
 :- dynamic(url_md5_translation/2).
 
@@ -59,8 +59,6 @@ datadoc_overview -->
     \cleaned_datadocs,
     h2('Cleaning'),
     \cleaning_datadocs
-    %h2('To be cleaned'),
-    %\pending_datadocs
   ]).
 
 cleaned_datadocs -->
@@ -72,8 +70,8 @@ cleaned_datadocs -->
         rdf(Md5res, lwm:start, Started),
         rdf(Md5res, lwm:added, Added),
         rdf_string(Md5res, lwm:md5, Md5, _),
-        datadoc_location(Md5, Location),
-	number_of_triples(Md5res, Triples)
+        lwm_datadoc_location(Md5, Location),
+        number_of_triples(Md5res, Triples)
       ),
       Pairs
     )
@@ -89,22 +87,7 @@ cleaning_datadocs -->
         \+ rdf(Md5res, lwm:end, _),
         rdf(Md5res, lwm:added, Added),
         rdf_string(Md5res, lwm:md5, Md5, _),
-        datadoc_location(Md5, Location)
-      ),
-      Pairs
-    )
-  },
-  rdf_html_table_pairs(Pairs, []).
-
-pending_datadocs -->
-  {
-    aggregate_all(
-      set(Added-[Location-Md5,Added]),
-      (
-        rdf(Md5res, lwm:added, Added),
-        \+ rdf(Md5res, lwm:start, _),
-        rdf_string(Md5res, lwm:md5, Md5, _),
-        datadoc_location(Md5, Location)
+        lwm_datadoc_location(Md5, Location)
       ),
       Pairs
     )
@@ -155,7 +138,7 @@ sources -->
       (
         member([Md5Literal|T], Rows1),
         rdf_literal(Md5Literal, Md5, _),
-        datadoc_location(Md5, Location)
+        lwm_datadoc_location(Md5, Location)
       ),
       Rows2
     )
@@ -170,13 +153,9 @@ sources -->
 
 % Helpers
 
-datadoc_location(Md5, Location):-
-  atomic_list_concat([Md5,'clean.nt.gz'], '/', Path),
-  http_link_to_id(clean, path_postfix(Path), Location).
-
-
 %! number_of_triples(+Md5res:iri, -Triples:nonneg) is det.
 
 number_of_triples(Md5res, Triples):-
   rdf_datatype(Md5res, lwm:triples, Triples, xsd:integer, _), !.
 number_of_triples(_, 0).
+

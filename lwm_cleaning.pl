@@ -31,7 +31,6 @@ The cleaning process performed by the LOD Washing Machine.
 :- use_module(plRdf_term(rdf_literal)).
 
 :- use_module(lwm(lod_basket)).
-:- use_module(lwm(lwm_db)).
 :- use_module(lwm(lwm_generics)).
 :- use_module(lwm(lwm_messages)).
 :- use_module(lwm(lwm_store_triple)).
@@ -203,17 +202,10 @@ clean_datastream(Md5, File, Read, ContentType, VoidUrls):-
   ),
 
   % Save the data in a cleaned format.
-  save_all_data_to_file(Md5, File, TOut),
+  save_data_to_file(Md5, File, TOut),
 
   % Store statistics about the number of (duplicate) triples.
   store_number_of_triples(Md5, TIn, TOut),
-
-  % Store metadata in a separate file.
-  % Notice that we use the blank node store
-  % that was created by writing all data.
-  save_metadata_to_file(Md5, File, TMeta),
-  store_triple(lwm-Md5, lwm-number_of_meta_triples,
-      literal(type(xsd-integer,TMeta)), lwm),
 
   % Make sure any VoID datadumps are added to the LOD Basket.
   find_void_datasets(VoidUrls).
@@ -238,54 +230,21 @@ find_void_datasets(Urls):-
 
 % Helpers
 
-%! md5_to_dir(+Md5:atom, -Md5Directory:atom) is det.
+%! rdf_content_type(?ContentType:atom, ?Format:atom) is nondet.
 
-md5_to_dir(Md5, Md5Dir):-
-  absolute_file_name(data(.), DataDir, [access(write),file_type(directory)]),
-  directory_file_path(DataDir, Md5, Md5Dir),
-  make_directory_path(Md5Dir).
-
-
-%! save_all_data_to_file(
-%!   +Md5:atom,
-%!   +File:atom,
-%!   -NumberOfTriples:nonneg
-%! ) is det.
-
-save_all_data_to_file(Md5, File, NumberOfTriples):-
-  file_directory_name(File, Dir),
-  directory_file_path(Dir, 'clean.nt.gz', Path),
-  lwm_bnode_base(Md5, BNodeBase),
-  setup_call_cleanup(
-    gzopen(Path, write, Write),
-    rdf_ntriples_write(
-      Write,
-      [bnode_base(BNodeBase),number_of_triples(NumberOfTriples)]
-    ),
-    close(Write)
-  ).
-
-
-%! save_metadata_to_file(
-%!   +Md5:atom,
-%!   +File:atom,
-%!   -NumberOfTriples:nonneg
-%! ) is det.
-
-save_metadata_to_file(Md5, File, NumberOfTriples):-
-  file_directory_name(File, Dir),
-  directory_file_path(Dir, 'metadata.nt.gz', Path),
-  lwm_bnode_base(Md5, BNodeBase),
-  setup_call_cleanup(
-    gzopen(Path, write, Write),
-    rdf_ntriples_write(
-      Write,
-      [bnode_base(BNodeBase),
-       filter(metadata),
-       number_of_triples(NumberOfTriples)]
-    ),
-    close(Write)
-  ).
+rdf_content_type('text/rdf',      xml).
+rdf_content_type('text/xml',      xml).
+rdf_content_type('text/rdf+xml',    xml).
+rdf_content_type('application/rdf+xml',    xml).
+rdf_content_type('application/x-turtle',  turtle).
+rdf_content_type('application/turtle',    turtle).
+rdf_content_type('application/trig',    trig).
+rdf_content_type('application/n-triples', ntriples).
+rdf_content_type('application/n-quads',   nquads).
+rdf_content_type('text/turtle',      turtle).
+rdf_content_type('text/rdf+n3',      turtle).  % Bit dubious
+rdf_content_type('text/html',      html).
+rdf_content_type('application/xhtml+xml', xhtml).
 
 
 %! rdf_guess_format(
@@ -306,19 +265,18 @@ rdf_guess_format(Md5, _, _, _, _):-
   throw(error(no_rdf(Md5))).
 
 
-%! rdf_content_type(?ContentType:atom, ?Format:atom) is nondet.
+%! save_data_to_file(+Md5:atom, +File:atom, -NumberOfTriples:nonneg) is det.
 
-rdf_content_type('text/rdf',      xml).
-rdf_content_type('text/xml',      xml).
-rdf_content_type('text/rdf+xml',    xml).
-rdf_content_type('application/rdf+xml',    xml).
-rdf_content_type('application/x-turtle',  turtle).
-rdf_content_type('application/turtle',    turtle).
-rdf_content_type('application/trig',    trig).
-rdf_content_type('application/n-triples', ntriples).
-rdf_content_type('application/n-quads',   nquads).
-rdf_content_type('text/turtle',      turtle).
-rdf_content_type('text/rdf+n3',      turtle).  % Bit dubious
-rdf_content_type('text/html',      html).
-rdf_content_type('application/xhtml+xml', xhtml).
+save_data_to_file(Md5, File, NumberOfTriples):-
+  file_directory_name(File, Dir),
+  directory_file_path(Dir, 'clean.nt.gz', Path),
+  lwm_bnode_base(Md5, BNodeBase),
+  setup_call_cleanup(
+    gzopen(Path, write, Write),
+    rdf_ntriples_write(
+      Write,
+      [bnode_base(BNodeBase),number_of_triples(NumberOfTriples)]
+    ),
+    close(Write)
+  ).
 

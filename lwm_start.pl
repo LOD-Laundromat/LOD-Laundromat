@@ -29,7 +29,7 @@ run_washing_machine:-
 
 washing_machine_loop:-
   % Debug.
-  flag(loop, X, X + 1),
+  flag(lwm_start, X, X + 1),
   writeln(X),
 
   % Pick a new source to process.
