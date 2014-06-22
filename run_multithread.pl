@@ -1,5 +1,5 @@
 :- module(
-  download_lod_multithread,
+  run_multithread,
   [
   ]
 ).

@@ -19,3 +19,8 @@
      spacing(next_argument)]
   ).
 
+
+%%%%:- use_module(library(swi_ide)).
+%%%%:- prolog_ide(debug_monitor).
+%%%%:- debug(sparql_request).
+

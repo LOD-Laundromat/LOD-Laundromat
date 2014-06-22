@@ -1,5 +1,5 @@
 :- module(
-  lwm_start,
+  run_singlethread,
   [
     run_washing_machine/0
   ]
@@ -9,7 +9,7 @@
 
 Initializes the downloading and cleaning of LOD in a single-threaded process.
 
-See module [lwm_start_threaded] for the threaded version of this module.
+See module [run_multithread] for the threaded version of this module.
 
 @author Wouter Beek
 @version 2014/03-2014/06
