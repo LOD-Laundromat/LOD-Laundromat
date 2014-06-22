@@ -69,7 +69,7 @@ lwm_unpack(Md5):-
 % The given MD5 denotes an archive entry.
 unpack_md5(Md5):-
   lwm_sparql_select([lwm], [md5,path],
-      [rdf(var(md5ent),lwm:md5,literal(xsd:string,Md5)),
+      [rdf(var(md5ent),lwm:md5,literal(type(xsd:string,Md5))),
        rdf(var(md5ent),lwm:path,var(path)),
        rdf(var(md5url),lwm:contains_entry,var(md5ent)),
        rdf(var(md5url),lwm:md5,var(md5))],
@@ -89,7 +89,7 @@ unpack_md5(Md5):-
 % The given MD5 denotes a URL.
 unpack_md5(Md5):-
   lwm_sparql_select([lwm], [url],
-      [rdf(var(md5res),lwm:md5,literal(xsd:string,Md5)),
+      [rdf(var(md5res),lwm:md5,literal(type(xsd:string,Md5))),
        rdf(var(md5res),lwm:url,var(url))],
       [[Url]], [distinct(true)]), !,
 
@@ -139,15 +139,14 @@ unpack_file(Md5, File1):-
     (
       File1 == File2
     ->
-      true
+      % If the archive format is `raw`,
+      % then the dirty file and the data file are actually the same.
+      file_alternative(File1, _, data, _, File3),
+      delete_file(File3)
     ;
       mv(File1, File2)
-    ),
-
+    )
     % The file is now ready for cleaning!
-
-    % :-(
-    delete_file(File2)
   ;
     % Store the archive entries for future processing.
     pairs_keys_values(EntryPairs, EntryPaths, EntryProperties1),

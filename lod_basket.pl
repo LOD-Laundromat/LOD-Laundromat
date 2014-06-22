@@ -51,7 +51,7 @@ added(Md5):-
   with_mutex(lod_basket, (
     once(lwm_endpoint(Endpoint)),
     lwm_sparql_ask(Endpoint, [lwm],
-        [rdf(var(md5),lwm:md5,literal(xsd:string,Md5)),
+        [rdf(var(md5),lwm:md5,literal(type(xsd:string,Md5))),
          rdf(var(md5),lwm:added,var(added))], [])
   )).
 
@@ -72,7 +72,7 @@ cleaned(Md5):-
   with_mutex(lod_basket, (
     once(lwm_endpoint(Endpoint)),
     lwm_sparql_ask(Endpoint, [lwm],
-        [rdf(var(md5),lwm:md5,literal(xsd:string,Md5)),
+        [rdf(var(md5),lwm:md5,literal(type(xsd:string,Md5))),
          rdf(var(md5),lwm:end_clean,var(end))], [])
   )).
 
@@ -98,7 +98,7 @@ pending(Md5):-
   with_mutex(lod_basket, (
     once(lwm_endpoint(Endpoint)),
     lwm_sparql_ask(Endpoint, [lwm],
-        [rdf(var(md5),lwm:md5,literal(xsd:string,Md5)),
+        [rdf(var(md5),lwm:md5,literal(type(xsd:string,Md5))),
          rdf(var(md5),lwm:added,var(added)),
          not([rdf(var(md5),lwm:start_unpack,var(start))])], [])
   )).
@@ -132,6 +132,7 @@ unpacked(Md5):-
       lwm_sparql_select([lwm], [md5],
           [rdf(var(md5res),lwm:added,var(added)),
            rdf(var(md5res),lwm:end_unpack,var(start)),
+           not([rdf(var(md5res),lwm:start_clean,var(clean))]),
            rdf(var(md5res),lwm:md5,var(md5))],
           [[Literal]], [limit(1)]),
       error(socket_error('Connection refused'),_),
@@ -143,9 +144,10 @@ unpacked(Md5):-
   with_mutex(lod_basket, (
     once(lwm_endpoint(Endpoint)),
     lwm_sparql_ask(Endpoint, [lwm],
-        [rdf(var(md5),lwm:md5,literal(xsd:string,Md5)),
+        [rdf(var(md5),lwm:md5,literal(type(xsd:string,Md5))),
          rdf(var(md5),lwm:added,var(added)),
-         rdf(var(md5),lwm:end_unpack,var(start))],
+         rdf(var(md5),lwm:end_unpack,var(start)),
+         not([rdf(var(md5res),lwm:start_clean,var(clean))])],
         [])
   )).
 

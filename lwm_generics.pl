@@ -204,15 +204,16 @@ lwm_default_graph(DefaultGraph):-
 lwm_endpoint(Endpoint):-
   lwm_endpoint(Endpoint, _).
 
-%lwm_endpoint(localhost, [update_method(direct)|AuthOpts]):-
+lwm_endpoint(Endpoint, Options2):-
+  lwm_endpoint0(Endpoint, Options1),
+  lwm_default_graph(LwmGraph),
+  merge_options([named_graphs([LwmGraph])], Options1, Options2).
+
+%lwm_endpoint0(localhost, [update_method(direct)|AuthOpts]):-
 %  lwm_endpoint_authentication(AuthOpts).
-lwm_endpoint(cliopatria, [update_method(direct)|AuthOpts]):-
+lwm_endpoint0(cliopatria, [update_method(direct)|AuthOpts]):-
   lwm_endpoint_authentication(AuthOpts).
-%lwm_endpoint(
-%  virtuoso,
-%  [named_graph(DefaultGraph),update_method(url_encoded)]
-%):-
-%  lwm_default_graph(DefaultGraph).
+%lwm_endpoint0(virtuoso, [update_method(url_encoded)]).
 
 
 %! lwm_endpoint_authentication(-Authentication:list(nvpair)) is det.
@@ -291,12 +292,12 @@ set_data_directory(DataDir):-
 prolog:message(end(Mode,Md5,Status,Messages)) -->
   status(Status), [nl],
   messages(Messages), [nl],
-  ['[END'],
+  ['[END '],
   lwm_mode(Mode),
   ['] [~w]'-[Md5],nl].
 
 prolog:message(start(Mode,Md5)) -->
-  ['[START'],
+  ['[START '],
   lwm_mode(Mode),
   ['] [~w]'-[Md5]].
 

@@ -72,12 +72,8 @@ clean_md5(Md5):-
   md5_to_dir(Md5, Md5Dir),
   directory_file_path(Md5Dir, dirty, File),
 
-  % Retrieve the content type that was previously determined.
-  lwm_sparql_select([lwm], [content_type],
-      [rdf(var(md5res),lwm:md5,literal(xsd:string,Md5)),
-       rdf(var(md5res),lwm:content_type,var(content_type))],
-      [[Literal]], [limit(1)]),
-  rdf_literal(Literal, ContentType, _),
+  % Retrieve the content type, if it was previously determined.
+  md5_content_type(Md5, ContentType),
 
   % Clean the data document in an RDF transaction.
   setup_call_cleanup(
@@ -164,6 +160,17 @@ find_void_datasets(Urls):-
   print_message(informational, found_void(Urls)).
 
 
+%! md5_content_type(+Md5:atom, -ContentType:atom) is det.
+
+md5_content_type(Md5, ContentType):-
+  lwm_sparql_select([lwm], [content_type],
+      [rdf(var(md5res),lwm:md5,literal(type(xsd:string,Md5))),
+       rdf(var(md5res),lwm:content_type,var(content_type))],
+      [[Literal]], [limit(1)]), !,
+  rdf_literal(Literal, ContentType, _).
+md5_content_type(_, _).
+
+
 %! rdf_content_type(?ContentType:atom, ?Format:atom) is nondet.
 
 rdf_content_type('text/rdf',      xml).
@@ -189,12 +196,19 @@ rdf_content_type('application/xhtml+xml', xhtml).
 %!   -Format:atom
 %! ) is semidet.
 
+% Use the file extensions as the RDF serialization format suggestion.
 rdf_guess_format(_, Read, FileExtension, _, Format):-
+  nonvar(FileExtension),
   rdf_db:rdf_file_type(FileExtension, SuggestedFormat),
   rdf_guess_format(Read, Format, [format(SuggestedFormat)]), !.
+% Use the HTTP content type header as the RDF serialization format suggestion.
 rdf_guess_format(_, Read, _, ContentType, Format):-
+  nonvar(ContentType),
   rdf_content_type(ContentType, SuggestedFormat),
   rdf_guess_format(Read, Format, [format(SuggestedFormat)]), !.
+% Use no RDF serialization format suggestion.
+rdf_guess_format(_, Read, _, _, Format):-
+  rdf_guess_format(Read, Format, []), !.
 rdf_guess_format(Md5, _, _, _, _):-
   throw(error(no_rdf(Md5))).
 

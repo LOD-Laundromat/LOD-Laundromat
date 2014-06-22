@@ -64,11 +64,13 @@ datadoc_overview -->
 cleaned_datadocs -->
   {
     aggregate_all(
-      set(Triples-[Location-Md5,Triples,Added,Started,Ended]),
+      set(Triples-[Location-Md5,Triples,Add,Unpack1,Unpack2,Clean1,Clean2]),
       (
-        rdf(Md5res, lwm:end, Ended),
-        rdf(Md5res, lwm:start, Started),
-        rdf(Md5res, lwm:added, Added),
+        rdf(Md5res, lwm:end_clean, Clean2),
+        rdf(Md5res, lwm:start_clean, Clean1),
+        rdf(Md5res, lwm:end_unpack, Unpack2),
+        rdf(Md5res, lwm:start_unpack, Unpack1),
+        rdf(Md5res, lwm:added, Add),
         rdf_string(Md5res, lwm:md5, Md5, _),
         lwm_datadoc_location(Md5, Location),
         number_of_triples(Md5res, Triples)
@@ -81,11 +83,11 @@ cleaned_datadocs -->
 cleaning_datadocs -->
   {
     aggregate_all(
-      set(Started-[Location-Md5,Added,Started]),
+      set(Started-[Location-Md5,Add,Start]),
       (
-        rdf(Md5res, lwm:start, Started),
-        \+ rdf(Md5res, lwm:end, _),
-        rdf(Md5res, lwm:added, Added),
+        rdf(Md5res, lwm:start_unpack, Start),
+        \+ rdf(Md5res, lwm:end_clean, _),
+        rdf(Md5res, lwm:added, Add),
         rdf_string(Md5res, lwm:md5, Md5, _),
         lwm_datadoc_location(Md5, Location)
       ),
