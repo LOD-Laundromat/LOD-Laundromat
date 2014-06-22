@@ -13,12 +13,9 @@ Unpacks files for the LOD Washing Machine to clean.
 @version 2014/06
 */
 
-:- use_module(library(aggregate)).
 :- use_module(library(apply)).
 :- use_module(library(lists)).
 :- use_module(library(pairs)).
-:- use_module(library(semweb/rdf_db)).
-:- use_module(library(zlib)).
 
 :- use_module(http(http_download)).
 :- use_module(os(archive_ext)).
@@ -26,8 +23,6 @@ Unpacks files for the LOD Washing Machine to clean.
 :- use_module(pl(pl_log)).
 :- use_module(void(void_db)). % XML namespace.
 
-:- use_module(plRdf_ser(rdf_detect)).
-:- use_module(plRdf_ser(rdf_ntriples_write)).
 :- use_module(plRdf_term(rdf_literal)).
 
 :- use_module(lwm(lod_basket)).
@@ -148,9 +143,9 @@ unpack_file(Md5, File1):-
     ;
       mv(File1, File2)
     ),
-    
+
     % The file is now ready for cleaning!
-    
+
     % :-(
     delete_file(File2)
   ;

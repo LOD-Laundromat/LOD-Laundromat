@@ -15,13 +15,9 @@ The cleaning process performed by the LOD Washing Machine.
 
 :- use_module(library(aggregate)).
 :- use_module(library(apply)).
-:- use_module(library(lists)).
-:- use_module(library(pairs)).
 :- use_module(library(semweb/rdf_db)).
 :- use_module(library(zlib)).
 
-:- use_module(http(http_download)).
-:- use_module(os(archive_ext)).
 :- use_module(os(file_ext)).
 :- use_module(pl(pl_log)).
 :- use_module(void(void_db)). % XML namespace.
@@ -75,14 +71,14 @@ clean_md5(Md5):-
   % Construct the file name belonging to the given MD5.
   md5_to_dir(Md5, Md5Dir),
   directory_file_path(Md5Dir, dirty, File),
-  
+
   % Retrieve the content type that was previously determined.
   lwm_sparql_select([lwm], [content_type],
       [rdf(var(md5res),lwm:md5,literal(xsd:string,Md5)),
        rdf(var(md5res),lwm:content_type,var(content_type))],
       [[Literal]], [limit(1)]),
   rdf_literal(Literal, ContentType, _),
-  
+
   % Clean the data document in an RDF transaction.
   setup_call_cleanup(
     open(File, read, Read),
@@ -96,7 +92,7 @@ clean_md5(Md5):-
     ),
     close(Read)
   ),
-  
+
   % Add the new VoID URLs to the LOD Basket.
   maplist(add_to_basket, VoidUrls).
 

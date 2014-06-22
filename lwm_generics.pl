@@ -55,13 +55,10 @@ Also contains Configuration settings for project LOD-Washing-Machine.
 :- use_module(library(base64)).
 :- use_module(library(filesex)).
 :- use_module(library(http/http_dispatch)).
-:- use_module(library(http/http_open)).
 :- use_module(library(option)).
-:- use_module(library(semweb/rdf_db)).
 :- use_module(library(uri)).
 
 :- use_module(generics(db_ext)).
-:- use_module(generics(uri_ext)).
 :- use_module(xml(xml_namespace)).
 
 :- use_module(plSparql(sparql_api)).

@@ -23,7 +23,6 @@ and at the same time send small RDF messages using SPARQL Update requests.
 @version 2014/05-2014/06
 */
 
-:- use_module(library(http/http_client)).
 :- use_module(library(option)).
 :- use_module(library(semweb/rdf_db)).
 :- use_module(library(uri)).
