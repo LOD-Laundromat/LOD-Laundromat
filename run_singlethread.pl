@@ -31,7 +31,6 @@ run_singlethread:-
 init_washing_machine:-
   flag(number_of_processed_files, _, 0),
   flag(number_of_skipped_files, _, 0),
-  flag(number_of_triples_written, _, 0),
 
   % Set the directory where the data is stored.
   absolute_file_name(data(.), DataDir, [access(write),file_type(directory)]),

@@ -153,6 +153,8 @@ unpacked(Md5):-
 
 % Messages
 
+:- multifile(prolog:message//1).
+
 prolog:message(already_added(Md5)) -->
   cannot_add(Md5),
   ['already added'].

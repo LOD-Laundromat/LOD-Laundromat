@@ -285,3 +285,42 @@ set_data_directory(DataDir):-
   % Assert the data directory.
   db_replace_novel(data_directory(DataDir), [e]).
 
+
+
+% Messages
+
+:- multifile(prolog:message/1).
+
+prolog:message(end(Mode,Md5,Status,Messages)) -->
+  status(Status), [nl],
+  messages(Messages), [nl],
+  ['[END'],
+  lwm_mode(Mode),
+  ['] [~w]'-[Md5],nl].
+
+prolog:message(start(Mode,Md5)) -->
+  ['[START'],
+  lwm_mode(Mode),
+  ['] [~w]'-[Md5]].
+
+lines([]) --> [].
+lines([H|T]) -->
+  [H],
+  lines(T).
+
+lwm_mode(clean) --> ['CLEAN'].
+lwm_mode(metadata) --> ['METADATA'].
+lwm_mode(unpack) --> ['UNPACK'].
+
+messages([]) --> !, [].
+messages([message(_,Kind,Lines)|T]) -->
+  ['  [~w] '-[Kind]],
+  lines(Lines),
+  [nl],
+  messages(T).
+
+status(false) --> !, ['false'].
+status(true) --> !, ['true'].
+status(exception(Error)) -->
+  {print_message(error, Error)}.
+

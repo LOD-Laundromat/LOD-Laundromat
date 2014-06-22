@@ -32,7 +32,6 @@ Unpacks files for the LOD Washing Machine to clean.
 
 :- use_module(lwm(lod_basket)).
 :- use_module(lwm(lwm_generics)).
-:- use_module(lwm(lwm_messages)).
 :- use_module(lwm(lwm_store_triple)).
 :- use_module(lwm(noRdf_store)).
 

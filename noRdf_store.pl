@@ -31,7 +31,6 @@ and at the same time send small RDF messages using SPARQL Update requests.
 :- use_module(plSparql(sparql_api)).
 
 :- use_module(lwm(lwm_generics)).
-:- use_module(lwm(lwm_messages)).
 
 %! rdf_triple(
 %!   ?Subject:or([bnode,iri]),

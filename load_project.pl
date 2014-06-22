@@ -16,7 +16,7 @@ Generic code for loading a project:
   * Load the index of subprojects onto the file search path.
 
 @author Wouter Beek
-@version 2014/06/13
+@version 2014/06/22
 */
 
 :- use_module(library(ansi_term)). % Colorized terminal messages.
@@ -105,6 +105,8 @@ set_data_subdirectory(ParentDir):-
   assert(user:file_search_path(data, DataDir)).
 
 
+
+% Messages
 
 :- multifile(prolog:message//1).
 

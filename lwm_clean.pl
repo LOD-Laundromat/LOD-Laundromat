@@ -32,7 +32,6 @@ The cleaning process performed by the LOD Washing Machine.
 
 :- use_module(lwm(lod_basket)).
 :- use_module(lwm(lwm_generics)).
-:- use_module(lwm(lwm_messages)).
 :- use_module(lwm(lwm_store_triple)).
 :- use_module(lwm(noRdf_store)).
 
@@ -218,4 +217,15 @@ save_data_to_file(Md5, File, NumberOfTriples):-
     ),
     close(Write)
   ).
+
+
+
+% Messages
+
+:- multifile(prolog:message//1).
+
+prolog:message(found_void([])) --> !, [].
+prolog:message(found_void([H|T])) -->
+  ['[VoID] Found: ',H,nl],
+  prolog:message(found_void(T)).
 

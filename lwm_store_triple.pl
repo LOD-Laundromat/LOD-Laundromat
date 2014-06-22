@@ -49,7 +49,6 @@ the stored triples are sent in a SPARQL Update request
 :- use_module(xsd(xsd_dateTime_ext)).
 
 :- use_module(lwm(lwm_generics)).
-:- use_module(lwm(lwm_messages)).
 :- use_module(lwm(noRdf_store)).
 
 
@@ -167,7 +166,7 @@ store_number_of_triples(Md5, TIn, TOut):-
   store_triple(lwm-Md5, lwm-triples, literal(type(xsd-integer,TOut))),
   TDup is TIn - TOut,
   store_triple(lwm-Md5, lwm-duplicates, literal(type(xsd-integer,TDup))),
-  print_message(informational, rdf_ntriples_written(TDup,TOut)).
+  print_message(informational, rdf_ntriples_written(TOut,TDup)).
 
 
 %! store_start_clean(+Md5:atom) is det.
@@ -228,4 +227,22 @@ store_url(Md5, Url):-
 store_lwm_version(Md5):-
   lwm_version(Version),
   store_triple(lwm-Md5, lwm-lwm_version, literal(type(xsd-integer,Version))).
+
+
+
+% Messages
+
+:- multifile(prolog:message//1).
+
+prolog:message(rdf_ntriples_written(TOut,TDup)) -->
+  ['['],
+    number_of_triples_written(TOut),
+    number_of_duplicates_written(TDup),
+  [']'].
+
+number_of_duplicates_written(0) --> !, [].
+number_of_duplicates_written(T) --> [' (~D dups)'-[T]].
+
+number_of_triples_written(0) --> !, [].
+number_of_triples_written(T) --> ['+~D'-[T]].
 
