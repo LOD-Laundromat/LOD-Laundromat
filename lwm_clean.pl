@@ -58,6 +58,7 @@ lwm_clean(Md5):-
     Status,
     Messages
   ),
+  
   store_status(Md5, Status),
   maplist(store_message(Md5), Messages),
 
@@ -236,6 +237,6 @@ save_data_to_file(Md5, File, NumberOfTriples):-
 
 prolog:message(found_void([])) --> !, [].
 prolog:message(found_void([H|T])) -->
-  ['[VoID] Found: ',H,nl],
+  ['    [VoID] Found: ',H,nl],
   prolog:message(found_void(T)).
 

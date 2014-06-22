@@ -312,13 +312,13 @@ lwm_mode(unpack) --> ['UNPACK'].
 
 messages([]) --> !, [].
 messages([message(_,Kind,Lines)|T]) -->
-  ['  [~w] '-[Kind]],
+  ['  [MESSAGE(~w)] '-[Kind]],
   lines(Lines),
   [nl],
   messages(T).
 
 status(false) --> !, ['false'].
-status(true) --> !, ['true'].
-status(exception(Error)) -->
-  {print_message(error, Error)}.
+status(true) --> !.
+status(Status) -->
+  ['  [STATUS] ~w'-[Status]].
 

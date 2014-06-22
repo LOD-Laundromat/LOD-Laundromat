@@ -8,7 +8,8 @@
     store_archive_filters/2, % +Md5:atom
                              % +ArchiveFilters:list(atom)
     store_end_clean/1, % +Md5:atom
-    store_end_unpack/1, % +Md5:atom
+    store_end_unpack/2, % +Md5:atom
+                        % +Status
     store_http/4, % +Md5:atom
                   % ?ContentLength:nonneg
                   % ?ContentType:atom
@@ -109,17 +110,30 @@ store_archive_filters(Md5, ArchiveFilters):-
 %! store_end_clean(+Md5:atom) is det.
 
 store_end_clean(Md5):-
-  get_dateTime(Now),
-  store_triple(lwm-Md5, lwm-end_clean, literal(type(xsd-dateTime,Now))),
+  store_end_clean0(Md5),
   post_rdf_triples(Md5).
 
-
-%! store_end_unpack(+Md5:atom) is det.
-
-store_end_unpack(Md5):-
+store_end_clean0(Md5):-
   get_dateTime(Now),
-  store_triple(lwm-Md5, lwm-end_unpack, literal(type(xsd-dateTime,Now))),
+  store_triple(lwm-Md5, lwm-end_clean, literal(type(xsd-dateTime,Now))).
+
+
+%! store_end_unpack(+Md5:atom, +Status:or([boolean,compound])) is det.
+
+% Only unpacking actions with status `true` proceed to cleaning.
+store_end_unpack(Md5, true):- !,
+  store_end_unpack0(Md5),
   post_rdf_triples(Md5).
+store_end_unpack(Md5, Status):-
+  store_end_unpack0(Md5),
+  store_start_clean0(Md5),
+  store_end_clean0(Md5),
+  store_status(Md5, Status),
+  post_rdf_triples(Md5).
+
+store_end_unpack0(Md5):-
+  get_dateTime(Now),
+  store_triple(lwm-Md5, lwm-end_unpack, literal(type(xsd-dateTime,Now))).
 
 
 %! store_http(
@@ -171,12 +185,13 @@ store_number_of_triples(Md5, TIn, TOut):-
 %! store_start_clean(+Md5:atom) is det.
 
 store_start_clean(Md5):-
-  store_lwm_version(Md5),
-
-  get_dateTime(Now),
-  store_triple(lwm-Md5, lwm-start_clean, literal(type(xsd-dateTime,Now))),
-
+  store_start_clean0(Md5),
   post_rdf_triples(Md5).
+
+store_start_clean0(Md5):-
+  store_lwm_version(Md5),
+  get_dateTime(Now),
+  store_triple(lwm-Md5, lwm-start_clean, literal(type(xsd-dateTime,Now))).
 
 
 %! store_start_unpack(+Md5:atom) is det.
@@ -234,7 +249,7 @@ store_lwm_version(Md5):-
 :- multifile(prolog:message//1).
 
 prolog:message(rdf_ntriples_written(TOut,TDup)) -->
-  ['['],
+  ['  ['],
     number_of_triples_written(TOut),
     number_of_duplicates_written(TDup),
   [']'].

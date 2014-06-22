@@ -57,11 +57,10 @@ lwm_unpack(Md5):-
     Status,
     Messages
   ),
-  store_status(Md5, Status),
+  
+  print_message(informational, end(unpack,Md5,Status,Messages)),
   maplist(store_message(Md5), Messages),
-
-  store_end_unpack(Md5),
-  print_message(informational, end(unpack,Md5,Status,Messages)).
+  store_end_unpack(Md5, Status).
 
 
 %! unpack_md5(+Md5:atom) is det.
