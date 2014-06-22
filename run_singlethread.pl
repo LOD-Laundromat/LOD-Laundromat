@@ -1,11 +1,11 @@
 :- module(
   run_singlethread,
   [
-    run_washing_machine/0
+    run_singlethread/0
   ]
 ).
 
-/** <module> LOD Washing Machine: start
+/** <module> Run single-threaded
 
 Initializes the downloading and cleaning of LOD in a single-threaded process.
 
@@ -23,7 +23,7 @@ See module [run_multithread] for the threaded version of this module.
 
 
 
-run_washing_machine:-
+run_singlethread:-
   init_washing_machine,
   thread_create(lwm_unpack_loop, _, []),
   thread_create(lwm_clean_loop, _, []).

@@ -12,16 +12,17 @@ Informational messages for the LOD Washing Machine.
 
 
 
-prolog:message(end_cleaning(X,Md5,Status,Messages)) -->
+prolog:message(end(Mode,Md5,Status,Messages)) -->
   status(Status), [nl],
   messages(Messages), [nl],
-  ['[DONE ~D] [~w]'-[X,Md5]],
-  [nl,nl].
+  ['[END'],
+  lwm_mode(Mode),
+  ['] [~w]'-[Md5],nl].
 
-prolog:message(found_void_datadumps([])) --> !.
-prolog:message(found_void_datadumps([H|T])) -->
+prolog:message(found_void([])) --> !.
+prolog:message(found_void([H|T])) -->
   ['[VoID] Found: ',H,nl],
-  prolog:message(found_void_datadumps(T)).
+  prolog:message(found_void(T)).
 
 prolog:message(rdf_ntriples_written(TDup,TOut)) -->
   ['['],
@@ -30,12 +31,10 @@ prolog:message(rdf_ntriples_written(TDup,TOut)) -->
     total_number_of_triples_written(TOut),
   [']'].
 
-prolog:message(sent_to_endpoint(Endpoint,Reply)) -->
-  ['[',Endpoint,']',nl,Reply,nl].
-
-prolog:message(start_cleaning(X,Md5)) -->
-  {flag(number_of_processed_files, X, X + 1)},
-  ['[START ~D] [~w]'-[X,Md5]].
+prolog:message(start(Mode,Md5)) -->
+  ['[START'],
+  lwm_mode(Mode),
+  ['] [~w]'-[Md5]].
 
 
 
@@ -45,6 +44,10 @@ lines([]) --> [].
 lines([H|T]) -->
   [H],
   lines(T).
+
+lwm_mode(clean) --> ['CLEAN'].
+lwm_mode(metadata) --> ['METADATA'].
+lwm_mode(unpack) --> ['UNPACK'].
 
 messages([]) --> !, [].
 messages([message(_,Kind,Lines)|T]) -->

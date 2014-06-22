@@ -56,7 +56,7 @@ lwm_clean_loop:-
 %! lwm_clean(+Md5:atom) is det.
 
 lwm_clean(Md5):-
-  print_message(informational, start_cleaning(X,Md5)),
+  print_message(informational, start(clean,Md5)),
 
   run_collect_messages(
     clean_md5(Md5),
@@ -67,7 +67,7 @@ lwm_clean(Md5):-
   maplist(store_message(Md5), Messages),
 
   store_end_clean(Md5),
-  print_message(informational, end_cleaning(X,Md5,Status,Messages)).
+  print_message(informational, end(clean,Md5,Status,Messages)).
 
 
 %! clean_md5(+Md5:atom) is det.
@@ -166,7 +166,7 @@ find_void_datasets(Urls):-
     ),
     Urls
   ),
-  print_message(informational, found_void_datadumps(Urls)).
+  print_message(informational, found_void(Urls)).
 
 
 %! rdf_content_type(?ContentType:atom, ?Format:atom) is nondet.

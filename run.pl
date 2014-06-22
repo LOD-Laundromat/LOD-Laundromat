@@ -8,5 +8,5 @@
 :- ensure_loaded(load).
 
 :- use_module(lwm(run_singlethread)).
-:- run_washing_machine.
+:- run_singlethread.
 
