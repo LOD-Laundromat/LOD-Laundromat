@@ -29,9 +29,6 @@ run_singlethread:-
   thread_create(lwm_clean_loop, _, []).
 
 init_washing_machine:-
-  flag(number_of_processed_files, _, 0),
-  flag(number_of_skipped_files, _, 0),
-
   % Set the directory where the data is stored.
   absolute_file_name(data(.), DataDir, [access(write),file_type(directory)]),
   set_data_directory(DataDir),
