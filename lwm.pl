@@ -83,7 +83,7 @@ cleaned_datadocs -->
 cleaning_datadocs -->
   {
     aggregate_all(
-      set(Started-[Location-Md5,Add,Start]),
+      set(Start-[Location-Md5,Add,Start]),
       (
         rdf(Md5res, lwm:start_unpack, Start),
         \+ rdf(Md5res, lwm:end_clean, _),
