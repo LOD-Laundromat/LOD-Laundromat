@@ -239,7 +239,11 @@ lwm_sparql_ask(Prefixes, Bbps, Options):-
 lwm_sparql_ask(Endpoint, Prefixes, Bbps, Options1):-
   lwm_endpoint(Endpoint, Options2),
   merge_options(Options1, Options2, Options3),
-  sparql_ask(Endpoint, Prefixes, Bbps, Options3).
+  catch(
+    sparql_ask(Endpoint, Prefixes, Bbps, Options3),
+    _,
+    fail
+  ).
 
 
 lwm_sparql_drop(Options):-
@@ -250,7 +254,11 @@ lwm_sparql_drop(Endpoint, Options1):-
   lwm_endpoint(Endpoint, Options2),
   merge_options(Options1, Options2, Options3),
   option(default_graph(DefaultGraph), Options3),
-  sparql_drop_graph(Endpoint, DefaultGraph, Options3).
+  catch(
+    sparql_drop_graph(Endpoint, DefaultGraph, Options3),
+    _,
+    fail
+  ).
 
 
 lwm_sparql_select(Prefixes, Variables, Bgps, Result, Options):-
@@ -260,7 +268,11 @@ lwm_sparql_select(Prefixes, Variables, Bgps, Result, Options):-
 lwm_sparql_select(Endpoint, Prefixes, Variables, Bgps, Result, Options1):-
   lwm_endpoint(Endpoint, Options2),
   merge_options(Options1, Options2, Options3),
-  sparql_select(Endpoint, Prefixes, Variables, Bgps, Result, Options3).
+  catch(
+    sparql_select(Endpoint, Prefixes, Variables, Bgps, Result, Options3),
+    _,
+    fail
+  ).
 
 
 lwm_user(lwm).

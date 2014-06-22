@@ -71,17 +71,17 @@ lwm_clean(Md5):-
 clean_md5(Md5):-
   % Construct the file name belonging to the given MD5.
   md5_to_dir(Md5, Md5Dir),
-  directory_file_path(Md5Dir, dirty, File),
+  directory_file_path(Md5Dir, dirty, DirtyFile),
 
   % Retrieve the content type, if it was previously determined.
   md5_content_type(Md5, ContentType),
 
   % Clean the data document in an RDF transaction.
   setup_call_cleanup(
-    open(File, read, Read),
+    open(DirtyFile, read, Read),
     (
       rdf_transaction(
-        clean_datastream(Md5, File, Read, ContentType, VoidUrls),
+        clean_datastream(Md5, DirtyFile, Read, ContentType, VoidUrls),
         _,
         [snapshot(true)]
       ),
@@ -89,7 +89,11 @@ clean_md5(Md5):-
     ),
     close(Read)
   ),
-
+  
+  % Remove the old file.
+  % @tbd This is where a compressed copy of the dirty file could be kept.
+  delete_file(DirtyFile),
+  
   % Add the new VoID URLs to the LOD Basket.
   maplist(add_to_basket, VoidUrls).
 
@@ -103,14 +107,13 @@ clean_md5(Md5):-
 %! ) is det.
 
 clean_datastream(Md5, File, Read, ContentType, VoidUrls):-
-  % Store the file extension.
-  file_name_extensions(_, FileExtensions, base),
-  atomic_list_concat(FileExtensions, '.', FileExtension),
-  store_triple(lwm-Md5, lwm-file_extension,
-      literal(type(xsd-string,FileExtension))),
-
   % Guess the RDF serialization format,
   % using the content type and the file extension as suggestions.
+  lwm_sparql_select([lwm], [file_extension],
+      [rdf(var(md5res),lwm:md5,literal(type(xsd:string,Md5))),
+       rdf(var(md5res),lwm:file_extension,var(file_extension))],
+      [[Literal]], [limit(1)]),
+  rdf_literal(Literal, FileExtension, _),
   rdf_guess_format(Md5, Read, FileExtension, ContentType, Format),
   store_triple(lwm-Md5, lwm-serialization_format,
       literal(type(xsd-string,Format))),

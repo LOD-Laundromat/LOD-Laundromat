@@ -70,11 +70,7 @@ post_rdf_triples(Md5):-
     forall(
       lwm_endpoint(Endpoint, Options1),
       (
-        merge_options(
-          [bnode_base(BNodeBase),reset_bnode_map(false)],
-          Options1,
-          Options2
-        ),
+        merge_options([bnode_base(BNodeBase)], Options1, Options2),
         sparql_insert_data(Endpoint, Triples, Options2)
       )
     ),
