@@ -129,9 +129,7 @@ unpack_md5(Md5):-
 unpack_file(Md5, ArchiveFile):-
   % Store the file extensions.
   file_name_extensions(_, FileExtensions, ArchiveFile),
-  atomic_list_concat(FileExtensions, '.', FileExtension),
-  store_triple(lwm-Md5, lwm-file_extension,
-      literal(type(xsd-string,FileExtension))),
+  store_file_extensions(Md5, FileExtensions),
 
   % Extract archive.
   archive_extract(ArchiveFile, _, ArchiveFilters, EntryPairs),
