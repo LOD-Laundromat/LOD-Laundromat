@@ -11,6 +11,8 @@
     store_end_unpack/2, % +Md5:atom
                         % +Status
     store_end_unpack_and_skip_clean/1, % +Md5:atom
+    store_file_extensions/2, % +Md5:atom
+                             % +FileExtensions:list(atom)
     store_http/4, % +Md5:atom
                   % ?ContentLength:nonneg
                   % ?ContentType:atom
@@ -140,6 +142,16 @@ store_end_unpack(Md5, Status):-
 store_end_unpack0(Md5):-
   get_dateTime(Now),
   store_triple(lwm-Md5, lwm-end_unpack, literal(type(xsd-dateTime,Now))).
+
+
+%! store_file_extensions(+Md5:atom, +FileExtensions:list(atom)) is det.
+
+store_file_extensions(_, []):- !.
+store_file_extensions(_, ['']):- !.
+store_file_extensions(Md5, FileExtensions):-
+  atomic_list_concat(FileExtensions, '.', FileExtension),
+  store_triple(lwm-Md5, lwm-file_extension,
+      literal(type(xsd-string,FileExtension))).
 
 
 %! store_http(

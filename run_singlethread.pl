@@ -25,8 +25,14 @@ See module [run_multithread] for the threaded version of this module.
 
 run_singlethread:-
   init_washing_machine,
-  thread_create(lwm_unpack_loop, _, [detached(true)]),
-  thread_create(lwm_clean_loop, _, [detached(true)]).
+  forall(
+    between(1, 5, _),
+    thread_create(lwm_unpack_loop, _, [detached(true)])
+  ),
+  forall(
+    between(1, 1, _),
+    thread_create(lwm_clean_loop, _, [detached(true)])
+  ).
 
 init_washing_machine:-
   % Set the directory where the data is stored.
