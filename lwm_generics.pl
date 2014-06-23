@@ -240,12 +240,13 @@ lwm_scheme(http).
 %! lwm_size(+Md5:atom, -NumberOfGigabytes:between(0.0,inf)) is det.
 
 lwm_size(Md5, NumberOfGigabytes):-
-  lwm_sparql_select([lwm], [bytes],
+  lwm_sparql_select([lwm], [size],
       [rdf(var(datadoc),lwm:md5,literal(type(xsd:string,Md5))),
-       rdf(var(datadoc),lwm:byte_count,var(bytes))],
+       rdf(var(datadoc),lwm:size,var(size))],
       [[Literal]], [limit(1)]), !,
-  rdf_literal(Literal, NumberOfBytes, _),
-  NumberOfGigabytes is NumberOfBytes / (1024 ** 3).
+  rdf_literal(Literal, NumberOfBytes1, _),
+  atom_number(NumberOfBytes1, NumberOfBytes2),
+  NumberOfGigabytes is NumberOfBytes2 / (1024 ** 3).
 
 
 %! lwm_source(+Md5:atom, -Source:atom) is det.
