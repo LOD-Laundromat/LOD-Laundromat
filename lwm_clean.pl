@@ -18,7 +18,6 @@ The cleaning process performed by the LOD Washing Machine.
 :- use_module(library(semweb/rdf_db)).
 :- use_module(library(zlib)).
 
-:- use_module(os(file_ext)).
 :- use_module(pl(pl_log)).
 :- use_module(void(void_db)). % XML namespace.
 
@@ -35,7 +34,7 @@ The cleaning process performed by the LOD Washing Machine.
 
 lwm_clean_loop:-
   % Pick a new source to process.
-  catch(pick_unpacked(Md5), E, writeln(E)),
+  catch(pick_unpacked(Md5), Exception, var(Exception)),
 
   % Process the URL we picked.
   lwm_clean(Md5),
@@ -51,19 +50,19 @@ lwm_clean_loop:-
 %! lwm_clean(+Md5:atom) is det.
 
 lwm_clean(Md5):-
-  print_message(informational, start(clean,Md5)),
+  print_message(informational, lwm_start(clean,Md5,Source)),
 
   run_collect_messages(
     clean_md5(Md5),
     Status,
     Messages
   ),
-  
+
   store_status(Md5, Status),
   maplist(store_message(Md5), Messages),
 
   store_end_clean(Md5),
-  print_message(informational, end(clean,Md5,Status,Messages)).
+  print_message(informational, lwm_end(clean,Md5,Source,Status,Messages)).
 
 
 %! clean_md5(+Md5:atom) is det.
@@ -89,11 +88,11 @@ clean_md5(Md5):-
     ),
     close(Read)
   ),
-  
+
   % Remove the old file.
   % @tbd This is where a compressed copy of the dirty file could be kept.
   delete_file(DirtyFile),
-  
+
   % Add the new VoID URLs to the LOD Basket.
   maplist(add_to_basket, VoidUrls).
 

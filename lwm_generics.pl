@@ -15,11 +15,11 @@
                     % -Options:list(nvpair)
     lwm_endpoint_authentication/1, % -Authentication:list(nvpair)
     lwm_sparql_ask/3, % +Prefixes:list(atom)
-                      % +Bbps:or([compound,list(compound)])
+                      % +Bgps:or([compound,list(compound)])
                       % +Options:list(nvpair)
     lwm_sparql_ask/4, % +Endpoint:atom
                       % +Prefixes:list(atom)
-                      % +Bbps:or([compound,list(compound)])
+                      % +Bgps:or([compound,list(compound)])
                       % +Options:list(nvpair)
     lwm_sparql_drop/1, % +Options:list(nvpair)
     lwm_sparql_drop/2, % +Endpoint:atom
@@ -35,6 +35,8 @@
                          % +Bgps:or([compound,list(compound)])
                          % -Result:list(list)
                          % +Options:list(nvpair)
+    lwm_url/2, % +Md5:atom
+               % -Url:url
     lwm_version/1, % -Version:positive_integer
     md5_to_dir/2, % +Md5:atom
                   % -Md5Directory:atom
@@ -59,7 +61,10 @@ Also contains Configuration settings for project LOD-Washing-Machine.
 :- use_module(library(uri)).
 
 :- use_module(generics(db_ext)).
+:- use_module(generics(meta_ext)).
 :- use_module(xml(xml_namespace)).
+
+:- use_module(plRdf_term(rdf_literal)).
 
 :- use_module(plSparql(sparql_api)).
 :- use_module(plSparql(sparql_db)).
@@ -232,17 +237,47 @@ lwm_password(lwmlwm).
 lwm_scheme(http).
 
 
-lwm_sparql_ask(Prefixes, Bbps, Options):-
-  once(lwm_endpoint(Endpoint)),
-  lwm_sparql_ask(Endpoint, Prefixes, Bbps, Options).
+%! lwm_size(+Md5:atom, -NumberOfGigabytes:between(0.0,inf)) is det.
 
-lwm_sparql_ask(Endpoint, Prefixes, Bbps, Options1):-
+lwm_size(Md5, NumberOfGigabytes):-
+  lwm_sparql_select([lwm], [bytes],
+      [rdf(var(datadoc),lwm:md5,literal(type(xsd:string,Md5))),
+       rdf(var(datadoc),lwm:byte_count,var(bytes))],
+      [[Literal]], [limit(1)]), !,
+  rdf_literal(Literal, NumberOfBytes, _),
+  NumberOfGigabytes is NumberOfBytes / (1024 ** 3).
+
+
+%! lwm_source(+Md5:atom, -Source:atom) is det.
+% Returns the original source of the given datadocument.
+%
+% This is either a URL simpliciter,
+% or a URL suffixed by an archive entry path.
+
+lwm_source(Md5, Url):-
+  lwm_url(Md5, Url), !.
+lwm_source(Md5, Source):-
+  lwm_sparql_select([lwm], [md5parent,path],
+      [rdf(var(ent),lwm:md5,literal(type(xsd:string,Md5))),
+       rdf(var(ent),lwm:path,var(path)),
+       rdf(var(parent),lwm:contains_entry,var(md5ent)),
+       rdf(var(parent),lwm:md5,var(md5parent))],
+      [[Literal1,Literal2]], [limit(1)]), !,
+  maplist(rdf_literal, [Literal1,Literal2], [ParentMd5,Path], _),
+  lwm_source(ParentMd5, ParentSource),
+  atomic_concat(ParentSource, Path, Source).
+lwm_source(_, 'UNKNOWN SOURCE').
+
+
+lwm_sparql_ask(Prefixes, Bgps, Options):-
+  once(lwm_endpoint(Endpoint)),
+  lwm_sparql_ask(Endpoint, Prefixes, Bgps, Options).
+
+lwm_sparql_ask(Endpoint, Prefixes, Bgps, Options1):-
   lwm_endpoint(Endpoint, Options2),
   merge_options(Options1, Options2, Options3),
-  catch(
-    sparql_ask(Endpoint, Prefixes, Bbps, Options3),
-    _,
-    fail
+  loop_until_true(
+    sparql_ask(Endpoint, Prefixes, Bgps, Options3)
   ).
 
 
@@ -254,10 +289,8 @@ lwm_sparql_drop(Endpoint, Options1):-
   lwm_endpoint(Endpoint, Options2),
   merge_options(Options1, Options2, Options3),
   option(default_graph(DefaultGraph), Options3),
-  catch(
-    sparql_drop_graph(Endpoint, DefaultGraph, Options3),
-    _,
-    fail
+  loop_until_true(
+    sparql_drop_graph(Endpoint, DefaultGraph, Options3)
   ).
 
 
@@ -268,11 +301,18 @@ lwm_sparql_select(Prefixes, Variables, Bgps, Result, Options):-
 lwm_sparql_select(Endpoint, Prefixes, Variables, Bgps, Result, Options1):-
   lwm_endpoint(Endpoint, Options2),
   merge_options(Options1, Options2, Options3),
-  catch(
-    sparql_select(Endpoint, Prefixes, Variables, Bgps, Result, Options3),
-    _,
-    fail
+  loop_until_true(
+    sparql_select(Endpoint, Prefixes, Variables, Bgps, Result, Options3)
   ).
+
+
+%! lwm_url(+Md5:atom, -Url:url) is det.
+
+lwm_url(Md5, Url):-
+  lwm_sparql_select([lwm], [url],
+      [rdf(var(md5res),lwm:md5,literal(type(xsd:string,Md5))),
+       rdf(var(md5res),lwm:url,var(url))],
+      [[Url]], [limit(1)]).
 
 
 lwm_user(lwm).
@@ -301,17 +341,24 @@ set_data_directory(DataDir):-
 
 :- multifile(prolog:message/1).
 
-prolog:message(end(Mode,Md5,Status,Messages)) -->
-  status(Status), [nl],
-  messages(Messages), [nl],
+prolog:message(lwm_end(Mode,Md5,Source,Status,Messages)) -->
+  status(Md5, Status),
+  messages(Messages),
   ['[END '],
   lwm_mode(Mode),
-  ['] [~w]'-[Md5],nl].
+  ['] [~w] [~w]'-[Md5,Source]].
 
-prolog:message(start(Mode,Md5)) -->
+prolog:message(lwm_sparql_retry(Mode,Exception)) -->
+  ['Retrying '],
+  sparql_mode(Mode),
+  [': ~w'-[Exception]].
+
+prolog:message(lwm_start(Mode,Md5,Source)) -->
+  {lwm_source(Md5, Source)},
   ['[START '],
   lwm_mode(Mode),
-  ['] [~w]'-[Md5]].
+  ['] [~w] [~w]'-[Md5,Source]],
+  lwm_start_mode_specific_suffix(Md5, Mode).
 
 lines([]) --> [].
 lines([H|T]) -->
@@ -322,15 +369,29 @@ lwm_mode(clean) --> ['CLEAN'].
 lwm_mode(metadata) --> ['METADATA'].
 lwm_mode(unpack) --> ['UNPACK'].
 
-messages([]) --> !, [].
-messages([message(_,Kind,Lines)|T]) -->
+lwm_start_mode_specific_suffix(Md5, clean) --> !,
+  {lwm_size(Md5, NumberOfGigabytes)},
+  [' [~f]'-[NumberOfGigabytes]].
+lwm_start_mode_specific_suffix(_, unpack) --> [].
+
+message(message(_,Kind,Lines)) -->
   ['  [MESSAGE(~w)] '-[Kind]],
   lines(Lines),
-  [nl],
+  [nl].
+
+messages([]) --> !, [].
+messages([H|T]) -->
+  message(H),
   messages(T).
 
-status(false) --> !, ['false'].
-status(true) --> !.
-status(Status) -->
-  ['  [STATUS] ~w'-[Status]].
+sparql_mode(ask) --> ['ASK'].
+sparql_mode(drop) --> ['DROP'].
+sparql_mode(select) --> ['SELECT'].
+
+% @tbd Send an email whenever an MD5 fails.
+status(_, false) --> !,
+  ['  [STATUS] FALSE',nl].
+status(_, true) --> !.
+status(_, Status) -->
+  ['  [STATUS] ~w'-[Status],nl].
 

@@ -35,7 +35,7 @@ Unpacks files for the LOD Washing Machine to clean.
 
 lwm_unpack_loop:-
   % Pick a new source to process.
-  catch(pick_pending(Md5), E, writeln(E)),
+  catch(pick_pending(Md5), Exception, var(Exception)),
 
   % Process the URL we picked.
   lwm_unpack(Md5),
@@ -51,7 +51,7 @@ lwm_unpack_loop:-
 %! lwm_unpack(+Md5:atom) is det.
 
 lwm_unpack(Md5):-
-  print_message(informational, start(unpack,Md5)),
+  print_message(informational, lwm_start(unpack,Md5,Source)),
 
   run_collect_messages(
     unpack_md5(Md5),
@@ -59,7 +59,7 @@ lwm_unpack(Md5):-
     Messages
   ),
 
-  print_message(informational, end(unpack,Md5,Status,Messages)),
+  print_message(informational, lwm_end(unpack,Md5,Source,Status,Messages)),
   maplist(store_message(Md5), Messages),
   store_end_unpack(Md5, Status).
 
@@ -71,8 +71,8 @@ unpack_md5(Md5):-
   lwm_sparql_select([lwm], [md5,path],
       [rdf(var(md5ent),lwm:md5,literal(type(xsd:string,Md5))),
        rdf(var(md5ent),lwm:path,var(path)),
-       rdf(var(md5url),lwm:contains_entry,var(md5ent)),
-       rdf(var(md5url),lwm:md5,var(md5))],
+       rdf(var(md5parent),lwm:contains_entry,var(md5ent)),
+       rdf(var(md5parent),lwm:md5,var(md5))],
       [[ParentMd50,EntryPath0]], [limit(1)]),
   maplist(rdf_literal, [ParentMd50,EntryPath0], [ParentMd5,EntryPath], _), !,
 
@@ -88,10 +88,7 @@ unpack_md5(Md5):-
   unpack_file(Md5, EntryFile2).
 % The given MD5 denotes a URL.
 unpack_md5(Md5):-
-  lwm_sparql_select([lwm], [url],
-      [rdf(var(md5res),lwm:md5,literal(type(xsd:string,Md5))),
-       rdf(var(md5res),lwm:url,var(url))],
-      [[Url]], [limit(1)]), !,
+  lwm_url(Md5, Url), !,
 
   % Create a directory for the dirty version of the given Md5.
   md5_to_dir(Md5, Md5Dir),

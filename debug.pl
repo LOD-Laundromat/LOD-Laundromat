@@ -23,4 +23,5 @@
 %%%%:- use_module(library(swi_ide)).
 %%%%:- prolog_ide(debug_monitor).
 %%%%:- debug(sparql_request).
+:- debug(loop_until_true).
 
