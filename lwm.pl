@@ -78,7 +78,10 @@ cleaned_datadocs -->
       Pairs
     )
   },
-  rdf_html_table_pairs(Pairs, [summation_row(true)]).
+  rdf_html_table_pairs(
+    Pairs,
+    [maximum_number_of_rows(10),summation_row(true)]
+  ).
 
 cleaning_datadocs -->
   {
@@ -94,7 +97,7 @@ cleaning_datadocs -->
       Pairs
     )
   },
-  rdf_html_table_pairs(Pairs, []).
+  rdf_html_table_pairs(Pairs, [maximum_number_of_rows(10)]).
 
 
 lwm_basket(Request):-
