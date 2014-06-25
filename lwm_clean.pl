@@ -108,7 +108,7 @@ clean_md5(Md5):-
 clean_datastream(Md5, File, Read, ContentType, VoidUrls):-
   % Guess the RDF serialization format,
   % using the content type and the file extension as suggestions.
-  ignore(lwm_file_extension(FileExtension)),
+  ignore(lwm_file_extension(Md5, FileExtension)),
   rdf_guess_format(Md5, Read, FileExtension, ContentType, Format),
   store_triple(lwm-Md5, lwm-serialization_format,
       literal(type(xsd-string,Format))),
