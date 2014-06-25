@@ -41,7 +41,7 @@ add_to_basket(Url1):-
     ->
       print_message(informational, already_added(Md5))
     ;
-      store_url(Md5, Url)
+      store_url(Md5, Url2)
     )
   )).
 
