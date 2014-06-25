@@ -2,6 +2,7 @@
   lod_basket,
   [
     add_to_basket/1, % +Url:url
+    added/1, % +Md5:atom
     cleaned/1, % ?Md5:atom
     pending/1, % ?Md5:atom
     pick_pending/1, % +Md5:atom
