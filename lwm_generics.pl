@@ -84,9 +84,8 @@ Also contains Configuration settings for project LOD-Washing-Machine.
 :- initialization(init_lwm).
 init_lwm:-
   init_cliopatria,
-  %init_localhost,
-  %init_virtuoso,
-  true.
+  init_localhost,
+  init_virtuoso.
 
 % Localhost.
 init_localhost:-
@@ -270,9 +269,11 @@ lwm_source(Md5, Source):-
 lwm_source(_, 'UNKNOWN SOURCE').
 
 
-lwm_sparql_ask(Prefixes, Bgps, Options):-
+lwm_sparql_ask(Prefixes, Bgps1, Options):-
   once(lwm_endpoint(Endpoint)),
-  lwm_sparql_ask(Endpoint, Prefixes, Bgps, Options).
+  lwm_default_graph(LwmGraph),
+  Bgps2 = [graph(LwmGraph,Bgps1)],
+  lwm_sparql_ask(Endpoint, Prefixes, Bgps2, Options).
 
 lwm_sparql_ask(Endpoint, Prefixes, Bgps, Options1):-
   lwm_endpoint(Endpoint, Options2),
