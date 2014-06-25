@@ -18,6 +18,7 @@ The cleaning process performed by the LOD Washing Machine.
 :- use_module(library(semweb/rdf_db)).
 :- use_module(library(zlib)).
 
+:- use_module(generics(flag_ext)).
 :- use_module(pl(pl_log)).
 :- use_module(void(void_db)). % XML namespace.
 
@@ -41,10 +42,12 @@ lwm_clean_loop:-
   lwm_clean(Md5),
 
   % Intermittent loop.
+  reset_thread_flag(number_of_idle_loops(lwm_clean)),
   lwm_clean_loop.
 % Done for now. Check whether there are new jobs in one seconds.
 lwm_clean_loop:-
   sleep(1),
+  print_message(warning, idle_loop(lwm_clean)),
   lwm_clean_loop.
 
 
@@ -233,3 +236,6 @@ prolog:message(found_void([H|T])) -->
   ['    [VoID] Found: ',H,nl],
   prolog:message(found_void(T)).
 
+prolog:message(idle_loop(Kind)) -->
+  {thread_flag(number_of_idle_loops(Kind), X, X + 1)},
+  ['IDLE ~D'-[X]].
