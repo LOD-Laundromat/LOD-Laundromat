@@ -319,7 +319,7 @@ lwm_url(Md5, Url):-
 lwm_user(lwm).
 
 
-lwm_version(9).
+lwm_version(10).
 
 
 %! md5_to_dir(+Md5:atom, -Md5Directory:atom) is det.

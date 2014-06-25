@@ -24,13 +24,16 @@ See module [run_multithread] for the threaded version of this module.
 
 
 run_singlethread:-
+  run_singlethread(1, 1).
+
+run_singlethread(NumberOfUnpackLoops, NumberOfCleanLoops):-
   init_washing_machine,
   forall(
-    between(1, 5, _),
+    between(1, NumberOfUnpackLoops, _),
     thread_create(lwm_unpack_loop, _, [detached(true)])
   ),
   forall(
-    between(1, 1, _),
+    between(1, NumberOfCleanLoops, _),
     thread_create(lwm_clean_loop, _, [detached(true)])
   ).
 
