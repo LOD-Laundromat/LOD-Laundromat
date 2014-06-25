@@ -51,7 +51,7 @@ lwm_unpack_loop:-
 %! lwm_unpack(+Md5:atom) is det.
 
 lwm_unpack(Md5):-
-  %%%%print_message(informational, lwm_start(unpack,Md5,Source)),
+  print_message(informational, lwm_start(unpack,Md5,Source)),
 
   run_collect_messages(
     unpack_md5(Md5),
@@ -59,7 +59,7 @@ lwm_unpack(Md5):-
     Messages
   ),
 
-  %%%%print_message(informational, lwm_end(unpack,Md5,Source,Status,Messages)),
+  print_message(informational, lwm_end(unpack,Md5,Source,Status,Messages)),
   maplist(store_message(Md5), Messages),
   store_end_unpack(Md5, Status).
 
