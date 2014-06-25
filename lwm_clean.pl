@@ -148,10 +148,7 @@ clean_datastream(Md5, File, Read, ContentType, VoidUrls):-
 find_void_datasets(Urls):-
   aggregate_all(
     set(Url),
-    (
-      rdf(_, void:dataDump, Url),
-      \+ added(Md5)
-    ),
+    rdf(_, void:dataDump, Url),
     Urls
   ),
   print_message(informational, found_void(Urls)).

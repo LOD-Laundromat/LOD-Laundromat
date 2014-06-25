@@ -2,7 +2,6 @@
   lod_basket,
   [
     add_to_basket/1, % +Url:url
-    added/1, % +Md5:atom
     cleaned/1, % ?Md5:atom
     pending/1, % ?Md5:atom
     pick_pending/1, % +Md5:atom
@@ -33,9 +32,10 @@ $ curl --data "url=http://acm.rkbexplorer.com/id/998550" http://lodlaundry.wbeek
 
 %! add_to_basket(+Source) is det.
 
-add_to_basket(Url):-
+add_to_basket(Url1):-
+  uri_iri(Url2, Url1),
   with_mutex(lod_basket, (
-    rdf_atom_md5(Url, 1, Md5),
+    rdf_atom_md5(Url2, 1, Md5),
     (
       added(Md5)
     ->

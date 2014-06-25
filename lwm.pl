@@ -103,12 +103,11 @@ cleaning_datadocs -->
 lwm_basket(Request):-
   cors_enable,
   (
-    catch(http_parameters(Request, [url(Url1, [])]), _, fail),
-    is_url(Url1)
+    catch(http_parameters(Request, [url(Url, [])]), _, fail),
+    is_url(Url)
   ->
     % Make sure that it is a URL.
-    uri_iri(Url2, Url1),
-    add_to_basket(Url2),
+    add_to_basket(Url),
 
     % HTTP status code 202 Accepted: The request has been accepted
     % for processing, but the processing has not been completed.
