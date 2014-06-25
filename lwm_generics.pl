@@ -391,7 +391,7 @@ lwm_start_mode_specific_suffix(Md5, clean) --> !,
 lwm_start_mode_specific_suffix(_, unpack) --> [].
 
 message(message(_,Kind,Lines)) -->
-  ['  [MESSAGE(~w)] '-[Kind]],
+  ['    [MESSAGE(~w)] '-[Kind]],
   lines(Lines),
   [nl].
 
@@ -406,8 +406,8 @@ sparql_mode(select) --> ['SELECT'].
 
 % @tbd Send an email whenever an MD5 fails.
 status(_, false) --> !,
-  ['  [STATUS] FALSE',nl].
+  ['    [STATUS] FALSE',nl].
 status(_, true) --> !.
 status(_, Status) -->
-  ['  [STATUS] ~w'-[Status],nl].
+  ['    [STATUS] ~w'-[Status],nl].
 
