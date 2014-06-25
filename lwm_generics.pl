@@ -14,6 +14,8 @@
     lwm_endpoint/2, % ?Endpoint:atom
                     % -Options:list(nvpair)
     lwm_endpoint_authentication/1, % -Authentication:list(nvpair)
+    lwm_file_extension/2, % +Md5:atom
+                          % -FileExtension:atom
     lwm_sparql_ask/3, % +Prefixes:list(atom)
                       % +Bgps:or([compound,list(compound)])
                       % +Options:list(nvpair)
@@ -228,6 +230,16 @@ lwm_endpoint_authentication([request_header('Authorization'=Authentication)]):-
   atomic_list_concat([User,Password], ':', Plain),
   base64(Plain, Encoded),
   atomic_list_concat(['Basic',Encoded], ' ', Authentication).
+
+
+%! lwm_file_extension(+Md5:atom, -FileExtension:atom) is det.
+
+lwm_file_extension(Md5, FileExtension):-
+  lwm_sparql_select([lwm], [file_extension],
+      [rdf(var(md5res),lwm:md5,literal(type(xsd:string,Md5))),
+       rdf(var(md5res),lwm:file_extension,var(file_extension))],
+      [[Literal]], [limit(1)]),
+  rdf_literal(Literal, FileExtension, _).
 
 
 lwm_password(lwmlwm).

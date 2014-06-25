@@ -70,7 +70,7 @@ lwm_clean(Md5):-
 clean_md5(Md5):-
   % Construct the file name belonging to the given MD5.
   md5_to_dir(Md5, Md5Dir),
-  directory_file_path(Md5Dir, dirty, DirtyFile),
+  absolute_file_name(dirty, DirtyFile, [access(read),relative_to(Md5Dir)]),
 
   % Retrieve the content type, if it was previously determined.
   md5_content_type(Md5, ContentType),
@@ -108,11 +108,7 @@ clean_md5(Md5):-
 clean_datastream(Md5, File, Read, ContentType, VoidUrls):-
   % Guess the RDF serialization format,
   % using the content type and the file extension as suggestions.
-  lwm_sparql_select([lwm], [file_extension],
-      [rdf(var(md5res),lwm:md5,literal(type(xsd:string,Md5))),
-       rdf(var(md5res),lwm:file_extension,var(file_extension))],
-      [[Literal]], [limit(1)]),
-  rdf_literal(Literal, FileExtension, _),
+  ignore(lwm_file_extension(FileExtension)),
   rdf_guess_format(Md5, Read, FileExtension, ContentType, Format),
   store_triple(lwm-Md5, lwm-serialization_format,
       literal(type(xsd-string,Format))),
