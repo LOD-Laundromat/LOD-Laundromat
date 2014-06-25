@@ -296,9 +296,11 @@ lwm_sparql_drop(Endpoint, Options1):-
   ).
 
 
-lwm_sparql_select(Prefixes, Variables, Bgps, Result, Options):-
+lwm_sparql_select(Prefixes, Variables, Bgps1, Result, Options):-
   once(lwm_endpoint(Endpoint)),
-  lwm_sparql_select(Endpoint, Prefixes, Variables, Bgps, Result, Options).
+  lwm_default_graph(LwmGraph),
+  Bgps2 = [graph(LwmGraph,Bgps1)],
+  lwm_sparql_select(Endpoint, Prefixes, Variables, Bgps2, Result, Options).
 
 lwm_sparql_select(Endpoint, Prefixes, Variables, Bgps, Result, Options1):-
   lwm_endpoint(Endpoint, Options2),
