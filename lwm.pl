@@ -54,12 +54,7 @@ lwm(_, HtmlStyle):-
   reply_html_page(HtmlStyle, title('LOD Laundry'), \datadoc_overview).
 
 datadoc_overview -->
-  html([
-    h2('Cleaned'),
-    \cleaned_datadocs,
-    h2('Cleaning'),
-    \cleaning_datadocs
-  ]).
+  html(\lwm_unpacking).
 
 cleaned_datadocs -->
   {
@@ -116,6 +111,19 @@ lwm_basket(Request):-
     % HTTP status code 400 Bad Request: The request could not
     % be understood by the server due to malformed syntax.
     reply_json(json{}, [status(400)])
+  ).
+
+
+lwm_unpacking -->
+  {lwm_sparql_select([lwm], [datadoc,start_unpack],
+      [rdf(var(datadoc),lwm:start_unpack,var(start_unpack)),
+       not([rdf(var(datadoc),lwm:end_unpack,var(end_unpack))])],
+      Rows, []),
+  },
+  rdf_html_table(
+    [header_column(true),header_row(true),indexed(true)],
+    html('Datadocuments that are being unpacked right now.'),
+    [['Data document','Unpacking start']|Rows]
   ).
 
 
