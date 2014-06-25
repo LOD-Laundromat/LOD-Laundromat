@@ -37,6 +37,7 @@ lwm_clean_loop:-
   catch(pick_unpacked(Md5), Exception, var(Exception)),
 
   % Process the URL we picked.
+gtrace,
   lwm_clean(Md5),
 
   % Intermittent loop.
