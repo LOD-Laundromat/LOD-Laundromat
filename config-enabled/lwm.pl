@@ -3,21 +3,18 @@
 :- use_module(library(http/html_head)).
 :- use_module(library(http/http_dispatch)).
 
-
 :- use_module(cliopatria(hooks)).
    cliopatria:menu_item(500=places/lwm, 'LOD Washing Machine').
    cliopatria:menu_item(600=places/plTabular, plTabular).
 
-
 :- ensure_loaded('../debug').
 :- ensure_loaded('../load').
-:- use_module(lwm(lwm)).
-
 
 :- http_handler(cliopatria(plTabular), rdf_tabular, [id(plTabular)]).
 :- http_handler(cliopatria(lwm), lwm, [prefix]).
 :- http_handler(cliopatria(basket), lwm_basket, []).
 
+:- ensure_loaded(plServer(style)).
 
 
 % plTabular
@@ -26,13 +23,10 @@
 rdf_tabular(Request):-
   rdf_tabular(Request, plTabular).
 
-:- html_resource(plTabular, [requires([css('plTabular.css')]),virtual(true)]).
-
 :- multifile(user:body//2).
 user:body(plTabular, Body) -->
-  html_requires(plTabular),
+  html_requires(css('plServer.css')),
   user:body(cliopatria(default), Body).
-
 
 
 % LOD-Washing-Machine
@@ -43,6 +37,6 @@ lwm(Request):-
 
 :- multifile(user:body//2).
 user:body(lwm, Body) -->
-  %%%%html_requires(plTabular),
+  html_requires(css('plServer.css')),
   user:body(cliopatria(default), Body).
 

@@ -26,6 +26,8 @@
 
 :- use_module(plHtml(html_pl_term)).
 
+:- use_module(plRdf_term(rdf_literal)).
+
 :- use_module(plTabular(rdf_html_table_pairs)).
 
 :- use_module(lwm(lod_basket)).
@@ -107,10 +109,11 @@ pending(Graph) -->
 unpacking(Graph) -->
   {
     findall(
-      StartUnpack-[Datadoc,StartUnpack],
+      StartUnpack2-[Datadoc,StartUnpack1],
       (
-        rdf(Datadoc, lwm:start_unpack, StartUnpack, Graph),
-        \+ rdf(Datadoc, lwm:end_unpack, _, Graph)
+        rdf(Datadoc, lwm:start_unpack, StartUnpack1, Graph),
+        \+ rdf(Datadoc, lwm:end_unpack, _, Graph),
+        rdf_literal(StartUnpack1, StartUnpack2, _)
       ),
       Pairs
     ),
