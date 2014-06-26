@@ -269,7 +269,6 @@ lwm_size(Md5, NumberOfGigabytes):-
 lwm_source(Md5, Url):-
   lwm_url(Md5, Url), !.
 lwm_source(Md5, Source):-
-gtrace,
   lwm_sparql_select([lwm], [md5parent,path],
       [rdf(var(ent),lwm:md5,literal(type(xsd:string,Md5))),
        rdf(var(ent),lwm:path,var(path)),
