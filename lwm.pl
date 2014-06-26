@@ -23,18 +23,15 @@
 :- use_module(library(http/http_session)). % HTTP session support.
 :- use_module(library(semweb/rdf_db)).
 :- use_module(library(lists)).
-:- use_module(library(uri)).
 
 :- use_module(generics(typecheck)).
-
-:- use_module(plHtml(html)).
-:- use_module(plHtml(html_pl_term)).
 
 :- use_module(plRdf_term(rdf_datatype)).
 :- use_module(plRdf_term(rdf_literal)).
 :- use_module(plRdf_term(rdf_string)).
 
 :- use_module(plTabular(rdf_html_table)).
+:- use_module(plTabular(rdf_html_table_pairs)).
 
 :- use_module(lwm(lod_basket)).
 :- use_module(lwm(lwm_generics)).
@@ -51,10 +48,39 @@
 
 % Response to requesting a JSON description of all LOD URL.
 lwm(_, HtmlStyle):-
-  reply_html_page(HtmlStyle, title('LOD Laundry'), \datadoc_overview).
+  lwm_default_graph(Graph),
+  reply_html_page(
+    HtmlStyle,
+    title('LOD Laundry'),
+    html([
+      \lwm_unpacking(Graph)
+    ])
+  ).
 
-datadoc_overview -->
-  html(\lwm_unpacking).
+lwm_unpacking(Graph) -->
+  {
+    findall(
+      StartUnpack-[Datadoc,StartUnpack,EndUnpack],
+      (
+        rdf(Datadoc, lwm:start_unpack, StartUnpack, Graph),
+        \+ rdf(Datadoc, lwm:end_unpack, EndUnpack, Graph)
+      ),
+      Pairs
+    )
+  },
+  rdf_html_table_pairs(
+    ['Data document','Unpacking start'],
+    Pairs,
+    html('Datadocuments that are being unpacked right now.'),
+    [
+      header_column(true),
+      header_row(true),
+      indexed(true),
+      maximum_number_of_rows(10),
+      summation_row(true)
+    ]
+  ).
+
 
 cleaned_datadocs -->
   {
@@ -74,6 +100,7 @@ cleaned_datadocs -->
     )
   },
   rdf_html_table_pairs(
+    ['Source','Time added','Time started','Time ended'],
     Pairs,
     [maximum_number_of_rows(10),summation_row(true)]
   ).
@@ -92,7 +119,11 @@ cleaning_datadocs -->
       Pairs
     )
   },
-  rdf_html_table_pairs(Pairs, [maximum_number_of_rows(10)]).
+  rdf_html_table_pairs(
+    ['Source','Time added','Time started','Time ended'],
+    Pairs,
+    [maximum_number_of_rows(10)]
+  ).
 
 
 lwm_basket(Request):-
@@ -111,19 +142,6 @@ lwm_basket(Request):-
     % HTTP status code 400 Bad Request: The request could not
     % be understood by the server due to malformed syntax.
     reply_json(json{}, [status(400)])
-  ).
-
-
-lwm_unpacking -->
-  {lwm_sparql_select([lwm], [datadoc,start_unpack],
-      [rdf(var(datadoc),lwm:start_unpack,var(start_unpack)),
-       not([rdf(var(datadoc),lwm:end_unpack,var(end_unpack))])],
-      Rows, []),
-  },
-  rdf_html_table(
-    [header_column(true),header_row(true),indexed(true)],
-    html('Datadocuments that are being unpacked right now.'),
-    [['Data document','Unpacking start']|Rows]
   ).
 
 
