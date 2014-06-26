@@ -13,7 +13,6 @@
 @version 2014/05-2014/06
 */
 
-:- use_module(library(aggregate)).
 :- use_module(library(http/html_write)).
 :- use_module(library(http/http_cors)).
 :- use_module(library(http/http_dispatch)).
@@ -22,17 +21,11 @@
 :- use_module(library(http/http_server_files)).
 :- use_module(library(http/http_session)). % HTTP session support.
 :- use_module(library(semweb/rdf_db)).
-:- use_module(library(lists)).
 
 :- use_module(generics(typecheck)).
 
 :- use_module(plHtml(html_pl_term)).
 
-:- use_module(plRdf_term(rdf_datatype)).
-:- use_module(plRdf_term(rdf_literal)).
-:- use_module(plRdf_term(rdf_string)).
-
-:- use_module(plTabular(rdf_html_table)).
 :- use_module(plTabular(rdf_html_table_pairs)).
 
 :- use_module(lwm(lod_basket)).
