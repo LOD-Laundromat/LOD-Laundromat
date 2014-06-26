@@ -26,6 +26,8 @@
 
 :- use_module(generics(typecheck)).
 
+:- use_module(plHtml(html_pl_term)).
+
 :- use_module(plRdf_term(rdf_datatype)).
 :- use_module(plRdf_term(rdf_literal)).
 :- use_module(plRdf_term(rdf_string)).
@@ -46,84 +48,9 @@
 
 
 
-% Response to requesting a JSON description of all LOD URL.
-lwm(_, HtmlStyle):-
-  lwm_default_graph(Graph),
-  reply_html_page(
-    HtmlStyle,
-    title('LOD Laundry'),
-    html([
-      \lwm_unpacking(Graph)
-    ])
-  ).
-
-lwm_unpacking(Graph) -->
-  {
-    findall(
-      StartUnpack-[Datadoc,StartUnpack,EndUnpack],
-      (
-        rdf(Datadoc, lwm:start_unpack, StartUnpack, Graph),
-        \+ rdf(Datadoc, lwm:end_unpack, EndUnpack, Graph)
-      ),
-      Pairs
-    )
-  },
-  rdf_html_table_pairs(
-    ['Data document','Unpacking start'],
-    Pairs,
-    html('Datadocuments that are being unpacked right now.'),
-    [
-      header_column(true),
-      header_row(true),
-      indexed(true),
-      maximum_number_of_rows(10),
-      summation_row(true)
-    ]
-  ).
-
-
-cleaned_datadocs -->
-  {
-    aggregate_all(
-      set(Triples-[Location-Md5,Triples,Add,Unpack1,Unpack2,Clean1,Clean2]),
-      (
-        rdf(Md5res, lwm:end_clean, Clean2),
-        rdf(Md5res, lwm:start_clean, Clean1),
-        rdf(Md5res, lwm:end_unpack, Unpack2),
-        rdf(Md5res, lwm:start_unpack, Unpack1),
-        rdf(Md5res, lwm:added, Add),
-        rdf_string(Md5res, lwm:md5, Md5, _),
-        lwm_datadoc_location(Md5, Location),
-        number_of_triples(Md5res, Triples)
-      ),
-      Pairs
-    )
-  },
-  rdf_html_table_pairs(
-    ['Source','Time added','Time started','Time ended'],
-    Pairs,
-    [maximum_number_of_rows(10),summation_row(true)]
-  ).
-
-cleaning_datadocs -->
-  {
-    aggregate_all(
-      set(Start-[Location-Md5,Add,Start]),
-      (
-        rdf(Md5res, lwm:start_unpack, Start),
-        \+ rdf(Md5res, lwm:end_clean, _),
-        rdf(Md5res, lwm:added, Add),
-        rdf_string(Md5res, lwm:md5, Md5, _),
-        lwm_datadoc_location(Md5, Location)
-      ),
-      Pairs
-    )
-  },
-  rdf_html_table_pairs(
-    ['Source','Time added','Time started','Time ended'],
-    Pairs,
-    [maximum_number_of_rows(10)]
-  ).
+serve_files_in_directory_with_cors(Alias, Request):-
+  cors_enable,
+  serve_files_in_directory(Alias, Request).
 
 
 lwm_basket(Request):-
@@ -145,46 +72,137 @@ lwm_basket(Request):-
   ).
 
 
-serve_files_in_directory_with_cors(Alias, Request):-
-  cors_enable,
-  serve_files_in_directory(Alias, Request).
-
-
-
-% Legacy: SPARQL
-
-sources -->
-  {
-    lwm_sparql_select([lwm], [md5,triples,added,start,end],
-        [rdf(var(md5res),lwm:added,var(added)),
-         optional([rdf(var(md5res),lwm:end,var(end))]),
-         optional([rdf(var(md5res),lwm:start,var(start))]),
-         rdf(var(md5res),lwm:md5,var(md5)),
-         rdf(var(md5res),lwm:triples,var(triples))],
-        Rows1, [distinct(true),limit(250)]),
-    findall(
-      [Location-Md5|T],
-      (
-        member([Md5Literal|T], Rows1),
-        rdf_literal(Md5Literal, Md5, _),
-        lwm_datadoc_location(Md5, Location)
-      ),
-      Rows2
-    )
-  },
-  rdf_html_table(
-    [header_column(true),header_row(true),indexed(true)],
-    html('Overview of LOD sources.'),
-    [['Source','Time added','Time started','Time ended']|Rows2]
+% Response to requesting a JSON description of all LOD URL.
+lwm(_, HtmlStyle):-
+  lwm_default_graph(Graph),
+  reply_html_page(
+    HtmlStyle,
+    title('LOD Laundry'),
+    html([
+      \pending(Graph),
+      \unpacking(Graph),
+      \unpacked(Graph),
+      \cleaning(Graph),
+      \cleaned(Graph)
+    ])
   ).
 
+pending(Graph) -->
+  {
+    findall(
+      Added-[Datadoc,Added],
+      (
+        rdf(Datadoc, lwm:added, Added, Graph),
+        \+ rdf(Datadoc, lwm:start_unpack, _, Graph)
+      ),
+      Pairs
+    ),
+    length(Pairs, Length)
+  },
+  rdf_html_table_pairs(
+    ['Data document','Added'],
+    Pairs,
+    html([\html_pl_term(lwm,Length),' pending data documents.']),
+    [
+      header_column(true),
+      header_row(true),
+      indexed(true),
+      maximum_number_of_rows(10)
+    ]
+  ).
 
+unpacking(Graph) -->
+  {
+    findall(
+      StartUnpack-[Datadoc,StartUnpack],
+      (
+        rdf(Datadoc, lwm:start_unpack, StartUnpack, Graph),
+        \+ rdf(Datadoc, lwm:end_unpack, _, Graph)
+      ),
+      Pairs
+    ),
+    length(Pairs, Length)
+  },
+  rdf_html_table_pairs(
+    ['Data document','Unpacking start'],
+    Pairs,
+    html([\html_pl_term(lwm,Length),' data documents are being unpacked.']),
+    [
+      header_column(true),
+      header_row(true),
+      indexed(true),
+      maximum_number_of_rows(10)
+    ]
+  ).
 
-% Helpers
+unpacked(Graph) -->
+  {
+    findall(
+      EndUnpack-[Datadoc,EndUnpack],
+      (
+        rdf(Datadoc, lwm:end_unpack, EndUnpack, Graph),
+        \+ rdf(Datadoc, lwm:start_clean, _, Graph)
+      ),
+      Pairs
+    ),
+    length(Pairs, Length)
+  },
+  rdf_html_table_pairs(
+    ['Data document','Unpacking end'],
+    Pairs,
+    html([\html_pl_term(lwm,Length),' unpacked data documents.']),
+    [
+      header_column(true),
+      header_row(true),
+      indexed(true),
+      maximum_number_of_rows(10)
+    ]
+  ).
 
-%! number_of_triples(+Md5res:iri, -Triples:nonneg) is det.
+cleaning(Graph) -->
+  {
+    findall(
+      StartClean-[Datadoc,StartClean],
+      (
+        rdf(Datadoc, lwm:start_clean, StartClean, Graph),
+        \+ rdf(Datadoc, lwm:end_clean, _, Graph)
+      ),
+      Pairs
+    ),
+    length(Pairs, Length)
+  },
+  rdf_html_table_pairs(
+    ['Data document','Cleaning start'],
+    Pairs,
+    html([\html_pl_term(lwm,Length),' data documents are being cleaned.']),
+    [
+      header_column(true),
+      header_row(true),
+      indexed(true),
+      maximum_number_of_rows(10)
+    ]
+  ).
 
-number_of_triples(Md5res, Triples):-
-  rdf_datatype(Md5res, lwm:triples, Triples, xsd:integer, _), !.
-number_of_triples(_, 0).
+cleaned(Graph) -->
+  {
+    findall(
+      EndClean-[Datadoc,EndClean],
+      (
+        rdf(Datadoc, lwm:end_clean, EndClean, Graph)
+      ),
+      Pairs
+    ),
+    length(Pairs, Length)
+  },
+  rdf_html_table_pairs(
+    ['Data document','Cleaning end'],
+    Pairs,
+    html([\html_pl_term(lwm,Length),' cleaned data documents.']),
+    [
+      header_column(true),
+      header_row(true),
+      indexed(true),
+      maximum_number_of_rows(10)
+    ]
+  ).
 
