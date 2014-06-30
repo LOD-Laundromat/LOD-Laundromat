@@ -114,7 +114,7 @@ clean_datastream(Md5, File, Read, ContentType, VoidUrls):-
   % using the content type and the file extension as suggestions.
   ignore(lwm_file_extension(Md5, FileExtension)),
   rdf_guess_format(Md5, Read, FileExtension, ContentType, Format),
-  store_triple(lwm-Md5, lwm-serialization_format,
+  store_triple(ll-Md5, ll-serialization_format,
       literal(type(xsd-string,Format))),
 
   % Load all triples by parsing the data document
@@ -160,9 +160,9 @@ find_void_datasets(Urls):-
 %! md5_content_type(+Md5:atom, -ContentType:atom) is det.
 
 md5_content_type(Md5, ContentType):-
-  lwm_sparql_select([lwm], [content_type],
-      [rdf(var(md5res),lwm:md5,literal(type(xsd:string,Md5))),
-       rdf(var(md5res),lwm:content_type,var(content_type))],
+  lwm_sparql_select([ll], [content_type],
+      [rdf(var(md5res),ll:md5,literal(type(xsd:string,Md5))),
+       rdf(var(md5res),ll:content_type,var(content_type))],
       [[Literal]], [limit(1)]), !,
   rdf_literal(Literal, ContentType, _).
 md5_content_type(_, _).

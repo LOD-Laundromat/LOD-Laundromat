@@ -235,9 +235,9 @@ lwm_endpoint_authentication([request_header('Authorization'=Authentication)]):-
 %! lwm_file_extension(+Md5:atom, -FileExtension:atom) is det.
 
 lwm_file_extension(Md5, FileExtension):-
-  lwm_sparql_select([lwm], [file_extension],
-      [rdf(var(md5res),lwm:md5,literal(type(xsd:string,Md5))),
-       rdf(var(md5res),lwm:file_extension,var(file_extension))],
+  lwm_sparql_select([ll], [file_extension],
+      [rdf(var(md5res),ll:md5,literal(type(xsd:string,Md5))),
+       rdf(var(md5res),ll:file_extension,var(file_extension))],
       [[Literal]], [limit(1)]),
   rdf_literal(Literal, FileExtension, _).
 
@@ -251,9 +251,9 @@ lwm_scheme(http).
 %! lwm_size(+Md5:atom, -NumberOfGigabytes:between(0.0,inf)) is det.
 
 lwm_size(Md5, NumberOfGigabytes):-
-  lwm_sparql_select([lwm], [size],
-      [rdf(var(datadoc),lwm:md5,literal(type(xsd:string,Md5))),
-       rdf(var(datadoc),lwm:size,var(size))],
+  lwm_sparql_select([ll], [size],
+      [rdf(var(datadoc),ll:md5,literal(type(xsd:string,Md5))),
+       rdf(var(datadoc),ll:size,var(size))],
       [[Literal]], [limit(1)]), !,
   rdf_literal(Literal, NumberOfBytes1, _),
   atom_number(NumberOfBytes1, NumberOfBytes2),
@@ -269,11 +269,11 @@ lwm_size(Md5, NumberOfGigabytes):-
 lwm_source(Md5, Url):-
   lwm_url(Md5, Url), !.
 lwm_source(Md5, Source):-
-  lwm_sparql_select([lwm], [md5parent,path],
-      [rdf(var(ent),lwm:md5,literal(type(xsd:string,Md5))),
-       rdf(var(ent),lwm:path,var(path)),
-       rdf(var(parent),lwm:contains_entry,var(md5ent)),
-       rdf(var(parent),lwm:md5,var(md5parent))],
+  lwm_sparql_select([ll], [md5parent,path],
+      [rdf(var(ent),ll:md5,literal(type(xsd:string,Md5))),
+       rdf(var(ent),ll:path,var(path)),
+       rdf(var(parent),ll:contains_entry,var(md5ent)),
+       rdf(var(parent),ll:md5,var(md5parent))],
       [[Literal1,Literal2]], [limit(1)]), !,
   maplist(rdf_literal, [Literal1,Literal2], [ParentMd5,Path], _),
   lwm_source(ParentMd5, ParentSource),
@@ -325,9 +325,9 @@ lwm_sparql_select(Endpoint, Prefixes, Variables, Bgps, Result, Options1):-
 %! lwm_url(+Md5:atom, -Url:url) is det.
 
 lwm_url(Md5, Url):-
-  lwm_sparql_select([lwm], [url],
-      [rdf(var(md5res),lwm:md5,literal(type(xsd:string,Md5))),
-       rdf(var(md5res),lwm:url,var(url))],
+  lwm_sparql_select([ll], [url],
+      [rdf(var(md5res),ll:md5,literal(type(xsd:string,Md5))),
+       rdf(var(md5res),ll:url,var(url))],
       [[Url]], [limit(1)]).
 
 

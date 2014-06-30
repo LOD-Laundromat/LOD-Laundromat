@@ -51,10 +51,10 @@ metadata_scrape_loop:-
 
 get_datadoc(Md5):-
   catch(
-    lwm_sparql_select([lwm], [md5],
-        [rdf(var(md5res),lwm:end,var(end)),
-         rdf(var(md5res),lwm:triples,var(triples)),
-         rdf(var(md5res),lwm:md5,var(md5))],
+    lwm_sparql_select([ll], [md5],
+        [rdf(var(md5res),ll:end,var(end)),
+         rdf(var(md5res),ll:triples,var(triples)),
+         rdf(var(md5res),ll:md5,var(md5))],
         [[Literal]], [limit(1)]),
     error(socket_error('Connection refused'),_),
     fail
@@ -77,7 +77,7 @@ metadata_scrape(Md5):-
     ),
     close(Write)
   ),
-  store_triple(lwm-Md5, lwm-number_of_meta_triples,
+  store_triple(ll-Md5, ll-number_of_meta_triples,
       literal(type(xsd-integer,NumberOfTriples)), lwm),
   post_rdf_triples(Md5).
 

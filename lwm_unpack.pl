@@ -68,11 +68,11 @@ lwm_unpack(Md5):-
 
 % The given MD5 denotes an archive entry.
 unpack_md5(Md5):-
-  lwm_sparql_select([lwm], [md5,path],
-      [rdf(var(md5ent),lwm:md5,literal(type(xsd:string,Md5))),
-       rdf(var(md5ent),lwm:path,var(path)),
-       rdf(var(md5parent),lwm:contains_entry,var(md5ent)),
-       rdf(var(md5parent),lwm:md5,var(md5))],
+  lwm_sparql_select([ll], [md5,path],
+      [rdf(var(md5ent),ll:md5,literal(type(xsd:string,Md5))),
+       rdf(var(md5ent),ll:path,var(path)),
+       rdf(var(md5parent),ll:contains_entry,var(md5ent)),
+       rdf(var(md5parent),ll:md5,var(md5))],
       [[ParentMd50,EntryPath0]], [limit(1)]),
   maplist(rdf_literal, [ParentMd50,EntryPath0], [ParentMd5,EntryPath], _), !,
 
@@ -117,7 +117,7 @@ unpack_md5(Md5):-
 
   % Store the file size of the dirty file.
   size_file(DownloadFile, ByteSize),
-  store_triple(lwm-Md5, lwm-size, literal(type(xsd-integer,ByteSize))),
+  store_triple(ll-Md5, ll-size, literal(type(xsd-integer,ByteSize))),
 
   % Store HTTP statistics.
   store_http(Md5, ContentLength, ContentType, LastModified),
@@ -165,7 +165,7 @@ unpack_file(Md5, ArchiveFile):-
       EntryProperties1,
       EntryProperties2
     ),
-    store_triple(lwm-Md5, lwm-archive_format,
+    store_triple(ll-Md5, ll-archive_format,
         literal(type(xsd-string,ArchiveFormat))),
     maplist(store_archive_entry(Md5), EntryPaths, EntryProperties2),
     store_end_unpack_and_skip_clean(Md5)

@@ -87,8 +87,8 @@ pending(Graph) -->
     findall(
       Added-[Datadoc,Added],
       (
-        rdf(Datadoc, lwm:added, Added, Graph),
-        \+ rdf(Datadoc, lwm:start_unpack, _, Graph)
+        rdf(Datadoc, ll:added, Added, Graph),
+        \+ rdf(Datadoc, ll:start_unpack, _, Graph)
       ),
       Pairs
     ),
@@ -111,8 +111,8 @@ unpacking(Graph) -->
     findall(
       StartUnpack2-[Datadoc,StartUnpack1],
       (
-        rdf(Datadoc, lwm:start_unpack, StartUnpack1, Graph),
-        \+ rdf(Datadoc, lwm:end_unpack, _, Graph),
+        rdf(Datadoc, ll:start_unpack, StartUnpack1, Graph),
+        \+ rdf(Datadoc, ll:end_unpack, _, Graph),
         rdf_literal(StartUnpack1, StartUnpack2, _)
       ),
       Pairs
@@ -136,8 +136,8 @@ unpacked(Graph) -->
     findall(
       EndUnpack-[Datadoc,EndUnpack],
       (
-        rdf(Datadoc, lwm:end_unpack, EndUnpack, Graph),
-        \+ rdf(Datadoc, lwm:start_clean, _, Graph)
+        rdf(Datadoc, ll:end_unpack, EndUnpack, Graph),
+        \+ rdf(Datadoc, ll:start_clean, _, Graph)
       ),
       Pairs
     ),
@@ -160,8 +160,8 @@ cleaning(Graph) -->
     findall(
       StartClean-[Datadoc,StartClean],
       (
-        rdf(Datadoc, lwm:start_clean, StartClean, Graph),
-        \+ rdf(Datadoc, lwm:end_clean, _, Graph)
+        rdf(Datadoc, ll:start_clean, StartClean, Graph),
+        \+ rdf(Datadoc, ll:end_clean, _, Graph)
       ),
       Pairs
     ),
@@ -184,7 +184,7 @@ cleaned(Graph) -->
     findall(
       EndClean-[Datadoc,EndClean],
       (
-        rdf(Datadoc, lwm:end_clean, EndClean, Graph)
+        rdf(Datadoc, ll:end_clean, EndClean, Graph)
       ),
       Pairs
     ),

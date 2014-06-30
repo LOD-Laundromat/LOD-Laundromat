@@ -51,9 +51,9 @@ add_to_basket(Url1):-
 added(Md5):-
   with_mutex(lod_basket, (
     catch(
-      lwm_sparql_ask([lwm],
-        [rdf(var(md5),lwm:md5,literal(type(xsd:string,Md5))),
-         rdf(var(md5),lwm:added,var(added))], []),
+      lwm_sparql_ask([ll],
+        [rdf(var(md5),ll:md5,literal(type(xsd:string,Md5))),
+         rdf(var(md5),ll:added,var(added))], []),
       _,
       fail
     )
@@ -66,17 +66,17 @@ added(Md5):-
 cleaned(Md5):-
   var(Md5), !,
   with_mutex(lod_basket, (
-    lwm_sparql_select([lwm], [md5],
-        [rdf(var(md5res),lwm:end_clean,var(end_clean)),
-         rdf(var(md5res),lwm:md5,var(md5))],
+    lwm_sparql_select([ll], [md5],
+        [rdf(var(md5res),ll:end_clean,var(end_clean)),
+         rdf(var(md5res),ll:md5,var(md5))],
         [[Literal]], [limit(1)]),
     rdf_literal(Literal, Md5, _)
   )).
 cleaned(Md5):-
   with_mutex(lod_basket, (
-    lwm_sparql_ask([lwm],
-        [rdf(var(md5),lwm:md5,literal(type(xsd:string,Md5))),
-         rdf(var(md5),lwm:end_clean,var(end))], [])
+    lwm_sparql_ask([ll],
+        [rdf(var(md5),ll:md5,literal(type(xsd:string,Md5))),
+         rdf(var(md5),ll:end_clean,var(end))], [])
   )).
 
 
@@ -86,19 +86,19 @@ cleaned(Md5):-
 cleaning(Md5):-
   var(Md5), !,
   with_mutex(lod_basket, (
-    lwm_sparql_select([lwm], [md5],
-        [rdf(var(md5res),lwm:start_clean,var(start_clean)),
-         not([rdf(var(md5res),lwm:end_clean,var(end_clean))]),
-         rdf(var(md5res),lwm:md5,var(md5))],
+    lwm_sparql_select([ll], [md5],
+        [rdf(var(md5res),ll:start_clean,var(start_clean)),
+         not([rdf(var(md5res),ll:end_clean,var(end_clean))]),
+         rdf(var(md5res),ll:md5,var(md5))],
         [[Literal]], [limit(1)]),
     rdf_literal(Literal, Md5, _)
   )).
 cleaning(Md5):-
   with_mutex(lod_basket, (
-    lwm_sparql_ask([lwm],
-        [rdf(var(md5),lwm:md5,literal(type(xsd:string,Md5))),
-         rdf(var(md5),lwm:start_clean,var(end)),
-         not([rdf(var(md5),lwm:end_clean,var(end))])],
+    lwm_sparql_ask([ll],
+        [rdf(var(md5),ll:md5,literal(type(xsd:string,Md5))),
+         rdf(var(md5),ll:start_clean,var(end)),
+         not([rdf(var(md5),ll:end_clean,var(end))])],
         [])
   )).
 
@@ -109,19 +109,19 @@ cleaning(Md5):-
 pending(Md5):-
   var(Md5), !,
   with_mutex(lod_basket, (
-    lwm_sparql_select([lwm], [md5],
-        [rdf(var(md5res),lwm:added,var(added)),
-         not([rdf(var(md5res),lwm:start_unpack,var(start))]),
-         rdf(var(md5res),lwm:md5,var(md5))],
+    lwm_sparql_select([ll], [md5],
+        [rdf(var(md5res),ll:added,var(added)),
+         not([rdf(var(md5res),ll:start_unpack,var(start))]),
+         rdf(var(md5res),ll:md5,var(md5))],
         [[Literal]], [limit(1)]),
     rdf_literal(Literal, Md5, _)
   )).
 pending(Md5):-
   with_mutex(lod_basket, (
-    lwm_sparql_ask([lwm],
-        [rdf(var(md5),lwm:md5,literal(type(xsd:string,Md5))),
-         rdf(var(md5),lwm:added,var(added)),
-         not([rdf(var(md5),lwm:start_unpack,var(start))])], [])
+    lwm_sparql_ask([ll],
+        [rdf(var(md5),ll:md5,literal(type(xsd:string,Md5))),
+         rdf(var(md5),ll:added,var(added)),
+         not([rdf(var(md5),ll:start_unpack,var(start))])], [])
   )).
 
 
@@ -149,19 +149,19 @@ pick_unpacked(Md5):-
 unpacked(Md5):-
   var(Md5), !,
   with_mutex(lod_basket, (
-    lwm_sparql_select([lwm], [md5],
-        [rdf(var(md5res),lwm:end_unpack,var(start)),
-         not([rdf(var(md5res),lwm:start_clean,var(clean))]),
-         rdf(var(md5res),lwm:md5,var(md5))],
+    lwm_sparql_select([ll], [md5],
+        [rdf(var(md5res),ll:end_unpack,var(start)),
+         not([rdf(var(md5res),ll:start_clean,var(clean))]),
+         rdf(var(md5res),ll:md5,var(md5))],
         [[Literal]], [limit(1)]),
     rdf_literal(Literal, Md5, _)
   )).
 unpacked(Md5):-
   with_mutex(lod_basket, (
-    lwm_sparql_ask([lwm],
-        [rdf(var(md5),lwm:md5,literal(type(xsd:string,Md5))),
-         rdf(var(md5),lwm:end_unpack,var(start)),
-         not([rdf(var(md5res),lwm:start_clean,var(clean))])],
+    lwm_sparql_ask([ll],
+        [rdf(var(md5),ll:md5,literal(type(xsd:string,Md5))),
+         rdf(var(md5),ll:end_unpack,var(start)),
+         not([rdf(var(md5res),ll:start_clean,var(clean))])],
         [])
   )).
 
@@ -172,19 +172,19 @@ unpacked(Md5):-
 unpacking(Md5):-
   var(Md5), !,
   with_mutex(lod_basket, (
-    lwm_sparql_select([lwm], [md5],
-        [rdf(var(md5res),lwm:start_unpack,var(start)),
-         not([rdf(var(md5res),lwm:end_unpack,var(clean))]),
-         rdf(var(md5res),lwm:md5,var(md5))],
+    lwm_sparql_select([ll], [md5],
+        [rdf(var(md5res),ll:start_unpack,var(start)),
+         not([rdf(var(md5res),ll:end_unpack,var(clean))]),
+         rdf(var(md5res),ll:md5,var(md5))],
         [[Literal]], [limit(1)]),
     rdf_literal(Literal, Md5, _)
   )).
 unpacking(Md5):-
   with_mutex(lod_basket, (
-    lwm_sparql_ask([lwm],
-        [rdf(var(md5),lwm:md5,literal(type(xsd:string,Md5))),
-         rdf(var(md5),lwm:start_unpack,var(start)),
-         not([rdf(var(md5res),lwm:end_unpack,var(clean))])],
+    lwm_sparql_ask([ll],
+        [rdf(var(md5),ll:md5,literal(type(xsd:string,Md5))),
+         rdf(var(md5),ll:start_unpack,var(start)),
+         not([rdf(var(md5res),ll:end_unpack,var(clean))])],
         [])
   )).
 
