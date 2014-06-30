@@ -1,7 +1,7 @@
 :- module(
-  lwm_schema,
+  ll_schema,
   [
-    assert_lwm_schema/1 % +Graph:atom
+    assert_ll_schema/1 % +Graph:atom
   ]
 ).
 
@@ -11,11 +11,11 @@ Generates the schema file for the LOD Washing Machine.
 
 ## TODO
 
-### lwm:file_extension
+### ll:file_extension
 If present, the file extension of a single data document.
 Availability: any data document that can be downloaded/unpacked.
 
-### lwm:message
+### ll:message
 A non-blocking warning message emitted during the unpacking and/or cleaning process.
 Availability: Zero or more per data document.
 Possible values:
@@ -25,7 +25,7 @@ Possible values:
     ...
 
 
-### lwm:size
+### ll:size
 The size of a single data document on disk.
 Availability: Any data document that can be downloaded/unpacked.
 
@@ -46,13 +46,13 @@ ll:contains_entry: link tussen parent archive, en archive contents
 
 
 
-assert_lwm_schema(Graph):-
+assert_ll_schema(Graph):-
   % ArchiveEntry and URL partition the space of data documents.
   % Some data documents are in Archive.
   
   % Archive.
   rdfs_assert_class(
-    lwm:'Archive',
+    ll:'Archive',
     dcat:'Distribution',
     'file archive',
     'The class of resources that denote\c
@@ -65,7 +65,7 @@ assert_lwm_schema(Graph):-
   
   % ArchiveEntry.
   rdfs_assert_class(
-    lwm:'ArchiveEntry',
+    ll:'ArchiveEntry',
     dcat:'Distribution',
     'file archive entry',
     'The class of resource that denote\c
@@ -78,7 +78,7 @@ assert_lwm_schema(Graph):-
   
   % URL.
   rdfs_assert_class(
-    lwm:'URL',
+    ll:'URL',
     dcat:'Distribution',
     'URL',
     'The class of resources denoting\c
@@ -97,7 +97,7 @@ assert_lwm_schema(Graph):-
   
   % Added.
   rdfs_assert_property(
-    lwm:added,
+    ll:added,
     dcat:'Distribution',
     xsd:dateTime,
     added,
@@ -107,8 +107,8 @@ assert_lwm_schema(Graph):-
   
   % Archive format.
   rdfs_assert_property(
-    lwm:archive_format,
-    lwm:'Archive',
+    ll:archive_format,
+    ll:'Archive',
     xsd:string,
     'TODO',
     'TODO',
@@ -117,7 +117,7 @@ assert_lwm_schema(Graph):-
   
   % Byte count.
   rdfs_assert_property(
-    lwm:byte_count,
+    ll:byte_count,
     dcat:'Distribution',
     xsd:integer,
     'byte count',
@@ -128,7 +128,7 @@ assert_lwm_schema(Graph):-
   
   % Character count.
   rdfs_assert_property(
-    lwm:character_count,
+    ll:character_count,
     dcat:'Distribution',
     xsd:integer,
     'character count',
@@ -139,8 +139,8 @@ assert_lwm_schema(Graph):-
   
   % Content length.
   rdfs_assert_property(
-    lwm:content_length,
-    lwm;'URL',
+    ll:content_length,
+    ll;'URL',
     xsd:integer,
     'content length',
     'The number of bytes denoted in the Content-Length header\c
@@ -154,8 +154,8 @@ assert_lwm_schema(Graph):-
 
   % Content type.
   rdfs_assert_property(
-    lwm:content_type,
-    lwm;'URL',
+    ll:content_type,
+    ll;'URL',
     xsd:string,
     'content type',
     'The value of the Content-Type header of the HTTP reply message,\c
@@ -168,7 +168,7 @@ assert_lwm_schema(Graph):-
 
   % End cleaning.
   rdfs_assert_property(
-    lwm:end_clean,
+    ll:end_clean,
     dcat:'Distribution',
     xsd:dateTime,
     'end cleaning',
@@ -179,7 +179,7 @@ assert_lwm_schema(Graph):-
   
   % End unpacking.
   rdf_assert_property(
-    lwm:end_unpack,
+    ll:end_unpack,
     dcat:'Distribution',
     xsd:dateTime,
     'end unpacking',
@@ -190,8 +190,8 @@ assert_lwm_schema(Graph):-
   
   % Last modified.
   rdfs_assert_property(
-    lwm:last_modified,
-    lwm;'URL',
+    ll:last_modified,
+    ll;'URL',
     xsd:dateTime,
     'last modified',
     'The date and time denoted by the Last-Modified header of\c
@@ -205,7 +205,7 @@ assert_lwm_schema(Graph):-
   
   % Line count.
   rdfs_assert_property(
-    lwm:line_count,
+    ll:line_count,
     dcat:'Distribution',
     xsd:integer,
     'line count',
@@ -216,7 +216,7 @@ assert_lwm_schema(Graph):-
   
   % MD5.
   rdfs_assert_property(
-    lwm:md5,
+    ll:md5,
     dcat:'Distribution',
     xsd:string,
     'MD5',
@@ -230,7 +230,7 @@ assert_lwm_schema(Graph):-
   
   % Path.
   rdfs_assert_property(
-    lwm:path,
+    ll:path,
     dcat:'ArchiveEntry',
     xsd:string,
     'file archive path',
@@ -241,7 +241,7 @@ assert_lwm_schema(Graph):-
   
   % Start cleaning.
   rdfs_assert_property(
-    lwm:start_clean,
+    ll:start_clean,
     dcat:'Distribution',
     xsd:dateTime,
     'start cleaning',
@@ -252,7 +252,7 @@ assert_lwm_schema(Graph):-
   
   % Start unpacking.
   rdfs_assert_property(
-    lwm:start_unpack,
+    ll:start_unpack,
     dcat:'Distribution',
     xsd:dateTime,
     'start unpacking',
@@ -263,7 +263,7 @@ assert_lwm_schema(Graph):-
   
   % Status.
   rdfs_assert_property(
-    lwm:status,
+    ll:status,
     dcat:'Distribution',
     xsd:string,
     status,
@@ -277,8 +277,8 @@ assert_lwm_schema(Graph):-
   
   % URL.
   rdfs_assert_property(
-    lwm:url,
-    lwm:'URL',
+    ll:url,
+    ll:'URL',
     rdfs:'Resource',
     'URL',
     'The URL from which the original version of the data document\c
@@ -288,7 +288,7 @@ assert_lwm_schema(Graph):-
   
   % Version.
   rdfs_assert_property(
-    lwm:version,
+    ll:version,
     dcat:'Distribution',
     xsd:integer,
     version,
