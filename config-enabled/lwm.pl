@@ -7,8 +7,10 @@
    cliopatria:menu_item(500=places/lwm, 'LOD Washing Machine').
    cliopatria:menu_item(600=places/plTabular, plTabular).
 
-:- ensure_loaded('../debug').
-:- ensure_loaded('../load').
+:- if(\+ current_module(load_project)).
+  :- ensure_loaded('../debug').
+  :- ensure_loaded('../load').
+:- endif.
 
 :- http_handler(cliopatria(plTabular), rdf_tabular, [id(plTabular)]).
 :- http_handler(cliopatria(lwm), lwm, [prefix]).
