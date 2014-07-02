@@ -33,6 +33,9 @@ for use in LOD Laundromat.
 
 ll_infobox(Request):-
   cors_enable,
+  ll_infobox_with_cors(Request).
+
+ll_infobox_with_cors(Request):-gtrace,
   request_search_read(Request, md5, Md5), !,
   lwm_default_graph(Graph),
   aggregate_all(
@@ -43,8 +46,6 @@ ll_infobox(Request):-
     ),
     Rows
   ),
-  %lwm_source(Md5, Source),
-  %rdf(Datadoc, ll:url, Url),
   phrase(
     html(
       \rdf_html_table(
@@ -56,7 +57,7 @@ ll_infobox(Request):-
     Tokens
   ),
   print_html(Tokens).
-ll_infobox(_):-
+ll_infobox_with_cors(_):-
   throw(http_reply(bad_request('Could not find md5 search term.'))).
 
 
