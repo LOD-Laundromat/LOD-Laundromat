@@ -12,14 +12,14 @@
   :- ensure_loaded('../load').
 :- endif.
 
-:- http_handler(cliopatria(plTabular), rdf_tabular, [id(plTabular)]).
-:- http_handler(cliopatria(lwm), lwm, [prefix]).
 :- http_handler(cliopatria(basket), lwm_basket, []).
 
 :- ensure_loaded(plServer(style)).
 
 
 % plTabular
+
+:- http_handler(cliopatria(plTabular), rdf_tabular, [id(plTabular)]).
 
 :- use_module(plTabular(rdf_tabular)).
 rdf_tabular(Request):-
@@ -31,7 +31,18 @@ user:body(plTabular, Body) -->
   user:body(cliopatria(default), Body).
 
 
+
+% LOD InfoBox
+
+:- http_handler(cliopatria(infobox), ll_infobox, [prefix]).
+
+:- use_module(lwm(ll_infobox)).
+
+
+
 % LOD-Washing-Machine
+
+:- http_handler(cliopatria(lwm), lwm, [prefix]).
 
 :- use_module(lwm(lwm)).
 lwm(Request):-

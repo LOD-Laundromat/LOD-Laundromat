@@ -16,6 +16,8 @@
     lwm_endpoint_authentication/1, % -Authentication:list(nvpair)
     lwm_file_extension/2, % +Md5:atom
                           % -FileExtension:atom
+    lwm_source/2, % +Md5:atom
+                  % -Source:atom
     lwm_sparql_ask/3, % +Prefixes:list(atom)
                       % +Bgps:or([compound,list(compound)])
                       % +Options:list(nvpair)
@@ -71,7 +73,7 @@ Also contains Configuration settings for project LOD-Washing-Machine.
 :- use_module(plSparql(sparql_api)).
 :- use_module(plSparql(sparql_db)).
 
-:- xml_register_namespace(lwm, 'http://lodlaundromat.org/vocab#').
+:- xml_register_namespace(ll, 'http://lodlaundromat.org/vocab#').
 
 %! data_directory(?DataDirectory:atom) is semidet.
 
@@ -278,7 +280,6 @@ lwm_source(Md5, Source):-
   maplist(rdf_literal, [Literal1,Literal2], [ParentMd5,Path], _),
   lwm_source(ParentMd5, ParentSource),
   atomic_concat(ParentSource, Path, Source).
-lwm_source(_, 'UNKNOWN SOURCE').
 
 
 lwm_sparql_ask(Prefixes, Bgps1, Options):-
