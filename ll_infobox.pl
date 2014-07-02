@@ -15,6 +15,7 @@ for use in LOD Laundromat.
 */
 
 :- use_module(library(aggregate)).
+:- use_module(library(http/http_header)).
 :- use_module(library(http/html_write)).
 :- use_module(library(semweb/rdf_db)).
 
@@ -52,4 +53,8 @@ ll_infobox(Request):-
     Tokens
   ),
   print_html(Tokens).
+ll_infobox(_):-
+  throw(http_reply(bad_request('Could not find md5 search term.'))).
+
+
 
