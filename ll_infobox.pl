@@ -48,7 +48,7 @@ ll_infobox(Request):-
   phrase(
     html(
       \rdf_html_table(
-        html(['Infobox for ',a(href=Url,Source)]),
+        _NoCaption,
         Rows,
         [graph(Graph),header_row(po)]
       )
