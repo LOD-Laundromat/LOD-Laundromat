@@ -43,8 +43,8 @@ ll_infobox(Request):-
     ),
     Rows
   ),
-  lwm_source(Md5, Source),
-  rdf(Datadoc, ll:url, Url),
+  %lwm_source(Md5, Source),
+  %rdf(Datadoc, ll:url, Url),
   phrase(
     html(
       \rdf_html_table(
