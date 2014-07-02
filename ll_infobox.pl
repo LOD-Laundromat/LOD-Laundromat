@@ -16,6 +16,8 @@ for use in LOD Laundromat.
 
 :- use_module(library(aggregate)).
 :- use_module(library(http/html_write)).
+:- use_module(library(http/http_cors)).
+:- use_module(library(http/http_session)). % HTTP session support.
 :- use_module(library(semweb/rdf_db)).
 
 :- use_module(generics(uri_search)).
@@ -29,6 +31,7 @@ for use in LOD Laundromat.
 
 
 ll_infobox(Request):-
+  cors_enable,
   request_search_read(Request, md5, Md5), !,
   lwm_default_graph(Graph),
   aggregate_all(
