@@ -16,6 +16,8 @@
 
 :- ensure_loaded(plServer(style)).
 
+:- use_module(lwm(ll_schema)).
+
 
 % plTabular
 
