@@ -340,8 +340,16 @@ lwm_version(10).
 %! md5_to_dir(+Md5:atom, -Md5Directory:atom) is det.
 
 md5_to_dir(Md5, Md5Dir):-
+  % Place data documents in the data subdirectory.
   absolute_file_name(data(.), DataDir, [access(write),file_type(directory)]),
-  directory_file_path(DataDir, Md5, Md5Dir),
+  
+  % Add the LOD Washing Machine version to the directory path.
+  lwm_version(Version),
+  directory_file_path(DataDir, Version, VersionDir),
+  make_directory_path(VersionDir),
+  
+  % Add the MD5 hash to the directory path.
+  directory_file_path(VersionDir, Md5, Md5Dir),
   make_directory_path(Md5Dir).
 
 
