@@ -350,7 +350,7 @@ md5_to_dir(Md5, Md5Dir):-
 
 set_data_directory(DataDir):-
   % Assert the data directory.
-  db_replace_novel(data_directory(DataDir), [e]).
+  db_replace(data_directory(DataDir), [e]).
 
 
 

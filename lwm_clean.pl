@@ -10,7 +10,7 @@
 The cleaning process performed by the LOD Washing Machine.
 
 @author Wouter Beek
-@version 2014/03-2014/06
+@version 2014/03-2014/06, 2014/08
 */
 
 :- use_module(library(aggregate)).
@@ -42,7 +42,7 @@ lwm_clean_loop:-
   lwm_clean(Md5),
 
   % Intermittent loop.
-  reset_thread_flag(number_of_idle_loops(lwm_clean)),
+  flag(number_of_idle_loops, _, 0),
   lwm_clean_loop.
 % Done for now. Check whether there are new jobs in one seconds.
 lwm_clean_loop:-
@@ -210,6 +210,6 @@ prolog:message(found_void([H|T])) -->
   prolog:message(found_void(T)).
 
 prolog:message(idle_loop(Kind)) -->
-  {thread_flag(number_of_idle_loops(Kind), X, X + 1)},
+  {flag(number_of_idle_loops(Kind), X, X + 1)},
   ['IDLE ~D'-[X]].
 
