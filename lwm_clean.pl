@@ -112,10 +112,13 @@ clean_datastream(Md5, File, Read, ContentType, VoidUrls):-
   % Guess the RDF serialization format,
   % using the content type and the file extension as suggestions.
   ignore(lwm_file_extension(Md5, FileExtension)),
+gtrace,
   rdf_guess_format_md5(Md5, Read, FileExtension, ContentType, Format),
   store_triple(ll-Md5, ll-serialization_format,
       literal(type(xsd-string,Format))),
-
+  % DEB: N-Triples files are not loaded properly?
+  (Format == ntriples -> gtrace ; true),
+  
   % Load all triples by parsing the data document
   % according to the guessed RDF serialization format.
   lwm_base(Md5, Base),
@@ -123,7 +126,7 @@ clean_datastream(Md5, File, Read, ContentType, VoidUrls):-
     stream(Read),
     [base_uri(Base),format(Format),register_namespaces(false)]
   ),
-
+  
   % In between loading and saving the data,
   % we count the number of triples, including the number of duplicates.
   aggregate_all(
@@ -131,10 +134,10 @@ clean_datastream(Md5, File, Read, ContentType, VoidUrls):-
     rdf(_, _, _, _),
     TIn
   ),
-
+  
   % Save the data in a cleaned format.
   save_data_to_file(Md5, File, TOut),
-
+  
   % Store statistics about the number of (duplicate) triples.
   store_number_of_triples(Md5, TIn, TOut),
 
