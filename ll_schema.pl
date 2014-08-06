@@ -148,7 +148,7 @@ assert_ll_schema(Graph):-
   % Content length.
   rdfs_assert_property(
     ll:content_length,
-    ll;'URL',
+    ll:'URL',
     xsd:integer,
     'content length',
     'The number of bytes denoted in the Content-Length header\c
@@ -163,7 +163,7 @@ assert_ll_schema(Graph):-
   % Content type.
   rdfs_assert_property(
     ll:content_type,
-    ll;'URL',
+    ll:'URL',
     xsd:string,
     'content type',
     'The value of the Content-Type header of the HTTP reply message,\c
@@ -199,7 +199,7 @@ assert_ll_schema(Graph):-
   % Last modified.
   rdfs_assert_property(
     ll:last_modified,
-    ll;'URL',
+    ll:'URL',
     xsd:dateTime,
     'last modified',
     'The date and time denoted by the Last-Modified header of\c
