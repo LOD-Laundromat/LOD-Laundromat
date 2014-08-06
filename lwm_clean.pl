@@ -113,7 +113,7 @@ clean_datastream(Md5, File, Read, ContentType, VoidUrls):-
   % Guess the RDF serialization format,
   % using the content type and the file extension as suggestions.
   ignore(lwm_file_extension(Md5, FileExtension)),
-  rdf_guess_format(Md5, Read, FileExtension, ContentType, Format),
+  rdf_guess_format_md5(Md5, Read, FileExtension, ContentType, Format),
   store_triple(ll-Md5, ll-serialization_format,
       literal(type(xsd-string,Format))),
 
@@ -168,24 +168,7 @@ md5_content_type(Md5, ContentType):-
 md5_content_type(_, _).
 
 
-%! rdf_content_type(?ContentType:atom, ?Format:atom) is nondet.
-
-rdf_content_type('text/rdf',      xml).
-rdf_content_type('text/xml',      xml).
-rdf_content_type('text/rdf+xml',    xml).
-rdf_content_type('application/rdf+xml',    xml).
-rdf_content_type('application/x-turtle',  turtle).
-rdf_content_type('application/turtle',    turtle).
-rdf_content_type('application/trig',    trig).
-rdf_content_type('application/n-triples', ntriples).
-rdf_content_type('application/n-quads',   nquads).
-rdf_content_type('text/turtle',      turtle).
-rdf_content_type('text/rdf+n3',      turtle).  % Bit dubious
-rdf_content_type('text/html',      html).
-rdf_content_type('application/xhtml+xml', xhtml).
-
-
-%! rdf_guess_format(
+%! rdf_guess_format_md5(
 %!   +Md5:atom,
 %!   +Read:blob,
 %!   +FileExtension:atom,
@@ -193,21 +176,11 @@ rdf_content_type('application/xhtml+xml', xhtml).
 %!   -Format:atom
 %! ) is semidet.
 
-% Use the file extensions as the RDF serialization format suggestion.
-rdf_guess_format(_, Read, FileExtension, _, Format):-
-  nonvar(FileExtension),
-  rdf_db:rdf_file_type(FileExtension, SuggestedFormat),
-  rdf_guess_format(Read, Format, [format(SuggestedFormat)]), !.
-% Use the HTTP content type header as the RDF serialization format suggestion.
-rdf_guess_format(_, Read, _, ContentType, Format):-
-  nonvar(ContentType),
-  rdf_content_type(ContentType, SuggestedFormat),
-  rdf_guess_format(Read, Format, [format(SuggestedFormat)]), !.
-% Use no RDF serialization format suggestion.
-rdf_guess_format(_, Read, _, _, Format):-
-  rdf_guess_format(Read, Format, []), !.
-rdf_guess_format(Md5, _, _, _, _):-
-  throw(error(no_rdf(Md5))).
+rdf_guess_format_md5(_, Read, FileExtension, ContentType, Format):-
+  rdf_guess_format(Read, FileExtension, ContentType, Format), !.
+rdf_guess_format_md5(Md5, _, _, _, _):-
+  lwm_source(Md5, Source),
+  throw(error(no_rdf(Source))).
 
 
 %! save_data_to_file(+Md5:atom, +File:atom, -NumberOfTriples:nonneg) is det.
@@ -239,3 +212,4 @@ prolog:message(found_void([H|T])) -->
 prolog:message(idle_loop(Kind)) -->
   {thread_flag(number_of_idle_loops(Kind), X, X + 1)},
   ['IDLE ~D'-[X]].
+

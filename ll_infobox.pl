@@ -60,5 +60,3 @@ ll_infobox_with_cors(Request):-
 ll_infobox_with_cors(_):-
   throw(http_reply(bad_request('Could not find md5 search term.'))).
 
-
-
