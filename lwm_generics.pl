@@ -55,7 +55,7 @@ Generic predicates that are used in the LOD download process.
 Also contains Configuration settings for project LOD-Washing-Machine.
 
 @author Wouter Beek
-@version 2014/04-2014/06
+@version 2014/04-2014/06, 2014/08
 */
 
 :- use_module(library(base64)).
@@ -66,14 +66,13 @@ Also contains Configuration settings for project LOD-Washing-Machine.
 
 :- use_module(generics(db_ext)).
 :- use_module(generics(meta_ext)).
-:- use_module(xml(xml_namespace)).
 
 :- use_module(plRdf_term(rdf_literal)).
 
 :- use_module(plSparql(sparql_api)).
 :- use_module(plSparql(sparql_db)).
 
-:- xml_register_namespace(ll, 'http://lodlaundromat.org/vocab#').
+:- rdf_register_prefix(ll, 'http://lodlaundromat.org/vocab#').
 
 %! data_directory(?DataDirectory:atom) is semidet.
 

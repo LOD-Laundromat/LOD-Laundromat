@@ -24,7 +24,6 @@ Possible values:
     No RDF in file.
     ...
 
-
 ### ll:size
 The size of a single data document on disk.
 Availability: Any data document that can be downloaded/unpacked.
@@ -38,17 +37,25 @@ ll:triples: total aantal triples
 ll:contains_entry: link tussen parent archive, en archive contents
 
 @author Wouter Beek
-@version 2014/06
+@author Laurens Rietveld
+@version 2014/06, 2014/08
 */
 
-:- use_module(plRdf(rdf_namespaces)). % Registrations.
+:- use_module(plRdf(rdf_prefixes)). % Registrations.
 :- use_module(plRdf(rdfs_build2)).
+
+:- use_module(lwm(lwm_generics)).
 
 
 
 assert_ll_schema(Graph):-
   % ArchiveEntry and URL partition the space of data documents.
   % Some data documents are in Archive.
+  
+  % Some archives are archiveEntries.
+  % Some archiveEntries are archives
+  % No URL is an archiveEntry.
+  % Every data document is represented by either an archiveEntry or a URL.
   
   % Archive.
   rdfs_assert_class(
@@ -57,7 +64,7 @@ assert_ll_schema(Graph):-
     'file archive',
     'The class of resources that denote\c
      a data document that can be unpacked in order to reveal one or more\c
-     data document entries. Such entries would be of type ArchiveEntry.\c\c
+     data document entries. These entries are of type ArchiveEntry.\c\c
      Since archives can contain archives, there may be resources that are\c
      both Archive and ArchiveEntry.',
     Graph
@@ -86,7 +93,7 @@ assert_ll_schema(Graph):-
      Such URLs are always added as seed points to the LOD Basket,\c
      via an HTTP SEND request to the LOD Basket endpoint.\c
      These requests can be performed either by\c
-     (1) a bash script we usually use to initialize the LOD Laundromat,\c
+     (1) a bash script we use to initialize the LOD Laundromat,\c
      (2) the procedure the LOD Washing Machine cleaning process uses\c
      to extract VoID datadump locations, and\c
      (3) human input, delivered through the HTML form at\c
@@ -101,7 +108,8 @@ assert_ll_schema(Graph):-
     dcat:'Distribution',
     xsd:dateTime,
     added,
-    'The date and time at which the data document was added to the LOD Basket.',
+    'The date and time at which the dirty data document was added\c
+     to the LOD Basket.',
     Graph
   ),
   
@@ -110,7 +118,7 @@ assert_ll_schema(Graph):-
     ll:archive_format,
     ll:'Archive',
     xsd:string,
-    'TODO',
+    'archive format',
     'TODO',
     Graph
   ),
@@ -122,7 +130,7 @@ assert_ll_schema(Graph):-
     xsd:integer,
     'byte count',
     'The number of bytes that were processed in the stream of\c
-     the data document.',
+     the dirty data document.',
     Graph
   ),
   
@@ -133,7 +141,7 @@ assert_ll_schema(Graph):-
     xsd:integer,
     'character count',
     'The number of characters that were processed in the stream of\c
-     the data document.',
+     the dirty data document.',
     Graph
   ),
   
@@ -145,7 +153,7 @@ assert_ll_schema(Graph):-
     'content length',
     'The number of bytes denoted in the Content-Length header\c
      of the HTTP reply message, received upon downloading a single\c
-     data document of type URL.\c
+     dirty data document of type URL.\c
      Availability of this information depends on whether\c
      the disseminating host can be accessed and the HTTP reply contains\c
      the factum.',
@@ -178,7 +186,7 @@ assert_ll_schema(Graph):-
   ),
   
   % End unpacking.
-  rdf_assert_property(
+  rdfs_assert_property(
     ll:end_unpack,
     dcat:'Distribution',
     xsd:dateTime,
