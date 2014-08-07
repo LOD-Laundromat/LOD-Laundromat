@@ -41,7 +41,7 @@ the stored triples are sent in a SPARQL Update request
 (see module [noRdf_store].
 
 @author Wouter Beek
-@version 2014/04-2014/06
+@version 2014/04-2014/06, 2014/08
 */
 
 :- use_module(library(lists)).
@@ -51,7 +51,7 @@ the stored triples are sent in a SPARQL Update request
 :- use_module(pl(pl_log)).
 :- use_module(xsd(xsd_dateTime_ext)).
 
-:- use_module(lwm(lwm_generics)).
+:- use_module(ll(ll_generics)).
 :- use_module(lwm(noRdf_store)).
 
 
@@ -257,8 +257,8 @@ store_url(Md5, Url):-
 %! store_lwm_version(+Md5:atom) is det.
 
 store_lwm_version(Md5):-
-  lwm_version(Version),
-  store_triple(ll-Md5, ll-lwm_version, literal(type(xsd-integer,Version))).
+  ll_version(Version),
+  store_triple(ll-Md5, ll-ll_version, literal(type(xsd-integer,Version))).
 
 
 

@@ -27,8 +27,6 @@ for use in LOD Laundromat.
 
 :- use_module(plTabular(rdf_html_table)).
 
-:- use_module(lwm(lwm_generics)).
-
 
 
 ll_infobox(Request):-
@@ -37,7 +35,7 @@ ll_infobox(Request):-
 
 ll_infobox_with_cors(Request):-
   request_search_read(Request, md5, Md5), !,
-  lwm_default_graph(Graph),
+  ll_sparql_default_graph(Graph),
   aggregate_all(
     set([P,O]),
     (

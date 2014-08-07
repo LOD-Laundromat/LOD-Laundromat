@@ -1,5 +1,5 @@
 :- module(
-  lod_laundry,
+  lwm_web_deb,
   [
     lwm/2, % +Request:list
            % +HtmlStyle:atom
@@ -30,8 +30,7 @@
 
 :- use_module(plTabular(rdf_html_table_pairs)).
 
-:- use_module(lwm(lod_basket)).
-:- use_module(lwm(lwm_generics)).
+:- use_module(ll_basket(ll_basket)).
 
 :- dynamic(url_md5_translation/2).
 
@@ -69,7 +68,7 @@ lwm_basket(Request):-
 
 % Response to requesting a JSON description of all LOD URL.
 lwm(_, HtmlStyle):-
-  lwm_default_graph(Graph),
+  ll_sparql_default_graph(Graph),
   reply_html_page(
     HtmlStyle,
     title('LOD Laundry'),

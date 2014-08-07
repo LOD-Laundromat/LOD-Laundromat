@@ -17,8 +17,6 @@ Generates the schema file for the LOD Washing Machine.
 :- use_module(plRdf(rdf_prefixes)). % Registrations.
 :- use_module(plRdf(rdfs_build2)).
 
-:- use_module(lwm(lwm_generics)).
-
 
 
 assert_ll_schema(Graph):-

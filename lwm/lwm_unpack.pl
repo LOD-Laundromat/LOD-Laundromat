@@ -26,11 +26,13 @@ Unpacks files for the LOD Washing Machine to clean.
 
 :- use_module(plRdf_term(rdf_literal)).
 
-:- use_module(lwm(lod_basket)).
-:- use_module(lwm(lwm_generics)).
+:- use_module(ll(md5)).
+:- use_module(ll_basket(ll_basket)).
+:- use_module(ll_sparql(ll_sparql_api)).
+:- use_module(ll_sparql(ll_sparql_query)).
 :- use_module(lwm(lwm_messages)).
-:- use_module(lwm(lwm_store_triple)).
 :- use_module(lwm(noRdf_store)).
+:- use_module(lwm(store_triple)).
 
 
 
@@ -69,7 +71,7 @@ lwm_unpack(Md5):-
 
 % The given MD5 denotes an archive entry.
 unpack_md5(Md5):-
-  lwm_sparql_select([ll], [md5,path],
+  ll_sparql_select([ll], [md5,path],
       [rdf(var(md5ent),ll:md5,literal(type(xsd:string,Md5))),
        rdf(var(md5ent),ll:path,var(path)),
        rdf(var(md5parent),ll:contains_entry,var(md5ent)),
@@ -79,9 +81,9 @@ unpack_md5(Md5):-
 
   % Move the entry file from the parent directory into
   % an MD5 directory of its own.
-  md5_to_dir(ParentMd5, Md5ParentDir),
+  md5_directory(ParentMd5, Md5ParentDir),
   relative_file_path(EntryFile1, Md5ParentDir, EntryPath),
-  md5_to_dir(Md5, Md5Dir),
+  md5_directory(Md5, Md5Dir),
   relative_file_path(EntryFile2, Md5Dir, EntryPath),
   create_file_directory(EntryFile2),
   mv(EntryFile1, EntryFile2),
@@ -89,10 +91,10 @@ unpack_md5(Md5):-
   unpack_file(Md5, EntryFile2).
 % The given MD5 denotes a URL.
 unpack_md5(Md5):-
-  lwm_url(Md5, Url), !,
+  md5_url(Md5, Url), !,
 
   % Create a directory for the dirty version of the given Md5.
-  md5_to_dir(Md5, Md5Dir),
+  md5_directory(Md5, Md5Dir),
 
   % Extracting and store the file extensions from the download URL.
   url_file_extensions(Url, FileExtensions),
@@ -150,7 +152,7 @@ unpack_file(Md5, ArchiveFile):-
     directory_file_path(ArchiveDir, data, DataFile),
 
     % Construct the dirty file name.
-    md5_to_dir(Md5, Md5Dir),
+    md5_directory(Md5, Md5Dir),
     directory_file_path(Md5Dir, dirty, DirtyFile),
 
     % Move the data file outside of the its entry path,

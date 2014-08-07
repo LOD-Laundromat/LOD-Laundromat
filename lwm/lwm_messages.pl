@@ -8,7 +8,7 @@ Print messages for the LOD Washing Machine.
 @version 2014/06, 2014/08
 */
 
-:- use_module(lwm(lwm_sparql_query)).
+:- use_module(ll_sparql(ll_sparql_query)).
 
 :- multifile(prolog:message/1).
 
@@ -22,7 +22,7 @@ prolog:message(lwm_end(Mode,Md5,Source,Status,Messages)) -->
   ['] [~w] [~w]'-[Md5,Source]].
 
 prolog:message(lwm_start(Mode,Md5,Source)) -->
-  {lwm_source(Md5, Source)},
+  {md5_source(Md5, Source)},
   ['[START '],
   lwm_mode(Mode),
   ['] [~w] [~w]'-[Md5,Source]],
@@ -38,7 +38,7 @@ lwm_mode(metadata) --> ['METADATA'].
 lwm_mode(unpack) --> ['UNPACK'].
 
 lwm_start_mode_specific_suffix(Md5, clean) --> !,
-  {lwm_size(Md5, NumberOfGigabytes)},
+  {md5_size(Md5, NumberOfGigabytes)},
   [' [~f]'-[NumberOfGigabytes]].
 lwm_start_mode_specific_suffix(_, unpack) --> [].
 
@@ -58,3 +58,4 @@ status(_, false) --> !,
 status(_, true) --> !.
 status(_, Status) -->
   ['    [STATUS] ~w'-[Status],nl].
+

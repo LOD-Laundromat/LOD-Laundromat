@@ -26,13 +26,13 @@ The cleaning process performed by the LOD Washing Machine.
 :- use_module(plRdf_ser(rdf_ntriples_write)).
 :- use_module(plRdf_term(rdf_literal)).
 
-:- use_module(lwm(lod_basket)).
-:- use_module(lwm(lwm_generics)).
+:- use_module(ll(md5)).
+:- use_module(ll_basket(ll_basket)).
+:- use_module(ll_sparql(ll_sparql_api)).
+:- use_module(ll_sparql(ll_sparql_query)).
 :- use_module(lwm(lwm_messages)).
-:- use_module(lwm(lwm_sparql_api)).
-:- use_module(lwm(lwm_sparql_query)).
-:- use_module(lwm(lwm_store_triple)).
 :- use_module(lwm(noRdf_store)).
+:- use_module(lwm(store_triple)).
 
 
 
@@ -75,7 +75,7 @@ lwm_clean(Md5):-
 
 clean_md5(Md5):-
   % Construct the file name belonging to the given MD5.
-  md5_to_dir(Md5, Md5Dir),
+  md5_directory(Md5, Md5Dir),
   absolute_file_name(dirty, DirtyFile, [access(read),relative_to(Md5Dir)]),
 
   % Retrieve the content type, if it was previously determined.
@@ -114,7 +114,7 @@ clean_md5(Md5):-
 clean_datastream(Md5, File, Read, ContentType, VoidUrls):-
   % Guess the RDF serialization format,
   % using the content type and the file extension as suggestions.
-  ignore(lwm_file_extension(Md5, FileExtension)),
+  ignore(md5_file_extension(Md5, FileExtension)),
 gtrace,
   rdf_guess_format_md5(Md5, Read, FileExtension, ContentType, Format),
   store_triple(ll-Md5, ll-serialization_format,
@@ -124,7 +124,7 @@ gtrace,
   
   % Load all triples by parsing the data document
   % according to the guessed RDF serialization format.
-  lwm_base(Md5, Base),
+  md5_base_url(Md5, Base),
   rdf_load(
     stream(Read),
     [base_uri(Base),format(Format),register_namespaces(false)]
@@ -162,17 +162,6 @@ find_void_datasets(Urls):-
   print_message(informational, found_void(Urls)).
 
 
-%! md5_content_type(+Md5:atom, -ContentType:atom) is det.
-
-md5_content_type(Md5, ContentType):-
-  lwm_sparql_select([ll], [content_type],
-      [rdf(var(md5res),ll:md5,literal(type(xsd:string,Md5))),
-       rdf(var(md5res),ll:content_type,var(content_type))],
-      [[Literal]], [limit(1)]), !,
-  rdf_literal(Literal, ContentType, _).
-md5_content_type(_, _).
-
-
 %! rdf_guess_format_md5(
 %!   +Md5:atom,
 %!   +Read:blob,
@@ -184,7 +173,7 @@ md5_content_type(_, _).
 rdf_guess_format_md5(_, Read, FileExtension, ContentType, Format):-
   rdf_guess_format(Read, FileExtension, ContentType, Format), !.
 rdf_guess_format_md5(Md5, _, _, _, _):-
-  lwm_source(Md5, Source),
+  md5_source(Md5, Source),
   throw(error(no_rdf(Source))).
 
 
@@ -193,12 +182,12 @@ rdf_guess_format_md5(Md5, _, _, _, _):-
 save_data_to_file(Md5, File, NumberOfTriples):-
   file_directory_name(File, Dir),
   directory_file_path(Dir, 'clean.nt.gz', Path),
-  lwm_bnode_base(Md5, BNodeBase),
+  md5_bnode_base(Md5, BaseComponents),
   setup_call_cleanup(
     gzopen(Path, write, Write),
     rdf_ntriples_write(
       Write,
-      [bnode_base(BNodeBase),number_of_triples(NumberOfTriples)]
+      [bnode_base(BaseComponents),number_of_triples(NumberOfTriples)]
     ),
     close(Write)
   ).

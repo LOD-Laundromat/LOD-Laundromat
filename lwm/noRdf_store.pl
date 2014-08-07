@@ -20,7 +20,7 @@ This means that we can use RDF transactions + snapshots
 and at the same time send small RDF messages using SPARQL Update requests.
 
 @author Wouter Beek
-@version 2014/05-2014/06
+@version 2014/05-2014/06, 2014/08
 */
 
 :- use_module(library(option)).
@@ -29,7 +29,9 @@ and at the same time send small RDF messages using SPARQL Update requests.
 
 :- use_module(plSparql(sparql_api)).
 
-:- use_module(lwm(lwm_generics)).
+:- use_module(ll(ll_generics)).
+:- use_module(ll(md5)).
+:- use_module(ll_sparql(ll_sparql_endpoint)).
 
 %! rdf_triple(
 %!   ?Subject:or([bnode,iri]),
@@ -60,7 +62,7 @@ and at the same time send small RDF messages using SPARQL Update requests.
 % of the update request.
 
 post_rdf_triples(Md5):-
-  lwm_bnode_base(Md5, BNodeBase),
+  md5_bnode_base(Md5, BaseComponents),
   setup_call_cleanup(
     aggregate_all(
       set(Triple),
@@ -68,9 +70,9 @@ post_rdf_triples(Md5):-
       Triples
     ),
     forall(
-      lwm_endpoint(Endpoint, Options1),
+      ll_sparql_endpoint(Endpoint, Options1),
       (
-        merge_options([bnode_base(BNodeBase)], Options1, Options2),
+        merge_options([bnode_base(BaseComponents)], Options1, Options2),
         sparql_insert_data(Endpoint, Triples, Options2)
       )
     ),
@@ -91,14 +93,14 @@ rdf_triple([S,P,O,G]):-
 
 store_triple(S1, P1, O1):-
   maplist(rdf_term_map, [S1,P1,O1], [S2,P2,O2]),
-  lwm_default_graph(DefaultGraph),
+  ll_sparql_default_graph(DefaultGraph),
   assert(rdf_triple(S2, P2, O2, DefaultGraph)).
 
 %! store_triple(+Subject, +Predicate, +Object, +Graph) is det.
 
 store_triple(S1, P1, O1, G1):-
   maplist(rdf_term_map, [S1,P1,O1], [S2,P2,O2]),
-  versioned_graph(G1, G2),
+  ll_versioned_graph(G1, G2),
   assert(rdf_triple(S2, P2, O2, G2)).
 
 
@@ -107,14 +109,4 @@ rdf_term_map(X-Y, Z):- !,
 rdf_term_map(literal(type(X-Y,Q)), literal(type(Z,Q))):- !,
   rdf_global_id(X:Y, Z).
 rdf_term_map(X, X).
-
-
-%! versioned_graph(+Graph:atom, -VersionedGraph:atom) is det.
-
-versioned_graph(G1, G2):-
-  lwm_bnode_base(G1, Scheme-Authority-Hash1),
-  lwm_version(Version),
-  atomic_list_concat([Hash1,Version], '#', Path1),
-  atomic_list_concat(['',Path1], '/', Path2),
-  uri_components(G2, uri_components(Scheme,Authority,Path2,_,_)).
 
