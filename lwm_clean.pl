@@ -28,6 +28,9 @@ The cleaning process performed by the LOD Washing Machine.
 
 :- use_module(lwm(lod_basket)).
 :- use_module(lwm(lwm_generics)).
+:- use_module(lwm(lwm_messages)).
+:- use_module(lwm(lwm_sparql_api)).
+:- use_module(lwm(lwm_sparql_query)).
 :- use_module(lwm(lwm_store_triple)).
 :- use_module(lwm(noRdf_store)).
 

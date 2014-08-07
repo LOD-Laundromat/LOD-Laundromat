@@ -10,7 +10,7 @@
 Unpacks files for the LOD Washing Machine to clean.
 
 @author Wouter Beek
-@version 2014/06
+@version 2014/06, 2014/08
 */
 
 :- use_module(library(apply)).
@@ -28,6 +28,7 @@ Unpacks files for the LOD Washing Machine to clean.
 
 :- use_module(lwm(lod_basket)).
 :- use_module(lwm(lwm_generics)).
+:- use_module(lwm(lwm_messages)).
 :- use_module(lwm(lwm_store_triple)).
 :- use_module(lwm(noRdf_store)).
 
@@ -173,3 +174,49 @@ unpack_file(Md5, ArchiveFile):-
   % Remove the archive file.
   delete_file(ArchiveFile).
 
+
+
+% Helpers
+
+%! lod_accept_header_value(-Value:atom) is det.
+
+lod_accept_header_value(Value):-
+  findall(
+    Value,
+    (
+      lod_content_type(ContentType, Q),
+      format(atom(Value), '~a; q=~1f', [ContentType,Q])
+    ),
+    Values
+  ),
+  atomic_list_concat(Values, ', ', Value).
+
+
+%! lod_content_type(?ContentType:atom, ?QValue:between(0.0,1.0)) is nondet.
+
+% RDFa
+lod_content_type('text/html',              0.3).
+% N-Quads
+lod_content_type('application/n-quads',    0.8).
+% N-Triples
+lod_content_type('application/n-triples',  0.8).
+% RDF/XML
+lod_content_type('application/rdf+xml',    0.7).
+lod_content_type('text/rdf+xml',           0.7).
+lod_content_type('application/xhtml+xml',  0.3).
+lod_content_type('application/xml',        0.3).
+lod_content_type('text/xml',               0.3).
+lod_content_type('application/rss+xml',    0.5).
+% Trig
+lod_content_type('application/trig',       0.8).
+lod_content_type('application/x-trig',     0.5).
+% Turtle
+lod_content_type('text/turtle',            0.9).
+lod_content_type('application/x-turtle',   0.5).
+lod_content_type('application/turtle',     0.5).
+lod_content_type('application/rdf+turtle', 0.5).
+% N3
+lod_content_type('text/n3',                0.8).
+lod_content_type('text/rdf+n3',            0.5).
+% All
+lod_content_type('*/*',                    0.1).
