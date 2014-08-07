@@ -6,27 +6,9 @@
 	path = plRdf
 	url = https://github.com/wouterbeek/plRdf.git
 	branch = master
-[submodule "plHtml"]
-	path = plHtml
-	url = https://github.com/wouterbeek/plHtml.git
-	branch = master
-[submodule "plServer"]
-	path = plServer
-	url = https://github.com/wouterbeek/plServer.git
-	branch = master
-[submodule "plDev"]
-	path = plDev
-	url = https://github.com/wouterbeek/plDev.git
-	branch = master
-[submodule "plTabular"]
-	path = plTabular
-	url = https://github.com/wouterbeek/plTabular.git
 [submodule "plSparql"]
 	path = plSparql
 	url = https://github.com/wouterbeek/plSparql.git
 [submodule "plGraph"]
 	path = plGraph
 	url = https://github.com/wouterbeek/plGraph.git
-[submodule "plGraphViz"]
-	path = plGraphViz
-	url = https://github.com/wouterbeek/plGraphViz.git

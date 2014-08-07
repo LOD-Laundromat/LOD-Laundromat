@@ -24,7 +24,7 @@ MD5 support predicates.
 :- use_module(library(http/http_dispatch)).
 :- use_module(library(uri)).
 
-:- use_module(ll(ll_generics)).
+:- use_module(lwm(lwm_settings)).
 
 
 
@@ -32,8 +32,8 @@ MD5 support predicates.
 % The base URL that is used for the clean data document with the given MD5.
 
 md5_base_url(Md5, Base):-
-  ll_scheme(Scheme),
-  ll_authority(Authority),
+  lwm_scheme(Scheme),
+  lwm_authority(Authority),
   atomic_list_concat(['',Md5], '/', Path1),
   atomic_concat(Path1, '#', Path2),
   uri_components(Base, uri_components(Scheme,Authority,Path2,_,_)).
@@ -42,8 +42,8 @@ md5_base_url(Md5, Base):-
 %! md5_bnode_base(+Md5:atom, -BaseComponents:compound) is det.
 
 md5_bnode_base(Md5, Scheme-Authority-Md5):-
-  ll_scheme(Scheme),
-  ll_authority(Authority).
+  lwm_scheme(Scheme),
+  lwm_authority(Authority).
 
 
 %! md5_clean_url(+Md5:atom, -Location:url) is det.
@@ -60,7 +60,7 @@ md5_directory(Md5, Md5Dir):-
   absolute_file_name(data(.), DataDir, [access(write),file_type(directory)]),
   
   % Add the LOD Washing Machine version to the directory path.
-  ll_version(collection, Version),
+  lwm_version(Version),
   directory_file_path(DataDir, Version, VersionDir),
   make_directory_path(VersionDir),
   

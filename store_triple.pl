@@ -49,7 +49,7 @@ the stored triples are sent in a SPARQL Update request
 :- use_module(pl(pl_log)).
 :- use_module(xsd(xsd_dateTime_ext)).
 
-:- use_module(ll(ll_generics)).
+:- use_module(lwm(lwm_settings)).
 :- use_module(lwm(noRdf_store)).
 
 
@@ -246,8 +246,8 @@ store_stream(Md5, Stream):-
 %! store_lwm_version(+Md5:atom) is det.
 
 store_lwm_version(Md5):-
-  ll_version(collection, Version),
-  store_triple(ll-Md5, ll-ll_version, literal(type(xsd-integer,Version))).
+  lwm_version(Version),
+  store_triple(ll-Md5, ll-lwm_version, literal(type(xsd-integer,Version))).
 
 
 

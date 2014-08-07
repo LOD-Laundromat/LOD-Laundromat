@@ -15,7 +15,9 @@ The cleaning process performed by the LOD Washing Machine.
 
 :- use_module(library(aggregate)).
 :- use_module(library(apply)).
+:- use_module(library(http/http_client)).
 :- use_module(library(semweb/rdf_db)).
+:- use_module(library(uri)).
 :- use_module(library(zlib)).
 
 :- use_module(generics(flag_ext)).
@@ -26,13 +28,14 @@ The cleaning process performed by the LOD Washing Machine.
 :- use_module(plRdf_ser(rdf_ntriples_write)).
 :- use_module(plRdf_term(rdf_literal)).
 
-:- use_module(ll(md5)).
-:- use_module(ll_basket(ll_basket)).
-:- use_module(ll_sparql(ll_sparql_api)).
-:- use_module(ll_sparql(ll_sparql_query)).
+:- use_module(lwm(lwm_basket)).
 :- use_module(lwm(lwm_messages)).
+:- use_module(lwm(lwm_settings)).
+:- use_module(lwm(md5)).
 :- use_module(lwm(noRdf_store)).
 :- use_module(lwm(store_triple)).
+:- use_module(lwm_sparql(lwm_sparql_api)).
+:- use_module(lwm_sparql(lwm_sparql_query)).
 
 
 
@@ -100,7 +103,7 @@ clean_md5(Md5):-
   delete_file(DirtyFile),
 
   % Add the new VoID URLs to the LOD Basket.
-  maplist(add_to_basket, VoidUrls).
+  maplist(send_to_basket, VoidUrls).
 
 
 %! clean_datastream(
@@ -191,6 +194,19 @@ save_data_to_file(Md5, File, NumberOfTriples):-
     ),
     close(Write)
   ).
+
+
+%! send_to_basket(+Url:url) is det.
+
+send_to_basket(Url):-
+  lwm_scheme(Scheme),
+  lwm_authority(Authority),
+  uri_components(
+    BasketLocation,
+    uri_components(Scheme,Authority,basket,_,_)
+  ),
+  http_post(BasketLocation, atom(Url), Reply, []),
+  writeln(Reply).
 
 
 

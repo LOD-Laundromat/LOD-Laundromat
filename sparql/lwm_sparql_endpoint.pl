@@ -1,12 +1,11 @@
 :- module(
-  ll_sparql_endpoint,
+  lwm_sparql_endpoint,
   [
-    ll_sparql_default_graph/2, % +Mode:oneof([collection,dissemination])
-                               % -DefaultGraph:iri
-    ll_sparql_endpoint/1, % ?Endpoint:atom
-    ll_sparql_endpoint/2, % ?Endpoint:atom
+    lwm_sparql_default_graph/1, % -DefaultGraph:iri
+    lwm_sparql_endpoint/1, % ?Endpoint:atom
+    lwm_sparql_endpoint/2, % ?Endpoint:atom
                           % -Options:list(nvpair)
-    ll_sparql_endpoint_authentication/1 % -Authentication:list(nvpair)
+    lwm_sparql_endpoint_authentication/1 % -Authentication:list(nvpair)
   ]
 ).
 
@@ -24,19 +23,16 @@ Registration of SPARQL endpoints for the LOD Laundromat.
 
 :- use_module(plSparql(sparql_db)).
 
-:- use_module(ll(ll_generics)).
+:- use_module(lwm(lwm_settings)).
 
-:- initialization(init_ll_sparql_endpoints).
+:- initialization(init_lwm_sparql_endpoints).
 
 
 
-%! ll_sparql_default_graph(
-%!   +Mode:oneof([collection,dissemination]),
-%!   -DefaultGraph:iri
-%! ) is det.
+%! lwm_sparql_default_graph(-DefaultGraph:iri) is det.
 
-ll_sparql_default_graph(Mode, DefaultGraph):-
-  ll_version(Mode, Version),
+lwm_sparql_default_graph(DefaultGraph):-
+  lwm_version(Version),
   atom_number(Fragment, Version),
   uri_components(
     DefaultGraph,
@@ -44,50 +40,50 @@ ll_sparql_default_graph(Mode, DefaultGraph):-
   ).
 
 
-%! ll_sparql_endpoint(+Endpoint:atom) is semidet.
-%! ll_sparql_endpoint(-Endpoint:atom) is det.
+%! lwm_sparql_endpoint(+Endpoint:atom) is semidet.
+%! lwm_sparql_endpoint(-Endpoint:atom) is det.
 
-ll_sparql_endpoint(Endpoint):-
-  ll_sparql_endpoint(Endpoint, _).
+lwm_sparql_endpoint(Endpoint):-
+  lwm_sparql_endpoint(Endpoint, _).
 
-%! ll_sparql_endpoint(-Endpoint:atom, -Options:list(nvpair)) is multi.
+%! lwm_sparql_endpoint(-Endpoint:atom, -Options:list(nvpair)) is multi.
 
-ll_sparql_endpoint(Endpoint, Options2):-
+lwm_sparql_endpoint(Endpoint, Options2):-
   lwm_endpoint0(Endpoint, Options1),
-  ll_sparql_default_graph(collection, LwmGraph),
+  lwm_sparql_default_graph(LwmGraph),
   merge_options([named_graphs([LwmGraph])], Options1, Options2).
 
 lwm_endpoint0(localhost, Options):-
-  ll_sparql_endpoint_authentication(AuthenticationOptions),
+  lwm_sparql_endpoint_authentication(AuthenticationOptions),
   merge_options(AuthenticationOptions, [update_method(direct)], Options).
 %lwm_endpoint0(cliopatria, Options):-
-%  ll_sparql_endpoint_authentication(AuthenticationOptions),
+%  lwm_sparql_endpoint_authentication(AuthenticationOptions),
 %  merge_options(AuthenticationOptions, [update_method(direct)], Options).
 %lwm_endpoint0(virtuoso, [update_method(url_encoded)]).
 
 
-%! ll_sparql_endpoint_authentication(-Authentication:list(nvpair)) is det.
+%! lwm_sparql_endpoint_authentication(-Authentication:list(nvpair)) is det.
 
-ll_sparql_endpoint_authentication(
+lwm_sparql_endpoint_authentication(
   [request_header('Authorization'=Authentication)]
 ):-
-  ll_sparql_user(User),
-  ll_sparql_password(Password),
+  lwm_sparql_user(User),
+  lwm_sparql_password(Password),
   atomic_list_concat([User,Password], ':', Plain),
   base64(Plain, Encoded),
   atomic_list_concat(['Basic',Encoded], ' ', Authentication).
 
 
-ll_sparql_password(lwmlwm).
+lwm_sparql_password(lwmlwm).
 
 
-ll_sparql_user(lwm).
+lwm_sparql_user(lwm).
 
 
 
 % Initialization.
 
-init_ll_sparql_endpoints:-
+init_lwm_sparql_endpoints:-
   init_cliopatria_endpoint,
   init_localhost_endpoint,
   init_virtuoso_endpoint.

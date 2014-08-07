@@ -1,9 +1,7 @@
 % Index for the LOD-Laundromat project.
-% This assumes that file search path `ll` has been set.
+% This assumes that file search path `lwm` has been set.
 
-user:file_search_path(ll_basket, ll(basket)).
-user:file_search_path(ll_schema, ll(schema)).
-user:file_search_path(ll_sparql, ll(sparql)).
-user:file_search_path(ll_web, ll(web)).
-user:file_search_path(lwm, ll(lwm)).
+user:file_search_path(lwm_basket, lwm(basket)).
+user:file_search_path(lwm_schema, lwm(schema)).
+user:file_search_path(lwm_sparql, lwm(sparql)).
 

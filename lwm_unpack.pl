@@ -26,13 +26,13 @@ Unpacks files for the LOD Washing Machine to clean.
 
 :- use_module(plRdf_term(rdf_literal)).
 
-:- use_module(ll(md5)).
-:- use_module(ll_basket(ll_basket)).
-:- use_module(ll_sparql(ll_sparql_api)).
-:- use_module(ll_sparql(ll_sparql_query)).
+:- use_module(lwm(md5)).
+:- use_module(lwm(lwm_basket)).
 :- use_module(lwm(lwm_messages)).
 :- use_module(lwm(noRdf_store)).
 :- use_module(lwm(store_triple)).
+:- use_module(lwm_sparql(lwm_sparql_api)).
+:- use_module(lwm_sparql(lwm_sparql_query)).
 
 
 
@@ -71,7 +71,7 @@ lwm_unpack(Md5):-
 
 % The given MD5 denotes an archive entry.
 unpack_md5(Md5):-
-  ll_sparql_select([ll], [md5,path],
+  lwm_sparql_select([ll], [md5,path],
       [rdf(var(md5ent),ll:md5,literal(type(xsd:string,Md5))),
        rdf(var(md5ent),ll:path,var(path)),
        rdf(var(md5parent),ll:contains_entry,var(md5ent)),

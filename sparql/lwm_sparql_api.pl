@@ -1,22 +1,22 @@
 :- module(
-  ll_sparql_api,
+  lwm_sparql_api,
   [
-    ll_sparql_ask/3, % +Prefixes:list(atom)
+    lwm_sparql_ask/3, % +Prefixes:list(atom)
                      % +Bgps:or([compound,list(compound)])
                      % +Options:list(nvpair)
-    ll_sparql_ask/4, % +Endpoint:atom
+    lwm_sparql_ask/4, % +Endpoint:atom
                      % +Prefixes:list(atom)
                      % +Bgps:or([compound,list(compound)])
                      % +Options:list(nvpair)
-    ll_sparql_drop/1, % +Options:list(nvpair)
-    ll_sparql_drop/2, % +Endpoint:atom
+    lwm_sparql_drop/1, % +Options:list(nvpair)
+    lwm_sparql_drop/2, % +Endpoint:atom
                       % +Options:list(nvpair)
-    ll_sparql_select/5, % +Prefixes:list(atom)
+    lwm_sparql_select/5, % +Prefixes:list(atom)
                         % +Variables:list(atom)
                         % +Bgps:or([compound,list(compound)])
                         % -Result:list(list)
                         % +Options:list(nvpair)
-    ll_sparql_select/6 % +Endpoint:atom
+    lwm_sparql_select/6 % +Endpoint:atom
                        % +Prefixes:list(atom)
                        % +Variables:list(atom)
                        % +Bgps:or([compound,list(compound)])
@@ -39,30 +39,30 @@ SPARQL constructors for the LOD Washing Machine.
 
 :- use_module(plSparql(sparql_api)).
 
-:- use_module(ll_sparql(ll_sparql_endpoint)).
+:- use_module(lwm_sparql(lwm_sparql_endpoint)).
 
 
 
-ll_sparql_ask(Prefixes, Bgps1, Options):-
-  once(ll_sparql_endpoint(Endpoint)),
-  ll_sparql_default_graph(collection, LwmGraph),
+lwm_sparql_ask(Prefixes, Bgps1, Options):-
+  once(lwm_sparql_endpoint(Endpoint)),
+  lwm_sparql_default_graph(LwmGraph),
   Bgps2 = [graph(LwmGraph,Bgps1)],
-  ll_sparql_ask(Endpoint, Prefixes, Bgps2, Options).
+  lwm_sparql_ask(Endpoint, Prefixes, Bgps2, Options).
 
-ll_sparql_ask(Endpoint, Prefixes, Bgps, Options1):-
-  ll_sparql_endpoint(Endpoint, Options2),
+lwm_sparql_ask(Endpoint, Prefixes, Bgps, Options1):-
+  lwm_sparql_endpoint(Endpoint, Options2),
   merge_options(Options1, Options2, Options3),
   loop_until_true(
     sparql_ask(Endpoint, Prefixes, Bgps, Options3)
   ).
 
 
-ll_sparql_drop(Options):-
-  once(ll_sparql_endpoint(Endpoint)),
-  ll_sparql_drop(Endpoint, Options).
+lwm_sparql_drop(Options):-
+  once(lwm_sparql_endpoint(Endpoint)),
+  lwm_sparql_drop(Endpoint, Options).
 
-ll_sparql_drop(Endpoint, Options1):-
-  ll_sparql_endpoint(Endpoint, Options2),
+lwm_sparql_drop(Endpoint, Options1):-
+  lwm_sparql_endpoint(Endpoint, Options2),
   merge_options(Options1, Options2, Options3),
   option(default_graph(DefaultGraph), Options3),
   loop_until_true(
@@ -70,14 +70,14 @@ ll_sparql_drop(Endpoint, Options1):-
   ).
 
 
-ll_sparql_select(Prefixes, Variables, Bgps1, Result, Options):-
-  once(ll_sparql_endpoint(Endpoint)),
-  ll_sparql_default_graph(collection, LwmGraph),
+lwm_sparql_select(Prefixes, Variables, Bgps1, Result, Options):-
+  once(lwm_sparql_endpoint(Endpoint)),
+  lwm_sparql_default_graph(LwmGraph),
   Bgps2 = [graph(LwmGraph,Bgps1)],
-  ll_sparql_select(Endpoint, Prefixes, Variables, Bgps2, Result, Options).
+  lwm_sparql_select(Endpoint, Prefixes, Variables, Bgps2, Result, Options).
 
-ll_sparql_select(Endpoint, Prefixes, Variables, Bgps, Result, Options1):-
-  ll_sparql_endpoint(Endpoint, Options2),
+lwm_sparql_select(Endpoint, Prefixes, Variables, Bgps, Result, Options1):-
+  lwm_sparql_endpoint(Endpoint, Options2),
   merge_options(Options1, Options2, Options3),
   loop_until_true(
     sparql_select(Endpoint, Prefixes, Variables, Bgps, Result, Options3)

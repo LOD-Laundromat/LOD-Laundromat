@@ -29,9 +29,9 @@ and at the same time send small RDF messages using SPARQL Update requests.
 
 :- use_module(plSparql(sparql_api)).
 
-:- use_module(ll(ll_generics)).
-:- use_module(ll(md5)).
-:- use_module(ll_sparql(ll_sparql_endpoint)).
+:- use_module(lwm(lwm_settings)).
+:- use_module(lwm(md5)).
+:- use_module(lwm_sparql(lwm_sparql_endpoint)).
 
 %! rdf_triple(
 %!   ?Subject:or([bnode,iri]),
@@ -70,7 +70,7 @@ post_rdf_triples(Md5):-
       Triples
     ),
     forall(
-      ll_sparql_endpoint(Endpoint, Options1),
+      lwm_sparql_endpoint(Endpoint, Options1),
       (
         merge_options([bnode_base(BaseComponents)], Options1, Options2),
         sparql_insert_data(Endpoint, Triples, Options2)
@@ -93,14 +93,14 @@ rdf_triple([S,P,O,G]):-
 
 store_triple(S1, P1, O1):-
   maplist(rdf_term_map, [S1,P1,O1], [S2,P2,O2]),
-  ll_sparql_default_graph(collection, DefaultGraph),
+  lwm_sparql_default_graph(DefaultGraph),
   assert(rdf_triple(S2, P2, O2, DefaultGraph)).
 
 %! store_triple(+Subject, +Predicate, +Object, +Graph) is det.
 
 store_triple(S1, P1, O1, G1):-
   maplist(rdf_term_map, [S1,P1,O1], [S2,P2,O2]),
-  ll_versioned_graph(G1, G2),
+  lwm_versioned_graph(G1, G2),
   assert(rdf_triple(S2, P2, O2, G2)).
 
 

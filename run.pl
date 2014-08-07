@@ -4,8 +4,8 @@
 % that serves the cleaned files and an accessible SPARQL endpoint
 % for storing the metadata.
 
-:- ensure_loaded(debug).
-:- ensure_loaded(load).
+:- [debug].
+:- [load].
 
 :- use_module(lwm(run_singlethread)).
 :- run_singlethread.

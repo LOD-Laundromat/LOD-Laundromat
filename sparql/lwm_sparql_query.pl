@@ -1,5 +1,5 @@
 :- module(
-  ll_sparql_query,
+  lwm_sparql_query,
   [
     md5_content_type/2, % +Md5:atom
                         % -ContentType:atom
@@ -26,14 +26,14 @@ SPARQL queries for the LOD Washing Machine.
 
 :- use_module(plRdf_term(rdf_literal)).
 
-:- use_module(ll_sparql(ll_sparql_api)).
+:- use_module(lwm_sparql(lwm_sparql_api)).
 
 
 
 %! md5_content_type(+Md5:atom, -ContentType:atom) is det.
 
 md5_content_type(Md5, ContentType):-
-  ll_sparql_select([ll], [content_type],
+  lwm_sparql_select([ll], [content_type],
       [rdf(var(md5res),ll:md5,literal(type(xsd:string,Md5))),
        rdf(var(md5res),ll:content_type,var(content_type))],
       [[Literal]], [limit(1)]), !,
@@ -44,7 +44,7 @@ md5_content_type(_, _).
 %! md5_file_extension(+Md5:atom, -FileExtension:atom) is det.
 
 md5_file_extension(Md5, FileExtension):-
-  ll_sparql_select([ll], [file_extension],
+  lwm_sparql_select([ll], [file_extension],
       [rdf(var(md5res),ll:md5,literal(type(xsd:string,Md5))),
        rdf(var(md5res),ll:file_extension,var(file_extension))],
       [[Literal]], [limit(1)]),
@@ -54,7 +54,7 @@ md5_file_extension(Md5, FileExtension):-
 %! md5_size(+Md5:atom, -NumberOfGigabytes:between(0.0,inf)) is det.
 
 md5_size(Md5, NumberOfGigabytes):-
-  ll_sparql_select([ll], [size],
+  lwm_sparql_select([ll], [size],
       [rdf(var(datadoc),ll:md5,literal(type(xsd:string,Md5))),
        rdf(var(datadoc),ll:size,var(size))],
       [[Literal]], [limit(1)]), !,
@@ -72,7 +72,7 @@ md5_size(Md5, NumberOfGigabytes):-
 md5_source(Md5, Url):-
   md5_url(Md5, Url), !.
 md5_source(Md5, Source):-
-  ll_sparql_select([ll], [md5parent,path],
+  lwm_sparql_select([ll], [md5parent,path],
       [rdf(var(ent),ll:md5,literal(type(xsd:string,Md5))),
        rdf(var(ent),ll:path,var(path)),
        rdf(var(parent),ll:contains_entry,var(md5ent)),
@@ -86,7 +86,7 @@ md5_source(Md5, Source):-
 %! md5_url(+Md5:atom, -Url:url) is det.
 
 md5_url(Md5, Url):-
-  ll_sparql_select([ll], [url],
+  lwm_sparql_select([ll], [url],
       [rdf(var(md5res),ll:md5,literal(type(xsd:string,Md5))),
        rdf(var(md5res),ll:url,var(url))],
       [[Url]], [limit(1)]).

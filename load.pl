@@ -4,19 +4,14 @@
 
 :- multifile(user:project/3).
 :- dynamic(user:project/3).
-   user:project('LOD-Laundromat',
-       'Where we clean other people\'s dirty data', ll).
+   user:project(llWashingMachine,
+       'Where we clean other people\'s dirty data', lwm).
 
 :- use_module(load_project).
 :- load_project([
     plc-'Prolog-Library-Collection',
-    plDev,
     plGraph,
-    plGraphViz,
-    plHtml,
     plRdf,
-    plServer,
-    plSparql,
-    plTabular
+    plSparql
 ]).
 
