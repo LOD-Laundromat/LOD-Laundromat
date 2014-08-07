@@ -257,7 +257,7 @@ store_url(Md5, Url):-
 %! store_lwm_version(+Md5:atom) is det.
 
 store_lwm_version(Md5):-
-  ll_version(Version),
+  ll_version(collection, Version),
   store_triple(ll-Md5, ll-ll_version, literal(type(xsd-integer,Version))).
 
 

@@ -1,9 +1,4 @@
-:- module(
-  ll_schema,
-  [
-    assert_ll_schema/1 % +Graph:atom
-  ]
-).
+:- module(ll_schema, []).
 
 /** <module> LOD Washing Machine: schema
 
@@ -14,10 +9,26 @@ Generates the schema file for the LOD Washing Machine.
 @version 2014/06, 2014/08
 */
 
+:- use_module(library(semweb/rdf_db)).
+
 :- use_module(plRdf(rdf_prefixes)). % Registrations.
 :- use_module(plRdf(rdfs_build2)).
 
+:- use_module(ll_sparql(ll_sparql_endpoint)).
 
+:- rdf_register_prefix(ll, 'http://lodlaundromat.org/vocab#').
+
+:- initialization(assert_ll_schema).
+
+
+
+%! assert_ll_schema is det.
+
+assert_ll_schema:-
+  ll_sparql_default_graph(dissemination, Graph),
+  assert_ll_schema(Graph).
+
+%! assert_ll_schema(+Graph:atom) is det.
 
 assert_ll_schema(Graph):-
   % ArchiveEntry and URL partition the space of data documents.

@@ -3,8 +3,10 @@
   [
     ll_authority/1, % ?Authority:atom
     ll_scheme/1, % ?Scheme:atom
-    ll_version/1, % ?Version:positive_integer
-    ll_versioned_graph/2 % +Graph:atom
+    ll_version/2, % +Mode:oneof([collection,dissemination])
+                  % ?Version:positive_integer
+    ll_versioned_graph/3 % +Graph:atom
+                         % +Mode:oneof([collection,dissemination])
                          % -VersionedGraph:atom
   ]
 ).
@@ -35,18 +37,29 @@ ll_authority('lodlaundromat.org').
 ll_scheme(http).
 
 
-%! ll_version(+Version:positive_integer) is semidet.
-%! ll_version(-Version:positive_integer) is det.
+%! ll_version(
+%!   +Mode:oneof([collection,dissemination]),
+%!   +Version:positive_integer
+%! ) is semidet.
+%! ll_version(
+%!   +Mode:oneof([collection,dissemination]),
+%!   -Version:positive_integer
+%! ) is det.
 
-ll_version(11).
+ll_version(collection, 11).
+ll_version(dissemination, 10).
 
 
-%! ll_versioned_graph(+Graph:atom, -VersionedGraph:atom) is det.
+%! ll_versioned_graph(
+%!   +Graph:atom,
+%!   +Mode:oneof([collection,dissemination]),
+%!   -VersionedGraph:atom
+%! ) is det.
 
-ll_versioned_graph(G1, G2):-
-  md5_bnode_base(G1, Scheme-Authority-Hash1),
-  ll_version(Version),
+ll_versioned_graph(Graph, Mode, VersionedGraph):-
+  md5_bnode_base(Graph, Scheme-Authority-Hash1),
+  ll_version(Mode, Version),
   atomic_list_concat([Hash1,Version], '#', Path1),
   atomic_list_concat(['',Path1], '/', Path2),
-  uri_components(G2, uri_components(Scheme,Authority,Path2,_,_)).
+  uri_components(VersionedGraph, uri_components(Scheme,Authority,Path2,_,_)).
 

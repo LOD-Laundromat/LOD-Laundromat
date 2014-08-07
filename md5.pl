@@ -60,7 +60,7 @@ md5_directory(Md5, Md5Dir):-
   absolute_file_name(data(.), DataDir, [access(write),file_type(directory)]),
   
   % Add the LOD Washing Machine version to the directory path.
-  ll_version(Version),
+  ll_version(collection, Version),
   directory_file_path(DataDir, Version, VersionDir),
   make_directory_path(VersionDir),
   

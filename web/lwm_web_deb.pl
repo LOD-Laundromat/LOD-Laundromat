@@ -1,23 +1,20 @@
 :- module(
   lwm_web_deb,
   [
-    lwm/2, % +Request:list
-           % +HtmlStyle:atom
-    lwm_basket/1 % +Request:list
+    lwm_web_deb/2 % +Request:list
+                  % +HtmlStyle:atom
   ]
 ).
 
 /** <module> LOD laundry
 
 @author Wouter Beek
-@version 2014/05-2014/06
+@version 2014/05-2014/06, 2014/08
 */
 
 :- use_module(library(http/html_write)).
 :- use_module(library(http/http_cors)).
 :- use_module(library(http/http_dispatch)).
-:- use_module(library(http/http_json)).
-:- use_module(library(http/http_parameters)).
 :- use_module(library(http/http_server_files)).
 :- use_module(library(http/http_session)). % HTTP session support.
 :- use_module(library(semweb/rdf_db)).
@@ -30,7 +27,7 @@
 
 :- use_module(plTabular(rdf_html_table_pairs)).
 
-:- use_module(ll_basket(ll_basket)).
+:- use_module(ll_sparql(ll_sparql_endpoint)).
 
 :- dynamic(url_md5_translation/2).
 
@@ -47,39 +44,27 @@ serve_files_in_directory_with_cors(Alias, Request):-
   serve_files_in_directory(Alias, Request).
 
 
-lwm_basket(Request):-
-  cors_enable,
-  (
-    catch(http_parameters(Request, [url(Url, [])]), _, fail),
-    is_url(Url)
-  ->
-    % Make sure that it is a URL.
-    add_to_basket(Url),
-
-    % HTTP status code 202 Accepted: The request has been accepted
-    % for processing, but the processing has not been completed.
-    reply_json(json{}, [status(202)])
-  ;
-    % HTTP status code 400 Bad Request: The request could not
-    % be understood by the server due to malformed syntax.
-    reply_json(json{}, [status(400)])
-  ).
-
-
-% Response to requesting a JSON description of all LOD URL.
-lwm(_, HtmlStyle):-
-  ll_sparql_default_graph(Graph),
+lwm_web_deb(_, HtmlStyle):-
   reply_html_page(
+    title('LOD Laundromat'),
     HtmlStyle,
-    title('LOD Laundry'),
     html([
-      \pending(Graph),
-      \unpacking(Graph),
-      \unpacked(Graph),
-      \cleaning(Graph),
-      \cleaned(Graph)
+      h1('Overview of collection version'),
+      \lwm_web_deb_mode(collection),
+      h1('Overview of dissemination version'),
+      \lwm_web_deb_mode(dissemination)
     ])
   ).
+
+%! lwm_web_deb_mode(+Mode:oneof([collection,dissemination]))// is det.
+
+lwm_web_deb_mode(Mode) -->
+  {ll_sparql_default_graph(Mode, Graph)},
+  pending(Graph),
+  unpacking(Graph),
+  unpacked(Graph),
+  cleaning(Graph),
+  cleaned(Graph).
 
 pending(Graph) -->
   {

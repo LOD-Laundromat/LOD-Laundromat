@@ -11,7 +11,7 @@ Serves responses for the contents of a metadata infobox in HTML,
 for use in LOD Laundromat.
 
 @author Wouter Beek
-@version 2014/07
+@version 2014/07-2014/08
 */
 
 :- use_module(library(aggregate)).
@@ -27,6 +27,8 @@ for use in LOD Laundromat.
 
 :- use_module(plTabular(rdf_html_table)).
 
+:- use_module(ll_sparql(ll_sparql_endpoint)).
+
 
 
 ll_infobox(Request):-
@@ -35,7 +37,7 @@ ll_infobox(Request):-
 
 ll_infobox_with_cors(Request):-
   request_search_read(Request, md5, Md5), !,
-  ll_sparql_default_graph(Graph),
+  ll_sparql_default_graph(dissemination, Graph),
   aggregate_all(
     set([P,O]),
     (

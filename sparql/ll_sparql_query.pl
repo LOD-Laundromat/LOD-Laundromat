@@ -23,13 +23,10 @@ SPARQL queries for the LOD Washing Machine.
 */
 
 :- use_module(library(apply)).
-:- use_module(library(semweb/rdf_db)).
 
 :- use_module(plRdf_term(rdf_literal)).
 
 :- use_module(ll_sparql(ll_sparql_api)).
-
-:- rdf_register_prefix(ll, 'http://lodlaundromat.org/vocab#').
 
 
 

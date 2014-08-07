@@ -93,7 +93,7 @@ rdf_triple([S,P,O,G]):-
 
 store_triple(S1, P1, O1):-
   maplist(rdf_term_map, [S1,P1,O1], [S2,P2,O2]),
-  ll_sparql_default_graph(DefaultGraph),
+  ll_sparql_default_graph(collection, DefaultGraph),
   assert(rdf_triple(S2, P2, O2, DefaultGraph)).
 
 %! store_triple(+Subject, +Predicate, +Object, +Graph) is det.

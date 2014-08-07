@@ -39,13 +39,13 @@ SPARQL constructors for the LOD Washing Machine.
 
 :- use_module(plSparql(sparql_api)).
 
-:- use_module(ll_sparql(ll_sparql_endpoint)). % Register SPARQL endpoints.
+:- use_module(ll_sparql(ll_sparql_endpoint)).
 
 
 
 ll_sparql_ask(Prefixes, Bgps1, Options):-
   once(ll_sparql_endpoint(Endpoint)),
-  ll_sparql_default_graph(LwmGraph),
+  ll_sparql_default_graph(collection, LwmGraph),
   Bgps2 = [graph(LwmGraph,Bgps1)],
   ll_sparql_ask(Endpoint, Prefixes, Bgps2, Options).
 
@@ -72,7 +72,7 @@ ll_sparql_drop(Endpoint, Options1):-
 
 ll_sparql_select(Prefixes, Variables, Bgps1, Result, Options):-
   once(ll_sparql_endpoint(Endpoint)),
-  ll_sparql_default_graph(LwmGraph),
+  ll_sparql_default_graph(collection, LwmGraph),
   Bgps2 = [graph(LwmGraph,Bgps1)],
   ll_sparql_select(Endpoint, Prefixes, Variables, Bgps2, Result, Options).
 
