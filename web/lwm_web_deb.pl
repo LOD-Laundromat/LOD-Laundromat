@@ -46,8 +46,8 @@ serve_files_in_directory_with_cors(Alias, Request):-
 
 lwm_web_deb(_, HtmlStyle):-
   reply_html_page(
-    title('LOD Laundromat'),
     HtmlStyle,
+    title('LOD Laundromat'),
     html([
       h1('Overview of collection version'),
       \lwm_web_deb_mode(collection),

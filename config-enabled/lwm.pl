@@ -49,14 +49,9 @@ user:body(plTabular, Body) -->
 
 % LOD-Washing-Machine
 
-:- http_handler(cliopatria(lwm), lwm, [prefix]).
+:- http_handler(cliopatria(lwm), lwm_web_deb, [prefix]).
 
 :- use_module(ll_web(lwm_web_deb)).
 lwm_web_deb(Request):-
-  lwm_web_deb(Request, lwm).
-
-:- multifile(user:body//2).
-user:body(lwm, Body) -->
-  html_requires(css('plServer.css')),
-  user:body(cliopatria(default), Body).
+  lwm_web_deb(Request, cliopatria(default)).
 
