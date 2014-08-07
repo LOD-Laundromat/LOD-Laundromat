@@ -20,8 +20,6 @@
   ).
 
 
-%%%%:- use_module(library(swi_ide)).
-%%%%:- prolog_ide(debug_monitor).
-%%%%:- debug(sparql_request).
+:- use_module(library(debug)).
 :- debug(loop_until_true).
 

@@ -1,7 +1,6 @@
 :- module(
-  ll_basket,
+  lwm_basket,
   [
-    add_to_basket/1, % +Url:url
     cleaned/1, % ?Md5:atom
     pending/1, % ?Md5:atom
     pick_pending/1, % +Md5:atom
@@ -29,36 +28,6 @@ $ curl --data "url=http://acm.rkbexplorer.com/id/998550" http://lodlaundry.wbeek
 :- use_module(ll_sparql(ll_sparql_api)).
 :- use_module(lwm(store_triple)).
 
-
-
-%! add_to_basket(+Source) is det.
-
-add_to_basket(Url1):-
-  uri_iri(Url2, Url1),
-  with_mutex(ll_basket, (
-    rdf_atom_md5(Url2, 1, Md5),
-    (
-      added(Md5)
-    ->
-      print_message(informational, already_added(Md5))
-    ;
-      store_url(Md5, Url2)
-    )
-  )).
-
-
-%! added(+Md5:atom) is semidet.
-
-added(Md5):-
-  with_mutex(ll_basket, (
-    catch(
-      ll_sparql_ask([ll],
-        [rdf(var(md5),ll:md5,literal(type(xsd:string,Md5))),
-         rdf(var(md5),ll:added,var(added))], []),
-      _,
-      fail
-    )
-  )).
 
 
 %! cleaned(+Md5:atom) is semidet.
@@ -188,17 +157,4 @@ unpacking(Md5):-
          not([rdf(var(md5res),ll:end_unpack,var(clean))])],
         [])
   )).
-
-
-
-% Messages
-
-:- multifile(prolog:message//1).
-
-prolog:message(already_added(Md5)) -->
-  cannot_add(Md5),
-  ['already added'].
-
-cannot_add(Md5) -->
-  ['MD5 ~w cannot be added to the pool: '-[Md5]].
 
