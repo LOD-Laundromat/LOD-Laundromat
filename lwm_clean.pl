@@ -40,6 +40,9 @@ lwm_clean_loop:-
   % Pick a new source to process.
   catch(pick_unpacked(Md5), Exception, var(Exception)),
 
+  % DEB
+  (debug_md5(Md5) -> gtrace ; true),
+
   % Process the URL we picked.
   lwm_clean(Md5),
 
@@ -51,6 +54,15 @@ lwm_clean_loop:-
   sleep(1),
   print_message(warning, idle_loop(lwm_clean)),
   lwm_clean_loop.
+debug_md5('5401da9718d5ee79dbe37001edc039c3'). %existence_error(directory)
+debug_md5('5b4328effff921b18b5cee3da045387c'). %existence_error(source_sink)
+debug_md5('6c05d2bd9a68bc6d44d78d543af7ba43'). %io_error(write)
+debug_md5('b775ae43b94aef4aacdf8abae5e3907f'). %instantiation_error
+debug_md5('be7ed1f32a507d3d9f503778e5a37cd9'). %type_error(xml_dom)
+debug_md5('cd54621d9e9d3cec30caeb9b21fdb91e'). %limit_exceeded(max_errors)
+debug_md5('def6ea9a6bdc58ce77534e83a7a75507'). %timeout_error(read)
+debug_md5('def7c635f47c0c9bb34f92b0bc5089db'). %false
+debug_md5('f114a00db90b1744827bc59eab4c8fca'). %existence_error(source_sink)
 
 
 %! lwm_clean(+Md5:atom) is det.
@@ -63,15 +75,12 @@ lwm_clean(Md5):-
     Status,
     Messages
   ),
-  (skip_status(Status) -> true ; gtrace), %DEB
 
   store_status(Md5, Status),
   maplist(store_message(Md5), Messages),
 
   store_end_clean(Md5),
   print_message(informational, lwm_end(clean,Md5,Source,Status,Messages)).
-skip_status(exception(error(socket_error(_),_))).
-skip_status(true).
 
 
 %! clean_md5(+Md5:atom) is det.

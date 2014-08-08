@@ -141,11 +141,13 @@ unpack_file(Md5, ArchiveFile):-
   (
     EntryPairs == []
   ->
-    % The file is now ready for cleaning!
-    true
+    % There is no file for cleaning.
+    % To keep the process simple, we create an empty dirty file.
+    directory_file_path(Md5Dir, dirty, DirtyFile),
+    touch_file(DirtyFile)
   ;
     EntryPairs = [data-EntryProperties],
-    memberchk(format(raw),EntryProperties)
+    memberchk(format(raw), EntryProperties)
   ->
     % Construct the data file name.
     file_directory_name(ArchiveFile, ArchiveDir),
