@@ -54,9 +54,13 @@ lwm_clean_loop:-
   sleep(1),
   print_message(warning, idle_loop(lwm_clean)),
   lwm_clean_loop.
+debug_md5('3c22dd25de533e90eac53072e40b31ec'). %no_rdf
 debug_md5('5401da9718d5ee79dbe37001edc039c3'). %existence_error(directory)
 debug_md5('5b4328effff921b18b5cee3da045387c'). %existence_error(source_sink)
 debug_md5('6c05d2bd9a68bc6d44d78d543af7ba43'). %io_error(write)
+debug_md5('7c2605d9992504f7c8ad9bc5b7308fec'). %instantiation_error
+debug_md5('8fcbd6efeb1cb1f6a0f8409f419cb967'). %no_rdf.
+debug_md5('993cb6c31a862cd8d9e770581d557925'). %type_error(xml_dom)
 debug_md5('b775ae43b94aef4aacdf8abae5e3907f'). %instantiation_error
 debug_md5('be7ed1f32a507d3d9f503778e5a37cd9'). %type_error(xml_dom)
 debug_md5('cd54621d9e9d3cec30caeb9b21fdb91e'). %limit_exceeded(max_errors)
