@@ -20,13 +20,11 @@ The cleaning process performed by the LOD Washing Machine.
 :- use_module(library(uri)).
 :- use_module(library(zlib)).
 
-:- use_module(generics(flag_ext)).
 :- use_module(pl(pl_log)).
 :- use_module(void(void_db)). % XML namespace.
 
 :- use_module(plRdf_ser(rdf_detect)).
 :- use_module(plRdf_ser(rdf_ntriples_write)).
-:- use_module(plRdf_term(rdf_literal)).
 
 :- use_module(lwm(lwm_basket)).
 :- use_module(lwm(lwm_messages)).
@@ -34,7 +32,6 @@ The cleaning process performed by the LOD Washing Machine.
 :- use_module(lwm(md5)).
 :- use_module(lwm(noRdf_store)).
 :- use_module(lwm(store_triple)).
-:- use_module(lwm_sparql(lwm_sparql_api)).
 :- use_module(lwm_sparql(lwm_sparql_query)).
 
 
@@ -66,12 +63,15 @@ lwm_clean(Md5):-
     Status,
     Messages
   ),
+  (skip_status(Status) -> true ; gtrace), %DEB
 
   store_status(Md5, Status),
   maplist(store_message(Md5), Messages),
 
   store_end_clean(Md5),
   print_message(informational, lwm_end(clean,Md5,Source,Status,Messages)).
+skip_status(exception(error(socket_error(_),_))).
+skip_status(true).
 
 
 %! clean_md5(+Md5:atom) is det.
@@ -118,13 +118,10 @@ clean_datastream(Md5, File, Read, ContentType, VoidUrls):-
   % Guess the RDF serialization format,
   % using the content type and the file extension as suggestions.
   ignore(md5_file_extension(Md5, FileExtension)),
-gtrace,
   rdf_guess_format_md5(Md5, Read, FileExtension, ContentType, Format),
   store_triple(ll-Md5, ll-serialization_format,
       literal(type(xsd-string,Format))),
-  % DEB: N-Triples files are not loaded properly?
-  (Format == ntriples -> gtrace ; true),
-  
+
   % Load all triples by parsing the data document
   % according to the guessed RDF serialization format.
   md5_base_url(Md5, Base),
@@ -132,7 +129,7 @@ gtrace,
     stream(Read),
     [base_uri(Base),format(Format),register_namespaces(false)]
   ),
-  
+
   % In between loading and saving the data,
   % we count the number of triples, including the number of duplicates.
   aggregate_all(
@@ -140,10 +137,10 @@ gtrace,
     rdf(_, _, _, _),
     TIn
   ),
-  
+
   % Save the data in a cleaned format.
   save_data_to_file(Md5, File, TOut),
-  
+
   % Store statistics about the number of (duplicate) triples.
   store_number_of_triples(Md5, TIn, TOut),
 

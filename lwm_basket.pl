@@ -20,9 +20,6 @@ $ curl --data "url=http://acm.rkbexplorer.com/id/998550" http://lodlaundry.wbeek
 @version 2014/05-2014/06, 2014/08
 */
 
-:- use_module(library(semweb/rdf_db)).
-:- use_module(library(uri)).
-
 :- use_module(plRdf_term(rdf_literal)).
 
 :- use_module(lwm_sparql(lwm_sparql_api)).

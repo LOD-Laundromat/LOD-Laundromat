@@ -25,7 +25,6 @@ and at the same time send small RDF messages using SPARQL Update requests.
 
 :- use_module(library(option)).
 :- use_module(library(semweb/rdf_db)).
-:- use_module(library(uri)).
 
 :- use_module(plSparql(sparql_api)).
 
