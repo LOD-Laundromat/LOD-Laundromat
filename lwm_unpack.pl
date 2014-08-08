@@ -39,10 +39,10 @@ Unpacks files for the LOD Washing Machine to clean.
 lwm_unpack_loop:-
   % Pick a new source to process.
   catch(pick_pending(Md5), Exception, var(Exception)),
-
+  
   % Process the URL we picked.
   lwm_unpack(Md5),
-
+  
   % Intermittent loop.
   lwm_unpack_loop.
 % Done for now. Check whether there are new jobs in one seconds.

@@ -34,12 +34,15 @@ SPARQL constructors for the LOD Washing Machine.
 */
 
 :- use_module(library(option)).
+:- use_module(library(semweb/rdf_db)).
 
 :- use_module(generics(meta_ext)).
 
 :- use_module(plSparql(sparql_api)).
 
 :- use_module(lwm_sparql(lwm_sparql_endpoint)).
+
+:- rdf_register_prefix(ll, 'http://lodlaundromat.org/vocab#').
 
 
 

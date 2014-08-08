@@ -58,12 +58,13 @@ md5_clean_url(Md5, Location):-
 md5_directory(Md5, Md5Dir):-
   % Place data documents in the data subdirectory.
   absolute_file_name(data(.), DataDir, [access(write),file_type(directory)]),
-  
+
   % Add the LOD Washing Machine version to the directory path.
-  lwm_version(Version),
-  directory_file_path(DataDir, Version, VersionDir),
+  lwm_version(Version1),
+  atom_number(Version2, Version1),
+  directory_file_path(DataDir, Version2, VersionDir),
   make_directory_path(VersionDir),
-  
+
   % Add the MD5 hash to the directory path.
   directory_file_path(VersionDir, Md5, Md5Dir),
   make_directory_path(Md5Dir).
