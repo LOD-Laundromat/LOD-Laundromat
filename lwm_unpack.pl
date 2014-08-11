@@ -40,6 +40,9 @@ lwm_unpack_loop:-
   % Pick a new source to process.
   catch(pick_pending(Md5), Exception, var(Exception)),
   
+  % DEB
+  %%%%(debug_md5(Md5) -> gtrace ; true),
+  
   % Process the URL we picked.
   lwm_unpack(Md5),
   
@@ -49,6 +52,7 @@ lwm_unpack_loop:-
 lwm_unpack_loop:-
   sleep(10),
   lwm_unpack_loop.
+debug_md5('993cb6c31a862cd8d9e770581d557925'). %type_error(xml_dom)
 
 
 %! lwm_unpack(+Md5:atom) is det.
@@ -138,6 +142,7 @@ unpack_file(Md5, ArchiveFile):-
   archive_extract(ArchiveFile, _, ArchiveFilters, EntryPairs),
   store_archive_filters(Md5, ArchiveFilters),
 
+  md5_directory(Md5, Md5Dir),
   (
     EntryPairs == []
   ->
@@ -154,7 +159,6 @@ unpack_file(Md5, ArchiveFile):-
     directory_file_path(ArchiveDir, data, DataFile),
 
     % Construct the dirty file name.
-    md5_directory(Md5, Md5Dir),
     directory_file_path(Md5Dir, dirty, DirtyFile),
 
     % Move the data file outside of the its entry path,

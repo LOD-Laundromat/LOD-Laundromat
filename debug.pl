@@ -1,24 +1,19 @@
-% Debug tools for the LOD-Washing-Machine project.
+% Debug tools for the llWashingMachine project.
+
+:- set_prolog_flag(
+     answer_write_options,
+     [max_depth(10),portrayed(true),spacing(next_argument)]
+   ).
+:- set_prolog_flag(
+     debugger_write_options,
+     [max_depth(10),portrayed(true),spacing(next_argument)]
+   ).
 
 :- use_module(library(ansi_term)).
+
 :- use_module(library(portray_text)).
 :- portray_text(true).
-:- set_prolog_flag(backquoted_string, true).
-:- set_prolog_flag(
-    toplevel_print_options,
-    [backquoted_string(true),
-     max_depth(9999),
-     portray(true),
-     spacing(next_argument)]
-  ).
-:- set_prolog_flag(
-    debugger_print_options,
-    [backquoted_string(true),
-     max_depth(9999),
-     portray(true),
-     spacing(next_argument)]
-  ).
-
+:- set_portray_text(ellipsis, 100).
 
 :- use_module(library(debug)).
 :- debug(loop_until_true).

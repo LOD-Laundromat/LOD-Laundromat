@@ -2,8 +2,8 @@
 
 :- use_module(library(ansi_term)).
 
-:- multifile(user:project/3).
 :- dynamic(user:project/3).
+:- multifile(user:project/3).
    user:project(llWashingMachine,
        'Where we clean other people\'s dirty data', lwm).
 
