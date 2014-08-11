@@ -60,7 +60,7 @@ debug_md5('3d69838f412b23afc538cb223e2a0bce'). %io_error(read)
 debug_md5('51cc65a7277b513bd3ab46e893ca5bd9'). %instantiation_error
 debug_md5('5401da9718d5ee79dbe37001edc039c3'). %existence_error(directory)
 debug_md5('5a55b44a207066e9c96d6861c5150972'). %existence_error(directory)
-debug_md5('6988fdbc5ee96ff717fcaa620ba2797a'). %timeout_error(read)
+debug_md5('6988fdbc5ee96ff717fcaa620ba2797a'). %timeout_error(read)*
 debug_md5('6c05d2bd9a68bc6d44d78d543af7ba43'). %io_error(write)
 debug_md5('708210029cb8cb0a5c63f9739361bb1b'). %limit_exceeded(max_errors):html4
 debug_md5('7455add7b66ca81a52e381206d40a7bf'). %false
@@ -68,6 +68,7 @@ debug_md5('74fbf321beb302cce12986829c56a2eb'). %existence_error(directory)
 debug_md5('7c2605d9992504f7c8ad9bc5b7308fec'). %instantiation_error
 debug_md5('853e6b84793b50008efd2a9bd3a62601'). %no_rdf
 debug_md5('8cf747f77aaf6481c37e4aa3ccf02867'). %timeout_error(read)
+debug_md5('a0545f2792e29e54bb7a7f617c078838'). %existence_error(directory)*
 debug_md5('a2638795c6d9fa1bfcdb70a8825bcbce'). %instantiation_error
 debug_md5('aff6914f31e40b94e1fa8fb0a26d15ed'). %false
 debug_md5('b775ae43b94aef4aacdf8abae5e3907f'). %instantiation_error
@@ -75,8 +76,9 @@ debug_md5('baa7651083fc7e429fb6f1f98fe15856'). %existence_error(directory)
 debug_md5('be7ed1f32a507d3d9f503778e5a37cd9'). %type_error(xml_dom)
 debug_md5('ca44ab500992d71d33bfdb804f284c29'). %instantiation_error
 debug_md5('cd54621d9e9d3cec30caeb9b21fdb91e'). %limit_exceeded(max_errors)
-debug_md5('def6ea9a6bdc58ce77534e83a7a75507'). %timeout_error(read)
-debug_md5('e1a52add8f3ceb4f472c0117931df512'). %instantiation_error
+debug_md5('deeb39e943bd6d3bbfc4f9a5dc739a11'). %timeout_error(read)* 
+debug_md5('def6ea9a6bdc58ce77534e83a7a75507'). %timeout_error(read)*
+debug_md5('e1a52add8f3ceb4f472c0117931df512'). %false*
 debug_md5('f087e2f4cccb95ecd102dc792370a8e6'). %false
 debug_md5('fc142b6dc1248ae088b2788548373666'). %instantiation_error
 debug_md5('fdfc6eaf4c36ca71ad176ca3dace688b'). %false
