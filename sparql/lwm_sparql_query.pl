@@ -90,3 +90,4 @@ md5_url(Md5, Url):-
       [rdf(var(md5res),ll:md5,literal(type(xsd:string,Md5))),
        rdf(var(md5res),ll:url,var(url))],
       [[Url]], [limit(1)]).
+

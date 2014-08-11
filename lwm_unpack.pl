@@ -52,6 +52,7 @@ lwm_unpack_loop:-
 lwm_unpack_loop:-
   sleep(10),
   lwm_unpack_loop.
+debug_md5('4af8f45f3cbd70bc10e8e17dc502cb33'). %library(archive)?
 debug_md5('993cb6c31a862cd8d9e770581d557925'). %type_error(xml_dom)
 
 

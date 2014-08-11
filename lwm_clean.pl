@@ -54,7 +54,10 @@ lwm_clean_loop:-
   sleep(1),
   print_message(warning, idle_loop(lwm_clean)),
   lwm_clean_loop.
+debug_md5('3ac5e377cec01da6db843806b3482987'). %instantiation_error
+debug_md5('3b594a5f76d5d67de6e33b84624da419'). %instantiation_error
 %%%%debug_md5('3c22dd25de533e90eac53072e40b31ec'). %no_rdf
+debug_md5('3d69838f412b23afc538cb223e2a0bce'). %io_error(read)
 debug_md5('5401da9718d5ee79dbe37001edc039c3'). %existence_error(directory)
 debug_md5('5a55b44a207066e9c96d6861c5150972'). %existence_error(directory)
 %%%%debug_md5('5b4328effff921b18b5cee3da045387c'). %no_rdf
@@ -65,19 +68,19 @@ debug_md5('74fbf321beb302cce12986829c56a2eb'). %existence_error(directory)
 %%%%debug_md5('7958728f1a5aed6a9bc5630cbe959408'). %no_rdf
 debug_md5('7c2605d9992504f7c8ad9bc5b7308fec'). %instantiation_error
 debug_md5('853e6b84793b50008efd2a9bd3a62601'). %no_rdf
-debug_md5('8fcbd6efeb1cb1f6a0f8409f419cb967'). %no_rdf
-%%%%debug_md5('993cb6c31a862cd8d9e770581d557925'). %type_error(xml_dom),@JW
 debug_md5('aff6914f31e40b94e1fa8fb0a26d15ed'). %false
 debug_md5('b775ae43b94aef4aacdf8abae5e3907f'). %instantiation_error
 debug_md5('baa7651083fc7e429fb6f1f98fe15856'). %existence_error(directory)
 debug_md5('be7ed1f32a507d3d9f503778e5a37cd9'). %type_error(xml_dom)
 debug_md5('c84fdd2b67538f65a54e93109ca2a8cf'). %0triples
+debug_md5('ca44ab500992d71d33bfdb804f284c29'). %instantiation_error
 debug_md5('cd54621d9e9d3cec30caeb9b21fdb91e'). %limit_exceeded(max_errors)
 debug_md5('def6ea9a6bdc58ce77534e83a7a75507'). %timeout_error(read)
 %%%%debug_md5('def7c635f47c0c9bb34f92b0bc5089db'). %false
 debug_md5('f087e2f4cccb95ecd102dc792370a8e6'). %false
 %%%%debug_md5('f114a00db90b1744827bc59eab4c8fca'). %no_rdf
 %%%%debug_md5('f4f0beffd8c21e195f9b41d3056c3b10'). %ssl_error(ssl_verify)
+debug_md5('fc142b6dc1248ae088b2788548373666'). %instantiation_error
 debug_md5('fdfc6eaf4c36ca71ad176ca3dace688b'). %false
 
 %! lwm_clean(+Md5:atom) is det.
