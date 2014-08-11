@@ -41,7 +41,7 @@ lwm_unpack_loop:-
   catch(pick_pending(Md5), Exception, var(Exception)),
   
   % DEB
-  %%%%(debug_md5(Md5) -> gtrace ; true),
+  (debug_md5(Md5) -> gtrace ; true),
   
   % Process the URL we picked.
   lwm_unpack(Md5),
@@ -52,8 +52,7 @@ lwm_unpack_loop:-
 lwm_unpack_loop:-
   sleep(10),
   lwm_unpack_loop.
-debug_md5('4af8f45f3cbd70bc10e8e17dc502cb33'). %library(archive)?
-debug_md5('993cb6c31a862cd8d9e770581d557925'). %type_error(xml_dom)
+debug_md5('4af8f45f3cbd70bc10e8e17dc502cb33'). %library(archive)
 
 
 %! lwm_unpack(+Md5:atom) is det.
