@@ -17,4 +17,5 @@
 
 :- use_module(library(debug)).
 :- debug(loop_until_true).
-
+%:- debug(sparql_request).
+%:- debug(sparql_reply).

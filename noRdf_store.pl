@@ -57,6 +57,7 @@ and at the same time send small RDF messages using SPARQL Update requests.
 %! post_rdf_triples(+Md5:atom) is det.
 % Sends a SPARQL Update requests to the SPARQL endpoints that are
 % registered and enabled.
+%
 % The thread-local rdf_triple/[3,4] statements form the contents
 % of the update request.
 

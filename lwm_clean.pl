@@ -24,7 +24,7 @@ The cleaning process performed by the LOD Washing Machine.
 :- use_module(void(void_db)). % XML namespace.
 
 :- use_module(plRdf_ser(rdf_detect)).
-:- use_module(plRdf_ser(rdf_ntriples_write)).
+:- use_module(plRdf_ser(ctriples_write)).
 
 :- use_module(lwm(lwm_basket)).
 :- use_module(lwm(lwm_messages)).
@@ -214,7 +214,7 @@ save_data_to_file(Md5, File, NumberOfTriples):-
   md5_bnode_base(Md5, BaseComponents),
   setup_call_cleanup(
     gzopen(Path, write, Write),
-    rdf_ntriples_write(
+    ctriples_write(
       Write,
       [bnode_base(BaseComponents),number_of_triples(NumberOfTriples)]
     ),
