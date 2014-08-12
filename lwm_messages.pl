@@ -14,12 +14,33 @@ Print messages for the LOD Washing Machine.
 
 
 
+% lwm_end(
+%   +Mode:oneof([clean,unpack]),
+%   +Md5:atom,
+%   +Source,
+%   +Status,
+%   +Messages:list
+% )
+
 prolog:message(lwm_end(Mode,Md5,Source,Status,Messages)) -->
   status(Md5, Status),
   messages(Messages),
   ['[END '],
   lwm_mode(Mode),
   ['] [~w] [~w]'-[Md5,Source]].
+
+
+% lwm_idle_loop(+Mode:oneof([clean,unpack]))
+
+prolog:message(lwm_idle_loop(Mode)) -->
+  {flag(number_of_idle_loops(Mode), X, X + 1)},
+  ['['],
+    ['IDLE '],
+    lwm_mode(Mode),
+  ['] ~D'-[X]].
+
+
+% lwm_start(+Mode:oneof([clean,unpack]), +Md5:atom, +Source)
 
 prolog:message(lwm_start(Mode,Md5,Source)) -->
   {md5_source(Md5, Source)},
@@ -28,13 +49,16 @@ prolog:message(lwm_start(Mode,Md5,Source)) -->
   ['] [~w] [~w]'-[Md5,Source]],
   lwm_start_mode_specific_suffix(Md5, Mode).
 
+
+
+% Helpers.
+
 lines([]) --> [].
 lines([H|T]) -->
   [H],
   lines(T).
 
 lwm_mode(clean) --> ['CLEAN'].
-lwm_mode(metadata) --> ['METADATA'].
 lwm_mode(unpack) --> ['UNPACK'].
 
 lwm_start_mode_specific_suffix(Md5, clean) --> !,

@@ -2,26 +2,26 @@
   lwm_sparql_api,
   [
     lwm_sparql_ask/3, % +Prefixes:list(atom)
-                     % +Bgps:or([compound,list(compound)])
-                     % +Options:list(nvpair)
+                      % +Bgps:or([compound,list(compound)])
+                      % +Options:list(nvpair)
     lwm_sparql_ask/4, % +Endpoint:atom
-                     % +Prefixes:list(atom)
-                     % +Bgps:or([compound,list(compound)])
-                     % +Options:list(nvpair)
+                      % +Prefixes:list(atom)
+                      % +Bgps:or([compound,list(compound)])
+                      % +Options:list(nvpair)
     lwm_sparql_drop/1, % +Options:list(nvpair)
     lwm_sparql_drop/2, % +Endpoint:atom
-                      % +Options:list(nvpair)
+                       % +Options:list(nvpair)
     lwm_sparql_select/5, % +Prefixes:list(atom)
+                         % +Variables:list(atom)
+                         % +Bgps:or([compound,list(compound)])
+                         % -Result:list(list)
+                         % +Options:list(nvpair)
+    lwm_sparql_select/6 % +Endpoint:atom
+                        % +Prefixes:list(atom)
                         % +Variables:list(atom)
                         % +Bgps:or([compound,list(compound)])
                         % -Result:list(list)
                         % +Options:list(nvpair)
-    lwm_sparql_select/6 % +Endpoint:atom
-                       % +Prefixes:list(atom)
-                       % +Variables:list(atom)
-                       % +Bgps:or([compound,list(compound)])
-                       % -Result:list(list)
-                       % +Options:list(nvpair)
   ]
 ).
 

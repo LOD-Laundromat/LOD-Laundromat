@@ -34,28 +34,10 @@ The cleaning process performed by the LOD Washing Machine.
 :- use_module(lwm(store_triple)).
 :- use_module(lwm_sparql(lwm_sparql_query)).
 
+:- dynamic(debug_md5/1).
 
-
-lwm_clean_loop:-
-  % Pick a new source to process.
-  catch(pick_unpacked(Md5), Exception, var(Exception)),
-
-  % DEB
-  (debug_md5(Md5) -> gtrace ; true),
-
-  % Process the URL we picked.
-  lwm_clean(Md5),
-
-  % Intermittent loop.
-  flag(number_of_idle_loops, _, 0),
-  lwm_clean_loop.
-% Done for now. Check whether there are new jobs in one seconds.
-lwm_clean_loop:-
-  sleep(1),
-  print_message(warning, idle_loop(lwm_clean)),
-  lwm_clean_loop.
+debug_md5('19ce04ae2005997d6164f057be7a44e6'). %io_error(read)*
 debug_md5('3ac5e377cec01da6db843806b3482987'). %instantiation_error
-debug_md5('3b594a5f76d5d67de6e33b84624da419'). %instantiation_error
 debug_md5('3d69838f412b23afc538cb223e2a0bce'). %io_error(read)
 debug_md5('51cc65a7277b513bd3ab46e893ca5bd9'). %instantiation_error
 debug_md5('5401da9718d5ee79dbe37001edc039c3'). %existence_error(directory)
@@ -73,14 +55,35 @@ debug_md5('aff6914f31e40b94e1fa8fb0a26d15ed'). %false
 debug_md5('b775ae43b94aef4aacdf8abae5e3907f'). %instantiation_error
 debug_md5('baa7651083fc7e429fb6f1f98fe15856'). %existence_error(directory)
 debug_md5('be7ed1f32a507d3d9f503778e5a37cd9'). %type_error(xml_dom)
-debug_md5('ca44ab500992d71d33bfdb804f284c29'). %instantiation_error
 debug_md5('cd54621d9e9d3cec30caeb9b21fdb91e'). %limit_exceeded(max_errors)
-debug_md5('deeb39e943bd6d3bbfc4f9a5dc739a11'). %timeout_error(read)* 
+debug_md5('d015487fc59044ca316d6c6344e7afa6'). %false*
+debug_md5('dbd2035c1aefcd2297b41fe8910faf29'). %existence_error(directory)*
+debug_md5('deeb39e943bd6d3bbfc4f9a5dc739a11'). %timeout_error(read)*
 debug_md5('def6ea9a6bdc58ce77534e83a7a75507'). %timeout_error(read)*
 debug_md5('e1a52add8f3ceb4f472c0117931df512'). %false*
 debug_md5('f087e2f4cccb95ecd102dc792370a8e6'). %false
 debug_md5('fc142b6dc1248ae088b2788548373666'). %instantiation_error
 debug_md5('fdfc6eaf4c36ca71ad176ca3dace688b'). %false
+
+
+
+lwm_clean_loop:-
+  % Pick a new source to process.
+  catch(pick_unpacked(Md5), Exception, var(Exception)),
+
+  % DEB
+  (debug_md5(Md5) -> gtrace ; true),
+
+  % Process the URL we picked.
+  lwm_clean(Md5),
+
+  % Intermittent loop.
+  lwm_clean_loop.
+% Done for now. Check whether there are new jobs in one seconds.
+lwm_clean_loop:-
+  sleep(1),
+  print_message(warning, lwm_idle_loop(clean)),
+  lwm_clean_loop.
 
 %! lwm_clean(+Md5:atom) is det.
 
@@ -241,8 +244,4 @@ prolog:message(found_void([])) --> !, [].
 prolog:message(found_void([H|T])) -->
   ['    [VoID] Found: ',H,nl],
   prolog:message(found_void(T)).
-
-prolog:message(idle_loop(Kind)) -->
-  {flag(number_of_idle_loops(Kind), X, X + 1)},
-  ['IDLE ~D'-[X]].
 

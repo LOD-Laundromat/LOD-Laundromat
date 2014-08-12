@@ -34,25 +34,27 @@ Unpacks files for the LOD Washing Machine to clean.
 :- use_module(lwm_sparql(lwm_sparql_api)).
 :- use_module(lwm_sparql(lwm_sparql_query)).
 
+:- dynamic(debug_md5/1).
+
 
 
 lwm_unpack_loop:-
   % Pick a new source to process.
   catch(pick_pending(Md5), Exception, var(Exception)),
-  
+
   % DEB
   (debug_md5(Md5) -> gtrace ; true),
-  
+
   % Process the URL we picked.
   lwm_unpack(Md5),
-  
+
   % Intermittent loop.
   lwm_unpack_loop.
 % Done for now. Check whether there are new jobs in one seconds.
 lwm_unpack_loop:-
-  sleep(10),
+  sleep(1),
+  print_message(warning, lwm_idle_loop(unpack)),
   lwm_unpack_loop.
-debug_md5('4af8f45f3cbd70bc10e8e17dc502cb33'). %library(archive)
 
 
 %! lwm_unpack(+Md5:atom) is det.

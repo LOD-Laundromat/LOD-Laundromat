@@ -36,14 +36,15 @@ cleaned(Md5):-
     lwm_sparql_select([ll], [md5],
         [rdf(var(md5res),ll:end_clean,var(end_clean)),
          rdf(var(md5res),ll:md5,var(md5))],
-        [[Literal]], [limit(1)]),
+        [[Literal]], [limit(1),sparql_errors(fail)]),
     rdf_literal(Literal, Md5, _)
   )).
 cleaned(Md5):-
   with_mutex(lwm_basket, (
     lwm_sparql_ask([ll],
         [rdf(var(md5),ll:md5,literal(type(xsd:string,Md5))),
-         rdf(var(md5),ll:end_clean,var(end))], [])
+         rdf(var(md5),ll:end_clean,var(end))],
+        [sparql_errors(fail)])
   )).
 
 
@@ -57,7 +58,7 @@ cleaning(Md5):-
         [rdf(var(md5res),ll:start_clean,var(start_clean)),
          not([rdf(var(md5res),ll:end_clean,var(end_clean))]),
          rdf(var(md5res),ll:md5,var(md5))],
-        [[Literal]], [limit(1)]),
+        [[Literal]], [limit(1),sparql_errors(fail)]),
     rdf_literal(Literal, Md5, _)
   )).
 cleaning(Md5):-
@@ -66,7 +67,7 @@ cleaning(Md5):-
         [rdf(var(md5),ll:md5,literal(type(xsd:string,Md5))),
          rdf(var(md5),ll:start_clean,var(end)),
          not([rdf(var(md5),ll:end_clean,var(end))])],
-        [])
+        [sparql_errors(fail)])
   )).
 
 
@@ -80,7 +81,7 @@ pending(Md5):-
         [rdf(var(md5res),ll:added,var(added)),
          not([rdf(var(md5res),ll:start_unpack,var(start))]),
          rdf(var(md5res),ll:md5,var(md5))],
-        [[Literal]], [limit(1)]),
+        [[Literal]], [limit(1),sparql_errors(fail)]),
     rdf_literal(Literal, Md5, _)
   )).
 pending(Md5):-
@@ -88,7 +89,8 @@ pending(Md5):-
     lwm_sparql_ask([ll],
         [rdf(var(md5),ll:md5,literal(type(xsd:string,Md5))),
          rdf(var(md5),ll:added,var(added)),
-         not([rdf(var(md5),ll:start_unpack,var(start))])], [])
+         not([rdf(var(md5),ll:start_unpack,var(start))])],
+        [sparql_errors(fail)])
   )).
 
 
@@ -120,7 +122,7 @@ unpacked(Md5):-
         [rdf(var(md5res),ll:end_unpack,var(start)),
          not([rdf(var(md5res),ll:start_clean,var(clean))]),
          rdf(var(md5res),ll:md5,var(md5))],
-        [[Literal]], [limit(1)]),
+        [[Literal]], [limit(1),sparql_errors(fail)]),
     rdf_literal(Literal, Md5, _)
   )).
 unpacked(Md5):-
@@ -129,7 +131,7 @@ unpacked(Md5):-
         [rdf(var(md5),ll:md5,literal(type(xsd:string,Md5))),
          rdf(var(md5),ll:end_unpack,var(start)),
          not([rdf(var(md5res),ll:start_clean,var(clean))])],
-        [])
+        [sparql_errors(fail)])
   )).
 
 
@@ -143,7 +145,7 @@ unpacking(Md5):-
         [rdf(var(md5res),ll:start_unpack,var(start)),
          not([rdf(var(md5res),ll:end_unpack,var(clean))]),
          rdf(var(md5res),ll:md5,var(md5))],
-        [[Literal]], [limit(1)]),
+        [[Literal]], [limit(1),sparql_errors(fail)]),
     rdf_literal(Literal, Md5, _)
   )).
 unpacking(Md5):-
@@ -152,6 +154,6 @@ unpacking(Md5):-
         [rdf(var(md5),ll:md5,literal(type(xsd:string,Md5))),
          rdf(var(md5),ll:start_unpack,var(start)),
          not([rdf(var(md5res),ll:end_unpack,var(clean))])],
-        [])
+        [sparql_errors(fail)])
   )).
 
