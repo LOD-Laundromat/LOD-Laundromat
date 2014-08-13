@@ -53,8 +53,10 @@ debug_md5('657225d02a183b071ab1eb1b9705d8d1'). %existence_error(directory)*
 debug_md5('6988fdbc5ee96ff717fcaa620ba2797a'). %timeout_error(read)*
 debug_md5('6c05d2bd9a68bc6d44d78d543af7ba43'). %io_error(write)
 debug_md5('708210029cb8cb0a5c63f9739361bb1b'). %limit_exceeded(max_errors)
+debug_md5('70cb40bfa06d80d8f219968485cf8c5b'). %false*
 debug_md5('7455add7b66ca81a52e381206d40a7bf'). %false
 debug_md5('7c2605d9992504f7c8ad9bc5b7308fec'). %instantiation_error
+debug_md5('83464a3f9a2971734d8e88b5044548bf'). %timeout_error(read)*
 debug_md5('8ab0a7dab88adc940116a98c762047e0'). %limit_exceeded(max_errors)*
 debug_md5('8cf747f77aaf6481c37e4aa3ccf02867'). %timeout_error(read)
 debug_md5('a0545f2792e29e54bb7a7f617c078838'). %existence_error(directory)*
@@ -63,16 +65,13 @@ debug_md5('b775ae43b94aef4aacdf8abae5e3907f'). %instantiation_error
 debug_md5('c6fedb5b2b099ca8bed2698c7d76c3f4'). %false*
 debug_md5('cd54621d9e9d3cec30caeb9b21fdb91e'). %limit_exceeded(max_errors)
 debug_md5('cf7f53cd6e1607cc8a0618621d3f9005'). %timeout_error(read)*
-debug_md5('d015487fc59044ca316d6c6344e7afa6'). %false*
 debug_md5('dbd2035c1aefcd2297b41fe8910faf29'). %existence_error(directory)*
 debug_md5('deeb39e943bd6d3bbfc4f9a5dc739a11'). %timeout_error(read)*
 debug_md5('def6ea9a6bdc58ce77534e83a7a75507'). %timeout_error(read)*
-debug_md5('def7c635f47c0c9bb34f92b0bc5089db'). %false*
 debug_md5('e1a52add8f3ceb4f472c0117931df512'). %false*
 debug_md5('f087e2f4cccb95ecd102dc792370a8e6'). %false
 debug_md5('fadd440c34e79d77dec413f9ba93883a'). %false*
 debug_md5('fc142b6dc1248ae088b2788548373666'). %instantiation_error
-debug_md5('fdfc6eaf4c36ca71ad176ca3dace688b'). %false
 debug_md5('feee2dc2e4b43cea3e9988a1689bbccd'). %false*
 
 
@@ -166,7 +165,7 @@ clean_datastream(Md5, File, Read, ContentType, VoidUrls):-
   md5_base_url(Md5, Base),
   rdf_load(
     stream(Read),
-    [base_uri(Base),format(Format),register_namespaces(false)]
+    [base_uri(Base),format(Format),graph(user),register_namespaces(false)]
   ),
 
   % In between loading and saving the data,
@@ -189,6 +188,15 @@ clean_datastream(Md5, File, Read, ContentType, VoidUrls):-
 
 
 % Helpers
+
+%! clean_file_name(+File:atom, +Format:oneof([quads,triples])) is det.
+
+clean_file_name(_, triples):- !.
+clean_file_name(File1, quads):-
+  file_directory_name(File1, Dir),
+  directory_file_path(Dir, 'clean.nq.gz', File2),
+  rename_file(File1, File2).
+
 
 %! find_void_datasets(-VoidUrls:ordset(url)) is det.
 
@@ -220,16 +228,22 @@ rdf_guess_format_md5(Md5, _, _, _, _):-
 
 save_data_to_file(Md5, File, NumberOfTriples):-
   file_directory_name(File, Dir),
-  directory_file_path(Dir, 'clean.nt.gz', Path),
+  directory_file_path(Dir, 'clean.nt.gz', CleanFile),
   md5_bnode_base(Md5, BaseComponents),
   setup_call_cleanup(
-    gzopen(Path, write, Write),
+    gzopen(CleanFile, write, Write),
     ctriples_write(
       Write,
-      [bnode_base(BaseComponents),number_of_triples(NumberOfTriples)]
+      [
+        bnode_base(BaseComponents),
+        format(Format),
+        number_of_triples(NumberOfTriples)
+      ]
     ),
     close(Write)
-  ).
+  ),
+  % Fix the file name, if needed.
+  clean_file_name(CleanFile, Format).
 
 
 %! send_to_basket(+Url:url) is det.
