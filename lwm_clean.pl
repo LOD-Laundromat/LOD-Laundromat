@@ -110,14 +110,14 @@ lwm_clean(Md5):-
   run_collect_messages(
     clean_md5(Md5),
     Status,
-    Messages
+    Warnings
   ),
 
-  store_status(Md5, Status),
-  maplist(store_message(Md5), Messages),
+  store_exception(Md5, Status),
+  maplist(store_warning(Md5), Warnings),
 
   store_end_clean(Md5),
-  print_message(informational, lwm_end(clean,Md5,Source,Status,Messages)).
+  print_message(informational, lwm_end(clean,Md5,Source,Status,Warnings)).
 
 
 %! clean_md5(+Md5:atom) is det.
