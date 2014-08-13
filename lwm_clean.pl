@@ -137,9 +137,7 @@ clean_md5(Md5):-
     close(Read)
   ),
 
-  % Remove the old file.
-  % @tbd This is where a compressed copy of the dirty file could be kept.
-gtrace,
+  % Keep the old/dirty file around in compressed form.
   archive_create(DirtyFile, _),
   delete_file(DirtyFile),
 
