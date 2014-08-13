@@ -37,16 +37,6 @@ Unpacks files for the LOD Washing Machine to clean.
 :- dynamic(debug_md5/1).
 
 debug_md5('09ca00c8b835490e71f5d0705a9bc18f'). %io_error(read)
-debug_md5('1e14fd736c91255365a9d95db70d17d6'). %existence_error(directory)
- debug_md5('28665808584a3425631a805afbd72336'). %existence_error(directory)
-debug_md5('3f121ab68ad20b2bbc3cd1b817abd742'). %existence_error(directory)
-debug_md5('74fbf321beb302cce12986829c56a2eb'). %existence_error(directory)
-debug_md5('82db0dbf95e635cddae8c385116b6120'). %existence_error(source_sink)
-debug_md5('a521496249961964421fcbdae870ee31'). %existence_error(directory)
-debug_md5('baa7651083fc7e429fb6f1f98fe15856'). %existence_error(directory)
-debug_md5('c858f10c2742bef9becadcbcca454e71'). %existence_error(directory)
-debug_md5('cfee1f887364ff5c4311a5ba7b416a96'). %existence_error(directory)
-debug_md5('f40b1d768c99758aaa8a6c2433c2d997'). %false
 
 
 
