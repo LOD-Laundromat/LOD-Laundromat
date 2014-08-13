@@ -54,18 +54,14 @@ md5_clean_url(Md5, Location):-
 
 
 %! md5_directory(+Md5:atom, -Directory:atom) is det.
+% Returns the absolute directory of a specific MD5.
 
-md5_directory(Md5, Md5Dir):-
-  % Place data documents in the data subdirectory.
-  absolute_file_name(data(.), DataDir, [access(write),file_type(directory)]),
-
-  % Add the LOD Washing Machine version to the directory path.
-  lwm_version(Version1),
-  atom_number(Version2, Version1),
-  directory_file_path(DataDir, Version2, VersionDir),
-  make_directory_path(VersionDir),
-
+md5_directory(Md5, Dir):-
+  % Retrieve the enclosing directory
+  % for the current LOD Washing Machine version.
+  lwm_version_directory(VersionDir),
+  
   % Add the MD5 hash to the directory path.
-  directory_file_path(VersionDir, Md5, Md5Dir),
-  make_directory_path(Md5Dir).
+  directory_file_path(VersionDir, Md5, Dir),
+  make_directory_path(Dir).
 

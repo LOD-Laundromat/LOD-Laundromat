@@ -1,7 +1,6 @@
 :- module(
   lwm_sparql_endpoint,
   [
-    lwm_sparql_default_graph/1, % -DefaultGraph:iri
     lwm_sparql_endpoint/1, % ?Endpoint:atom
     lwm_sparql_endpoint/2, % ?Endpoint:atom
                           % -Options:list(nvpair)
@@ -29,17 +28,6 @@ Registration of SPARQL endpoints for the LOD Laundromat.
 
 
 
-%! lwm_sparql_default_graph(-DefaultGraph:iri) is det.
-
-lwm_sparql_default_graph(DefaultGraph):-
-  lwm_version(Version),
-  atom_number(Fragment, Version),
-  uri_components(
-    DefaultGraph,
-    uri_components(http, 'lodlaundromat.org', _, _, Fragment)
-  ).
-
-
 %! lwm_sparql_endpoint(+Endpoint:atom) is semidet.
 %! lwm_sparql_endpoint(-Endpoint:atom) is det.
 
@@ -50,7 +38,7 @@ lwm_sparql_endpoint(Endpoint):-
 
 lwm_sparql_endpoint(Endpoint, Options2):-
   lwm_endpoint0(Endpoint, Options1),
-  lwm_sparql_default_graph(LwmGraph),
+  lwm_version_object(LwmGraph),
   merge_options([named_graphs([LwmGraph])], Options1, Options2).
 
 lwm_endpoint0(localhost, Options):-

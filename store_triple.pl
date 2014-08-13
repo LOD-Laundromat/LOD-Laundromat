@@ -186,13 +186,6 @@ store_http(Md5, ContentLength, ContentType, LastModified):-
   ).
 
 
-%! store_lwm_version(+Md5:atom) is det.
-
-store_lwm_version(Md5):-
-  lwm_version(Version),
-  store_triple(ll-Md5, ll-lwm_version, literal(type(xsd-integer,Version))).
-
-
 %! store_number_of_triples(
 %!   +Md5:atom,
 %!   +ReadTriples:nonneg,
@@ -213,7 +206,6 @@ store_start_clean(Md5):-
   post_rdf_triples(Md5).
 
 store_start_clean0(Md5):-
-  store_lwm_version(Md5),
   get_dateTime(Now),
   store_triple(ll-Md5, ll-start_clean, literal(type(xsd-dateTime,Now))).
 
@@ -221,11 +213,8 @@ store_start_clean0(Md5):-
 %! store_start_unpack(+Md5:atom) is det.
 
 store_start_unpack(Md5):-
-  store_lwm_version(Md5),
-
   get_dateTime(Now),
   store_triple(ll-Md5, ll-start_unpack, literal(type(xsd-dateTime,Now))),
-
   post_rdf_triples(Md5).
 
 

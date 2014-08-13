@@ -1,14 +1,11 @@
 :- module(
   noRdf_store,
   [
+    post_rdf_triples/0,
     post_rdf_triples/1, % +Md5:atom
-    store_triple/3, % +Subject
-                    % +Predicate
-                    % +Object
-    store_triple/4 % +Subject
+    store_triple/3 % +Subject
                    % +Predicate
                    % +Object
-                   % +Graph:atom
   ]
 ).
 
@@ -54,15 +51,24 @@ and at the same time send small RDF messages using SPARQL Update requests.
 
 
 
-%! post_rdf_triples(+Md5:atom) is det.
-% Sends a SPARQL Update requests to the SPARQL endpoints that are
-% registered and enabled.
+%! post_rdf_triples is det.
+% Sends a SPARQL Update request to the LOD Laundromat Endpoint
+% containing all current noRdf triples, for no particular MD5.
 %
 % The thread-local rdf_triple/[3,4] statements form the contents
 % of the update request.
 
+post_rdf_triples:-
+  post_rdf_triples0([]).
+
+%! post_rdf_triples(+Md5:atom) is det.
+% Like post_rdf_triples/0, but for a particular MD5.
+
 post_rdf_triples(Md5):-
   md5_bnode_base(Md5, BaseComponents),
+  post_rdf_triples0([bnode_base(BaseComponents)]).
+
+post_rdf_triples0(Options1):-
   setup_call_cleanup(
     aggregate_all(
       set(Triple),
@@ -70,10 +76,10 @@ post_rdf_triples(Md5):-
       Triples
     ),
     forall(
-      lwm_sparql_endpoint(Endpoint, Options1),
+      lwm_sparql_endpoint(Endpoint, Options2),
       (
-        merge_options([bnode_base(BaseComponents)], Options1, Options2),
-        sparql_insert_data(Endpoint, Triples, Options2)
+        merge_options(Options1, Options2, Options3),
+        sparql_insert_data(Endpoint, Triples, Options3)
       )
     ),
     (
@@ -93,15 +99,8 @@ rdf_triple([S,P,O,G]):-
 
 store_triple(S1, P1, O1):-
   maplist(rdf_term_map, [S1,P1,O1], [S2,P2,O2]),
-  lwm_sparql_default_graph(DefaultGraph),
+  lwm_version_object(DefaultGraph),
   assert(rdf_triple(S2, P2, O2, DefaultGraph)).
-
-%! store_triple(+Subject, +Predicate, +Object, +Graph) is det.
-
-store_triple(S1, P1, O1, G1):-
-  maplist(rdf_term_map, [S1,P1,O1], [S2,P2,O2]),
-  lwm_versioned_graph(G1, G2),
-  assert(rdf_triple(S2, P2, O2, G2)).
 
 
 rdf_term_map(X-Y, Z):- !,
