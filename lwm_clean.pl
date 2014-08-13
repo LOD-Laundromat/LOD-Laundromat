@@ -16,6 +16,7 @@ The cleaning process performed by the LOD Washing Machine.
 :- use_module(library(aggregate)).
 :- use_module(library(apply)).
 :- use_module(library(http/http_client)).
+:- use_module(library(option)).
 :- use_module(library(semweb/rdf_db)).
 :- use_module(library(uri)).
 :- use_module(library(zlib)).
@@ -46,8 +47,8 @@ debug_md5('3ac5e377cec01da6db843806b3482987'). %instantiation_error
 debug_md5('3d69838f412b23afc538cb223e2a0bce'). %io_error(read)
 debug_md5('51cc65a7277b513bd3ab46e893ca5bd9'). %instantiation_error
 debug_md5('5401da9718d5ee79dbe37001edc039c3'). %existence_error(directory)
-debug_md5('56a7fb6afc5c57fae9f16382cb608cf7'). %limit_exceeded(max_errors)
-debug_md5('59e6f6d8a57584e0c4ae647f72c69a79'). %limit_exceeded(max_errors)
+%debug_md5('56a7fb6afc5c57fae9f16382cb608cf7'). %limit_exceeded(max_errors)
+%debug_md5('59e6f6d8a57584e0c4ae647f72c69a79'). %limit_exceeded(max_errors)
 debug_md5('5a55b44a207066e9c96d6861c5150972'). %existence_error(directory)
 debug_md5('5b06a7ff1d0c90f85bbfb1f02a21521c'). %false
 debug_md5('643be2990debd17791d60b06fb71018b'). %existence_error(directory)
@@ -55,19 +56,19 @@ debug_md5('657225d02a183b071ab1eb1b9705d8d1'). %existence_error(directory)
 debug_md5('66d1b5a6fa397260b47dc886a19b5b2e'). %false
 debug_md5('6988fdbc5ee96ff717fcaa620ba2797a'). %timeout_error(read)
 debug_md5('6c05d2bd9a68bc6d44d78d543af7ba43'). %io_error(write)
-debug_md5('708210029cb8cb0a5c63f9739361bb1b'). %limit_exceeded(max_errors)
+%debug_md5('708210029cb8cb0a5c63f9739361bb1b'). %limit_exceeded(max_errors)
 debug_md5('70cb40bfa06d80d8f219968485cf8c5b'). %false
 debug_md5('7455add7b66ca81a52e381206d40a7bf'). %false
 debug_md5('7c2605d9992504f7c8ad9bc5b7308fec'). %instantiation_error
 debug_md5('83464a3f9a2971734d8e88b5044548bf'). %timeout_error(read)
-debug_md5('8ab0a7dab88adc940116a98c762047e0'). %limit_exceeded(max_errors)
+%debug_md5('8ab0a7dab88adc940116a98c762047e0'). %limit_exceeded(max_errors)
 debug_md5('8cf747f77aaf6481c37e4aa3ccf02867'). %timeout_error(read)
 debug_md5('a0545f2792e29e54bb7a7f617c078838'). %existence_error(directory)
 debug_md5('a2638795c6d9fa1bfcdb70a8825bcbce'). %instantiation_error
-debug_md5('afc4e315b0c13f6a34c69ba05a226e94'). %limit_exceeded(max_errors)
+%debug_md5('afc4e315b0c13f6a34c69ba05a226e94'). %limit_exceeded(max_errors)
 debug_md5('b775ae43b94aef4aacdf8abae5e3907f'). %instantiation_error
 debug_md5('c6fedb5b2b099ca8bed2698c7d76c3f4'). %false
-debug_md5('cd54621d9e9d3cec30caeb9b21fdb91e'). %limit_exceeded(max_errors)
+%debug_md5('cd54621d9e9d3cec30caeb9b21fdb91e'). %limit_exceeded(max_errors)
 debug_md5('cf7f53cd6e1607cc8a0618621d3f9005'). %timeout_error(read)
 debug_md5('dbd2035c1aefcd2297b41fe8910faf29'). %existence_error(directory)
 debug_md5('deeb39e943bd6d3bbfc4f9a5dc739a11'). %timeout_error(read)
@@ -167,10 +168,19 @@ clean_datastream(Md5, File, Read, ContentType, VoidUrls):-
   % Load all triples by parsing the data document
   % according to the guessed RDF serialization format.
   md5_base_url(Md5, Base),
-  rdf_load(
-    stream(Read),
-    [base_uri(Base),format(Format),graph(user),register_namespaces(false)]
+  Options1 =
+      [base_uri(Base),format(Format),graph(user),register_namespaces(false)],
+  
+  % Add options that are specific to the RDFa serialization format.
+  (
+    Format == rdfa
+  ->
+    merge_options([max_errors(-1),syntax(style)], Options1, Options2)
+  ;
+    Options2 = Options1
   ),
+  
+  rdf_load(stream(Read), Options2),
 
   % In between loading and saving the data,
   % we count the number of triples, including the number of duplicates.
