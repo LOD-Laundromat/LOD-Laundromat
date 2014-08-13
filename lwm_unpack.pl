@@ -155,10 +155,14 @@ unpack_file(Md5, ArchiveFile):-
     EntryPairs == []
   ->
     % There is no file for cleaning.
-    % To keep the process simple, we create an empty dirty file.
+    % To keep the process simple / consistent with other cases,
+    % we create an empty dirty file.
     directory_file_path(Md5Dir, dirty, DirtyFile),
     touch_file(DirtyFile)
   ;
+    % Exactly one raw file.
+    % This file is completely unarchived
+    % and should be moved to the cleaning phase.
     EntryPairs = [data-EntryProperties],
     memberchk(format(raw), EntryProperties)
   ->
