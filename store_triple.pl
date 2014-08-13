@@ -11,21 +11,21 @@
     store_end_unpack/2, % +Md5:atom
                         % +Status
     store_end_unpack_and_skip_clean/1, % +Md5:atom
+    store_exception/2, % +Md5:atom
+                       % +Status:or([boolean,compound]))
     store_file_extensions/2, % +Md5:atom
                              % +FileExtensions:list(atom)
     store_http/4, % +Md5:atom
                   % ?ContentLength:nonneg
                   % ?ContentType:atom
                   % ?LastModified:nonneg
-    store_message/2, % +Md5:atom
-                     % +Message:compound
     store_number_of_triples/3, % +Md5:atom
                                % +ReadTriples:nonneg
                                % +WrittenTriples:nonneg
+    store_warning/2, % +Md5:atom
+                     % +Warning:compound
     store_start_clean/1, % +Md5:atom
     store_start_unpack/1, % +Md5:atom
-    store_status/2, % +Md5:atom
-                    % +Status:or([boolean,compound]))
     store_stream/2 % +Md5:atom
                    % +Stream:stream
   ]
@@ -134,12 +134,20 @@ store_end_unpack(Md5, true):- !,
   post_rdf_triples(Md5).
 store_end_unpack(Md5, Status):-
   store_end_unpack_and_skip_clean(Md5),
-  store_status(Md5, Status),
+  store_exception(Md5, Status),
   post_rdf_triples(Md5).
 
 store_end_unpack0(Md5):-
   get_dateTime(Now),
   store_triple(ll-Md5, ll-end_unpack, literal(type(xsd-dateTime,Now))).
+
+
+%! store_exception(+Md5:atom, +Status:or([boolean,compound])) is det.
+
+store_exception(_, true):- !.
+store_exception(Md5, Status):-
+  with_output_to(atom(String), write_canonical_blobs(Status)),
+  store_triple(ll-Md5, ll-exception, literal(type(xsd-string,String))).
 
 
 %! store_file_extensions(+Md5:atom, +FileExtensions:list(atom)) is det.
@@ -178,11 +186,11 @@ store_http(Md5, ContentLength, ContentType, LastModified):-
   ).
 
 
-%! store_message(+Md5:atom, +Message:compound) is det.
+%! store_lwm_version(+Md5:atom) is det.
 
-store_message(Md5, Message):-
-  with_output_to(atom(String), write_canonical_blobs(Message)),
-  store_triple(ll-Md5, ll-message, literal(type(xsd-string,String))).
+store_lwm_version(Md5):-
+  lwm_version(Version),
+  store_triple(ll-Md5, ll-lwm_version, literal(type(xsd-integer,Version))).
 
 
 %! store_number_of_triples(
@@ -221,13 +229,6 @@ store_start_unpack(Md5):-
   post_rdf_triples(Md5).
 
 
-%! store_status(+Md5:atom, +Status:or([boolean,compound])) is det.
-
-store_status(Md5, Status):-
-  with_output_to(atom(String), write_canonical_blobs(Status)),
-  store_triple(ll-Md5, ll-status, literal(type(xsd-string,String))).
-
-
 %! store_stream(+Md5:atom, +Stream:stream) is det.
 
 store_stream(Md5, Stream):-
@@ -243,11 +244,11 @@ store_stream(Md5, Stream):-
   store_triple(ll-Md5, ll-line_count, literal(type(xsd-integer,LineCount))).
 
 
-%! store_lwm_version(+Md5:atom) is det.
+%! store_warning(+Md5:atom, +Warning:compound) is det.
 
-store_lwm_version(Md5):-
-  lwm_version(Version),
-  store_triple(ll-Md5, ll-lwm_version, literal(type(xsd-integer,Version))).
+store_warning(Md5, Warning):-
+  with_output_to(atom(String), write_canonical_blobs(Warning)),
+  store_triple(ll-Md5, ll-warning, literal(type(xsd-string,String))).
 
 
 

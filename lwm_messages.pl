@@ -19,12 +19,12 @@ Print messages for the LOD Washing Machine.
 %   +Md5:atom,
 %   +Source,
 %   +Status,
-%   +Messages:list
+%   +Warnings:list
 % )
 
-prolog:message(lwm_end(Mode,Md5,Source,Status,Messages)) -->
+prolog:message(lwm_end(Mode,Md5,Source,Status,Warnings)) -->
   status(Md5, Status),
-  messages(Messages),
+  warnings(Warnings),
   ['[END '],
   lwm_mode(Mode),
   ['] [~w] [~w]'-[Md5,Source]].
@@ -66,15 +66,15 @@ lwm_start_mode_specific_suffix(Md5, clean) --> !,
   [' [~f]'-[NumberOfGigabytes]].
 lwm_start_mode_specific_suffix(_, unpack) --> [].
 
-message(message(_,Kind,Lines)) -->
+warning(message(_,Kind,Lines)) -->
   ['    [MESSAGE(~w)] '-[Kind]],
   lines(Lines),
   [nl].
 
-messages([]) --> !, [].
-messages([H|T]) -->
-  message(H),
-  messages(T).
+warnings([]) --> !, [].
+warnings([H|T]) -->
+  warning(H),
+  warnings(T).
 
 % @tbd Send an email whenever an MD5 fails.
 status(_, false) --> !,

@@ -67,11 +67,11 @@ lwm_unpack(Md5):-
   run_collect_messages(
     unpack_md5(Md5),
     Status,
-    Messages
+    Warnings
   ),
 
-  print_message(informational, lwm_end(unpack,Md5,Source,Status,Messages)),
-  maplist(store_message(Md5), Messages),
+  print_message(informational, lwm_end(unpack,Md5,Source,Status,Warnings)),
+  maplist(store_warning(Md5), Warnings),
   store_end_unpack(Md5, Status).
 
 
