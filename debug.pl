@@ -1,5 +1,8 @@
 % Debug tools for the llWashingMachine project.
 
+% Avoid errors when using gtrace/0 in threads.
+:- initialization guitracer.
+
 :- set_prolog_flag(
      answer_write_options,
      [max_depth(10),portrayed(true),spacing(next_argument)]
