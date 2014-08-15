@@ -68,7 +68,7 @@ post_rdf_triples0(Options1):-
         sparql_insert_data(Endpoint, Triples, Options3)
       )
     ),
-    retractall(rdf_triple(_, _, _)
+    retractall(rdf_triple(_,_,_))
   ).
 
 
