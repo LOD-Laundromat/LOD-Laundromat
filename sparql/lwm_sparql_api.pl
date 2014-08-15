@@ -49,7 +49,7 @@ SPARQL constructors for the LOD Washing Machine.
 
 lwm_sparql_ask(Prefixes, Bgps1, Options):-
   once(lwm_sparql_endpoint(Endpoint)),
-  lwm_version_object(LwmGraph),
+  lwm_version_graph(LwmGraph),
   Bgps2 = [graph(LwmGraph,Bgps1)],
   lwm_sparql_ask(Endpoint, Prefixes, Bgps2, Options).
 
@@ -76,7 +76,7 @@ lwm_sparql_drop(Endpoint, Options1):-
 
 lwm_sparql_select(Prefixes, Variables, Bgps1, Result, Options):-
   once(lwm_sparql_endpoint(Endpoint)),
-  lwm_version_object(LwmGraph),
+  lwm_version_graph(LwmGraph),
   Bgps2 = [graph(LwmGraph,Bgps1)],
   lwm_sparql_select(Endpoint, Prefixes, Variables, Bgps2, Result, Options).
 

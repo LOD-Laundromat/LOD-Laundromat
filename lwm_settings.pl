@@ -4,8 +4,8 @@
     lwm_authority/1, % ?Authority:atom
     lwm_scheme/1, % ?Scheme:atom
     lwm_version_directory/1, % -Directory:atom
-    lwm_version_number/1, % ?Version:positive_integer
-    lwm_version_object/1 % -Version:iri
+    lwm_version_graph/1, % -Graph:iri
+    lwm_version_number/1 % ?Version:positive_integer
   ]
 ).
 
@@ -49,21 +49,19 @@ lwm_version_directory(Dir):-
   make_directory_path(Dir).
 
 
+%! lwm_version_graph(-Graph:iri) is det.
+
+lwm_version_graph(Graph):-
+  lwm_version_number(Version),
+  atom_number(Fragment, Version),
+  uri_components(
+    Graph,
+    uri_components(http,'lodlaundromat.org',_,_,Fragment)
+  ).
+
+
 %! lwm_version_number(+Version:positive_integer) is semidet.
 %! lwm_version_number(-Version:positive_integer) is det.
 
 lwm_version_number(11).
-
-
-%! lwm_version_object(-Version:iri) is det.
-% The version object is used as the default graph in which metadata
-% create by the LOD Laundromat is stored.
-
-lwm_version_object(Version):-
-  lwm_version_number(VersionNumber),
-  atom_number(Fragment, VersionNumber),
-  uri_components(
-    Version,
-    uri_components(http,'lodlaundromat.org',_,_,Fragment)
-  ).
 

@@ -38,7 +38,7 @@ lwm_sparql_endpoint(Endpoint):-
 
 lwm_sparql_endpoint(Endpoint, Options2):-
   lwm_endpoint0(Endpoint, Options1),
-  lwm_version_object(LwmGraph),
+  lwm_version_graph(LwmGraph),
   merge_options([named_graphs([LwmGraph])], Options1, Options2).
 
 lwm_endpoint0(localhost, Options):-
