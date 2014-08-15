@@ -55,17 +55,18 @@ post_rdf_triples(Md5):-
   post_rdf_triples0([bnode_base(BaseComponents)]).
 
 post_rdf_triples0(Options1):-
+  lwm_version_graph(G),
   setup_call_cleanup(
     aggregate_all(
-      set(Triple),
-      rdf_triple(Triple),
-      Triples
+      set([S,P,O,G]),
+      rdf_triple([S,P,O]),
+      Quads
     ),
     forall(
       lwm_sparql_endpoint(Endpoint, Options2),
       (
         merge_options(Options1, Options2, Options3),
-        sparql_insert_data(Endpoint, Triples, Options3)
+        sparql_insert_data(Endpoint, Quads, Options3)
       )
     ),
     retractall(rdf_triple(_,_,_))

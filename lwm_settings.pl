@@ -19,8 +19,6 @@ Generic predicates for the LOD Washing Machine.
 
 :- use_module(library(uri)).
 
-:- use_module(lwm(md5)).
-
 
 
 %! lwm_authority(+Authortity:atom) is semidet.
