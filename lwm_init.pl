@@ -8,6 +8,7 @@ Initializes the LOD Washing Machine.
 @version 2014/06, 2014/08
 */
 
+:- use_module(library(optparse)).
 :- use_module(library(semweb/rdf_db)).
 
 :- use_module(generics(db_ext)).
@@ -18,6 +19,11 @@ Initializes the LOD Washing Machine.
 
 
 lwm_init:-
+  opt_arguments([], _, [Dir]),
+  exists_directory(Dir),
+  retractall(user:file_search_path(data, _)),
+  assert(user:file_search_path(data, Dir)),
+
   % Set the directory where the data is stored.
   absolute_file_name(data(.), DataDir, [access(write),file_type(directory)]),
   create_directory(DataDir),
