@@ -19,7 +19,16 @@ Initializes the LOD Washing Machine.
 
 
 lwm_init:-
-  opt_arguments([], _, [Dir]),
+  absolute_file_name(data(.), DefaultDir, [file_type(directory)]),
+  opt_arguments(
+    [
+      [default(''),opt(debug),longflags([debug]),type(atom)],
+      [default(DefaultDir),opt(directory),longflags([dir]),type(atom)]
+    ],
+    Opts,
+    _
+  ),
+  memberchk(directory(Dir), Opts),
   exists_directory(Dir),
   retractall(user:file_search_path(data, _)),
   assert(user:file_search_path(data, Dir)),

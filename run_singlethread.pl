@@ -17,14 +17,14 @@ See module [run_multithread] for the threaded version of this module.
 
 :- use_module(library(uri)).
 
+:- use_module(plXsd_datetime(xsd_dateTime_ext)).
+
 :- use_module(lwm(lwm_clean)).
 :- use_module(lwm(lwm_init)). % Initialization.
 :- use_module(lwm(lwm_settings)).
 :- use_module(lwm(lwm_unpack)).
 :- use_module(lwm(md5)).
 :- use_module(lwm(noRdf_store)).
-
-:- use_module(xsd(xsd_dateTime_ext)).
 
 
 
@@ -47,3 +47,4 @@ run_singlethread(NumberOfUnpackLoops, NumberOfCleanLoops):-
     between(1, NumberOfCleanLoops, _),
     thread_create(lwm_clean_loop, _, [detached(true)])
   ).
+

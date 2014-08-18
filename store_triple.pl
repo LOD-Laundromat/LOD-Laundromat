@@ -47,7 +47,8 @@ the stored triples are sent in a SPARQL Update request
 
 :- use_module(pl(pl_control)).
 :- use_module(pl(pl_log)).
-:- use_module(xsd(xsd_dateTime_ext)).
+
+:- use_module(plXsd_datetime(xsd_dateTime_ext)).
 
 :- use_module(lwm(lwm_settings)).
 :- use_module(lwm(noRdf_store)).

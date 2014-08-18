@@ -10,8 +10,10 @@
 :- use_module(load_project).
 :- load_project([
     plc-'Prolog-Library-Collection',
+    plDcg,
     plGraph,
     plTree,
+    plXsd,
     plRdf,
     plSparql
 ]).
