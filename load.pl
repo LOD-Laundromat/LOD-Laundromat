@@ -11,6 +11,7 @@
 :- load_project([
     plc-'Prolog-Library-Collection',
     plGraph,
+    plTree,
     plRdf,
     plSparql
 ]).

@@ -12,3 +12,6 @@
 [submodule "plGraph"]
 	path = plGraph
 	url = https://github.com/wouterbeek/plGraph.git
+[submodule "plTree"]
+	path = plTree
+	url = https://github.com/wouterbeek/plTree.git
