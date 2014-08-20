@@ -8,10 +8,10 @@ Initializes the LOD Washing Machine.
 @version 2014/06, 2014/08
 */
 
+:- use_module(library(filesex)).
 :- use_module(library(optparse)).
 :- use_module(library(semweb/rdf_db)).
 
-:- use_module(generics(db_ext)).
 :- use_module(os(dir_ext)).
 
 :- initialization(lwm_init).
@@ -22,14 +22,14 @@ lwm_init:-
   absolute_file_name(data(.), DefaultDir, [file_type(directory)]),
   opt_arguments(
     [
-      [default(''),opt(debug),longflags([debug]),type(atom)],
+      [default(false),opt(debug),longflags([debug]),type(boolean)],
       [default(DefaultDir),opt(directory),longflags([dir]),type(atom)]
     ],
     Opts,
     _
   ),
   memberchk(directory(Dir), Opts),
-  exists_directory(Dir),
+  make_directory_path(Dir),
   retractall(user:file_search_path(data, _)),
   assert(user:file_search_path(data, Dir)),
 

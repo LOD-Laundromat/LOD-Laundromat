@@ -18,7 +18,6 @@ Registration of SPARQL endpoints for the LOD Laundromat.
 
 :- use_module(library(base64)).
 :- use_module(library(option)).
-:- use_module(library(uri)).
 
 :- use_module(plSparql(sparql_db)).
 
