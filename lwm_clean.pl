@@ -37,7 +37,8 @@ The cleaning process performed by the LOD Washing Machine.
 :- use_module(lwm_sparql(lwm_sparql_query)).
 
 :- dynamic(debug_md5/1).
-
+debug_md5('cfee1f887364ff5c4311a5ba7b416a96'). % false
+debug_md5('f4f0beffd8c21e195f9b41d3056c3b10'). % ssl_error(ssl_verify)
 
 
 lwm_clean_loop:-

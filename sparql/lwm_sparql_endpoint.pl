@@ -40,13 +40,10 @@ lwm_sparql_endpoint(Endpoint, Options2):-
   lwm_version_graph(LwmGraph),
   merge_options([named_graphs([LwmGraph])], Options1, Options2).
 
-lwm_endpoint0(localhost, Options):-
+lwm_endpoint0(cliopatria, Options):-
   lwm_sparql_endpoint_authentication(AuthenticationOptions),
   merge_options(AuthenticationOptions, [update_method(direct)], Options).
-%lwm_endpoint0(cliopatria, Options):-
-%  lwm_sparql_endpoint_authentication(AuthenticationOptions),
-%  merge_options(AuthenticationOptions, [update_method(direct)], Options).
-%lwm_endpoint0(virtuoso, [update_method(url_encoded)]).
+lwm_endpoint0(virtuoso, [update_method(direct)]).
 
 
 %! lwm_sparql_endpoint_authentication(-Authentication:list(nvpair)) is det.
@@ -72,33 +69,19 @@ lwm_sparql_user(lwm).
 
 init_lwm_sparql_endpoints:-
   init_cliopatria_endpoint,
-  init_localhost_endpoint,
   init_virtuoso_endpoint.
 
-% Localhost.
-init_localhost_endpoint:-
-  sparql_register_endpoint(
-    localhost,
-    query,
-    uri_components(http,'localhost:3020','/sparql/',_,_)
-  ),
-  sparql_register_endpoint(
-    localhost,
-    update,
-    uri_components(http,'localhost:3020','/sparql/update',_,_)
-  ).
-
-% Cliopatria.
+% ClioPatria
 init_cliopatria_endpoint:-
   sparql_register_endpoint(
     cliopatria,
     query,
-    uri_components(http,'lodlaundry.wbeek.ops.few.vu.nl','/sparql/',_,_)
+    uri_components(http,'localhost:3020','/sparql/',_,_)
   ),
   sparql_register_endpoint(
     cliopatria,
     update,
-    uri_components(http,'lodlaundry.wbeek.ops.few.vu.nl','/sparql/update',_,_)
+    uri_components(http,'localhost:3020','/sparql/update',_,_)
   ).
 
 % Virtuoso.
@@ -106,6 +89,11 @@ init_virtuoso_endpoint:-
   sparql_register_endpoint(
     virtuoso,
     query,
-    uri_components(http,'virtuoso.lodlaundromat.ops.few.vu.nl','/sparql',_,_)
+    uri_components(http,'sparql.backend.lodlaundromat.org','/',_,_)
+  ),
+  sparql_register_endpoint(
+    virtuoso,
+    update,
+    uri_components(http,'sparql.backend.lodlaundromat.org','/update',_,_)
   ).
 
