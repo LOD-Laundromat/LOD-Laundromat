@@ -13,8 +13,8 @@
     store_end_unpack_and_skip_clean/1, % +Md5:atom
     store_exception/2, % +Md5:atom
                        % +Status:or([boolean,compound]))
-    store_file_extensions/2, % +Md5:atom
-                             % +FileExtensions:list(atom)
+    store_file_extension/2, % +Md5:atom
+                            % +FileExtension:atom
     store_http/4, % +Md5:atom
                   % ?ContentLength:nonneg
                   % ?ContentType:atom
@@ -151,12 +151,9 @@ store_exception(Md5, Status):-
   store_triple(ll-Md5, ll-exception, literal(type(xsd-string,String))).
 
 
-%! store_file_extensions(+Md5:atom, +FileExtensions:list(atom)) is det.
+%! store_file_extension(+Md5:atom, +FileExtension:atom) is det.
 
-store_file_extensions(_, []):- !.
-store_file_extensions(_, ['']):- !.
-store_file_extensions(Md5, FileExtensions):-
-  atomic_list_concat(FileExtensions, '.', FileExtension),
+store_file_extension(Md5, FileExtension):-
   store_triple(ll-Md5, ll-file_extension,
       literal(type(xsd-string,FileExtension))).
 

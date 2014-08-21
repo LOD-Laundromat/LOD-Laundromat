@@ -103,8 +103,7 @@ unpack_md5(Md5):-
   md5_directory(Md5, Md5Dir),
 
   % Extracting and store the file extensions from the download URL.
-  url_file_extensions(Url, FileExtensions),
-  atomic_list_concat(FileExtensions, '.', FileExtension),
+  url_file_extension(Url, FileExtension),
 
   % Construct the download file.
   file_name_extension(download, FileExtension, LocalDownloadFile),
@@ -115,13 +114,15 @@ unpack_md5(Md5):-
   download_to_file(
     Url,
     DownloadFile,
-    [cert_verify_hook(ssl_verify),
-     % Always redownload.
-     freshness_lifetime(0.0),
-     header(content_length, ContentLength),
-     header(content_type, ContentType),
-     header(last_modified, LastModified),
-     request_header('Accept'=AcceptValue)]
+    [
+      cert_verify_hook(ssl_verify),
+      % Always redownload.
+      freshness_lifetime(0.0),
+      header(content_length, ContentLength),
+      header(content_type, ContentType),
+      header(last_modified, LastModified),
+      request_header('Accept'=AcceptValue)
+    ]
   ),
 
   % Store the file size of the dirty file.
@@ -137,9 +138,15 @@ unpack_md5(Md5):-
 
 unpack_file(Md5, ArchiveFile):-
   % Store the file extensions.
-  file_name_extensions(_, FileExtensions, ArchiveFile),
-  store_file_extensions(Md5, FileExtensions),
-
+  file_name_extension(_, FileExtension, ArchiveFile)
+  (
+    FileExtension == ''
+  ->
+    store_file_extension(Md5, FileExtension)
+  ;
+    true
+  ),
+  
   % Extract archive.
   archive_extract(ArchiveFile, _, ArchiveFilters, EntryPairs),
   store_archive_filters(Md5, ArchiveFilters),

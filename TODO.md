@@ -10,4 +10,6 @@ TODO
       [Dir]
     ),
     ~~~
+  - URI file extensions -> file extension
+    (asserted multiple times for archive entries).
 

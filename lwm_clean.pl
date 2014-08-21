@@ -25,8 +25,8 @@ The cleaning process performed by the LOD Washing Machine.
 :- use_module(pl(pl_log)).
 :- use_module(void(void_db)). % XML namespace.
 
-:- use_module(plRdf_ser(rdf_detect)).
 :- use_module(plRdf_ser(ctriples_write)).
+:- use_module(plRdf_ser(rdf_guess_format)).
 
 :- use_module(lwm(lwm_basket)).
 :- use_module(lwm(lwm_messages)).
@@ -39,6 +39,7 @@ The cleaning process performed by the LOD Washing Machine.
 :- dynamic(debug_md5/1).
 debug_md5('cfee1f887364ff5c4311a5ba7b416a96'). % false
 debug_md5('f4f0beffd8c21e195f9b41d3056c3b10'). % ssl_error(ssl_verify)
+
 
 
 lwm_clean_loop:-
