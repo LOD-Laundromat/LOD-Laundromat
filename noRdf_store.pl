@@ -58,7 +58,7 @@ post_rdf_triples0(Options1):-
   lwm_version_graph(G),
   setup_call_cleanup(
     aggregate_all(
-      set([S,P,O,G]),
+      set(rdf(S,P,O,G)),
       rdf_triple([S,P,O]),
       Quads
     ),
