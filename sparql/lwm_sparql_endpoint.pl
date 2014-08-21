@@ -12,6 +12,12 @@
 
 Registration of SPARQL endpoints for the LOD Laundromat.
 
+### Test Virtuose
+
+~~~{.sh}
+curl --data "INSERT DATA {\n<http://lodlaundromat.org/vocab#674f08039170b9f33b9451f96f89f057> <http://lodlaundromat.org/vocab#start_unpack> \"2014-08-20T15:41:13.4511661529541015625-02:00\"^^<http://www.w3.org/2001/XMLSchema#dateTime> .\n}\n" -L "http://sparql.backend.lodlaundromat.org/update?named-graph-uri=http://lodlaundromat.org%2311&using-named-graph-uri=http://lodlaundromat.org%2311"
+~~~
+
 @author Wouter Beek
 @version 2014/06, 2014/08
 */
