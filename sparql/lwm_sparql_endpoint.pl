@@ -3,7 +3,7 @@
   [
     lwm_sparql_endpoint/1, % ?Endpoint:atom
     lwm_sparql_endpoint/2, % ?Endpoint:atom
-                          % -Options:list(nvpair)
+                           % -Options:list(nvpair)
     lwm_sparql_endpoint_authentication/1 % -Authentication:list(nvpair)
   ]
 ).
@@ -36,27 +36,42 @@ curl --data "INSERT DATA {\n<http://lodlaundromat.org/vocab#674f08039170b9f33b94
 %! lwm_sparql_endpoint(+Endpoint:atom) is semidet.
 %! lwm_sparql_endpoint(-Endpoint:atom) is det.
 
-lwm_sparql_endpoint(Endpoint):-
-  lwm_sparql_endpoint(Endpoint, _).
+lwm_sparql_endpoint(Endpoint, Mode):-
+  lwm_endpoint0(Endpoint, Mode, _).
 
-%! lwm_sparql_endpoint(-Endpoint:atom, -Options:list(nvpair)) is multi.
+%! lwm_sparql_endpoint(
+%!   +Endpoint:atom,
+%!   +Mode:oneof([http,query,update]),
+%!   -Options:list(nvpair)
+%! ) is semidet.
 
-lwm_sparql_endpoint(Endpoint, Options2):-
-  lwm_endpoint0(Endpoint, Options1),
+lwm_sparql_endpoint(Endpoint, Mode, Options2):-
+  % Make sure that the endpoint is register with the required mode.
+  sparql_endpoint(Endpoint, Mode, _),
+  
+  % The LOD Washing Machine can specify endpoint-specific options.
+  findall(
+    Option,
+    lwm_endpoint_option(Endpoint, Mode, Option),
+    Options1
+  ),
+  
+  % The named graph option is endpoint-independent.
   lwm_version_graph(LwmGraph),
   merge_options([named_graphs([LwmGraph])], Options1, Options2).
 
-lwm_endpoint0(cliopatria, Options):-
-  lwm_sparql_endpoint_authentication(AuthenticationOptions),
-  merge_options(AuthenticationOptions, [update_method(direct)], Options).
-lwm_endpoint0(virtuoso, [update_method(direct)]).
+
+%! lwm_endpoint_option(+Endpoint:atom, -Option:nvpair) is nondet.
+% Endpoint-specific options.
+
+lwm_endpoint_option(cliopatria, _, Options):-
+  lwm_endpoint_auth_option(Option).
+lwm_endpoint_option(cliopatria, update, update_method(direct)).
 
 
-%! lwm_sparql_endpoint_authentication(-Authentication:list(nvpair)) is det.
+%! lwm_endpoint_auth_option(-AuthenticationOption:nvpair) is det.
 
-lwm_sparql_endpoint_authentication(
-  [request_header('Authorization'=Authentication)]
-):-
+lwm_endpoint_auth_option(request_header('Authorization'=Authentication)):-
   lwm_sparql_user(User),
   lwm_sparql_password(Password),
   atomic_list_concat([User,Password], ':', Plain),
@@ -92,6 +107,11 @@ init_cliopatria_endpoint:-
 
 % Virtuoso.
 init_virtuoso_endpoint:-
+  sparql_register_endpoint(
+    virtuoso,
+    http,
+    uri_components(http,localhost,'/sparql/graph',_,_)
+  ),
   sparql_register_endpoint(
     virtuoso,
     query,
