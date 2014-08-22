@@ -1,8 +1,10 @@
 :- module(
   lwm_sparql_endpoint,
   [
-    lwm_sparql_endpoint/1, % ?Endpoint:atom
     lwm_sparql_endpoint/2, % ?Endpoint:atom
+                           % ?Mode:oneof([http,sparql,update])
+    lwm_sparql_endpoint/3, % ?Endpoint:atom
+                           % ?Mode:oneof([http,sparql,update])
                            % -Options:list(nvpair)
     lwm_sparql_endpoint_authentication/1 % -Authentication:list(nvpair)
   ]
@@ -33,11 +35,25 @@ curl --data "INSERT DATA {\n<http://lodlaundromat.org/vocab#674f08039170b9f33b94
 
 
 
-%! lwm_sparql_endpoint(+Endpoint:atom) is semidet.
-%! lwm_sparql_endpoint(-Endpoint:atom) is det.
+%! lwm_sparql_endpoint(
+%!   +Endpoint:atom,
+%!   +Mode:oneof([http,sparql,update])
+%! ) is semidet.
+%! lwm_sparql_endpoint(
+%!   +Endpoint:atom,
+%!   -Mode:oneof([http,sparql,update])
+%! ) is nondet.
+%! lwm_sparql_endpoint(
+%!   -Endpoint:atom,
+%!   +Mode:oneof([http,sparql,update])
+%! ) is nondet.
+%! lwm_sparql_endpoint(
+%!   -Endpoint:atom,
+%!   -Mode:oneof([http,sparql,update])
+%! ) is nondet.
 
 lwm_sparql_endpoint(Endpoint, Mode):-
-  lwm_endpoint0(Endpoint, Mode, _).
+  lwm_endpoint(Endpoint, Mode, _).
 
 %! lwm_sparql_endpoint(
 %!   +Endpoint:atom,
@@ -57,7 +73,6 @@ lwm_sparql_endpoint(Endpoint, Mode, Options2):-
   ),
   
   % The named graph option is endpoint-independent.
-  lwm_version_graph(LwmGraph),
   merge_options([named_graphs([LwmGraph])], Options1, Options2).
 
 

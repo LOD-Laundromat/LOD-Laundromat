@@ -48,13 +48,13 @@ SPARQL constructors for the LOD Washing Machine.
 
 
 lwm_sparql_ask(Prefixes, Bgps1, Options):-
-  once(lwm_sparql_endpoint(Endpoint)),
+  once(lwm_sparql_endpoint(Endpoint, query)),
   lwm_version_graph(LwmGraph),
   Bgps2 = [graph(LwmGraph,Bgps1)],
   lwm_sparql_ask(Endpoint, Prefixes, Bgps2, Options).
 
 lwm_sparql_ask(Endpoint, Prefixes, Bgps, Options1):-
-  lwm_sparql_endpoint(Endpoint, Options2),
+  lwm_sparql_endpoint(Endpoint, query, Options2),
   merge_options(Options1, Options2, Options3),
   loop_until_true(
     sparql_ask(Endpoint, Prefixes, Bgps, Options3)
@@ -62,11 +62,11 @@ lwm_sparql_ask(Endpoint, Prefixes, Bgps, Options1):-
 
 
 lwm_sparql_drop(Options):-
-  once(lwm_sparql_endpoint(Endpoint)),
+  once(lwm_sparql_endpoint(Endpoint, update)),
   lwm_sparql_drop(Endpoint, Options).
 
 lwm_sparql_drop(Endpoint, Options1):-
-  lwm_sparql_endpoint(Endpoint, Options2),
+  lwm_sparql_endpoint(Endpoint, update, Options2),
   merge_options(Options1, Options2, Options3),
   option(default_graph(DefaultGraph), Options3),
   loop_until_true(
@@ -75,13 +75,13 @@ lwm_sparql_drop(Endpoint, Options1):-
 
 
 lwm_sparql_select(Prefixes, Variables, Bgps1, Result, Options):-
-  once(lwm_sparql_endpoint(Endpoint)),
+  once(lwm_sparql_endpoint(Endpoint, query)),
   lwm_version_graph(LwmGraph),
   Bgps2 = [graph(LwmGraph,Bgps1)],
   lwm_sparql_select(Endpoint, Prefixes, Variables, Bgps2, Result, Options).
 
 lwm_sparql_select(Endpoint, Prefixes, Variables, Bgps, Result, Options1):-
-  lwm_sparql_endpoint(Endpoint, Options2),
+  lwm_sparql_endpoint(Endpoint, query, Options2),
   merge_options(Options1, Options2, Options3),
   loop_until_true(
     sparql_select(Endpoint, Prefixes, Variables, Bgps, Result, Options3)

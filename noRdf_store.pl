@@ -23,6 +23,7 @@ and at the same time send small RDF messages using SPARQL Update requests.
 :- use_module(library(semweb/rdf_db)).
 
 :- use_module(plSparql(sparql_api)).
+:- use_module(plSparql(sparql_graph_store)).
 
 :- use_module(lwm(lwm_settings)).
 :- use_module(lwm(md5)).
@@ -55,7 +56,10 @@ post_rdf_triples(Md5):-
   post_rdf_triples0([bnode_base(BaseComponents)]).
 
 post_rdf_triples0(Options1):-
+  % Add the named graph as an option.
   lwm_version_graph(G),
+  merge_options([named_graph(G)], Options1, Options2),
+  
   setup_call_cleanup(
     aggregate_all(
       set(rdf(S,P,O,G)),
@@ -63,14 +67,20 @@ post_rdf_triples0(Options1):-
       Quads
     ),
     forall(
-      lwm_sparql_endpoint(Endpoint, Options2),
+      lwm_sparql_endpoint(Endpoint, Mode, Options2),
       (
         merge_options(Options1, Options2, Options3),
-        sparql_insert_data(Endpoint, Quads, Options3)
+        post_rdf_triples0(Endpoint, Mode, Quads, Options3)
       )
     ),
     retractall(rdf_triple(_,_,_))
   ).
+
+post_rdf_triples0(Endpoint, http, Quads, Options):-
+  sparql_post_named_graph(Endpoint, Quads, Options).
+post_rdf_triples0(Endpoint, update, Quads, Options):-
+  sparql_insert_data(Endpoint, Quads, Options).
+
 
 
 rdf_triple([S,P,O]):-
