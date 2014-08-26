@@ -102,8 +102,9 @@ clean_md5(Md5):-
     close(Read)
   ),
 
-  % Keep the old/dirty file around in compressed form.
-  archive_create(DirtyFile, _),
+  % Keep the old/dirty file around in compressed form,
+  % or throw it away.
+  %%%%archive_create(DirtyFile, _),
   delete_file(DirtyFile),
 
   % Add the new VoID URLs to the LOD Basket.
