@@ -119,7 +119,7 @@ unpack_md5(Md5):-
 
   % Store the file size of the dirty file.
   size_file(DownloadFile, ByteSize),
-  store_triple(ll-Md5, ll-size, literal(type(xsd-integer,ByteSize))),
+  store_triple(ll-Md5, llo-size, literal(type(xsd-integer,ByteSize))),
 
   % Store HTTP statistics.
   store_http(Md5, ContentLength, ContentType, LastModified),
@@ -179,7 +179,7 @@ unpack_file(Md5, ArchiveFile):-
       EntryProperties1,
       EntryProperties2
     ),
-    store_triple(ll-Md5, ll-archive_format,
+    store_triple(ll-Md5, llo-archive_format,
         literal(type(xsd-string,ArchiveFormat))),
     maplist(store_archive_entry(Md5), EntryPaths, EntryProperties2),
     store_end_unpack_and_skip_clean(Md5)
