@@ -24,8 +24,6 @@ Unpacks files for the LOD Washing Machine to clean.
 :- use_module(pl(pl_log)).
 :- use_module(void(void_db)). % XML namespace.
 
-:- use_module(plRdf_term(rdf_literal)).
-
 :- use_module(lwm(md5)).
 :- use_module(lwm(lwm_basket)).
 :- use_module(lwm(lwm_messages)).
@@ -39,6 +37,7 @@ Unpacks files for the LOD Washing Machine to clean.
 
 lwm_unpack_loop:-
   % Pick a new source to process.
+gtrace,
   catch(pick_pending(Md5), Exception, var(Exception)),
 
   % DEB
@@ -139,7 +138,7 @@ unpack_file(Md5, ArchiveFile):-
   ;
     true
   ),
-  
+
   % Extract archive.
   archive_extract(ArchiveFile, _, ArchiveFilters, EntryPairs),
   store_archive_filters(Md5, ArchiveFilters),
