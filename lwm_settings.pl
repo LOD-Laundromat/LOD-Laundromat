@@ -120,14 +120,18 @@ init_lwm_sparql_endpoints:-
     uri_components(http,'sparql.backend.lodlaundromat.org','',_,_),
     virtuoso
   ),
-  assert(sparql_endpoint_option0(virtuoso_query, path_suffix(query), '')),
-  
+  sparql_db:assert(
+    sparql_endpoint_option0(virtuoso_query, path_suffix(query), '')
+  ),
+
   % HTTP.
   assert(lwm_sparql_endpoint(virtuoso_http)),
   sparql_register_endpoint(
     virtuoso_http,
-    uri_components(http,'localhost/sparql/graph','',_,_),
+    uri_components(http,'localhost','/sparql/graph',_,_),
     virtuoso
   ),
-  assert(sparql_endpoint_option0(virtuoso_http, path_suffix(http), '')).
+  sparql_db:assert(
+    sparql_endpoint_option0(virtuoso_http, path_suffix(http), '')
+  ).
 

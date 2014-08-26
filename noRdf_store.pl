@@ -60,18 +60,14 @@ post_rdf_triples0(Options):-
   setup_call_cleanup(
     % Collect contents.
     aggregate_all(
-      set(rdf(S,P,O,NG)),
-      rdf_triple([S,P,O]),
-      Quads
+      set(rdf(S,P,O)),
+      rdf_triple(S, P, O),
+      Triples
     ),
     % Use HTTP Graph Store on Virtuoso.
-    sparql_post_named_graph(virtuoso_http, NG, Quads, Options),
+    sparql_post_named_graph(virtuoso_http, NG, Triples, Options),
     retractall(rdf_triple(_,_,_))
   ).
-
-
-rdf_triple([S,P,O]):-
-  rdf_triple(S, P, O).
 
 
 %! store_triple(+Subject, +Predicate, +Object) is det.

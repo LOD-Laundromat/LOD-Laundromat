@@ -37,6 +37,7 @@ Unpacks files for the LOD Washing Machine to clean.
 
 lwm_unpack_loop:-
   % Pick a new source to process.
+gtrace,
   catch(pick_pending(Md5), Exception, var(Exception)),
 
   % DEB
@@ -93,8 +94,11 @@ unpack_md5(Md5):-
   % Create a directory for the dirty version of the given Md5.
   md5_directory(Md5, Md5Dir),
 
-  % Extracting and store the file extensions from the download URL.
-  url_file_extension(Url, FileExtension),
+  % Extracting and store the file extensions from the download URL, if any.
+  (   url_file_extension(Url, FileExtension)
+  ->  true
+  ;   FileExtension = ''
+  ),
 
   % Construct the download file.
   file_name_extension(download, FileExtension, LocalDownloadFile),
@@ -128,14 +132,11 @@ unpack_md5(Md5):-
 %! unpack_file(+Md5:atom, +ArchiveFile:atom) is det.
 
 unpack_file(Md5, ArchiveFile):-
-  % Store the file extensions.
+  % Store the file extension, if any.
   file_name_extension(_, FileExtension, ArchiveFile),
-  (
-    FileExtension == ''
-  ->
-    store_file_extension(Md5, FileExtension)
-  ;
-    true
+  (   FileExtension == ''
+  ->  true
+  ;   store_file_extension(Md5, FileExtension)
   ),
 
   % Extract archive.
