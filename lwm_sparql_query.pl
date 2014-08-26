@@ -246,7 +246,7 @@ lwm_sparql_ask(Prefixes, Bgps, Options1):-
   ).
 
 
-lwm_sparql_select(Prefixes, Variables, Bgps, Result, Options1):-
+lwm_sparql_select(Prefixes, Variables, Bgps, Result, Options1):-gtrace,
   % Set the RDF Dataset over which SPARQL Queries are executed.
   lod_basket_graph(BasketGraph),
   lwm_version_graph(LwmGraph),
@@ -255,7 +255,7 @@ lwm_sparql_select(Prefixes, Variables, Bgps, Result, Options1):-
     Options1,
     Options2
   ),
-  
+
   loop_until_true(
     sparql_select(virtuoso, Prefixes, Variables, Bgps, Result, Options2)
   ).

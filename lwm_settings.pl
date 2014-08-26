@@ -32,6 +32,9 @@ Generic predicates for the LOD Washing Machine.
 :- rdf_register_prefix(ll, 'http://lodlaundromat.org/resource/').
 :- rdf_register_prefix(llo, 'http://lodlaundromat.org/ontology/').
 
+:- dynamic(sparql_endpoint_option0/3).
+:- multifile(sparql_endpoint_option0/3).
+
 :- initialization(init_lwm_sparql_endpoints).
 
 
@@ -44,7 +47,7 @@ lod_basket_graph(Graph):-
   ll_authority(Authority),
   lod_basket_path(Path),
   lod_basket_fragment(Fragment),
-  uri_components(Graph, uri_components(Scheme,Authortity,Path,_,Fragment)).
+  uri_components(Graph, uri_components(Scheme,Authority,Path,_,Fragment)).
 
 
 lod_basket_path('/').
@@ -125,6 +128,8 @@ init_virtuoso_endpoint:-
   assert(lwm_sparql_endpoint(virtuoso)),
   sparql_register_endpoint(
     virtuoso,
-    uri_components(http,localhost,'/',_,_),
+    uri_components(http,'localhost:8890','/',_,_),
     virtuoso
-  ).
+  ),
+  assert(sparql_endpoint_option0(virtuoso, path(query), '/')).
+
