@@ -242,7 +242,7 @@ lwm_sparql_ask(Prefixes, Bgps, Options1):-
   lwm_version_graph(Graph),
   merge_options([named_graph(Graph)], Options1, Options2),
   loop_until_true(
-    sparql_ask(virtuoso, Prefixes, Bgps, Options2)
+    sparql_ask(virtuoso_query, Prefixes, Bgps, Options2)
   ).
 
 
@@ -257,5 +257,5 @@ lwm_sparql_select(Prefixes, Variables, Bgps, Result, Options1):-gtrace,
   ),
 
   loop_until_true(
-    sparql_select(virtuoso, Prefixes, Variables, Bgps, Result, Options2)
+    sparql_select(virtuoso_query, Prefixes, Variables, Bgps, Result, Options2)
   ).

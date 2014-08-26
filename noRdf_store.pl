@@ -19,11 +19,9 @@ and at the same time send small RDF messages using SPARQL Update requests.
 @version 2014/05-2014/06, 2014/08
 */
 
-:- use_module(library(option)).
 :- use_module(library(semweb/rdf_db)).
 
 :- use_module(plSparql_http(sparql_graph_store)).
-:- use_module(plSparql_query(sparql_query_api)).
 :- use_module(plSparql_update(sparql_update_api)).
 
 :- use_module(lwm(lwm_settings)).
@@ -58,7 +56,7 @@ post_rdf_triples(Md5):-
 post_rdf_triples0(Options):-
   % Named graph argument.
   lwm_version_graph(NG),
-  
+
   setup_call_cleanup(
     % Collect contents.
     aggregate_all(
@@ -68,9 +66,9 @@ post_rdf_triples0(Options):-
     ),
     (
       % Use HTTP Graph Store on Virtuoso.
-      sparql_post_named_graph(virtuoso, NG, Quads, Options),
+      sparql_post_named_graph(virtuoso_http, NG, Quads, Options),
       % Use SPARQL Update on ClioPatria.
-      sparql_insert_data(cliopatria, Quads, [], [NG], Options)
+      ignore(sparql_insert_data(cliopatria_update, Quads, [], [NG], Options))
     ),
     retractall(rdf_triple(_,_,_))
   ).

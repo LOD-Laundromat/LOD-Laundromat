@@ -50,7 +50,7 @@ lod_basket_graph(Graph):-
   uri_components(Graph, uri_components(Scheme,Authority,Path,_,Fragment)).
 
 
-lod_basket_path('/').
+lod_basket_path('').
 
 
 lod_basket_fragment(seedlist).
@@ -73,7 +73,7 @@ lwm_fragment(Fragment):-
   atom_number(Fragment, Version).
 
 
-lwm_path('/').
+lwm_path('').
 
 
 %! lwm_version_directory(-Directory:atom) is det.
@@ -125,11 +125,18 @@ init_cliopatria_endpoint:-
   ).
 
 init_virtuoso_endpoint:-
-  assert(lwm_sparql_endpoint(virtuoso)),
+  assert(lwm_sparql_endpoint(virtuoso_query)),
   sparql_register_endpoint(
-    virtuoso,
-    uri_components(http,'localhost:8890','/',_,_),
+    virtuoso_query,
+    uri_components(http,'sparql.backend.lodlaundromat.org','',_,_),
     virtuoso
   ),
-  assert(sparql_endpoint_option0(virtuoso, path_suffix(query), '')).
+  assert(sparql_endpoint_option0(virtuoso_query, path_suffix(query), '')),
+  assert(lwm_sparql_endpoint(virtuoso_http)),
+  sparql_register_endpoint(
+    virtuoso_http,
+    uri_components(http,'localhost/sparql/graph','',_,_),
+    virtuoso
+  ),
+  assert(sparql_endpoint_option0(virtuoso_http, path_suffix(http), '')).
 
