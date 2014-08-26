@@ -18,6 +18,7 @@ Generic predicates for the LOD Washing Machine.
 */
 
 :- use_module(library(filesex)).
+:- use_module(library(semweb/rdf_db)).
 :- use_module(library(uri)).
 
 :- use_module(plSparql(sparql_db)).
@@ -26,6 +27,9 @@ Generic predicates for the LOD Washing Machine.
 %! lwm_sparql_endpoint(-Endpoint:atom) is multi.
 
 :- dynamic(lwm_sparql_endpoint/1).
+
+:- rdf_register_prefix(ll, 'http://lodlaundromat.org/resource/').
+:- rdf_register_prefix(llo, 'http://lodlaundromat.org/ontology/').
 
 :- initialization(init_lwm_sparql_endpoints).
 
