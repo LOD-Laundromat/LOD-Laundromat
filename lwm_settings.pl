@@ -131,5 +131,5 @@ init_virtuoso_endpoint:-
     uri_components(http,'localhost:8890','/',_,_),
     virtuoso
   ),
-  assert(sparql_endpoint_option0(virtuoso, path(query), '/')).
+  assert(sparql_endpoint_option0(virtuoso, path_suffix(query), '')).
 
