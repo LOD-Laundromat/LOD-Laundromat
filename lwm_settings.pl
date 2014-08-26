@@ -1,8 +1,9 @@
 :- module(
   lwm_settings,
   [
-    lwm_authority/1, % ?Authority:atom
-    lwm_scheme/1, % ?Scheme:atom
+    lod_basket_graph/1, % ?Graph:atom
+    ll_authority/1, % ?Authority:atom
+    ll_scheme/1, % ?Scheme:atom
     lwm_version_directory/1, % -Directory:atom
     lwm_version_graph/1, % -Graph:iri
     lwm_version_number/1 % ?Version:positive_integer
@@ -35,16 +36,41 @@ Generic predicates for the LOD Washing Machine.
 
 
 
-%! lwm_authority(+Authortity:atom) is semidet.
-%! lwm_authority(-Authortity:atom) is det.
+%! lod_basket_graph(+Graph:atom) is semidet.
+%! lod_basket_graph(-Graph:atom) is det.
 
-lwm_authority('lodlaundromat.org').
+lod_basket_graph(Graph):-
+  ll_scheme(Scheme),
+  ll_authority(Authority),
+  lod_basket_path(Path),
+  lod_basket_fragment(Fragment),
+  uri_components(Graph, uri_components(Scheme,Authortity,Path,_,Fragment)).
 
 
-%! lwm_scheme(+Scheme:atom) is semidet.
-%! lwm_scheme(-Scheme:oneof([http])) is det.
+lod_basket_path('/').
 
-lwm_scheme(http).
+
+lod_basket_fragment(seedlist).
+
+
+%! ll_authority(+Authortity:atom) is semidet.
+%! ll_authority(-Authortity:atom) is det.
+
+ll_authority('lodlaundromat.org').
+
+
+%! ll_scheme(+Scheme:atom) is semidet.
+%! ll_scheme(-Scheme:oneof([http])) is det.
+
+ll_scheme(http).
+
+
+lwm_fragment(Fragment):-
+  lwm_version_number(Version),
+  atom_number(Fragment, Version).
+
+
+lwm_path('/').
 
 
 %! lwm_version_directory(-Directory:atom) is det.
@@ -64,11 +90,13 @@ lwm_version_directory(Dir):-
 %! lwm_version_graph(-Graph:iri) is det.
 
 lwm_version_graph(Graph):-
-  lwm_version_number(Version),
-  atom_number(Fragment, Version),
+  ll_scheme(Scheme),
+  ll_authority(Authority),
+  lwm_path(Path),
+  lwm_fragment(Fragment),
   uri_components(
     Graph,
-    uri_components(http,'lodlaundromat.org',_,_,Fragment)
+    uri_components(Scheme,Authority,Path,_,Fragment)
   ).
 
 

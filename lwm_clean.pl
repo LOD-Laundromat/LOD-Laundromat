@@ -224,8 +224,8 @@ save_data_to_file(Md5, File, NumberOfTriples):-
 %! send_to_basket(+Url:url) is det.
 
 send_to_basket(Url):-
-  lwm_scheme(Scheme),
-  lwm_authority(Authority),
+  ll_scheme(Scheme),
+  ll_authority(Authority),
   uri_components(
     BasketLocation,
     uri_components(Scheme,Authority,basket,_,_)

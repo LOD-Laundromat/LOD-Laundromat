@@ -32,8 +32,8 @@ MD5 support predicates.
 % The base URL that is used for the clean data document with the given MD5.
 
 md5_base_url(Md5, Base):-
-  lwm_scheme(Scheme),
-  lwm_authority(Authority),
+  ll_scheme(Scheme),
+  ll_authority(Authority),
   atomic_list_concat(['',Md5], '/', Path1),
   atomic_concat(Path1, '#', Path2),
   uri_components(Base, uri_components(Scheme,Authority,Path2,_,_)).
@@ -42,8 +42,8 @@ md5_base_url(Md5, Base):-
 %! md5_bnode_base(+Md5:atom, -BaseComponents:compound) is det.
 
 md5_bnode_base(Md5, Scheme-Authority-Md5):-
-  lwm_scheme(Scheme),
-  lwm_authority(Authority).
+  ll_scheme(Scheme),
+  ll_authority(Authority).
 
 
 %! md5_clean_url(+Md5:atom, -Location:url) is det.

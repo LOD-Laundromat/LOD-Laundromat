@@ -234,3 +234,4 @@ lod_content_type('text/n3',                0.8).
 lod_content_type('text/rdf+n3',            0.5).
 % All
 lod_content_type('*/*',                    0.1).
+

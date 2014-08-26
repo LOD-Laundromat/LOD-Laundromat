@@ -126,20 +126,25 @@ md5_file_extension(Md5, FileExtension):-
 md5_pending(Md5):-
   var(Md5), !,
   with_mutex(lwm_basket, (
-    lwm_sparql_select([llo], [md5],
-        [rdf(var(md5res),llo:added,var(added)),
-         not([rdf(var(md5res),llo:start_unpack,var(start))]),
-         rdf(var(md5res),llo:md5,var(md5))],
-        [[Literal]], [limit(1),sparql_errors(fail)]),
+    lwm_sparql_select(
+      [llo],
+      [md5],
+      [rdf(var(md5res),llo:added,var(added)),
+       rdf(var(md5res),llo:md5,var(md5)),
+       not([rdf(var(md5res),llo:start_unpack,var(start))])],
+      [[Literal]],
+      [limit(1),sparql_errors(fail)]
+    ),
     rdf_literal(Literal, Md5, _)
   )).
 md5_pending(Md5):-
   with_mutex(lwm_basket, (
-    lwm_sparql_ask([llo],
-        [rdf(var(md5),llo:md5,literal(type(xsd:string,Md5))),
-         rdf(var(md5),llo:added,var(added)),
-         not([rdf(var(md5),llo:start_unpack,var(start))])],
-        [sparql_errors(fail)])
+    lwm_sparql_ask(
+      [llo],
+      [rdf(var(md5),llo:md5,literal(type(xsd:string,Md5))),
+       not([rdf(var(md5),llo:start_unpack,var(start))])],
+      [sparql_errors(fail)]
+    )
   )).
 
 
@@ -242,11 +247,13 @@ lwm_sparql_ask(Prefixes, Bgps, Options1):-
 
 
 lwm_sparql_select(Prefixes, Variables, Bgps, Result, Options1):-
-  % Set a named graph if none is given.
-  (  option(named_graph(_), Options1)
-  -> Options2 = Options1
-  ;  lwm_version_graph(Graph),
-     merge_options([named_graph(Graph)], Options1, Options2)
+  % Set the RDF Dataset over which SPARQL Queries are executed.
+  lod_basket_graph(BasketGraph),
+  lwm_version_graph(LwmGraph),
+  merge_options(
+    [named_graph(BasketGraph),named_graph(LwmGraph)],
+    Options1,
+    Options2
   ),
   
   loop_until_true(
