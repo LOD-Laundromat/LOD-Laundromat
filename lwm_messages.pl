@@ -8,7 +8,7 @@ Print messages for the LOD Washing Machine.
 @version 2014/06, 2014/08
 */
 
-:- use_module(lwm_sparql(lwm_sparql_query)).
+:- use_module(lwm(lwm_sparql_query)).
 
 :- multifile(prolog:message/1).
 

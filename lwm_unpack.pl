@@ -29,10 +29,9 @@ Unpacks files for the LOD Washing Machine to clean.
 :- use_module(lwm(md5)).
 :- use_module(lwm(lwm_basket)).
 :- use_module(lwm(lwm_messages)).
+:- use_module(lwm(lwm_sparql_query)).
 :- use_module(lwm(noRdf_store)).
 :- use_module(lwm(store_triple)).
-:- use_module(lwm_sparql(lwm_sparql_api)).
-:- use_module(lwm_sparql(lwm_sparql_query)).
 
 :- dynamic(debug_md5/1).
 
@@ -77,13 +76,7 @@ lwm_unpack(Md5):-
 
 % The given MD5 denotes an archive entry.
 unpack_md5(Md5):-
-  lwm_sparql_select([ll], [md5,path],
-      [rdf(var(md5ent),ll:md5,literal(type(xsd:string,Md5))),
-       rdf(var(md5ent),ll:path,var(path)),
-       rdf(var(md5parent),ll:contains_entry,var(md5ent)),
-       rdf(var(md5parent),ll:md5,var(md5))],
-      [[ParentMd50,EntryPath0]], [limit(1)]),
-  maplist(rdf_literal, [ParentMd50,EntryPath0], [ParentMd5,EntryPath], _), !,
+  md5_archive_entry(Md5, ParentMd5, EntryPath), !,
 
   % Move the entry file from the parent directory into
   % an MD5 directory of its own.
@@ -138,7 +131,7 @@ unpack_md5(Md5):-
 
 unpack_file(Md5, ArchiveFile):-
   % Store the file extensions.
-  file_name_extension(_, FileExtension, ArchiveFile)
+  file_name_extension(_, FileExtension, ArchiveFile),
   (
     FileExtension == ''
   ->

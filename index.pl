@@ -3,5 +3,4 @@
 
 user:file_search_path(lwm_basket, lwm(basket)).
 user:file_search_path(lwm_schema, lwm(schema)).
-user:file_search_path(lwm_sparql, lwm(sparql)).
 

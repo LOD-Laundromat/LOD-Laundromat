@@ -31,10 +31,10 @@ The cleaning process performed by the LOD Washing Machine.
 :- use_module(lwm(lwm_basket)).
 :- use_module(lwm(lwm_messages)).
 :- use_module(lwm(lwm_settings)).
+:- use_module(lwm(lwm_sparql_query)).
 :- use_module(lwm(md5)).
 :- use_module(lwm(noRdf_store)).
 :- use_module(lwm(store_triple)).
-:- use_module(lwm_sparql(lwm_sparql_query)).
 
 :- dynamic(debug_md5/1).
 debug_md5('cfee1f887364ff5c4311a5ba7b416a96'). % false

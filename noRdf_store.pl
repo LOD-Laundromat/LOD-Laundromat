@@ -22,12 +22,12 @@ and at the same time send small RDF messages using SPARQL Update requests.
 :- use_module(library(option)).
 :- use_module(library(semweb/rdf_db)).
 
-:- use_module(plSparql(sparql_api)).
-:- use_module(plSparql(sparql_graph_store)).
+:- use_module(plSparql_http(sparql_graph_store)).
+:- use_module(plSparql_query(sparql_query_api)).
+:- use_module(plSparql_update(sparql_update_api)).
 
 :- use_module(lwm(lwm_settings)).
 :- use_module(lwm(md5)).
-:- use_module(lwm_sparql(lwm_sparql_endpoint)).
 
 %! rdf_triple(
 %!   ?Subject:or([bnode,iri]),
@@ -55,32 +55,25 @@ post_rdf_triples(Md5):-
   md5_bnode_base(Md5, BaseComponents),
   post_rdf_triples0([bnode_base(BaseComponents)]).
 
-post_rdf_triples0(Options1):-
-  % Add the named graph as an option.
-  lwm_version_graph(G),
-  merge_options([named_graph(G)], Options1, Options2),
+post_rdf_triples0(Options):-
+  % Named graph argument.
+  lwm_version_graph(NG),
   
   setup_call_cleanup(
+    % Collect contents.
     aggregate_all(
-      set(rdf(S,P,O,G)),
+      set(rdf(S,P,O,NG)),
       rdf_triple([S,P,O]),
       Quads
     ),
-    forall(
-      lwm_sparql_endpoint(Endpoint, Mode, Options2),
-      (
-        merge_options(Options1, Options2, Options3),
-        post_rdf_triples0(Endpoint, Mode, Quads, Options3)
-      )
+    (
+      % Use HTTP Graph Store on Virtuoso.
+      sparql_post_named_graph(virtuoso, NG, Quads, Options),
+      % Use SPARQL Update on ClioPatria.
+      sparql_insert_data(cliopatria, Quads, [], [NG], Options)
     ),
     retractall(rdf_triple(_,_,_))
   ).
-
-post_rdf_triples0(Endpoint, http, Quads, Options):-
-  sparql_post_named_graph(Endpoint, Quads, Options).
-post_rdf_triples0(Endpoint, update, Quads, Options):-
-  sparql_insert_data(Endpoint, Quads, Options).
-
 
 
 rdf_triple([S,P,O]):-

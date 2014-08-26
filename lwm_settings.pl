@@ -17,7 +17,17 @@ Generic predicates for the LOD Washing Machine.
 @version 2014/06, 2014/08
 */
 
+:- use_module(library(filesex)).
 :- use_module(library(uri)).
+
+:- use_module(plSparql(sparql_db)).
+
+%! lwm_sparql_endpoint(+Endpoint:atom) is semidet.
+%! lwm_sparql_endpoint(-Endpoint:atom) is multi.
+
+:- dynamic(lwm_sparql_endpoint/1).
+
+:- initialization(init_lwm_sparql_endpoints).
 
 
 
@@ -63,3 +73,26 @@ lwm_version_graph(Graph):-
 
 lwm_version_number(11).
 
+
+
+% Initialization.
+
+init_lwm_sparql_endpoints:-
+  init_cliopatria_endpoint,
+  init_virtuoso_endpoint.
+
+init_cliopatria_endpoint:-
+  assert(lwm_sparql_endpoint(cliopatria)),
+  sparql_register_endpoint(
+    cliopatria,
+    uri_components(http,'localhost:3020','/',_,_),
+    cliopatria
+  ).
+
+init_virtuoso_endpoint:-
+  assert(lwm_sparql_endpoint(virtuoso)),
+  sparql_register_endpoint(
+    virtuoso,
+    uri_components(http,localhost,'/',_,_),
+    virtuoso
+  ).
