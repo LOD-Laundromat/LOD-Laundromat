@@ -259,4 +259,3 @@ lwm_sparql_select(Prefixes, Variables, Bgps, Result, Options1):-
   loop_until_true(
     sparql_select(virtuoso, Prefixes, Variables, Bgps, Result, Options2)
   ).
-
