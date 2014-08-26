@@ -64,12 +64,8 @@ post_rdf_triples0(Options):-
       rdf_triple([S,P,O]),
       Quads
     ),
-    (
-      % Use HTTP Graph Store on Virtuoso.
-      sparql_post_named_graph(virtuoso_http, NG, Quads, Options),
-      % Use SPARQL Update on ClioPatria.
-      ignore(sparql_insert_data(cliopatria_update, Quads, [], [NG], Options))
-    ),
+    % Use HTTP Graph Store on Virtuoso.
+    sparql_post_named_graph(virtuoso_http, NG, Quads, Options),
     retractall(rdf_triple(_,_,_))
   ).
 

@@ -113,18 +113,7 @@ lwm_version_number(11).
 % Initialization.
 
 init_lwm_sparql_endpoints:-
-  init_cliopatria_endpoint,
-  init_virtuoso_endpoint.
-
-init_cliopatria_endpoint:-
-  assert(lwm_sparql_endpoint(cliopatria)),
-  sparql_register_endpoint(
-    cliopatria,
-    uri_components(http,'localhost:3020','/',_,_),
-    cliopatria
-  ).
-
-init_virtuoso_endpoint:-
+  % Query.
   assert(lwm_sparql_endpoint(virtuoso_query)),
   sparql_register_endpoint(
     virtuoso_query,
@@ -132,6 +121,8 @@ init_virtuoso_endpoint:-
     virtuoso
   ),
   assert(sparql_endpoint_option0(virtuoso_query, path_suffix(query), '')),
+  
+  % HTTP.
   assert(lwm_sparql_endpoint(virtuoso_http)),
   sparql_register_endpoint(
     virtuoso_http,
