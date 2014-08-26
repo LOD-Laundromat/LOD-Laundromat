@@ -242,8 +242,13 @@ lwm_sparql_ask(Prefixes, Bgps, Options1):-
 
 
 lwm_sparql_select(Prefixes, Variables, Bgps, Result, Options1):-
-  lwm_version_graph(Graph),
-  merge_options([named_graph(Graph)], Options1, Options2),
+  % Set a named graph if none is given.
+  (  option(named_graph(_), Options1)
+  -> Options2 = Options1
+  ;  lwm_version_graph(Graph),
+     merge_options([named_graph(Graph)], Options1, Options2)
+  ),
+  
   loop_until_true(
     sparql_select(virtuoso, Prefixes, Variables, Bgps, Result, Options2)
   ).
