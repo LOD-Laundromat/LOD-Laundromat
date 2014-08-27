@@ -13,7 +13,10 @@ Reset the LOD Washing Machine during debugging.
 @version 2014/08
 */
 
-:- use_module(plSparql_update(sparql_update_api)).
+:- use_module(library(debug)).
+:- use_module(library(http/http_client)).
+
+:- use_module(plSparql(sparql_db)).
 
 :- use_module(lwm(lwm_settings)).
 
@@ -23,5 +26,15 @@ Reset the LOD Washing Machine during debugging.
 
 lwm_reset:-
   lwm_version_graph(Graph),
-  sparql_drop_graph(virtuoso_update, Graph, []).
+  
+  % Virtuoso implements SPARQL Updates so irregularly,
+  % that we cannot even use options for it:
+  % (1) No support for direct POST bodies (only URL encoded).
+  % (2) GET method for DROP GRAPH.
+  % (3) Required SILENT keyword.
+  sparql_endpoint_location(virtuoso_update, update, Url1),
+  format(atom(Query), 'DROP SILENT GRAPH <~a>', [Graph]),
+  url_query_add_nvpair(Url1, query, Query, Url2),
+  http_get(Url2, Reply, []),
+  debug(sparql_reply, '~a', [Reply]).
 
