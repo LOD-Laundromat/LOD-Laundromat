@@ -21,7 +21,6 @@ The cleaning process performed by the LOD Washing Machine.
 :- use_module(library(uri)).
 :- use_module(library(zlib)).
 
-:- use_module(os(archive_ext)).
 :- use_module(pl(pl_log)).
 :- use_module(void(void_db)). % XML namespace.
 
@@ -36,8 +35,8 @@ The cleaning process performed by the LOD Washing Machine.
 :- use_module(lwm(noRdf_store)).
 :- use_module(lwm(store_triple)).
 
-:- dynamic(debug_md5/1).
-:- multifile(debug_md5/1).
+:- dynamic(debug:debug_md5/1).
+:- multifile(debug:debug_md5/1).
 
 
 
@@ -46,7 +45,7 @@ lwm_clean_loop:-
   catch(pick_unpacked(Md5), Exception, var(Exception)),
 
   % DEB
-  (debug_md5(Md5) -> gtrace ; true),
+  (debug:debug_md5(Md5) -> gtrace ; true),
 
   % Process the URL we picked.
   lwm_clean(Md5),
@@ -131,7 +130,7 @@ clean_datastream(Md5, File, Read, ContentType, VoidUrls):-
   md5_base_url(Md5, Base),
   Options1 =
       [base_uri(Base),format(Format),graph(user),register_namespaces(false)],
-  
+
   % Add options that are specific to the RDFa serialization format.
   (
     Format == rdfa
@@ -140,7 +139,7 @@ clean_datastream(Md5, File, Read, ContentType, VoidUrls):-
   ;
     Options2 = Options1
   ),
-  
+
   rdf_load(stream(Read), Options2),
 
   % In between loading and saving the data,

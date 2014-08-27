@@ -37,6 +37,6 @@ lwm_reset:-
   sparql_endpoint_location(virtuoso_update, update, Url1),
   format(atom(Query), 'DROP SILENT GRAPH <~a>', [Graph]),
   uri_query_add_nvpair(Url1, query, Query, Url2),
-  http_get(Url2, Reply, []),
+  http_get(Url2, Reply, []), !,
   debug(sparql_reply, '~a', [Reply]).
 

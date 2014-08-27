@@ -31,8 +31,8 @@ Unpacks files for the LOD Washing Machine to clean.
 :- use_module(lwm(noRdf_store)).
 :- use_module(lwm(store_triple)).
 
-:- dynamic(debug_md5/1).
-:- multifile(debug_md5/1).
+:- dynamic(debug:debug_md5/1).
+:- multifile(debug:debug_md5/1).
 
 
 
@@ -41,7 +41,7 @@ lwm_unpack_loop:-
   catch(pick_pending(Md5), Exception, var(Exception)),
 
   % DEB
-  (debug_md5(Md5) -> gtrace ; true),
+  (debug:debug_md5(Md5) -> gtrace ; true),
 
   % Process the URL we picked.
   lwm_unpack(Md5),
@@ -182,6 +182,7 @@ unpack_file(Md5, ArchiveFile):-
     store_triple(ll-Md5, llo-archive_format,
         literal(type(xsd-string,ArchiveFormat))),
     maplist(store_archive_entry(Md5), EntryPaths, EntryProperties2),
+gtrace,
     store_end_unpack_and_skip_clean(Md5)
   ),
   % Remove the archive file.
