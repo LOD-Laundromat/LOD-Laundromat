@@ -33,13 +33,13 @@ lwm_init:-
     Opts,
     _
   ),
-  
+
   % Process the debug option.
   (   memberchk(debug(true), Opts)
   ->  debug(lwm)
   ;   true
   ),
-  
+
   % Process the directory option.
   memberchk(directory(Dir), Opts),
   make_directory_path(Dir),

@@ -33,6 +33,12 @@ Unpacks files for the LOD Washing Machine to clean.
 
 :- dynamic(debug_md5/1).
 
+debug_md5('baa7651083fc7e429fb6f1f98fe15856').
+debug_md5('0af4cf76187202f4f3a051b9542f3b46').
+debug_md5('28665808584a3425631a805afbd72336').
+debug_md5('3019899320737bfc88e28f323983139c').
+debug_md5('7645e27b568b8d2e1798f7eda7057975').
+debug_md5('f0ef0f94bdb8383b3badb90751b7adaf').
 
 
 lwm_unpack_loop:-
