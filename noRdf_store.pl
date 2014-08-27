@@ -68,7 +68,7 @@ post_rdf_triples0(Options):-
       % Use HTTP Graph Store on Virtuoso.
       sparql_post_named_graph(virtuoso_http, NG, Triples, Options),
       % Use SPARQL Update on ClioPatria.
-      gtrace,sparql_insert_data(cliopatria_http, Triples, [NG], Options)
+      sparql_insert_data(cliopatria_http, Triples, [NG], Options)
     ),
     retractall(rdf_triple(_,_,_))
   ).
