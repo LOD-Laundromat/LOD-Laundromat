@@ -126,9 +126,11 @@ store_end_clean0(Md5):-
 store_end_unpack(Md5, true):- !,
   store_end_unpack0(Md5),
   post_rdf_triples(Md5).
+% Skip cleaning if unpacking failed or throw a critical exception.
 store_end_unpack(Md5, Status):-
   store_end_unpack0(Md5),
-  store_skip_clean(Md5),
+  store_start_clean0(Md5),
+  store_end_clean0(Md5),
   store_exception(Md5, Status),
   post_rdf_triples(Md5).
 

@@ -52,7 +52,9 @@ and at the same time send small RDF messages using SPARQL Update requests.
 
 post_rdf_triples(Md5):-
   md5_bnode_base(Md5, BaseComponents),
-  post_rdf_triples0([bnode_base(BaseComponents)]).
+  with_mutex(lwm_endpoint,
+    post_rdf_triples0([bnode_base(BaseComponents)])
+  ).
 
 post_rdf_triples0(Options):-
   % Named graph argument.

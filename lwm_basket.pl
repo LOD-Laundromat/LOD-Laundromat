@@ -36,7 +36,7 @@ $ curl --data "url=http://acm.rkbexplorer.com/id/998550" http://lodlaundry.wbeek
 % pick_pending(-Md5:atom) is det.
 
 pick_pending(Md5):-
-  with_mutex(lwm_basket, (
+  with_mutex(lwm_endpoint, (
     md5_pending(Md5),
 
     % For the debug tools to work,
@@ -71,7 +71,7 @@ pair_to_triple(S, [P,O], rdf(S,P,O)).
 % pick_unpacked(-Md5:atom) is det.
 
 pick_unpacked(Md5):-
-  with_mutex(lwm_basket, (
+  with_mutex(lwm_endpoint, (
     md5_unpacked(Md5),
     store_start_clean(Md5)
   )).

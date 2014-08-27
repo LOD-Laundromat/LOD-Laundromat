@@ -60,7 +60,7 @@ md5_archive_entry(Md5, ParentMd5, EntryPath):-
 
 md5_cleaned(Md5):-
   var(Md5), !,
-  with_mutex(lwm_basket, (
+  with_mutex(lwm_endpoint, (
     lwm_sparql_select([llo], [md5],
         [rdf(var(md5res),llo:end_clean,var(end_clean)),
          rdf(var(md5res),llo:md5,var(md5))],
@@ -68,7 +68,7 @@ md5_cleaned(Md5):-
     rdf_literal(Literal, Md5, _)
   )).
 md5_cleaned(Md5):-
-  with_mutex(lwm_basket, (
+  with_mutex(lwm_endpoint, (
     lwm_sparql_ask([llo],
         [rdf(var(md5),llo:md5,literal(type(xsd:string,Md5))),
          rdf(var(md5),llo:end_clean,var(end))],
@@ -81,7 +81,7 @@ md5_cleaned(Md5):-
 
 md5_cleaning(Md5):-
   var(Md5), !,
-  with_mutex(lwm_basket, (
+  with_mutex(lwm_endpoint, (
     lwm_sparql_select([llo], [md5],
         [rdf(var(md5res),llo:start_clean,var(start_clean)),
          not([rdf(var(md5res),llo:end_clean,var(end_clean))]),
@@ -90,7 +90,7 @@ md5_cleaning(Md5):-
     rdf_literal(Literal, Md5, _)
   )).
 md5_cleaning(Md5):-
-  with_mutex(lwm_basket, (
+  with_mutex(lwm_endpoint, (
     lwm_sparql_ask([llo],
         [rdf(var(md5),llo:md5,literal(type(xsd:string,Md5))),
          rdf(var(md5),llo:start_clean,var(end)),
@@ -125,7 +125,7 @@ md5_file_extension(Md5, FileExtension):-
 
 md5_pending(Md5):-
   var(Md5), !,
-  with_mutex(lwm_basket, (
+  with_mutex(lwm_endpoint, (
     lwm_sparql_select(
       [llo],
       [md5],
@@ -138,7 +138,7 @@ md5_pending(Md5):-
     rdf_literal(Literal, Md5, _)
   )).
 md5_pending(Md5):-
-  with_mutex(lwm_basket, (
+  with_mutex(lwm_endpoint, (
     lwm_sparql_ask(
       [llo],
       [rdf(var(md5),llo:md5,literal(type(xsd:string,Md5))),
@@ -185,7 +185,7 @@ md5_source(Md5, Source):-
 
 md5_unpacked(Md5):-
   var(Md5), !,
-  with_mutex(lwm_basket, (
+  with_mutex(lwm_endpoint, (
     lwm_sparql_select([llo], [md5],
         [rdf(var(md5res),llo:end_unpack,var(start)),
          not([rdf(var(md5res),llo:start_clean,var(clean))]),
@@ -194,7 +194,7 @@ md5_unpacked(Md5):-
     rdf_literal(Literal, Md5, _)
   )).
 md5_unpacked(Md5):-
-  with_mutex(lwm_basket, (
+  with_mutex(lwm_endpoint, (
     lwm_sparql_ask([llo],
         [rdf(var(md5),llo:md5,literal(type(xsd:string,Md5))),
          rdf(var(md5),llo:end_unpack,var(start)),
@@ -208,7 +208,7 @@ md5_unpacked(Md5):-
 
 md5_unpacking(Md5):-
   var(Md5), !,
-  with_mutex(lwm_basket, (
+  with_mutex(lwm_endpoint, (
     lwm_sparql_select([llo], [md5],
         [rdf(var(md5res),llo:start_unpack,var(start)),
          not([rdf(var(md5res),llo:end_unpack,var(clean))]),
@@ -217,7 +217,7 @@ md5_unpacking(Md5):-
     rdf_literal(Literal, Md5, _)
   )).
 md5_unpacking(Md5):-
-  with_mutex(lwm_basket, (
+  with_mutex(lwm_endpoint, (
     lwm_sparql_ask([llo],
         [rdf(var(md5),llo:md5,literal(type(xsd:string,Md5))),
          rdf(var(md5),llo:start_unpack,var(start)),
