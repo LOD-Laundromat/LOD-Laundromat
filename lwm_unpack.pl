@@ -175,13 +175,13 @@ unpack_file(Md5, ArchiveFile):-
   ;
     % Store the archive entries for future processing.
     pairs_keys_values(EntryPairs, EntryPaths, EntryProperties1),
-    
+
     % Store the archive format.
     filter_archive_formats(EntryProperties1, ArchiveFormats, EntryProperties2),
     distill_archive_format(ArchiveFormats, ArchiveFormat),
     store_triple(ll-Md5, llo-archive_format,
         literal(type(xsd-string,ArchiveFormat))),
-    
+
     maplist(store_archive_entry(Md5), EntryPaths, EntryProperties2),
     store_skip_clean(Md5)
   ),
@@ -197,7 +197,7 @@ unpack_file(Md5, ArchiveFile):-
 distill_archive_format([H0], H):- !,
   strip_atom([' '], H0, H).
 distill_archive_format([H1,H2|T], Format):-
-  common_atom_prefix(F1, F2, Prefix),
+  common_atom_prefix(H1, H2, Prefix),
   distill_archive_format([Prefix|T], Format).
 
 
