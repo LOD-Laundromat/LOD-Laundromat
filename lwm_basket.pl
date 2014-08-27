@@ -38,7 +38,7 @@ $ curl --data "url=http://acm.rkbexplorer.com/id/998550" http://lodlaundry.wbeek
 pick_pending(Md5):-
   with_mutex(lwm_basket, (
     md5_pending(Md5),
-    
+
     % For the debug tools to work,
     % details from the LOD Basket have to be copied over.
     (   debugging(lwm)
@@ -48,7 +48,7 @@ pick_pending(Md5):-
             virtuoso_query,
             [ll],
             [p,o],
-            [rdf(ll:Md5,p,o)],
+            [rdf(ll:Md5,var(p),var(o))],
             Result,
             [default_graph(BasketGraph),distinct(true)]
           )
@@ -61,7 +61,7 @@ pick_pending(Md5):-
         )
     ;   true
     ),
-    
+
     store_start_unpack(Md5)
   )).
 
