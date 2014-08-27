@@ -183,7 +183,7 @@ unpack_file(Md5, ArchiveFile):-
         literal(type(xsd-string,ArchiveFormat))),
     maplist(store_archive_entry(Md5), EntryPaths, EntryProperties2),
 gtrace,
-    store_end_unpack_and_skip_clean(Md5)
+    store_skip_clean(Md5)
   ),
   % Remove the archive file.
   delete_file(ArchiveFile).

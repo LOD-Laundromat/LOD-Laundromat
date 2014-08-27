@@ -10,7 +10,6 @@
     store_end_clean/1, % +Md5:atom
     store_end_unpack/2, % +Md5:atom
                         % +Status
-    store_end_unpack_and_skip_clean/1, % +Md5:atom
     store_exception/2, % +Md5:atom
                        % +Status:or([boolean,compound]))
     store_file_extension/2, % +Md5:atom
@@ -22,6 +21,7 @@
     store_number_of_triples/3, % +Md5:atom
                                % +ReadTriples:nonneg
                                % +WrittenTriples:nonneg
+    store_skip_clean/1, % +Md5:atom
     store_warning/2, % +Md5:atom
                      % +Warning:compound
     store_start_clean/1, % +Md5:atom
@@ -120,13 +120,6 @@ store_end_clean0(Md5):-
   store_triple(ll-Md5, llo-end_clean, literal(type(xsd-dateTime,Now))).
 
 
-%! store_end_unpack_and_skip_clean(+Md5:atom) is det.
-
-store_end_unpack_and_skip_clean(Md5):-
-  store_end_unpack0(Md5),
-  store_start_clean0(Md5),
-  store_end_clean0(Md5).
-
 %! store_end_unpack(+Md5:atom, +Status:or([boolean,compound])) is det.
 
 % Only unpacking actions with status `true` proceed to cleaning.
@@ -134,7 +127,8 @@ store_end_unpack(Md5, true):- !,
   store_end_unpack0(Md5),
   post_rdf_triples(Md5).
 store_end_unpack(Md5, Status):-
-  store_end_unpack_and_skip_clean(Md5),
+  store_end_unpack0(Md5),
+  store_skip_clean(Md5),
   store_exception(Md5, Status),
   post_rdf_triples(Md5).
 
@@ -195,6 +189,14 @@ store_number_of_triples(Md5, TIn, TOut):-
   TDup is TIn - TOut,
   store_triple(ll-Md5, llo-duplicates, literal(type(xsd-integer,TDup))),
   print_message(informational, rdf_ntriples_written(TOut,TDup)).
+
+
+%! store_skip_clean(+Md5:atom) is det.
+
+store_skip_clean(Md5):-
+  store_start_clean0(Md5),
+  store_end_clean0(Md5),
+  post_rdf_triples(Md5).
 
 
 %! store_start_clean(+Md5:atom) is det.
