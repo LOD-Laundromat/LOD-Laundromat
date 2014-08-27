@@ -15,8 +15,10 @@ Unpacks files for the LOD Washing Machine to clean.
 
 :- use_module(library(apply)).
 :- use_module(library(lists)).
+:- use_module(library(ordsets)).
 :- use_module(library(pairs)).
 
+:- use_module(generics(atom_ext)).
 :- use_module(generics(uri_ext)).
 :- use_module(http(http_download)).
 :- use_module(os(archive_ext)).
@@ -173,13 +175,13 @@ unpack_file(Md5, ArchiveFile):-
   ;
     % Store the archive entries for future processing.
     pairs_keys_values(EntryPairs, EntryPaths, EntryProperties1),
-    maplist(
-      selectchk(format(ArchiveFormat)),
-      EntryProperties1,
-      EntryProperties2
-    ),
+    
+    % Store the archive format.
+    filter_archive_formats(EntryProperties1, ArchiveFormats, EntryProperties2),
+    distill_archive_format(ArchiveFormats, ArchiveFormat),
     store_triple(ll-Md5, llo-archive_format,
         literal(type(xsd-string,ArchiveFormat))),
+    
     maplist(store_archive_entry(Md5), EntryPaths, EntryProperties2),
     store_skip_clean(Md5)
   ),
@@ -189,6 +191,28 @@ unpack_file(Md5, ArchiveFile):-
 
 
 % Helpers
+
+%! distill_archive_format(+Formats:ordset(atom), -Format:atom) is det.
+
+distill_archive_format([H0], H):- !,
+  strip_atom([' '], H0, H).
+distill_archive_format([H1,H2|T], Format):-
+  common_atom_prefix(F1, F2, Prefix),
+  distill_archive_format([Prefix|T], Format).
+
+
+%! filter_archive_formats(
+%!   +Lists1:list(list(nvpair)),
+%!   -Formats:ordset(atom),
+%!   -Lists2(list(list(nvpair)))
+%! ) is det.
+
+filter_archive_formats([], [], []).
+filter_archive_formats([L1|Ls1], Fs1, [L2|Ls2]):-
+  selectchk(filter(F), L1, L2),
+  filter_archive_formats(Ls1, Fs2, Ls2),
+  ord_add_element(Fs2, F, Fs1).
+
 
 %! lod_accept_header_value(-Value:atom) is det.
 
