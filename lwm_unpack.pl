@@ -182,7 +182,6 @@ unpack_file(Md5, ArchiveFile):-
     store_triple(ll-Md5, llo-archive_format,
         literal(type(xsd-string,ArchiveFormat))),
     maplist(store_archive_entry(Md5), EntryPaths, EntryProperties2),
-gtrace,
     store_skip_clean(Md5)
   ),
   % Remove the archive file.
