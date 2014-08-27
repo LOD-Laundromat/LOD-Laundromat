@@ -22,7 +22,6 @@ The cleaning process performed by the LOD Washing Machine.
 :- use_module(library(zlib)).
 
 :- use_module(pl(pl_log)).
-:- use_module(void(void_db)). % XML namespace.
 
 :- use_module(plRdf_ser(ctriples_write)).
 :- use_module(plRdf_ser(rdf_guess_format)).

@@ -22,7 +22,6 @@ Unpacks files for the LOD Washing Machine to clean.
 :- use_module(os(archive_ext)).
 :- use_module(os(file_ext)).
 :- use_module(pl(pl_log)).
-:- use_module(void(void_db)). % XML namespace.
 
 :- use_module(lwm(md5)).
 :- use_module(lwm(lwm_basket)).

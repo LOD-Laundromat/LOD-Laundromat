@@ -22,6 +22,8 @@ Generic predicates for the LOD Washing Machine.
 :- use_module(library(semweb/rdf_db)).
 :- use_module(library(uri)).
 
+:- use_module(void(void_db)). % Namespace.
+
 :- use_module(plSparql(sparql_db)).
 
 %! lwm_sparql_endpoint(+Endpoint:atom) is semidet.

@@ -44,6 +44,7 @@ the stored triples are sent in a SPARQL Update request
 
 :- use_module(library(lists)).
 :- use_module(library(semweb/rdf_db)).
+:- use_module(library(uri)).
 
 :- use_module(pl(pl_control)).
 :- use_module(pl(pl_log)).
@@ -117,7 +118,13 @@ store_end_clean(Md5):-
 
 store_end_clean0(Md5):-
   get_dateTime(Now),
-  store_triple(ll-Md5, llo-end_clean, literal(type(xsd-dateTime,Now))).
+  store_triple(ll-Md5, llo-end_clean, literal(type(xsd-dateTime,Now))),
+  atom_concat('/', Md5, Path),
+  uri_components(
+    Datadump,
+    uri_components(http,'download.lodlaundromat.org',Path,_,_)
+  ),
+  store_triple(ll-Md5, void-dataDump, Datadump).
 
 
 %! store_end_unpack(+Md5:atom, +Status:or([boolean,compound])) is det.
