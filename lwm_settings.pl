@@ -116,7 +116,7 @@ init_lwm_sparql_endpoints:-
   % Update (debug tools)
   assert(lwm_sparql_endpoint(cliopatria_update)),
   sparql_register_endpoint(
-    cliopatria_http,
+    cliopatria_update,
     uri_components(http,'localhost:3020','',_,_),
     cliopatria
   ),

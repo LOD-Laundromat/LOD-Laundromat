@@ -19,6 +19,7 @@ and at the same time send small RDF messages using SPARQL Update requests.
 @version 2014/05-2014/06, 2014/08
 */
 
+:- use_module(library(debug)).
 :- use_module(library(semweb/rdf_db)).
 
 :- use_module(plSparql_http(sparql_graph_store)).
@@ -67,8 +68,12 @@ post_rdf_triples0(Options):-
     (
       % Use HTTP Graph Store on Virtuoso.
       sparql_post_named_graph(virtuoso_http, NG, Triples, Options),
+      
       % Use SPARQL Update on ClioPatria.
-      sparql_insert_data(cliopatria_http, Triples, [NG], Options)
+      (   debugging(lwm)
+      ->  sparql_insert_data(cliopatria_update, Triples, [NG], Options)
+      ;   true
+      )
     ),
     retractall(rdf_triple(_,_,_))
   ).

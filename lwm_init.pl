@@ -8,6 +8,7 @@ Initializes the LOD Washing Machine.
 @version 2014/06, 2014/08
 */
 
+:- use_module(library(debug)).
 :- use_module(library(filesex)).
 :- use_module(library(optparse)).
 :- use_module(library(semweb/rdf_db)).
@@ -32,7 +33,13 @@ lwm_init:-
     Opts,
     _
   ),
-
+  
+  % Process the debug option.
+  (   memberchk(debug(true), Opts)
+  ->  debug(lwm)
+  ;   true
+  ),
+  
   % Process the directory option.
   memberchk(directory(Dir), Opts),
   make_directory_path(Dir),
@@ -40,7 +47,8 @@ lwm_init:-
   assert(user:file_search_path(data, Dir)),
 
   % Process the reset option.
-  (   memberchk(debug(true), Opts)
+  (   debugging(lwm),
+      memberchk(reset(true), Opts)
   ->  lwm_reset
   ;   true
   ),
