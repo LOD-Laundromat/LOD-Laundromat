@@ -14,9 +14,9 @@
 
 :- use_module(library(ansi_term)).
 
-:- use_module(library(portray_text)).
-:- portray_text(true).
-:- set_portray_text(ellipsis, 100).
+%:- use_module(library(portray_text)).
+%:- portray_text(true).
+%:- set_portray_text(ellipsis, 100).
 
 :- use_module(library(debug)).
 :- debug(loop_until_true).
