@@ -46,9 +46,9 @@ pick_pending(Md5):-
         loop_until_true(
           sparql_select(
             virtuoso_query,
-            [ll,llo],
+            [ll],
             [p,o],
-            [rdf(ll-Md5,p,o)],
+            [rdf(ll:Md5,p,o)],
             Result,
             [default_graph(BasketGraph),distinct(true)]
           )
