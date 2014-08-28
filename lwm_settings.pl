@@ -119,7 +119,7 @@ init_lwm_sparql_endpoints:-
   assert(lwm_sparql_endpoint(cliopatria_update)),
   sparql_register_endpoint(
     cliopatria_update,
-    uri_components(http,'localhost:3020','',_,_),
+    'http://localhost:3020',
     cliopatria
   ),
   
@@ -127,7 +127,7 @@ init_lwm_sparql_endpoints:-
   assert(lwm_sparql_endpoint(virtuoso_update)),
   sparql_register_endpoint(
     virtuoso_update,
-    uri_components(http,'localhost:8890','/sparql-auth',_,_),
+    ['http://localhost:8890/sparql-auth'],
     virtuoso
   ),
   sparql_db:assert(
@@ -138,7 +138,7 @@ init_lwm_sparql_endpoints:-
   assert(lwm_sparql_endpoint(virtuoso_query)),
   sparql_register_endpoint(
     virtuoso_query,
-    uri_components(http,'sparql.backend.lodlaundromat.org','',_,_),
+    ['http://sparql.backend.lodlaundromat.org'],
     virtuoso
   ),
   sparql_db:assert(
@@ -149,7 +149,7 @@ init_lwm_sparql_endpoints:-
   assert(lwm_sparql_endpoint(virtuoso_http)),
   sparql_register_endpoint(
     virtuoso_http,
-    uri_components(http,'localhost','/sparql/graph',_,_),
+    ['http://localhost/sparql/graph'],
     virtuoso
   ),
   sparql_db:assert(
