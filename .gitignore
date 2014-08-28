@@ -1,6 +1,7 @@
 *~
 *#
 *.db
+*.out
 data/
 *.log
 daemon.pl
