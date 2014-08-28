@@ -119,10 +119,10 @@ init_lwm_sparql_endpoints:-
   assert(lwm_sparql_endpoint(cliopatria_update)),
   sparql_register_endpoint(
     cliopatria_update,
-    'http://localhost:3020',
+    ['http://localhost:3020'],
     cliopatria
   ),
-  
+
   % Update (debug reset)
   assert(lwm_sparql_endpoint(virtuoso_update)),
   sparql_register_endpoint(
@@ -133,7 +133,7 @@ init_lwm_sparql_endpoints:-
   sparql_db:assert(
     sparql_endpoint_option0(virtuoso_update, path_suffix(update), '')
   ),
-  
+
   % Query.
   assert(lwm_sparql_endpoint(virtuoso_query)),
   sparql_register_endpoint(
