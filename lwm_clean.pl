@@ -30,9 +30,9 @@ The cleaning process performed by the LOD Washing Machine.
 :- use_module(lwm(lwm_messages)).
 :- use_module(lwm(lwm_settings)).
 :- use_module(lwm(lwm_sparql_query)).
+:- use_module(lwm(lwm_store_triple)).
 :- use_module(lwm(md5)).
 :- use_module(lwm(noRdf_store)).
-:- use_module(lwm(store_triple)).
 
 :- dynamic(debug:debug_md5/1).
 :- multifile(debug:debug_md5/1).

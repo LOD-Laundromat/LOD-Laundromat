@@ -29,7 +29,7 @@ $ curl --data "url=http://acm.rkbexplorer.com/id/998550" http://lodlaundry.wbeek
 
 :- use_module(lwm(lwm_settings)).
 :- use_module(lwm(lwm_sparql_query)).
-:- use_module(lwm(store_triple)).
+:- use_module(lwm(lwm_store_triple)).
 
 
 
