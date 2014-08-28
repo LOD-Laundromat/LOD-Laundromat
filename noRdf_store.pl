@@ -70,7 +70,7 @@ post_rdf_triples0(Options):-
     (
       % Use HTTP Graph Store on Virtuoso.
       sparql_post_named_graph(virtuoso_http, NG, Triples, Options),
-      
+
       % Use SPARQL Update on ClioPatria.
       (   debugging(lwm)
       ->  sparql_insert_data(cliopatria_update, Triples, [NG], Options)
@@ -88,7 +88,8 @@ store_triple(S1, P1, O1):-
   assert(rdf_triple(S2, P2, O2)).
 
 
-rdf_term_map(X-Y, Z):- !,
+rdf_term_map(X-Y0, Z):- !,
+  (number(Y0) -> atom_number(Y, Y0) ; Y = Y0),
   rdf_global_id(X:Y, Z).
 rdf_term_map(literal(type(X-Y,Q)), literal(type(Z,Q))):- !,
   rdf_global_id(X:Y, Z).

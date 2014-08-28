@@ -1,5 +1,5 @@
 :- module(
-  tcp_socket_schema,
+  tcp_schema,
   [
     assert_tcp_socket_error_schema/1 % +Graph:atom
   ]
@@ -19,6 +19,7 @@ Asserts the schema for TCP socket.
 :- use_module(plRdf_term(rdf_datatype)).
 :- use_module(plRdf_term(rdf_string)).
 
+:- rdf_register_prefix(http, 'http://lodlaundromat.org/http-status/ontology/').
 :- rdf_register_prefix(tcp, 'http://lodlaundromat.org/tcp-status/ontology/').
 
 
@@ -37,7 +38,7 @@ rdfs_assert_status(Code, Class, ReasonPhrase, Graph):-
   rdf_global_id(tcp:Code, Uri),
   rdfs_assert_instance(Uri, Class, ReasonPhrase, _, Graph),
   rdf_assert_datatype(Uri, http:statusCode, Code, xsd:int, Graph),
-  rdf_assert_string(Uri, http:reasonPhrase, ReasonPhrase, Graph).
+  rdf_assert_string(Uri, http:reasonPhrase, ReasonPhrase, Graph),
   Def = 'https://gist.github.com/gabrielfalcao/4216897',
   rdf_assert(Uri, rdfs:isDefinedBy, Def, Graph).
 
