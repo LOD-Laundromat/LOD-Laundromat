@@ -24,6 +24,7 @@ The cleaning process performed by the LOD Washing Machine.
 :- use_module(pl(pl_log)).
 
 :- use_module(plRdf_ser(ctriples_write)).
+:- use_module(plRdf_ser(rdf_file_db)).
 :- use_module(plRdf_ser(rdf_guess_format)).
 
 :- use_module(lwm(lwm_basket)).
@@ -121,8 +122,8 @@ clean_datastream(Md5, File, Read, ContentType, VoidUrls):-
   % using the content type and the file extension as suggestions.
   ignore(md5_file_extension(Md5, FileExtension)),
   rdf_guess_format_md5(Md5, Read, FileExtension, ContentType, Format),
-  store_triple(ll-Md5, llo-serialization_format,
-      literal(type(xsd-string,Format))),
+  rdf_serialization(_, _, Format, _, Uri),
+  store_triple(ll-Md5, llo-serialization_format, Uri),
 
   % Load all triples by parsing the data document
   % according to the guessed RDF serialization format.
