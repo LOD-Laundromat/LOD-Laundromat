@@ -204,12 +204,12 @@ distill_archive_format([H1,H2|T], Format):-
 %! filter_archive_formats(
 %!   +Lists1:list(list(nvpair)),
 %!   -Formats:ordset(atom),
-%!   -Lists2(list(list(nvpair)))
+%!   -Lists2:list(list(nvpair))
 %! ) is det.
 
 filter_archive_formats([], [], []).
 filter_archive_formats([L1|Ls1], Fs1, [L2|Ls2]):-
-  selectchk(filter(F), L1, L2),
+  selectchk(format(F), L1, L2),
   filter_archive_formats(Ls1, Fs2, Ls2),
   ord_add_element(Fs2, F, Fs1).
 

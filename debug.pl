@@ -27,6 +27,5 @@
 :- dynamic(debug:debug_md5/1).
 :- multifile(debug:debug_md5/1).
 
-debug:debug_md5('baa7651083fc7e429fb6f1f98fe15856'). % false
 debug:debug_md5('cfee1f887364ff5c4311a5ba7b416a96'). % false
-debug:debug_md5('f4f0beffd8c21e195f9b41d3056c3b10'). % ssl_error(ssl_verify) GITHUB
+%debug:debug_md5('f4f0beffd8c21e195f9b41d3056c3b10'). % ssl_error(ssl_verify) GITHUB
