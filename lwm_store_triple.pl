@@ -52,6 +52,7 @@ the stored triples are sent in a SPARQL Update request
 :- use_module(plXsd_datetime(xsd_dateTime_ext)).
 
 :- use_module(lwm(noRdf_store)).
+:- use_module(lwm_schema(tcp_schema)).
 
 :- rdf_register_prefix(http, 'http://lodlaundromat.org/http-status/ontology/').
 
@@ -152,21 +153,27 @@ store_end_unpack0(Md5):-
 % Not an exception.
 store_exception(_, true):- !.
 % Format exceptions.
-store_exception(Md5, exception(Exception)):- !,
-  store_exception0(Md5, Exception).
+store_exception(Md5, exception(Error)):- !,
+  store_error(Md5, Error).
 % Catch-all.
 store_exception(Md5, Exception):-
   with_output_to(atom(String), write_canonical_blobs(Exception)),
   store_triple(ll-Md5, llo-exception, literal(type(xsd-string,String))).
 
-store_exception0(Md5, error(http_status(Status))):-
-  rdf_global_id(http:Status, Uri),
+store_error(Md5, error(http_status(Status),_)):-
   (   between(400, 599, Status)
-  ->  rdf_assert(Md5, llo:exception, Uri)
+  ->  store_triple(Md5, llo-exception, http-Status)
   ;   true
   ),
-  rdf_assert(Md5, llo:http_status, Uri).
-
+  store_triple(Md5, llo-http_status, http-Status).
+store_error(Md5, error(no_rdf(_))):-
+  rdf_assert(Md5, llo-serialization_format, llo-unrecognizedFormat).
+store_error(Md5, error(socket_error(Reason))):-
+  tcp_schema:tcp_socket_error(Status, Reason), !,
+  store_triple(Md5, llo-exception, tcp-Status).
+store_error(Md5, Error):-
+  gtrace,
+  store_error(Md5, Error).
 
 %! store_file_extension(+Md5:atom, +FileExtension:atom) is det.
 
