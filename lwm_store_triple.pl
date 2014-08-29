@@ -163,21 +163,21 @@ store_exception(Md5, Exception):-
 
 store_error(Md5, error(http_status(Status),_)):-
   (   between(400, 599, Status)
-  ->  store_triple(Md5, llo-exception, http-Status)
+  ->  store_triple(ll-Md5, llo-exception, http-Status)
   ;   true
   ),
-  store_triple(Md5, llo-http_status, http-Status).
+  store_triple(ll-Md5, llo-http_status, http-Status).
 store_error(Md5, error(no_rdf(_))):-
-  store_triple(Md5, llo-serialization_format, llo-unrecognizedFormat).
+  store_triple(ll-Md5, llo-serialization_format, llo-unrecognizedFormat).
 store_error(_, error(socket_error('Host not found'), _)):- !. % @tbd
 store_error(_, error(socket_error('Try Again'), _)):- !. % @tbd
 store_error(Md5, error(socket_error(ReasonPhrase), _)):-
   tcp_error(C, ReasonPhrase), !,
-  store_triple(Md5, llo-exception, tcp-C).
+  store_triple(ll-Md5, llo-exception, tcp-C).
 store_error(Md5, error(ssl_error(ssl_verify), _)):-
-  store_triple(Md5, llo-exception, exception-sslError).
+  store_triple(ll-Md5, llo-exception, exception-sslError).
 store_error(Md5, error(timeout_error(read,_),_)):-
-  store_triple(Md5, llo-exception, exception-readTimeoutError).
+  store_triple(ll-Md5, llo-exception, exception-readTimeoutError).
 store_error(Md5, Error):-
   gtrace,
   store_error(Md5, Error).
