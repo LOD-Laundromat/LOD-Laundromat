@@ -29,6 +29,20 @@ assert_schema(Graph):-
     'An action that is not part of ordinary operations or standards.',
     Graph
   ),
-
-
+  
+  rdfs_assert_instance(
+    exception:readTimeoutError,
+    exception:'Exception',
+    'read timeout error',
+    'Timeout occurs while reading',
+    Graph
+  ),
+  
+  rdfs_assert_instance(
+    exception:sslError,
+    exception:'Exception',
+    'SSL error',
+    'SSL error',
+    Graph
+  ).
 

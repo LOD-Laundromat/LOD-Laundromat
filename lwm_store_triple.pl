@@ -55,6 +55,7 @@ the stored triples are sent in a SPARQL Update request
 :- use_module(lwm_schema(tcp_schema)).
 
 :- rdf_register_prefix(http, 'http://lodlaundromat.org/http-status/ontology/').
+:- rdf_register_prefix(exception, 'http://lodlaundromat.org/exception/ontology/').
 
 
 
@@ -168,6 +169,10 @@ store_error(Md5, error(http_status(Status),_)):-
   store_triple(Md5, llo-http_status, http-Status).
 store_error(Md5, error(no_rdf(_))):-
   store_triple(Md5, llo-serialization_format, llo-unrecognizedFormat).
+store_error(Md5, ssl_error(ssl_verify), _):-
+  store_triple(Md5, llo-exception, exception-sslError).
+store_error(Md5, error(timeout_error(read,_),_)):-
+  store_triple(Md5, llo-exception, exception-readTimeoutError).
 store_error(Md5, error(socket_error(ReasonPhrase), _)):-
   tcp_error(C, ReasonPhrase), !,
   store_triple(Md5, llo-exception, tcp-C).
@@ -265,9 +270,15 @@ store_stream(Md5, Stream):-
 
 %! store_warning(+Md5:atom, +Warning:compound) is det.
 
+store_warning(Md5, message(Term,warning,_)):- !,
+  store_warning0(Md5, Term).
 store_warning(Md5, Warning):-
   with_output_to(atom(String), write_canonical_blobs(Warning)),
   store_triple(ll-Md5, llo-warning, literal(type(xsd-string,String))).
+
+store_warning0(Md5, Term):-
+  gtrace,
+  store_warning0(Md5, Term).
 
 
 
