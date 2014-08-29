@@ -87,6 +87,15 @@ schema_error(Graph):-
     Graph
   ),
   
+  % error:ParserWarning
+  rdfs_assert_class(
+    error:'SgmlParserWarning',
+    error:'ParserWarning',
+    'SGML parser warning',
+    'A warning that is emitted by an SGML parser.',
+    Graph
+  ),
+  
   % error:message
   rdfs_assert_property(
     error:message,

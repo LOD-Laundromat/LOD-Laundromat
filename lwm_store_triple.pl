@@ -196,6 +196,7 @@ store_error(Md5, Error):-
   gtrace,
   store_error(Md5, Error).
 
+
 %! store_file_extension(+Md5:atom, +FileExtension:atom) is det.
 
 store_file_extension(Md5, FileExtension):-
@@ -307,7 +308,7 @@ store_warning(Md5, Warning):-
 store_warning0(Md5, sgml(sgml_parser(_),_,Line,Message)):- !,
   rdf_bnode(BNode),
   store_triple(ll-Md5, llo-warning, BNode),
-  store_triple(BNode, rdf-type, error-'ParserWarning'),
+  store_triple(BNode, rdf-type, error-'SgmlParserWarning'),
   store_triple(BNode, error-sourceLine, literal(type(xsd-integer,Line))),
   store_triple(BNode, error-message, literal(type(xsd-string,Message))).
 store_warning0(Md5, Term):-
