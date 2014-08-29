@@ -21,6 +21,8 @@ Generates the schema file for the LOD Washing Machine.
 
 :- use_module(lle(lle_settings)). % RDF prefix registration.
 
+:- rdf_register_prefix(error, 'http://lodlaundromat.org/error/ontology/').
+
 
 
 assert_schema(Graph):-
@@ -32,7 +34,7 @@ assert_schema(Graph):-
   % No URL is an archiveEntry.
   % Every data document is represented by either an archiveEntry or a URL.
 
-  % Archive.
+  % llo:Archive
   rdfs_assert_class(
     llo:'Archive',
     dcat:'Distribution',
@@ -45,7 +47,7 @@ assert_schema(Graph):-
     Graph
   ),
 
-  % ArchiveEntry.
+  % llo:ArchiveEntry
   rdfs_assert_class(
     llo:'ArchiveEntry',
     dcat:'Distribution',
@@ -58,7 +60,7 @@ assert_schema(Graph):-
     Graph
   ),
 
-  % URL.
+  % llo:URL
   rdfs_assert_class(
     llo:'URL',
     dcat:'Distribution',
@@ -76,7 +78,7 @@ assert_schema(Graph):-
     Graph
   ),
 
-  % Added.
+  % llo:added
   rdfs_assert_property(
     llo:added,
     dcat:'Distribution',
@@ -87,9 +89,9 @@ assert_schema(Graph):-
     Graph
   ),
 
-  % Archive file type
+  % llo:archiveFileType
   rdfs_assert_property(
-    llo:archive_file_type,
+    llo:archiveFileType,
     llo:'Archive',
     xsd:string,
     'archive file type',
@@ -99,9 +101,19 @@ assert_schema(Graph):-
     Graph
   ),
 
-  % Archive format.
+  % llo:archiveFilters
   rdfs_assert_property(
-    llo:archive_format,
+    llo:archiveFilters,
+    llo:'Archive',
+    rdf:'List',
+    'archive filters',
+    'A list of filters that were applied in unpacking the archive.',
+    Graph
+  ),
+  
+  % llo:archiveFormat
+  rdfs_assert_property(
+    llo:archiveFormat,
     llo:'Archive',
     xsd:string,
     'archive format',
@@ -109,9 +121,9 @@ assert_schema(Graph):-
     Graph
   ),
 
-  % Archive last modified.
+  % llo:archiveLastModified
   rdfs_assert_property(
-    llo:archive_last_modified,
+    llo:archiveLastModified,
     llo:'Archive',
     xsd:dateTime,
     'archive last modified',
@@ -119,9 +131,9 @@ assert_schema(Graph):-
     Graph
   ),
 
-  % Archive size.
+  % llo:archiveSize
   rdfs_assert_property(
-    llo:archive_size,
+    llo:archiveSize,
     llo:'Archive',
     xsd:integer,
     'archive size',
@@ -129,9 +141,9 @@ assert_schema(Graph):-
     Graph
   ),
 
-  % Byte count.
+  % llo:byteCount
   rdfs_assert_property(
-    llo:byte_count,
+    llo:byteCount,
     dcat:'Distribution',
     xsd:integer,
     'byte count',
@@ -140,9 +152,9 @@ assert_schema(Graph):-
     Graph
   ),
 
-  % Character count.
+  % llo:characterCount
   rdfs_assert_property(
-    llo:character_count,
+    llo:characterCount,
     dcat:'Distribution',
     xsd:integer,
     'character count',
@@ -151,9 +163,9 @@ assert_schema(Graph):-
     Graph
   ),
 
-  % Contains entry.
+  % llo:containsEntry
   rdfs_assert_property(
-    llo:contains_entry,
+    llo:containsEntry,
     llo:'Archive',
     llo:'ArchiveEntry',
     'contains entry',
@@ -161,9 +173,9 @@ assert_schema(Graph):-
     Graph
   ),
 
-  % Content length.
+  % llo:contentLength
   rdfs_assert_property(
-    llo:content_length,
+    llo:contentLength,
     llo:'URL',
     xsd:integer,
     'content length',
@@ -176,9 +188,9 @@ assert_schema(Graph):-
     Graph
   ),
 
-  % Content type.
+  % llo:contentType
   rdfs_assert_property(
-    llo:content_type,
+    llo:contentType,
     llo:'URL',
     xsd:string,
     'content type',
@@ -190,7 +202,7 @@ assert_schema(Graph):-
     Graph
   ),
 
-  % Duplicates.
+  % llo:duplicates
   rdfs_assert_property(
     llo:duplicates,
     dcat:'Distribution',
@@ -201,9 +213,9 @@ assert_schema(Graph):-
     Graph
   ),
 
-  % End cleaning.
+  % llo:endClean
   rdfs_assert_property(
-    llo:end_clean,
+    llo:endClean,
     dcat:'Distribution',
     xsd:dateTime,
     'end cleaning a data document',
@@ -212,9 +224,9 @@ assert_schema(Graph):-
     Graph
   ),
 
-  % End unpacking.
+  % llo:endUnpack
   rdfs_assert_property(
-    llo:end_unpack,
+    llo:endUnpack,
     dcat:'Distribution',
     xsd:dateTime,
     'end unpacking a data document',
@@ -223,11 +235,11 @@ assert_schema(Graph):-
     Graph
   ),
 
-  % Exception.
+  % llo:exception
   rdfs_assert_property(
     llo:exception,
     dcat:'Distribution',
-    xsd:string,
+    error:'Exception',
     status,
     'A blockig exception that occured somewhere during the unpacking \c
      and/or cleaning process. Possible values: \c
@@ -237,9 +249,9 @@ assert_schema(Graph):-
     Graph
   ),
 
-  % File extension.
+  % llo:fileExtension
   rdfs_assert_property(
-    llo:file_extension,
+    llo:fileExtension,
     dcat:'Distribution',
     xsd:string,
     'file extension',
@@ -249,9 +261,9 @@ assert_schema(Graph):-
     Graph
   ),
 
-  % Last modified.
+  % llo:lastModified
   rdfs_assert_property(
-    llo:last_modified,
+    llo:lastModified,
     llo:'URL',
     xsd:dateTime,
     'last modified',
@@ -264,9 +276,9 @@ assert_schema(Graph):-
     Graph
   ),
 
-  % Line count.
+  % llo:lineCount
   rdfs_assert_property(
-    llo:line_count,
+    llo:lineCount,
     dcat:'Distribution',
     xsd:integer,
     'line count',
@@ -275,7 +287,7 @@ assert_schema(Graph):-
     Graph
   ),
 
-  % MD5.
+  % llo:md5
   rdfs_assert_property(
     llo:md5,
     dcat:'Distribution',
@@ -289,7 +301,7 @@ assert_schema(Graph):-
     Graph
   ),
 
-  % Path.
+  % llo:path
   rdfs_assert_property(
     llo:path,
     dcat:'ArchiveEntry',
@@ -300,11 +312,11 @@ assert_schema(Graph):-
     Graph
   ),
 
-  % Serialization format
+  % llo:serializationFormat
   rdfs_assert_property(
-    llo:serialization_format,
+    llo:serializationFormat,
     dcat:'Distribution',
-    rdfs:'Resource',
+    rdfs:'Resource', % @tbd Ideally this would be `format:Format`.
     'serialization format',
     'The RDF serialization format that the dirty data document \c
      was parsed in.\n\c
@@ -316,7 +328,7 @@ assert_schema(Graph):-
     Graph
   ),
 
-  % Size.
+  % llo:size
   rdfs_assert_property(
     llo:size,
     dcat:'Distribution',
@@ -328,9 +340,9 @@ assert_schema(Graph):-
     Graph
   ),
 
-  % Start cleaning.
+  % llo:startClean
   rdfs_assert_property(
-    llo:start_clean,
+    llo:startClean,
     dcat:'Distribution',
     xsd:dateTime,
     'start cleaning a data document',
@@ -339,9 +351,9 @@ assert_schema(Graph):-
     Graph
   ),
 
-  % Start unpacking.
+  % llo:startUnpack
   rdfs_assert_property(
-    llo:start_unpack,
+    llo:startUnpack,
     dcat:'Distribution',
     xsd:dateTime,
     'start unpacking a data document',
@@ -350,7 +362,7 @@ assert_schema(Graph):-
     Graph
   ),
 
-  % Triples.
+  % llo:triples
   rdfs_assert_property(
     llo:triples,
     dcat:'Distribution',
@@ -363,7 +375,7 @@ assert_schema(Graph):-
     Graph
   ),
 
-  % URL.
+  % llo:url
   rdfs_assert_property(
     llo:url,
     llo:'URL',
@@ -374,11 +386,11 @@ assert_schema(Graph):-
     Graph
   ),
   
-  % Warning.
+  % llo:warning
   rdfs_assert_property(
     llo:warning,
     dcat:'Distribution',
-    xsd:string,
+    error:'Warning',
     message,
     'A non-blocking warning message that is either emitted \c
      while downloading, unpacking, or cleaning a dirty data document.\n\c
@@ -388,7 +400,7 @@ assert_schema(Graph):-
     Graph
   ),
   
-  % unrecognizedFormat
+  % llo:unrecognizedFormat
   rdfs_assert_instance(
     llo:unrecognizedFormat,
     rdfs:'Resource',
