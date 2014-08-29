@@ -21,10 +21,7 @@ Asserts the schema of HTTP statuses.
 :- use_module(plRdf_term(rdf_datatype)).
 :- use_module(plRdf_term(rdf_string)).
 
-:- rdf_register_prefix(
-     http,
-     'http://lodlaundromat.org/http-status/ontology/'
-   ).
+:- rdf_register_prefix(http, 'http://lodlaundromat.org/http/ontology/').
 :- rdf_register_prefix('http-w3c', 'http://www.w3.org/2011/http#').
 
 :- meta_predicate(rdfs_assert_status(r,r,r,+,+,+,+)).

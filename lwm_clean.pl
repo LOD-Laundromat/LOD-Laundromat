@@ -123,7 +123,7 @@ clean_datastream(Md5, File, Read, ContentType, VoidUrls):-
   ignore(md5_file_extension(Md5, FileExtension)),
   rdf_guess_format_md5(Md5, Read, FileExtension, ContentType, Format),
   rdf_serialization(_, _, Format, _, Uri),
-  store_triple(ll-Md5, llo-serialization_format, Uri),
+  store_triple(ll-Md5, llo-serializationFormat, Uri),
 
   % Load all triples by parsing the data document
   % according to the guessed RDF serialization format.

@@ -54,8 +54,8 @@ the stored triples are sent in a SPARQL Update request
 :- use_module(lwm(noRdf_store)).
 :- use_module(lwm_schema(tcp_schema)).
 
-:- rdf_register_prefix(http, 'http://lodlaundromat.org/http-status/ontology/').
-:- rdf_register_prefix(exception, 'http://lodlaundromat.org/exception/ontology/').
+:- rdf_register_prefix(error, 'http://lodlaundromat.org/error/ontology/').
+:- rdf_register_prefix(http, 'http://lodlaundromat.org/http/ontology/').
 
 
 
@@ -82,20 +82,29 @@ store_archive_entry(ParentMd5, EntryPath, EntryProperties1):-
   store_triple(ll-EntryMd5, llo-path, literal(type(xsd-string,EntryPath))),
 
   store_triple(ll-ParentMd5, rdf-type, llo-'Archive'),
-  store_triple(ll-ParentMd5, llo-contains_entry, ll-EntryMd5),
+  store_triple(ll-ParentMd5, llo-containsEntry, ll-EntryMd5),
 
   selectchk(mtime(LastModified), EntryProperties1, EntryProperties2),
   % @tbd Store as xsd:dateTime.
-  store_triple(ll-EntryMd5, llo-archive_last_modified,
-      literal(type(xsd-integer,LastModified))),
+  store_triple(
+    ll-EntryMd5,
+    llo-archiveLastModified,
+    literal(type(xsd-integer,LastModified))
+  ),
 
   selectchk(size(ByteSize), EntryProperties2, EntryProperties3),
-  store_triple(ll-EntryMd5, llo-archive_size,
-      literal(type(xsd-integer,ByteSize))),
+  store_triple(
+    ll-EntryMd5,
+    llo-archiveSize,
+    literal(type(xsd-integer,ByteSize))
+  ),
 
   selectchk(filetype(ArchiveFileType), EntryProperties3, []),
-  store_triple(ll-EntryMd5, llo-archive_file_type,
-      literal(type(xsd-string,ArchiveFileType))),
+  store_triple(
+    ll-EntryMd5,
+    llo-archiveFileType,
+    literal(type(xsd-string,ArchiveFileType))
+  ),
 
   store_added(EntryMd5).
 
@@ -104,13 +113,18 @@ store_archive_entry(ParentMd5, EntryPath, EntryProperties1):-
 
 store_archive_filters(_, []):- !.
 store_archive_filters(Md5, ArchiveFilters):-
-  forall(
-    nth0(I, ArchiveFilters, ArchiveFilter),
-    (
-      atomic_list_concat([archive_filter,I], '_', P),
-      store_triple(ll-Md5, llo-P, literal(type(xsd-string,ArchiveFilter)))
-    )
-  ).
+  rdf_bnode(BNode),
+  store_triple(ll-Md5, llo-archiveFilters, BNode),
+  store_archive_filters0(BNode, ArchiveFilters).
+
+store_archive_filters0(BNode, [H]):- !,
+  store_triple(BNode, rdf-first, literal(type(xsd-string,H))),
+  store_triple(BNode, rdf-rest, rdf-nil).
+store_archive_filters0(BNode1, [H|T]):-
+  store_triple(BNode1, rdf-first, literal(type(xsd-string,H))),
+  rdf_bnode(BNode2),
+  store_triple(BNode1, rdf-rest, BNode2),
+  store_archive_filters0(BNode2, T).
 
 
 %! store_end_clean(+Md5:atom) is det.
@@ -121,7 +135,7 @@ store_end_clean(Md5):-
 
 store_end_clean0(Md5):-
   get_dateTime(Now),
-  store_triple(ll-Md5, llo-end_clean, literal(type(xsd-dateTime,Now))),
+  store_triple(ll-Md5, llo-endClean, literal(type(xsd-dateTime,Now))),
   atom_concat('/', Md5, Path),
   uri_components(
     Datadump,
@@ -146,7 +160,7 @@ store_end_unpack(Md5, Status):-
 
 store_end_unpack0(Md5):-
   get_dateTime(Now),
-  store_triple(ll-Md5, llo-end_unpack, literal(type(xsd-dateTime,Now))).
+  store_triple(ll-Md5, llo-endUnpack, literal(type(xsd-dateTime,Now))).
 
 
 %! store_exception(+Md5:atom, +Status:or([boolean,compound])) is det.
@@ -168,16 +182,16 @@ store_error(Md5, error(http_status(Status),_)):-
   ),
   store_triple(Md5, llo-http_status, http-Status).
 store_error(Md5, error(no_rdf(_))):-
-  store_triple(Md5, llo-serialization_format, llo-unrecognizedFormat).
+  store_triple(Md5, llo-serializationFormat, llo-unrecognizedFormat).
 store_error(_, error(socket_error('Host not found'), _)):- !. % @tbd
 store_error(_, error(socket_error('Try Again'), _)):- !. % @tbd
 store_error(Md5, error(socket_error(ReasonPhrase), _)):-
   tcp_error(C, ReasonPhrase), !,
   store_triple(Md5, llo-exception, tcp-C).
 store_error(Md5, error(ssl_error(ssl_verify), _)):-
-  store_triple(Md5, llo-exception, exception-sslError).
+  store_triple(Md5, llo-exception, error-sslError).
 store_error(Md5, error(timeout_error(read,_),_)):-
-  store_triple(Md5, llo-exception, exception-readTimeoutError).
+  store_triple(Md5, llo-exception, error-readTimeoutError).
 store_error(Md5, Error):-
   gtrace,
   store_error(Md5, Error).
@@ -185,8 +199,11 @@ store_error(Md5, Error):-
 %! store_file_extension(+Md5:atom, +FileExtension:atom) is det.
 
 store_file_extension(Md5, FileExtension):-
-  store_triple(ll-Md5, llo-file_extension,
-      literal(type(xsd-string,FileExtension))).
+  store_triple(
+    ll-Md5,
+    llo-fileExtension,
+    literal(type(xsd-string,FileExtension))
+  ).
 
 
 %! store_http(
@@ -199,19 +216,28 @@ store_file_extension(Md5, FileExtension):-
 store_http(Md5, ContentLength, ContentType, LastModified):-
   unless(
     ContentLength == '',
-    store_triple(ll-Md5, llo-content_length,
-        literal(type(xsd-integer,ContentLength)))
+    store_triple(
+      ll-Md5,
+      llo-contentLength,
+      literal(type(xsd-integer,ContentLength))
+    )
   ),
   unless(
     ContentType == '',
-    store_triple(ll-Md5, llo-content_type,
-        literal(type(xsd-string,ContentType)))
+    store_triple(
+      ll-Md5,
+      llo-contentType,
+      literal(type(xsd-string,ContentType))
+    )
   ),
   % @tbd Store as xsd:dateTime
   unless(
     LastModified == '',
-    store_triple(ll-Md5, llo-last_modified,
-        literal(type(xsd-string,LastModified)))
+    store_triple(
+      ll-Md5,
+      llo-lastModified,
+      literal(type(xsd-string,LastModified))
+    )
   ).
 
 
@@ -244,14 +270,14 @@ store_start_clean(Md5):-
 
 store_start_clean0(Md5):-
   get_dateTime(Now),
-  store_triple(ll-Md5, llo-start_clean, literal(type(xsd-dateTime,Now))).
+  store_triple(ll-Md5, llo-startClean, literal(type(xsd-dateTime,Now))).
 
 
 %! store_start_unpack(+Md5:atom) is det.
 
 store_start_unpack(Md5):-
   get_dateTime(Now),
-  store_triple(ll-Md5, llo-start_unpack, literal(type(xsd-dateTime,Now))),
+  store_triple(ll-Md5, llo-startUnpack, literal(type(xsd-dateTime,Now))),
   post_rdf_triples(Md5).
 
 
@@ -261,13 +287,13 @@ store_stream(Md5, Stream):-
   stream_property(Stream, position(Position)),
 
   stream_position_data(byte_count, Position, ByteCount),
-  store_triple(ll-Md5, llo-byte_count, literal(type(xsd-integer,ByteCount))),
+  store_triple(ll-Md5, llo-byteCount, literal(type(xsd-integer,ByteCount))),
 
   stream_position_data(char_count, Position, CharCount),
-  store_triple(ll-Md5, llo-char_count, literal(type(xsd-integer,CharCount))),
+  store_triple(ll-Md5, llo-charCount, literal(type(xsd-integer,CharCount))),
 
   stream_position_data(line_count, Position, LineCount),
-  store_triple(ll-Md5, llo-line_count, literal(type(xsd-integer,LineCount))).
+  store_triple(ll-Md5, llo-lineCount, literal(type(xsd-integer,LineCount))).
 
 
 %! store_warning(+Md5:atom, +Warning:compound) is det.
@@ -281,9 +307,9 @@ store_warning(Md5, Warning):-
 store_warning0(Md5, sgml(sgml_parser(_),_,Line,Message)):- !,
   rdf_bnode(BNode),
   store_triple(ll-Md5, llo-warning, BNode),
-  store_triple(BNode, rdf-type, exception-'ParserWarning'),
-  store_triple(BNode, exception-line, literal(type(xsd-integer,Line))),
-  store_triple(BNode, exception-message, literal(type(xsd-string,Message))).
+  store_triple(BNode, rdf-type, error-'ParserWarning'),
+  store_triple(BNode, error-sourceLine, literal(type(xsd-integer,Line))),
+  store_triple(BNode, error-message, literal(type(xsd-string,Message))).
 store_warning0(Md5, Term):-
   gtrace,
   store_warning0(Md5, Term).

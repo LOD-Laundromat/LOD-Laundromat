@@ -177,10 +177,17 @@ unpack_file(Md5, ArchiveFile):-
     pairs_keys_values(EntryPairs, EntryPaths, EntryProperties1),
 
     % Store the archive format.
-    filter_archive_formats(EntryProperties1, ArchiveFormats, EntryProperties2),
+    filter_archive_formats(
+      EntryProperties1,
+      ArchiveFormats,
+      EntryProperties2
+    ),
     distill_archive_format(ArchiveFormats, ArchiveFormat),
-    store_triple(ll-Md5, llo-archive_format,
-        literal(type(xsd-string,ArchiveFormat))),
+    store_triple(
+      ll-Md5,
+      llo-archiveFormat,
+      literal(type(xsd-string,ArchiveFormat))
+    ),
 
     maplist(store_archive_entry(Md5), EntryPaths, EntryProperties2),
     store_skip_clean(Md5)
