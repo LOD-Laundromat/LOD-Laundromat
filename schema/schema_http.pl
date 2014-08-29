@@ -1,7 +1,7 @@
 :- module(
-  http_status_schema,
+  schema_http,
   [
-    assert_http_status_schema/1 % +Graph:atom
+    schema_http/1 % +Graph:atom
   ]
 ).
 
@@ -21,14 +21,16 @@ Asserts the schema of HTTP statuses.
 :- use_module(plRdf_term(rdf_datatype)).
 :- use_module(plRdf_term(rdf_string)).
 
+:- rdf_register_prefix(error, 'http://lodlaundromat.org/error/ontology/').
 :- rdf_register_prefix(http, 'http://lodlaundromat.org/http/ontology/').
 :- rdf_register_prefix('http-w3c', 'http://www.w3.org/2011/http#').
 
-:- meta_predicate(rdfs_assert_status(r,r,r,+,+,+,+)).
+:- rdf_meta(rdfs_assert_status(r,r,+,+,+,+)).
+:- rdf_meta(rdfs_assert_status(r,r,+,+,+,+,+)).
 
 
 
-assert_http_status_schema(Graph):-
+schema_http(Graph):-
   % http:Status
   rdfs_assert_class(
     http:'Status',
@@ -43,7 +45,7 @@ assert_http_status_schema(Graph):-
     'http-w3c':'StatusCode',
     Graph
   ),
-  
+
   % http:1xx
   rdfs_assert_class(
     http:'1xx',
@@ -53,7 +55,7 @@ assert_http_status_schema(Graph):-
     Graph
   ),
   rdfs_assert_status(
-    http:100,
+    http:'100',
     http:'1xx',
     'Continue',
     'Indicates that the initial part of a request has been received \c
@@ -64,7 +66,7 @@ assert_http_status_schema(Graph):-
     Graph
   ),
   rdfs_assert_status(
-    http:101,
+    http:'101',
     http:'1xx',
     'Switching Protocols',
     'Indicates that the server understands and is willing to comply \c
@@ -73,7 +75,7 @@ assert_http_status_schema(Graph):-
     101,
     Graph
   ),
-  
+
   % http:2xx
   rdfs_assert_class(
     http:'2xx',
@@ -83,7 +85,7 @@ assert_http_status_schema(Graph):-
     Graph
   ),
   rdfs_assert_status(
-    http:200,
+    http:'200',
     http:'2xx',
     'OK',
     'Indicates that the request has succeeded.',
@@ -91,7 +93,7 @@ assert_http_status_schema(Graph):-
     Graph
   ),
   rdfs_assert_status(
-    http:201,
+    http:'201',
     http:'2xx',
     'Created',
     'Indicates that the request has been fulfilled and has resulted in \c
@@ -100,7 +102,7 @@ assert_http_status_schema(Graph):-
     Graph
   ),
   rdfs_assert_status(
-    http:202,
+    http:'202',
     http:'2xx',
     'Accepted',
     'Indicates that the request has been accepted for processing, \c
@@ -109,7 +111,7 @@ assert_http_status_schema(Graph):-
     Graph
   ),
   rdfs_assert_status(
-    http:203,
+    http:'203',
     http:'2xx',
     'Non-Authoritative Information',
     'Indicates that the request was successful but the enclosed payload \c
@@ -119,7 +121,7 @@ assert_http_status_schema(Graph):-
     Graph
   ),
   rdfs_assert_status(
-    http:204,
+    http:'204',
     http:'2xx',
     'No Content',
     'Indicates that the server has successfully fulfilled the request \c
@@ -129,7 +131,7 @@ assert_http_status_schema(Graph):-
     Graph
   ),
   rdfs_assert_status(
-    http:205,
+    http:'205',
     http:'2xx',
     'Reset Content',
     'Indicates that the server has fulfilled the request and desires that \c
@@ -138,7 +140,7 @@ assert_http_status_schema(Graph):-
     205,
     Graph
   ),
-  
+
   % http:3xx
   rdfs_assert_class(
     http:'3xx',
@@ -148,7 +150,7 @@ assert_http_status_schema(Graph):-
     Graph
   ),
   rdfs_assert_status(
-    http:300,
+    http:'300',
     http:'3xx',
     'Multiple Choices',
     'Indicates that the target resource has more than one representation, \c
@@ -160,7 +162,7 @@ assert_http_status_schema(Graph):-
     Graph
   ),
   rdfs_assert_status(
-    http:301,
+    http:'301',
     http:'3xx',
     'Moved Permanently',
     'Indicates that the target resource has been assigned \c
@@ -170,7 +172,7 @@ assert_http_status_schema(Graph):-
     Graph
   ),
   rdfs_assert_status(
-    http:302,
+    http:'302',
     http:'3xx',
     'Found',
     'Indicates that the target resource resides temporarily under \c
@@ -179,7 +181,7 @@ assert_http_status_schema(Graph):-
     Graph
   ),
   rdfs_assert_status(
-    http:303,
+    http:'303',
     http:'3xx',
     'See Other',
     'Indicates that the server is redirecting the user agent to \c
@@ -190,7 +192,7 @@ assert_http_status_schema(Graph):-
     Graph
   ),
   rdfs_assert_status(
-    http:305,
+    http:'305',
     http:'3xx',
     'Use Proxy',
     'The requested resource MUST be accessed through the proxy given by \c
@@ -200,7 +202,7 @@ assert_http_status_schema(Graph):-
     'http://tools.ietf.org/html/rfc2616'
   ),
   rdfs_assert_status(
-    http:306,
+    http:'306',
     http:'3xx',
     'Unused',
     'Subsequent requests should use the specified proxy.',
@@ -209,7 +211,7 @@ assert_http_status_schema(Graph):-
     'https://tools.ietf.org/html/draft-cohen-http-305-306-responses-00'
   ),
   rdfs_assert_status(
-    http:307,
+    http:'307',
     http:'3xx',
     'Temporary Redirect',
     'Indicates that the target resource resides temporarily \c
@@ -219,17 +221,7 @@ assert_http_status_schema(Graph):-
     Graph
   ),
   rdfs_assert_status(
-    http:307,
-    http:'3xx',
-    'Temporary Redirect',
-    'Indicates that the target resource resides temporarily \c
-     under a different URI and the user agent MUST NOT change \c
-     the request method if it performs an automatic redirection to that URI.',
-    307,
-    Graph
-  ),
-  rdfs_assert_status(
-    http:308,
+    http:'308',
     http:'3xx',
     'Permanent Redirect',
     'The request, and all future requests should be repeated \c
@@ -238,7 +230,7 @@ assert_http_status_schema(Graph):-
     Graph,
     'http://tools.ietf.org/html/rfc7238'
   ),
-  
+
   % http:4xx
   rdfs_assert_class(
     http:'4xx',
@@ -247,9 +239,9 @@ assert_http_status_schema(Graph):-
     'An HTTP status that is unsuccessful due to a client error.',
     Graph
   ),
-  rdfs_assert_subclass(http:'4xx', exception:'Exception', Graph),
+  rdfs_assert_subclass(http:'4xx', error:'Exception', Graph),
   rdfs_assert_status(
-    http:400,
+    http:'400',
     http:'4xx',
     'Bad Request',
     'Indicates that the server cannot or will not process the request \c
@@ -258,7 +250,7 @@ assert_http_status_schema(Graph):-
     Graph
   ),
   rdfs_assert_status(
-    http:402,
+    http:'402',
     http:'4xx',
     'Payment Required',
     'Reserved for future use.',
@@ -266,7 +258,7 @@ assert_http_status_schema(Graph):-
     Graph
   ),
   rdfs_assert_status(
-    http:403,
+    http:'403',
     http:'4xx',
     'Forbidden',
     'Indicates that the server understood the request \c
@@ -275,7 +267,7 @@ assert_http_status_schema(Graph):-
     Graph
   ),
   rdfs_assert_status(
-    http:404,
+    http:'404',
     http:'4xx',
     'Not Found',
     'Indicates that the origin server did not find a current representation \c
@@ -284,7 +276,7 @@ assert_http_status_schema(Graph):-
     Graph
   ),
   rdfs_assert_status(
-    http:405,
+    http:'405',
     http:'4xx',
     'Method Not Allowed',
     'Indicates that the method received in the request-line is known \c
@@ -293,7 +285,7 @@ assert_http_status_schema(Graph):-
     Graph
   ),
   rdfs_assert_status(
-    http:406,
+    http:'406',
     http:'4xx',
     'Not Acceptable',
     'Indicates that the target resource does not have a current \c
@@ -305,7 +297,7 @@ assert_http_status_schema(Graph):-
     Graph
   ),
   rdfs_assert_status(
-    http:408,
+    http:'408',
     http:'4xx',
     'Request Timeout',
     'Indicates that the server did not receive a complete request message \c
@@ -314,7 +306,7 @@ assert_http_status_schema(Graph):-
     Graph
   ),
   rdfs_assert_status(
-    http:409,
+    http:'409',
     http:'4xx',
     'Conflict',
     'Indicates that the request could not be completed due to a conflict \c
@@ -323,7 +315,7 @@ assert_http_status_schema(Graph):-
     Graph
   ),
   rdfs_assert_status(
-    http:410,
+    http:'410',
     http:'4xx',
     'Gone',
     'Indicates that access to the target resource is no longer available \c
@@ -332,7 +324,7 @@ assert_http_status_schema(Graph):-
     Graph
   ),
   rdfs_assert_status(
-    http:411,
+    http:'411',
     http:'4xx',
     'Length Required',
     'Indicates that the server refuses to accept the request \c
@@ -341,7 +333,7 @@ assert_http_status_schema(Graph):-
     Graph
   ),
   rdfs_assert_status(
-    http:413,
+    http:'413',
     http:'4xx',
     'Payload Too Large',
     'Indicates that the server is refusing to process a request \c
@@ -351,7 +343,7 @@ assert_http_status_schema(Graph):-
     Graph
   ),
   rdfs_assert_status(
-    http:414,
+    http:'414',
     http:'4xx',
     'URI Too Long',
     'Indicates that the server is refusing to service the request \c
@@ -361,7 +353,7 @@ assert_http_status_schema(Graph):-
     Graph
   ),
   rdfs_assert_status(
-    http:415,
+    http:'415',
     http:'4xx',
     'Unsupported Media Type',
     'Indicates that the origin server is refusing to service the request \c
@@ -371,7 +363,7 @@ assert_http_status_schema(Graph):-
     Graph
   ),
   rdfs_assert_status(
-    http:417,
+    http:'417',
     http:'4xx',
     'Expectation Failed',
     'Indicates that the expectation given in the request\'s Expect \c
@@ -380,7 +372,7 @@ assert_http_status_schema(Graph):-
     Graph
   ),
   rdfs_assert_status(
-    http:426,
+    http:'426',
     http:'4xx',
     'Upgrade Required',
     'Indicates that the server refuses to perform the request \c
@@ -389,7 +381,7 @@ assert_http_status_schema(Graph):-
     426,
     Graph
   ),
-  
+
   % http:5xx
   rdfs_assert_class(
     http:'5xx',
@@ -398,9 +390,9 @@ assert_http_status_schema(Graph):-
     'An HTTP status that is unsuccessful due to a server error.',
     Graph
   ),
-  rdfs_assert_subclass(http:'5xx', exception:'Exception', Graph),
+  rdfs_assert_subclass(http:'5xx', error:'Exception', Graph),
   rdfs_assert_status(
-    http:501,
+    http:'501',
     http:'5xx',
     'Not Implemented',
     'Indicates that the server does not support the functionality required \c
@@ -409,7 +401,7 @@ assert_http_status_schema(Graph):-
     Graph
   ),
   rdfs_assert_status(
-    http:502,
+    http:'502',
     http:'5xx',
     'Bad Gateway',
     'Indicates that the server, while acting as a gateway or proxy, \c
@@ -419,7 +411,7 @@ assert_http_status_schema(Graph):-
     Graph
   ),
   rdfs_assert_status(
-    http:503,
+    http:'503',
     http:'5xx',
     'Service Unavailable',
     'Indicates that the server is currently unable to handle the request \c
@@ -429,7 +421,7 @@ assert_http_status_schema(Graph):-
     Graph
   ),
   rdfs_assert_status(
-    http:504,
+    http:'504',
     http:'5xx',
     'Gateway Timeout',
     'Indicates that the server, while acting as a gateway or proxy, \c
@@ -439,7 +431,7 @@ assert_http_status_schema(Graph):-
     Graph
   ),
   rdfs_assert_status(
-    http:505,
+    http:'505',
     http:'5xx',
     'HTTP Version Not Supported',
     'Indicates that the server does not support, or refuses to support, \c
@@ -447,7 +439,7 @@ assert_http_status_schema(Graph):-
     505,
     Graph
   ),
-  
+
   % http:statusCode
   rdfs_assert_property(
     http:statusCode,
@@ -462,7 +454,7 @@ assert_http_status_schema(Graph):-
     'http-w3c':statusCodeNumber,
     Graph
   ),
-  
+
   % http:reasonPhrase
   rdfs_assert_property(
     http:reasonPhrase,
@@ -477,20 +469,20 @@ assert_http_status_schema(Graph):-
 
 % Helpers.
 
-rdfs_assert_status(Uri, Class, ReasonPhrase, Code, Comment, Graph):-
+rdfs_assert_status(Uri, Class, ReasonPhrase, Comment, Code, Graph):-
   rdfs_assert_status(
     Uri,
     Class,
     ReasonPhrase,
-    Code,
     Comment,
+    Code,
     Graph,
     'http://tools.ietf.org/html/rfc7231'
   ).
 
-rdfs_assert_status(Uri, Class, ReasonPhrase, Code, Comment, Graph, Def):-
+rdfs_assert_status(Uri, Class, ReasonPhrase, Comment, Code, Graph, Def):-
   rdfs_assert_instance(Uri, Class, ReasonPhrase, Comment, Graph),
-  rdf_assert_datatype(Uri, http:statusCode, Code, xsd:int, Graph),
+  rdf_assert_datatype(Uri, http:statusCode, Code, xsd:integer, Graph),
   rdf_assert_string(Uri, http:reasonPhrase, ReasonPhrase, Graph),
   rdf_assert(Uri, rdfs:isDefinedBy, Def, Graph).
 

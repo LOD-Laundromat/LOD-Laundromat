@@ -21,3 +21,9 @@
 [submodule "plDcg"]
 	path = plDcg
 	url = https://github.com/wouterbeek/plDcg.git
+[submodule "plGraphViz"]
+	path = plGraphViz
+	url = https://github.com/wouterbeek/plGraphViz.git
+[submodule "plHtml"]
+	path = plHtml
+	url = https://github.com/wouterbeek/plHtml.git

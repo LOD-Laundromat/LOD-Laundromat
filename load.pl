@@ -15,6 +15,8 @@
     plTree,
     plXsd,
     plRdf,
-    plSparql
+    plSparql,
+    plHtml,
+    plGraphViz
 ]).
 

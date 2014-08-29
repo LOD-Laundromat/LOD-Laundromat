@@ -52,7 +52,7 @@ the stored triples are sent in a SPARQL Update request
 :- use_module(plXsd_datetime(xsd_dateTime_ext)).
 
 :- use_module(lwm(noRdf_store)).
-:- use_module(lwm_schema(tcp_schema)).
+:- use_module(lwm_schema(schema_tcp)).
 
 :- rdf_register_prefix(error, 'http://lodlaundromat.org/error/ontology/').
 :- rdf_register_prefix(http, 'http://lodlaundromat.org/http/ontology/').
@@ -180,7 +180,7 @@ store_error(Md5, error(http_status(Status),_)):-
   ->  store_triple(ll-Md5, llo-exception, http-Status)
   ;   true
   ),
-  store_triple(ll-Md5, llo-http_status, http-Status).
+  store_triple(ll-Md5, llo-httpStatus, http-Status).
 store_error(Md5, error(no_rdf(_))):-
   store_triple(ll-Md5, llo-serializationFormat, llo-unrecognizedFormat).
 store_error(_, error(socket_error('Host not found'), _)):- !. % @tbd

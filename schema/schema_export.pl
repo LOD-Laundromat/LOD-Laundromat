@@ -1,7 +1,8 @@
 :- module(
   schema_export,
   [
-    schema_export/0
+    schema_export/0,
+    schema_export/1 % +Graph:atom
   ]
 ).
 
@@ -18,29 +19,40 @@ Exports the LOD Laundromat schema.
 :- use_module(os(pdf)).
 
 :- use_module(plRdf(rdf_export)).
+:- use_module(plRdf_ser(rdf_serial)).
 
 :- use_module(plGraphViz(gv_file)).
 
-:- use_module(lle_schema(schema)).
+:- use_module(lwm_schema(schema_error)).
+:- use_module(lwm_schema(schema_http)).
+:- use_module(lwm_schema(schema_llo)).
+:- use_module(lwm_schema(schema_tcp)).
 
 
 
-%! export_schema is det.
+%! schema_export is det.
 
-export_schema:-
-  export_schema(ll).
+schema_export:-
+  schema_error(error),
+  schema_http(http),
+  schema_llo(llo),
+  schema_tcp(tcp),
 
-%! export_schema(+Graph:atom) is det.
-
-export_schema(Graph):-
-  assert_schema(Graph),
-  
   % GIF
   maplist(
-    rdf_register_prefix_color(Graph),
-    [dcat, ll,   rdf,rdfs],
-    [black,green,red,blue]
+    rdf_register_prefix_color(_),
+    [dcat,  error, http, ll,    llo,   rdf,  rdfs, tcp],
+    [black, red,   red,  green, green, blue, blue, red]
   ),
+
+  forall(
+    member(Graph, [error,http,llo,tcp]),
+    schema_export(Graph)
+  ).
+
+schema_export(Graph):-
+  absolute_file_name(data(Graph), RdfFile, [access(write),file_type(turtle)]),
+  rdf_save_any(RdfFile, [format(turtle),graph(Graph)]),
   rdf_graph_to_gif(
     Graph,
     Gif,
@@ -52,11 +64,14 @@ export_schema(Graph):-
   ),
   
   % DOT
-  absolute_file_name(data(ll), DotFile, [access(write),file_type(dot)]),
+  absolute_file_name(data(Graph), DotFile, [access(write),file_type(dot)]),
   gif_to_gv_file(Gif, DotFile, [method(sfdp),to_file_type(dot)]),
-  
+
   % PDF
-  absolute_file_name(data(ll), PdfFile, [access(write),file_type(pdf)]),
+  absolute_file_name(data(Graph), PdfFile, [access(write),file_type(pdf)]),
   gif_to_gv_file(Gif, PdfFile, [method(sfdp),to_file_type(pdf)]),
-  open_pdf(PdfFile).
+  
+  % DEB
+  %%%%open_pdf(PdfFile),
+  true.
 

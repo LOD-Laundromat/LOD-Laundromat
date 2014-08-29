@@ -1,7 +1,7 @@
 :- module(
-  error_schema,
+  schema_error,
   [
-    assert_error_schema/1 % +Graph:atom
+    schema_error/1 % +Graph:atom
   ]
 ).
 
@@ -17,16 +17,18 @@ Asserts the exception schema.
 
 :- use_module(plRdf(rdfs_build)).
 :- use_module(plRdf(rdfs_build2)).
+:- use_module(plRdf_owl(owl_build)).
 
 :- rdf_register_prefix(error, 'http://lodlaundromat.org/error/ontology/').
 :- rdf_register_prefix(http, 'http://lodlaundromat.org/http/ontology/').
+:- rdf_register_prefix(tcp, 'http://lodlaundromat.org/tcp/ontology/').
 
 
 
-assert_error_schema(Graph):-
+schema_error(Graph):-
   % error:'Error'
   rdfs_assert_class(
-    exception:'Error',
+    error:'Error',
     rdfs:'Resource',
     error,
     'An recognized irregularity in program execution.',
@@ -59,6 +61,11 @@ assert_error_schema(Graph):-
     error:'Exception',
     'TCP exception',
     'An exception that is emitted in TCP communication.',
+    Graph
+  ),
+  owl_assert_class_equivalence(
+    error:'TcpException',
+    tcp:'TcpException',
     Graph
   ),
   

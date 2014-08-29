@@ -1,7 +1,7 @@
 :- module(
-  tcp_schema,
+  schema_tcp,
   [
-    assert_tcp_schema/1, % +Graph:atom
+    schema_tcp/1, % +Graph:atom
     tcp_error/2 % -C:atom
                 % +Text:atom
   ]
@@ -25,12 +25,14 @@ Asserts the schema for TCP socket.
 :- rdf_register_prefix(http, 'http://lodlaundromat.org/http/ontology/').
 :- rdf_register_prefix(tcp, 'http://lodlaundromat.org/tcp/ontology/').
 
+:- rdf_meta(rdfs_assert_status(+,r,+,+)).
 
 
-assert_tcp_schema(Graph):-
+
+schema_tcp(Graph):-
   forall(
     tcp_error(C, ReasonPhrase),
-    rdfs_assert_status(C, error:'TcpException', ReasonPhrase, Graph)
+    rdfs_assert_status(C, tcp:'TcpException', ReasonPhrase, Graph)
   ).
 
 

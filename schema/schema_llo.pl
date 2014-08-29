@@ -1,7 +1,7 @@
 :- module(
-  ll_schema,
+  schema_llo,
   [
-    init_schema/1 % +Graph:atom
+    schema_llo/1 % +Graph:atom
   ]
 ).
 
@@ -16,16 +16,16 @@ Generates the schema file for the LOD Washing Machine.
 
 :- use_module(library(semweb/rdf_db)).
 
-:- use_module(plRdf(rdf_prefixes)). % RDF prefix registrations.
+:- use_module(plRdf(rdf_prefixes)). % RDF prefix registrations (DCAT).
 :- use_module(plRdf(rdfs_build2)).
 
-:- use_module(lle(lle_settings)). % RDF prefix registration.
-
 :- rdf_register_prefix(error, 'http://lodlaundromat.org/error/ontology/').
+:- rdf_register_prefix(http, 'http://lodlaundromat.org/http/ontology/').
+:- rdf_register_prefix(llo, 'http://lodlaundromat.org/ontology/').
 
 
 
-assert_schema(Graph):-
+schema_llo(Graph):-
   % ArchiveEntry and URL partition the space of data documents.
   % Some data documents are in Archive.
 
@@ -260,7 +260,18 @@ assert_schema(Graph):-
      extracted, and that have a file extension.',
     Graph
   ),
-
+  
+  % llo:httpStatus
+  rdfs_assert_property(
+    llo:httpStatus,
+    llo:'URL',
+    http:'Status',
+    'HTTP status',
+    'The HTTP status of the reply that was received when requesting \c
+     the resource located at the URL.',
+    Graph
+  ),
+  
   % llo:lastModified
   rdfs_assert_property(
     llo:lastModified,
@@ -409,10 +420,4 @@ assert_schema(Graph):-
      the RDF serialization formats.',
     Graph
   ).
-
-
-init_schema(Graph):-
-  rdf_graph(Graph), !.
-init_schema(Graph):-
-  assert_schema(Graph).
 
