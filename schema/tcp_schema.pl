@@ -21,6 +21,7 @@ Asserts the schema for TCP socket.
 :- use_module(plRdf_term(rdf_datatype)).
 :- use_module(plRdf_term(rdf_string)).
 
+:- rdf_register_prefix(http, 'http://lodlaundromat.org/http-status/ontology/').
 :- rdf_register_prefix(tcp, 'http://lodlaundromat.org/tcp-status/ontology/').
 
 

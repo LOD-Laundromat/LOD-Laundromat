@@ -167,10 +167,10 @@ store_error(Md5, error(http_status(Status),_)):-
   ),
   store_triple(Md5, llo-http_status, http-Status).
 store_error(Md5, error(no_rdf(_))):-
-  rdf_assert(Md5, llo-serialization_format, llo-unrecognizedFormat).
-store_error(Md5, error(socket_error(Reason))):-
-  tcp_schema:tcp_socket_error(Status, Reason), !,
-  store_triple(Md5, llo-exception, tcp-Status).
+  store_triple(Md5, llo-serialization_format, llo-unrecognizedFormat).
+store_error(Md5, error(socket_error(ReasonPhrase), _)):-
+  tcp_error(C, ReasonPhrase), !,
+  store_triple(Md5, llo-exception, tcp-C).
 store_error(Md5, Error):-
   gtrace,
   store_error(Md5, Error).
