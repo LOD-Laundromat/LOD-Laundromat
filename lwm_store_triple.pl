@@ -179,14 +179,14 @@ store_exception(Md5, Exception):-
   store_triple(ll-Md5, llo-exception, literal(type(xsd-string,String))).
 
 % Existence error.
-store_error(Md5, error(existence_error(Kind1,Obj,context(_Pred,Msg)))):- !,
+store_error(Md5, error(existence_error(Kind1,Obj),context(_Pred,Msg))):- !,
   dcg_phrase(capitalize, Kind1, Kind2),
   atom_concat(Kind2, 'ExistenceError', Class),
   rdf_bnode(BNode),
-  store_triple(ll-Md5, llo:exception, BNode),
+  store_triple(ll-Md5, llo-exception, BNode),
   store_triple(BNode, rdf-type, error-Class),
-  store_triple(BNode, error:message, literal(type(xsd-string,Msg))),
-  store_triple(BNode, error:object, literal(type(xsd-string,Obj))).
+  store_triple(BNode, error-message, literal(type(xsd-string,Msg))),
+  store_triple(BNode, error-object, literal(type(xsd-string,Obj))).
 % HTTP status.
 store_error(Md5, error(http_status(Status),_)):-
   (   between(400, 599, Status)
