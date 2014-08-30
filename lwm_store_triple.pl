@@ -49,6 +49,9 @@ the stored triples are sent in a SPARQL Update request
 :- use_module(pl(pl_control)).
 :- use_module(pl(pl_log)).
 
+:- use_module(plDcg(dcg_content)).
+:- use_module(plDcg(dcg_generic)).
+
 :- use_module(plXsd_datetime(xsd_dateTime_ext)).
 
 :- use_module(lwm(noRdf_store)).
@@ -175,6 +178,15 @@ store_exception(Md5, Exception):-
   with_output_to(atom(String), write_canonical_blobs(Exception)),
   store_triple(ll-Md5, llo-exception, literal(type(xsd-string,String))).
 
+% Existence error.
+store_error(Md5, error(existence_error(Kind1,Obj,context(_Pred,Msg)))):- !,
+  dcg_phrase(capitalize, Kind1, Kind2),
+  atom_concat(Kind2, 'ExistenceError', Class),
+  rdf_bnode(BNode),
+  store_triple(ll-Md5, llo:exception, BNode),
+  store_triple(BNode, rdf-type, error-Class),
+  store_triple(BNode, error:message, literal(type(xsd-string,Msg))),
+  store_triple(BNode, error:object, literal(type(xsd-string,Obj))).
 % HTTP status.
 store_error(Md5, error(http_status(Status),_)):-
   (   between(400, 599, Status)
@@ -196,7 +208,7 @@ store_error(Md5, error(socket_error(ReasonPhrase), _)):-
 % Socket error: TBD.
 store_error(Md5, error(socket_error(Undefined), _)):- !,
   format(atom(LexExpr), 'socket_error(~a)', [Undefined]),
-  store_triple(Md5, llo-exception, literal(type(xsd-string,LexExpr))).
+  store_triple(ll-Md5, llo-exception, literal(type(xsd-string,LexExpr))).
 % SSL verification error.
 store_error(Md5, error(ssl_error(ssl_verify), _)):-
   store_triple(ll-Md5, llo-exception, error-sslError).

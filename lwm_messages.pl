@@ -23,7 +23,7 @@ Print messages for the LOD Washing Machine.
 % )
 
 prolog:message(lwm_end(Mode,Md5,Source,Status,Warnings)) -->
-  status(Md5, Status),
+  status(Status),
   warnings(Warnings),
   ['[END '],
   lwm_mode(Mode),
@@ -77,9 +77,9 @@ warnings([H|T]) -->
   warnings(T).
 
 % @tbd Send an email whenever an MD5 fails.
-status(_, false) --> !,
+status(false) --> !,
   ['    [STATUS] FALSE',nl].
-status(_, true) --> !.
-status(_, Status) -->
+status(true) --> !.
+status(Status) -->
   ['    [STATUS] ~w'-[Status],nl].
 
