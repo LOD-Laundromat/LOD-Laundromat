@@ -55,6 +55,7 @@ the stored triples are sent in a SPARQL Update request
 
 :- rdf_register_prefix(error, 'http://lodlaundromat.org/error/ontology/').
 :- rdf_register_prefix(http, 'http://lodlaundromat.org/http/ontology/').
+:- rdf_register_prefix(tcp, 'http://lodlaundromat.org/tcp/ontology/').
 
 
 
@@ -174,23 +175,35 @@ store_exception(Md5, Exception):-
   with_output_to(atom(String), write_canonical_blobs(Exception)),
   store_triple(ll-Md5, llo-exception, literal(type(xsd-string,String))).
 
+% HTTP status.
 store_error(Md5, error(http_status(Status),_)):-
   (   between(400, 599, Status)
   ->  store_triple(ll-Md5, llo-exception, http-Status)
   ;   true
   ),
   store_triple(ll-Md5, llo-httpStatus, http-Status).
+% IO error.
+store_error(Md5, error(io_error(read,_Stream),context(_Predicate,Message))):-
+  tcp_error(C, Message), !,
+  store_triple(ll-Md5, llo-exception, tcp-C).
+% No RDF Media Type.
 store_error(Md5, error(no_rdf(_))):-
   store_triple(ll-Md5, llo-serializationFormat, llo-unrecognizedFormat).
-store_error(_, error(socket_error('Host not found'), _)):- !. % @tbd
-store_error(_, error(socket_error('Try Again'), _)):- !. % @tbd
+% Socket error.
 store_error(Md5, error(socket_error(ReasonPhrase), _)):-
   tcp_error(C, ReasonPhrase), !,
   store_triple(ll-Md5, llo-exception, tcp-C).
+% Socket error: TBD.
+store_error(Md5, error(socket_error(Undefined), _)):- !,
+  format(atom(LexExpr), 'socket_error(~a)', [Undefined]),
+  store_triple(Md5, llo-exception, literal(type(xsd-string,LexExpr))).
+% SSL verification error.
 store_error(Md5, error(ssl_error(ssl_verify), _)):-
   store_triple(ll-Md5, llo-exception, error-sslError).
+% Read timeout error.
 store_error(Md5, error(timeout_error(read,_),_)):-
   store_triple(ll-Md5, llo-exception, error-readTimeoutError).
+% DEB
 store_error(Md5, Error):-
   gtrace,
   store_error(Md5, Error).
