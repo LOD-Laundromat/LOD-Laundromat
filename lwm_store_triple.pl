@@ -178,6 +178,13 @@ store_exception(Md5, Exception):-
   with_output_to(atom(String), write_canonical_blobs(Exception)),
   store_triple(ll-Md5, llo-exception, literal(type(xsd-string,String))).
 
+% Archive error.
+store_error(Md5, error(archive_error(Code,ReasonPhrase),_)):- !,
+  rdf_bnode(BNode),
+  store_triple(ll-Md5, llo-exception, BNode),
+  store_triple(BNode, rdf-type, error-'ArchiveError'),
+  store_triple(BNode, error-message, literal(type(xsd-string,ReasonPhrase))),
+  store_triple(BNode, error-code, literal(type(xsd-integer,Code))).
 % Existence error.
 store_error(Md5, error(existence_error(Kind1,Obj),context(_Pred,Msg))):- !,
   dcg_phrase(capitalize, Kind1, Kind2),
@@ -194,6 +201,8 @@ store_error(Md5, error(http_status(Status),_)):- !,
   ;   true
   ),
   store_triple(ll-Md5, llo-httpStatus, http-Status).
+store_error(Md5, error(io_error(read,_),context(_,'Inappropriate ioctl for device'))):- !,
+  store_triple(ll-Md5, llo-exception, literal(type(xsd-string,'Inappropriate ioctl for device'))).
 % IO error.
 store_error(Md5, error(io_error(read,_Stream),context(_Predicate,Message))):-
   tcp_error(C, Message), !,
