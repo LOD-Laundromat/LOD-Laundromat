@@ -188,7 +188,7 @@ store_error(Md5, error(existence_error(Kind1,Obj),context(_Pred,Msg))):- !,
   store_triple(BNode, error-message, literal(type(xsd-string,Msg))),
   store_triple(BNode, error-object, literal(type(xsd-string,Obj))).
 % HTTP status.
-store_error(Md5, error(http_status(Status),_)):-
+store_error(Md5, error(http_status(Status),_)):- !,
   (   between(400, 599, Status)
   ->  store_triple(ll-Md5, llo-exception, http-Status)
   ;   true
@@ -199,8 +199,17 @@ store_error(Md5, error(io_error(read,_Stream),context(_Predicate,Message))):-
   tcp_error(C, Message), !,
   store_triple(ll-Md5, llo-exception, tcp-C).
 % No RDF Media Type.
-store_error(Md5, error(no_rdf(_))):-
+store_error(Md5, error(no_rdf(_))):- !,
   store_triple(ll-Md5, llo-serializationFormat, llo-unrecognizedFormat).
+% Permission error.
+store_error(Md5, error(permission_error(redirect,_,Url),_)):- !,
+  % It is not allowed to perform Action on the object Term
+  % that is of the given Type.
+  rdf_bnode(BNode),
+  store_triple(ll-Md5, llo-exception, BNode),
+  store_triple(BNode, rdf-type, error-permissionError),
+  store_triple(BNode, error-action, error-redirectionLoop),
+  store_triple(BNode, error-object, Url).
 % Socket error.
 store_error(Md5, error(socket_error(ReasonPhrase), _)):-
   tcp_error(C, ReasonPhrase), !,
@@ -210,10 +219,10 @@ store_error(Md5, error(socket_error(Undefined), _)):- !,
   format(atom(LexExpr), 'socket_error(~a)', [Undefined]),
   store_triple(ll-Md5, llo-exception, literal(type(xsd-string,LexExpr))).
 % SSL verification error.
-store_error(Md5, error(ssl_error(ssl_verify), _)):-
+store_error(Md5, error(ssl_error(ssl_verify), _)):- !,
   store_triple(ll-Md5, llo-exception, error-sslError).
 % Read timeout error.
-store_error(Md5, error(timeout_error(read,_),_)):-
+store_error(Md5, error(timeout_error(read,_),_)):- !,
   store_triple(ll-Md5, llo-exception, error-readTimeoutError).
 % DEB
 store_error(Md5, Error):-
