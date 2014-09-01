@@ -17,6 +17,7 @@ Stores error term denoting exceptions in a LOD format.
 */
 
 :- use_module(library(semweb/rdf_db)).
+:- use_module(library(uri)).
 
 :- use_module(plDcg(dcg_content)).
 :- use_module(plDcg(dcg_generic)).
@@ -30,12 +31,48 @@ Stores error term denoting exceptions in a LOD format.
 
 
 
+store_lod_exception(Md5, error(existence_error(file,File),context(_Pred,Message))):-
+  (   Message == 'No such file or directory'
+  ->  ClassName = 'FileExistenceException'
+  ;   fail
+  ), !,
+  rdf_bnode(BNode),
+  store_triple(ll-Md5, llo-exception, BNode),
+  store_triple(BNode, rdf-type, error-ClassName),
+  uri_file_name(Uri, File),
+  store_triple(BNode, error-object, Uri).
+
 store_lod_exception(Md5, error(http_status(Status),_)):- !,
   (   between(400, 599, Status)
   ->  store_triple(ll-Md5, llo-exception, http-Status)
   ;   true
   ),
   store_triple(ll-Md5, llo-exception, http-Status).
+
+store_lod_exception(Md5, error(no_rdf(_))):- !,
+  store_triple(Md5, llo-serializationFormat, llo-unrecognizedFormat).
+
+store_lod_exception(Md5, error(socket_error(Message),_)):-
+  (   Message == 'Connection timed out'
+  ->  InstanceName = connectionTimedOut
+  ;   Message == 'Connection refused'
+  ->  InstanceName = connectionRefused
+  ;   Message == 'No route to host'
+  ->  InstanceName = noRouteToHost
+  ;   Message == 'Host not found'
+  ->  InstanceName = hostNotFound
+  ;   Message == 'Try Again'
+  ->  InstanceName = tryAgain
+  ;   fail
+  ), !,
+  store_triple(ll-Md5, llo-exception, llo-InstanceName).
+
+store_lod_exception(Md5, error(ssl_error(ssl_verify),_)):- !,
+  store_triple(ll-Md5, llo-exception, error-sslError).
+
+store_lod_exception(Md5, error(timeout_error(read,_Stream),context(_Pred,_))):- !,
+  store_triple(ll-Md5, llo-exception, llo-readTimeoutException).
+
 % DEB
 store_lod_exception(Md5, Error):-
   gtrace,
@@ -115,7 +152,6 @@ store_error(Md5, error(error_code(Undefined), _)):- !,
   store_triple(ll-Md5, llo-exception, literal(type(xsd-string,LexExpr))).
 % SSL verification error.
 store_error(Md5, error(ssl_error(ssl_verify), _)):- !,
-  store_triple(ll-Md5, llo-exception, error-sslError).
 % Read timeout error.
 store_error(Md5, error(timeout_error(read,_),_)):- !,
   store_triple(ll-Md5, llo-exception, error-readTimeoutError).
