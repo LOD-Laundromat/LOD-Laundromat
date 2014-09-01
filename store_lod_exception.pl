@@ -1,8 +1,10 @@
 :- module(
   store_lod_exception,
   [
-    store_lod_exception/2 % +Md5:atom
-                          % +ErrorTerm:compound
+    store_lod_exception/2, % +Md5:atom
+                           % +ErrorTerm:compound
+    store_lod_warning/2 % +Md5:atom
+                        % +WarningTerm:compound
   ]
 ).
 
@@ -14,12 +16,41 @@ Stores error term denoting exceptions in a LOD format.
 @version 2014/09
 */
 
+:- use_module(library(semweb/rdf_db)).
+
+:- use_module(plDcg(dcg_content)).
+:- use_module(plDcg(dcg_generic)).
+
+:- use_module(lwm(noRdf_store)).
+
+:- rdf_register_prefix(error, 'http://lodlaundromat.org/error/ontology/').
+:- rdf_register_prefix(http,  'http://lodlaundromat.org/http/ontology/').
+:- rdf_register_prefix(ll,    'http://lodlaundromat.org/resource/').
+:- rdf_register_prefix(llo,   'http://lodlaundromat.org/ontology/').
 
 
+
+store_lod_exception(Md5, error(http_status(Status),_)):- !,
+  (   between(400, 599, Status)
+  ->  store_triple(ll-Md5, llo-exception, http-Status)
+  ;   true
+  ),
+  store_triple(ll-Md5, llo-exception, http-Status).
 % DEB
 store_lod_exception(Md5, Error):-
   gtrace,
   store_lod_exception(Md5, Error).
+
+
+store_lod_warning(Md5, sgml(sgml_parser(_),_,Line,Message)):- !,
+  rdf_bnode(BNode),
+  store_triple(ll-Md5, llo-warning, BNode),
+  store_triple(BNode, rdf-type, error-'SgmlParserWarning'),
+  store_triple(BNode, error-sourceLine, literal(type(xsd-integer,Line))),
+  store_triple(BNode, error-message, literal(type(xsd-string,Message))).
+store_lod_warning(Md5, Term):-
+  gtrace,
+  store_lod_warning(Md5, Term).
 
 
 /*
@@ -39,7 +70,7 @@ store_error(Md5, error(archive_error(Code,Message),_)):- !,
 store_error(Md5, error(existence_error(Kind1,Obj),context(_Pred,Message))):-
   error_code(Var, Message), !,
   store_triple(ll-Md5, llo-exception, error-Var),
-  
+
 % Existence error: TBD
 store_error(Md5, error(existence_error(Kind1,Obj),context(_Pred,Message))):- !,
   dcg_phrase(capitalize, Kind1, Kind2),

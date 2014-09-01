@@ -49,16 +49,10 @@ the stored triples are sent in a SPARQL Update request
 :- use_module(pl(pl_control)).
 :- use_module(pl(pl_log)).
 
-:- use_module(plDcg(dcg_content)).
-:- use_module(plDcg(dcg_generic)).
-
 :- use_module(plXsd_datetime(xsd_dateTime_ext)).
 
 :- use_module(lwm(noRdf_store)).
 :- use_module(lwm(store_lod_exception)).
-
-:- rdf_register_prefix(error, 'http://lodlaundromat.org/error/ontology/').
-:- rdf_register_prefix(http, 'http://lodlaundromat.org/http/ontology/').
 
 
 
@@ -278,20 +272,7 @@ store_stream(Md5, Stream):-
 %! store_warning(+Md5:atom, +Warning:compound) is det.
 
 store_warning(Md5, message(Term,warning,_)):- !,
-  store_warning0(Md5, Term).
-store_warning(Md5, Warning):-
-  with_output_to(atom(String), write_canonical_blobs(Warning)),
-  store_triple(ll-Md5, llo-warning, literal(type(xsd-string,String))).
-
-store_warning0(Md5, sgml(sgml_parser(_),_,Line,Message)):- !,
-  rdf_bnode(BNode),
-  store_triple(ll-Md5, llo-warning, BNode),
-  store_triple(BNode, rdf-type, error-'SgmlParserWarning'),
-  store_triple(BNode, error-sourceLine, literal(type(xsd-integer,Line))),
-  store_triple(BNode, error-message, literal(type(xsd-string,Message))).
-store_warning0(Md5, Term):-
-  gtrace,
-  store_warning0(Md5, Term).
+  store_lod_warning(Md5, Term).
 
 
 
