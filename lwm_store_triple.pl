@@ -58,7 +58,6 @@ the stored triples are sent in a SPARQL Update request
 
 :- rdf_register_prefix(error, 'http://lodlaundromat.org/error/ontology/').
 :- rdf_register_prefix(http, 'http://lodlaundromat.org/http/ontology/').
-:- rdf_register_prefix(tcp, 'http://lodlaundromat.org/tcp/ontology/').
 
 
 
@@ -179,20 +178,20 @@ store_exception(Md5, Exception):-
   store_triple(ll-Md5, llo-exception, literal(type(xsd-string,String))).
 
 % Archive error.
-store_error(Md5, error(archive_error(Code,ReasonPhrase),_)):- !,
+store_error(Md5, error(archive_error(Code,Message),_)):- !,
   rdf_bnode(BNode),
   store_triple(ll-Md5, llo-exception, BNode),
-  store_triple(BNode, rdf-type, error-'ArchiveError'),
-  store_triple(BNode, error-message, literal(type(xsd-string,ReasonPhrase))),
+  store_triple(BNode, rdf-type, error-'ArchiveException'),
+  store_triple(BNode, rdfs-comment, literal(type(xsd-string,Message))),
   store_triple(BNode, error-code, literal(type(xsd-integer,Code))).
 % Existence error.
-store_error(Md5, error(existence_error(Kind1,Obj),context(_Pred,Msg))):- !,
+store_error(Md5, error(existence_error(Kind1,Obj),context(_Pred,Message))):- !,
   dcg_phrase(capitalize, Kind1, Kind2),
   atom_concat(Kind2, 'ExistenceError', Class),
   rdf_bnode(BNode),
   store_triple(ll-Md5, llo-exception, BNode),
   store_triple(BNode, rdf-type, error-Class),
-  store_triple(BNode, error-message, literal(type(xsd-string,Msg))),
+  store_triple(BNode, rdfs-comment, literal(type(xsd-string,Message))),
   store_triple(BNode, error-object, literal(type(xsd-string,Obj))).
 % HTTP status.
 store_error(Md5, error(http_status(Status),_)):- !,
@@ -205,8 +204,8 @@ store_error(Md5, error(io_error(read,_),context(_,'Inappropriate ioctl for devic
   store_triple(ll-Md5, llo-exception, literal(type(xsd-string,'Inappropriate ioctl for device'))).
 % IO error.
 store_error(Md5, error(io_error(read,_Stream),context(_Predicate,Message))):-
-  tcp_error(C, Message), !,
-  store_triple(ll-Md5, llo-exception, tcp-C).
+  linux_error_code(VariableName, _, Message), !,
+  store_triple(ll-Md5, llo-exception, error-VariableName).
 % No RDF Media Type.
 store_error(Md5, error(no_rdf(_))):- !,
   store_triple(ll-Md5, llo-serializationFormat, llo-unrecognizedFormat).
@@ -220,9 +219,9 @@ store_error(Md5, error(permission_error(redirect,_,Url),_)):- !,
   store_triple(BNode, error-action, error-redirectionLoop),
   store_triple(BNode, error-object, Url).
 % Socket error.
-store_error(Md5, error(socket_error(ReasonPhrase), _)):-
-  tcp_error(C, ReasonPhrase), !,
-  store_triple(ll-Md5, llo-exception, tcp-C).
+store_error(Md5, error(socket_error(Message), _)):-
+  socket_error(VariableName, _, Message), !,
+  store_triple(ll-Md5, llo-exception, error-VariableName).
 % Socket error: TBD.
 store_error(Md5, error(socket_error(Undefined), _)):- !,
   format(atom(LexExpr), 'socket_error(~a)', [Undefined]),
@@ -379,48 +378,143 @@ number_of_triples_written(T) --> ['+~D'-[T]].
 
 % Helpers.
 
-tcp_error('EACCES', 'Permission denied').
-tcp_error('EADDRINUSE', 'Address already in use').
-tcp_error('EADDRNOTAVAIL', 'Cannot assign requested address').
-tcp_error('EAFNOSUPPORT', 'Address family not supported by protocol').
-tcp_error('EALREADY', 'Operation already in progress').
-tcp_error('EBADF', 'Bad file descriptor').
-tcp_error('EBADSLT', 'Invalid slot').
-tcp_error('ECONNABORTED', 'Software caused connection abort').
-tcp_error('ECONNREFUSED', 'Connection refused').
-tcp_error('ECONNRESET', 'Connection reset by peer').
-tcp_error('EDQUOT', 'Disk quota exceeded').
-tcp_error('EHOSTDOWN', 'Host is down').
-tcp_error('EHOSTUNREACH', 'No route to host').
-tcp_error('EINPROGRESS', 'Operation now in progress').
-tcp_error('EINTR', 'Interrupted system call').
-tcp_error('EIO', 'Input/output error').
-tcp_error('EISCONN', 'Transport endpoint is already connected').
-tcp_error('EINVAL', 'Invalid argument').
-tcp_error('ELOOP', 'Too many levels of symbolic links').
-tcp_error('EMSGSIZE', 'Message too long').
-tcp_error('ENETDOWN', 'Network is down').
-tcp_error('ENETRESET', 'Network dropped connection on reset').
-tcp_error('ENETUNREACH', 'Network is unreachable').
-tcp_error('ENOBUFS', 'No buffer space available').
-tcp_error('ENODATA', 'No data available').
-tcp_error('ENOENT', 'No such file or directory').
-tcp_error('ENOTCONN', 'Transport endpoint is not connected').
-tcp_error('ENOTDIR', 'Not a directory').
-tcp_error('ENOTSOCK', 'Socket operation on non-socket').
-tcp_error('EOPNOTSUPP', 'Operation not supported').
-tcp_error('EPFNOSUPPORT', 'Protocol family not supported').
-tcp_error('EPIPE', 'Broken pipe').
-tcp_error('EPROTO', 'Protocol error').
-tcp_error('EPROTONOSUPPORT', 'Protocol not supported').
-tcp_error('EPROTOTYPE', 'Protocol wrong type for socket').
-tcp_error('EREMOTE', 'Object is remote').
-tcp_error('EREMOTEIO', 'Remote I/O error').
-tcp_error('ESHUTDOWN', 'Cannot send after transport endpoint shutdown').
-tcp_error('ESTALE', 'Stale file handle').
-tcp_error('ESOCKTNOSUPPORT', 'Socket type not supported').
-tcp_error('ETIMEDOUT', 'Connection timed out').
-tcp_error('ETOOMANYREFS', 'Too many references: cannot splice').
-tcp_error('EUSERS', 'Too many users').
-tcp_error('EWOULDBLOCK', 'Resource temporarily unavailable').
+linux_error_code('EPERM',           1,   'Operation not permitted').
+linux_error_code('ENOENT',          2,   'No such file or directory').
+linux_error_code('ESRCH',           3,   'No such process').
+linux_error_code('EINTR',           4,   'Interrupted system call').
+linux_error_code('EIO',             5,   'Input/output error').
+linux_error_code('ENXIO',           6,   'No such device or address').
+linux_error_code('E2BIG',           7,   'Argument list too long').
+linux_error_code('ENOEXEC',         8,   'Exec format error').
+linux_error_code('EBADF',           9,   'Bad file descriptor').
+linux_error_code('ECHILD',          10,  'No child processes').
+linux_error_code('EAGAIN',          11,  'Resource temporarily unavailable').
+linux_error_code('ENOMEM',          12,  'Cannot allocate memory').
+linux_error_code('EACCES',          13,  'Permission denied').
+linux_error_code('EFAULT',          14,  'Bad address').
+linux_error_code('ENOTBLK',         15,  'Block device required').
+linux_error_code('EBUSY',           16,  'Device or resource busy').
+linux_error_code('EXIST',           17,  'File exists').
+linux_error_code('EXDEV',           18,  'Invalid cross-device link').
+linux_error_code('ENODEV',          19,  'No such device').
+linux_error_code('ENOTDIR',         20,  'Not a directory').
+linux_error_code('EISDIR',          21,  'Is a directory').
+linux_error_code('EINVAL',          22,  'Invalid argument').
+linux_error_code('ENFILE',          23,  'Too many open files in system').
+linux_error_code('EMFILE',          24,  'Too many open files').
+linux_error_code('ENOTTY',          25,  'Inappropriate ioctl for device').
+linux_error_code('ETXTBSY',         26,  'Text file busy').
+linux_error_code('EFBIG',           27,  'File too large').
+linux_error_code('ENOSPC',          28,  'No space left on device').
+linux_error_code('ESPIPE',          29,  'Illegal seek').
+linux_error_code('EROFS',           30,  'Read-only file system').
+linux_error_code('EMLINK',          31,  'Too many links').
+linux_error_code('EPIPE',           32,  'Broken pipe').
+linux_error_code('EDOM',            33,  'Numerical argument out of domain').
+linux_error_code('ERANGE',          34,  'Numerical result out of range').
+linux_error_code('EDEADLK',         35,  'Resource deadlock avoided').
+linux_error_code('ENAMETOOLONG',    36,  'File name too long').
+linux_error_code('ENOLCK',          37,  'No locks available').
+linux_error_code('ENOSYS',          38,  'Function not implemented').
+linux_error_code('ENOTEMPTY',       39,  'Directory not empty').
+linux_error_code('ELOOP',           40,  'Too many levels of symbolic links').
+linux_error_code('EWOULDBLOCK',     41,  'Resource temporarily unavailable').
+linux_error_code('ENOMSG',          42,  'No message of desired type').
+linux_error_code('EIDRM',           43,  'Identifier removed').
+linux_error_code('ECHRNG',          44,  'Channel number out of range').
+linux_error_code('EL2NSYNC',        45,  'Level 2 not synchronized').
+linux_error_code('EL3HLT',          46,  'Level 3 halted').
+linux_error_code('EL3RST',          47,  'Level 3 reset').
+linux_error_code('ELNRNG',          48,  'Link number out of range').
+linux_error_code('EUNATCH',         49,  'Protocol driver not attached').
+linux_error_code('ENOCSI',          50,  'No CSI structure available').
+linux_error_code('EL2HLT',          51,  'Level 2 halted').
+linux_error_code('EBADE',           52,  'Invalid exchange').
+linux_error_code('EBADR',           53,  'Invalid request descriptor').
+linux_error_code('EXFULL',          54,  'Exchange full').
+linux_error_code('ENOANO',          55,  'No anode').
+linux_error_code('EBADRQC',         56,  'Invalid request code').
+linux_error_code('EBADSLT',         57,  'Invalid slot').
+linux_error_code('EDEADLOCK',       58,  'Resource deadlock avoided').
+linux_error_code('EBFONT',          59,  'Bad font file format').
+linux_error_code('ENOSTR',          60,  'Device not a stream').
+linux_error_code('ENODATA',         61,  'No data available').
+linux_error_code('ETIME',           62,  'Timer expired').
+linux_error_code('ENOSR',           63,  'Out of streams resources').
+linux_error_code('ENONET',          64,  'Machine is not on the network').
+linux_error_code('ENOPKG',          65,  'Package not installed').
+linux_error_code('EREMOTE',         66,  'Object is remote').
+linux_error_code('ENOLINK',         67,  'Link has been severed').
+linux_error_code('EADV',            68,  'Advertise error').
+linux_error_code('ESRMNT',          69,  'Srmount error').
+linux_error_code('ECOMM',           70,  'Communication error on send').
+linux_error_code('EPROTO',          71,  'Protocol error').
+linux_error_code('EMULTIHOP',       72,  'Multihop attempted').
+linux_error_code('EDOTDOT',         73,  'RFS specific error').
+linux_error_code('EBADMSG',         74,  'Bad message').
+linux_error_code('EOVERFLOW',       75,  'Value too large for defined data type').
+linux_error_code('ENOTUNIQ',        76,  'Name not unique on network').
+linux_error_code('EBADFD',          77,  'File descriptor in bad state').
+linux_error_code('EREMCHG',         78,  'Remote address changed').
+linux_error_code('ELIBACC',         79,  'Can not access a needed shared library').
+linux_error_code('ELIBBAD',         80,  'Accessing a corrupted shared library').
+linux_error_code('ELIBSCN',         81,  '.lib section in a.out corrupted').
+linux_error_code('ELIBMAX',         82,  'Attempting to link in too many shared libraries').
+linux_error_code('ELIBEXEC',        83,  'Cannot exec a shared library directly').
+linux_error_code('EILSEQ',          84,  'Invalid or incomplete multibyte or wide character').
+linux_error_code('ERESTART',        85,  'Interrupted system call should be restarted').
+linux_error_code('ESTRPIPE',        86,  'Streams pipe error').
+linux_error_code('EUSERS',          87,  'Too many users').
+linux_error_code('ENOTSOCK',        88,  'Socket operation on non-socket').
+linux_error_code('EDESTADDRREQ',    89,  'Destination address required').
+linux_error_code('EMSGSIZE',        90,  'Message too long').
+linux_error_code('EPROTOTYPE',      91,  'Protocol wrong type for socket').
+linux_error_code('ENOPROTOOPT',     92,  'Protocol not available').
+linux_error_code('EPROTONOSUPPORT', 93,  'Protocol not supported').
+linux_error_code('ESOCKTNOSUPPORT', 94,  'Socket type not supported').
+linux_error_code('EOPNOTSUPP',      95,  'Operation not supported').
+linux_error_code('EPFNOSUPPORT',    96,  'Protocol family not supported').
+linux_error_code('EAFNOSUPPORT',    97,  'Address family not supported by protocol').
+linux_error_code('EADDRINUSE',      98,  'Address already in use').
+linux_error_code('EADDRNOTAVAIL',   99,  'Cannot assign requested address').
+linux_error_code('ENETDOWN',        100, 'Network is down').
+linux_error_code('ENETUNREACH',     101, 'Network is unreachable').
+linux_error_code('ENETRESET',       102, 'Network dropped connection on reset').
+linux_error_code('ECONNABORTED',    103, 'Software caused connection abort').
+linux_error_code('ECONNRESET',      104, 'Connection reset by peer').
+linux_error_code('ENOBUFS',         105, 'No buffer space available').
+linux_error_code('EISCONN',         106, 'Transport endpoint is already connected').
+linux_error_code('ENOTCONN',        107, 'Transport endpoint is not connected').
+linux_error_code('ESHUTDOWN',       108, 'Cannot send after transport endpoint shutdown').
+linux_error_code('ETOOMANYREFS',    109, 'Too many references: cannot splice').
+linux_error_code('ETIMEDOUT',       110, 'Connection timed out').
+linux_error_code('ECONNREFUSED',    111, 'Connection refused').
+linux_error_code('EHOSTDOWN',       112, 'Host is down').
+linux_error_code('EHOSTUNREACH',    113, 'No route to host').
+linux_error_code('EALREADY',        114, 'Operation already in progress').
+linux_error_code('EINPROGRESS',     115, 'Operation now in progress').
+linux_error_code('ESTALE',          116, 'Stale file handle').
+linux_error_code('EUCLEAN',         117, 'Structure needs cleaning').
+linux_error_code('ENOTNAM',         118, 'Not a XENIX named type file').
+linux_error_code('ENAVAIL',         119, 'No XENIX semaphores available').
+linux_error_code('EISNAM',          120, 'Is a named type file').
+linux_error_code('EREMOTEIO',       121, 'Remote I/O error').
+linux_error_code('EDQUOT',          122, 'Disk quota exceeded').
+linux_error_code('ENOMEDIUM',       123, 'No medium found').
+linux_error_code('EMEDIUMTYPE',     124, 'Wrong medium type').
+linux_error_code('ECANCELED',       125, 'Operation canceled').
+linux_error_code('ENOKEY',          126, 'Required key not available').
+linux_error_code('EKEYEXPIRED',     127, 'Key has expired').
+linux_error_code('EKEYREVOKED',     128, 'Key has been revoked').
+linux_error_code('EKEYREJECTED',    129, 'Key was rejected by service').
+linux_error_code('EOWNERDEAD',      130, 'Owner died').
+linux_error_code('ENOTRECOVERABLE', 131, 'State not recoverable').
 
+
+socket_error('EACCES',          'Permission denied').
+socket_error('EAFNOSUPPORT',    'Address family not supported by protocol').
+socket_error('EINVAL',          'Invalid argument').
+socket_error('EMFILE',          'Too many open files').
+socket_error('ENOBUFS',         'No buffer space available').
+socket_error('ENOMEM',          'Cannot allocate memory').
+socket_error('EPROTONOSUPPORT', 'Protocol not supported').
