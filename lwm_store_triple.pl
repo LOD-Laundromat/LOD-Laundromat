@@ -165,8 +165,12 @@ store_end_unpack0(Md5):-
 % Not an exception.
 store_exception(_, true):- !.
 % Format exceptions.
-store_exception(Md5, exception(Error)):- !,
-  store_lod_exception(Md5, Error).
+store_exception(Md5, exception(Error)):-
+  (  store_lod_exception(Md5, Error)
+  -> true
+  ;  gtrace,
+     store_exception(Md5, exception(Error))
+  ).
 
 
 %! store_file_extension(+Md5:atom, +FileExtension:atom) is det.
