@@ -220,7 +220,7 @@ store_error(Md5, error(permission_error(redirect,_,Url),_)):- !,
   store_triple(BNode, error-object, Url).
 % Socket error.
 store_error(Md5, error(socket_error(Message), _)):-
-  socket_error(VariableName, _, Message), !,
+  socket_error(VariableName, Message), !,
   store_triple(ll-Md5, llo-exception, error-VariableName).
 % Socket error: TBD.
 store_error(Md5, error(socket_error(Undefined), _)):- !,
