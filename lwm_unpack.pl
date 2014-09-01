@@ -91,6 +91,7 @@ unpack_md5(Md5):-
 % The given MD5 denotes a URL.
 unpack_md5(Md5):-
   md5_url(Md5, Url), !,
+  store_triple(ll-Md5, rdf-type, llo-'URL'),
 
   % Create a directory for the dirty version of the given Md5.
   md5_directory(Md5, Md5Dir),
