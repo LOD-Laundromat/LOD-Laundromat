@@ -21,6 +21,7 @@ The cleaning process performed by the LOD Washing Machine.
 :- use_module(library(uri)).
 :- use_module(library(zlib)).
 
+:- use_module(os(archive_ext)).
 :- use_module(pl(pl_log)).
 
 :- use_module(plRdf_ser(ctriples_write)).
@@ -102,8 +103,8 @@ clean_md5(Md5):-
 
   % Keep the old/dirty file around in compressed form,
   % or throw it away.
-  %%%%archive_create(DirtyFile, _),
-  delete_file(DirtyFile),
+  archive_create(DirtyFile, _),
+  %%%%delete_file(DirtyFile),
 
   % Add the new VoID URLs to the LOD Basket.
   maplist(send_to_basket, VoidUrls).

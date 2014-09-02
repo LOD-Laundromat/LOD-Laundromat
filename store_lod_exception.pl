@@ -91,6 +91,14 @@ store_lod_warning(Md5, sgml(sgml_parser(_),_,Line,Message)):- !,
   store_triple(BNode, rdf-type, error-'SgmlParserWarning'),
   store_triple(BNode, error-sourceLine, literal(type(xsd-integer,Line))),
   store_triple(BNode, error-message, literal(type(xsd-string,Message))).
+store_lod_warning(Md5, error(syntax_error(Message),stream(_Stream,Line,LinePosition,CharacterNumber))):- !,
+  rdf_bnode(BNode),
+  store_triple(ll-Md5, llo-warning, BNode),
+  store_triple(BNode, rdf-type, error-'SyntaxError'),
+  store_triple(BNode, error-sourceLine, literal(type(xsd-integer,Line))),
+  store_triple(BNode, error-linePosition, literal(type(xsd-integer,LinePosition))),
+  store_triple(BNode, error-characterNumber, literal(type(xsd-integer,CharacterNumber))),
+  store_triple(BNode, error-message, literal(type(xsd-string,Message))).
 store_lod_warning(Md5, Term):-
   gtrace,
   store_lod_warning(Md5, Term).
