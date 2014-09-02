@@ -50,6 +50,14 @@ store_lod_error(Md5, Kind, error(http_status(Status),_)):- !,
   ),
   store_triple(ll-Md5, llo-httpStatus, http-Status).
 
+% IO warning
+store_lod_error(Md5, Kind, io_warning(_Stream,Message)):-
+  (   Message == 'Illegal UTF-8 start'
+  ->  InstanceName = illegalUtf8Start
+  ;   fail
+  ),
+  store_triple(Md5, llo-Kind, llo-InstanceName).
+
 % No RDF
 store_lod_error(Md5, _, error(no_rdf(_))):- !,
   store_triple(Md5, llo-serializationFormat, llo-unrecognizedFormat).
