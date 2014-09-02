@@ -274,6 +274,8 @@ store_stream(Md5, Stream):-
 
 
 %! store_warning(+Md5:atom, +Warning:compound) is det.
+% @tbd Should we distinguish between `warning` and `error`
+%      in the second argument here?
 
 store_warning(Md5, message(Term,error,_)):- !,
   store_lod_exception(Md5, Term).
