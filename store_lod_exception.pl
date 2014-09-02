@@ -85,12 +85,16 @@ store_lod_exception(Md5, Error):-
   store_lod_exception(Md5, Error).
 
 
+
+% SGML parser
 store_lod_warning(Md5, sgml(sgml_parser(_),_,Line,Message)):- !,
   rdf_bnode(BNode),
   store_triple(ll-Md5, llo-warning, BNode),
   store_triple(BNode, rdf-type, error-'SgmlParserWarning'),
   store_triple(BNode, error-sourceLine, literal(type(xsd-integer,Line))),
   store_triple(BNode, error-message, literal(type(xsd-string,Message))).
+
+% DEB
 store_lod_warning(Md5, Term):-
   gtrace,
   store_lod_warning(Md5, Term).
@@ -162,3 +166,4 @@ store_error(Md5, error(ssl_error(ssl_verify), _)):- !,
 store_error(Md5, error(timeout_error(read,_),_)):- !,
   store_triple(ll-Md5, llo-exception, error-readTimeoutError).
 */
+
