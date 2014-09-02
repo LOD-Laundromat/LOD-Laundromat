@@ -18,6 +18,9 @@ Stores error term denoting exceptions in a LOD format.
 :- use_module(library(semweb/rdf_db)).
 :- use_module(library(uri)).
 
+:- use_module(generics(atom_ext)).
+:- use_module(xml(xml_dom)).
+
 :- use_module(plDcg(dcg_content)).
 :- use_module(plDcg(dcg_generic)).
 
@@ -42,6 +45,14 @@ store_lod_error(Md5, Kind, error(existence_error(file,File),context(_Pred,Messag
   uri_file_name(Uri, File),
   store_triple(BNode, error-object, Uri).
 
+% Existence error: Turtle prefix
+store_lod_error(Md5, Kind, error(existence_error(turtle_prefix,Prefix),stream(_Stream,Line,LinePosition,CharacterNumber))):- !,
+  rdf_bnode(BNode),
+  store_triple(ll-Md5, llo-Kind, BNode),
+  store_triple(BNode, rdf-type, error-'MissingTurtlePrefixDefintion'),
+  store_triple(BNode, error-prefix, literal(type(xsd-string,Prefix))),
+  store_position(BNode, Line, LinePosition, CharacterNumber).
+
 % HTTP status
 store_lod_error(Md5, Kind, error(http_status(Status),_)):- !,
   (   between(400, 599, Status)
@@ -50,17 +61,27 @@ store_lod_error(Md5, Kind, error(http_status(Status),_)):- !,
   ),
   store_triple(ll-Md5, llo-httpStatus, http-Status).
 
+% IO error
+store_lod_error(Md5, Kind, error(io_error(read,_Stream),connect(_Pred,Message))):-
+  (   Message == 'Connection reset by peer'
+  ->  InstanceName = connectionResetByPeer
+  ;   fail
+  ),
+  store_triple(ll-Md5, llo-Kind, error-InstanceName).
+
 % IO warning
 store_lod_error(Md5, Kind, io_warning(_Stream,Message)):-
-  (   Message == 'Illegal UTF-8 start'
+  (   Message == 'Illegal UTF-8 continuation'
+  ->  InstanceName = illegalUtf8Continuation
+  ;   Message == 'Illegal UTF-8 start'
   ->  InstanceName = illegalUtf8Start
   ;   fail
   ),
-  store_triple(Md5, llo-Kind, llo-InstanceName).
+  store_triple(ll-Md5, llo-Kind, llo-InstanceName).
 
 % No RDF
 store_lod_error(Md5, _Kind, error(no_rdf(_File))):- !,
-  store_triple(Md5, llo-serializationFormat, llo-unrecognizedFormat).
+  store_triple(ll-Md5, llo-serializationFormat, llo-unrecognizedFormat).
 
 % SGML parser
 store_lod_error(Md5, Kind, sgml(sgml_parser(_Parser),_File,Line,Message)):- !,
@@ -91,24 +112,40 @@ store_lod_error(Md5, Kind, error(ssl_error(ssl_verify),_)):- !,
   store_triple(ll-Md5, llo-Kind, error-sslError).
 
 % Syntax error
-store_lod_error(Md5, Kind, error(syntax_error(Message),stream(_Stream,Line,LinePosition,CharacterNumber))):- !,
+store_lod_error(Md5, Kind, error(syntax_error(Message),stream(_Stream,Line,LinePosition,Character))):- !,
   rdf_bnode(BNode),
   store_triple(ll-Md5, llo-Kind, BNode),
   store_triple(BNode, rdf-type, error-'SyntaxError'),
-  store_triple(BNode, error-sourceLine, literal(type(xsd-integer,Line))),
-  store_triple(BNode, error-linePosition, literal(type(xsd-integer,LinePosition))),
-  store_triple(BNode, error-characterNumber, literal(type(xsd-integer,CharacterNumber))),
+  store_position(BNode, Line, LinePosition, Character),
   store_triple(BNode, error-message, literal(type(xsd-string,Message))).
 
 % Timeout error: read
 store_lod_error(Md5, Kind, error(timeout_error(read,_Stream),context(_Pred,_))):- !,
   store_triple(ll-Md5, llo-Kind, llo-readTimeoutException).
 
+% Unparsed RDF/XML
+store_lod_error(Md5, Kind, rdf(unparsed(DOM))):- !,
+  rdf_bnode(BNode),
+  store_triple(ll-Md5, llo-Kind, BNode),
+  store_triple(BNode, rdf-type, error-'RdfXmlParserError'),
+  xml_dom_to_atom([], DOM, Atom1),
+  atom_truncate(Atom1, 1000, Atom2),
+  store_triple(BNode, error-dom, literal(type(xsd-string,Atom2))).
+
 
 % DEB
 store_lod_error(Md5, Kind, Error):-
   gtrace,
   store_lod_error(Md5, Kind, Error).
+
+
+store_position(BNode1, Line, LinePosition, Character):-
+  rdf_bnode(BNode2),
+  store_triple(BNode1, error-streamPosition, BNode2),
+  store_triple(BNode2, rdf-type, error-'StreamPosition'),
+  store_triple(BNode2, error-line, literal(type(xsd:integer,Line))),
+  store_triple(BNode2, error-linePosition, literal(type(xsd:integer,LinePosition))),
+  store_triple(BNode2, error-character, literal(type(xsd:integer,Character))).
 
 /*
 % Archive error.
