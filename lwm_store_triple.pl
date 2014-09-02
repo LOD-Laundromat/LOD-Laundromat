@@ -52,7 +52,7 @@ the stored triples are sent in a SPARQL Update request
 :- use_module(plXsd_datetime(xsd_dateTime_ext)).
 
 :- use_module(lwm(noRdf_store)).
-:- use_module(lwm(store_lod_exception)).
+:- use_module(lwm(store_lod_error)).
 
 
 
@@ -166,10 +166,10 @@ store_end_unpack0(Md5):-
 store_exception(_, true):- !.
 % Format exceptions.
 store_exception(Md5, exception(Error)):-
-  (  store_lod_exception(Md5, Error)
+  (  store_lod_error(Md5, exception, Error)
   -> true
   ;  gtrace,
-     store_lod_exception(Md5, Error)
+     store_lod_error(Md5, exception, Error)
   ).
 
 
@@ -277,13 +277,11 @@ store_stream(Md5, Stream):-
 % @tbd Should we distinguish between `warning` and `error`
 %      in the second argument here?
 
-store_warning(Md5, message(Term,error,_)):- !,
-  store_lod_exception(Md5, Term).
 store_warning(Md5, message(Term,warning,_)):-
-  (  store_lod_warning(Md5, Term)
+  (  store_lod_error(Md5, warning, Term)
   -> true
   ;  gtrace,
-     store_lod_warning(Md5, Term)
+     store_lod_error(Md5, warning, Term)
   ).
 
 

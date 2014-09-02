@@ -1,10 +1,9 @@
 :- module(
-  store_lod_exception,
+  store_lod_error,
   [
-    store_lod_exception/2, % +Md5:atom
-                           % +ErrorTerm:compound
-    store_lod_warning/2 % +Md5:atom
-                        % +WarningTerm:compound
+    store_lod_error/3 % +Md5:atom
+                      % +Kind:oneof([exception,warning])
+                      % +ErrorTerm:compound
   ]
 ).
 
@@ -32,31 +31,39 @@ Stores error term denoting exceptions in a LOD format.
 
 
 % Existence error: file
-store_lod_exception(Md5, error(existence_error(file,File),context(_Pred,Message))):-
+store_lod_error(Md5, Kind, error(existence_error(file,File),context(_Pred,Message))):-
   (   Message == 'No such file or directory'
   ->  ClassName = 'FileExistenceException'
   ;   fail
   ), !,
   rdf_bnode(BNode),
-  store_triple(ll-Md5, llo-exception, BNode),
+  store_triple(ll-Md5, llo-Kind, BNode),
   store_triple(BNode, rdf-type, error-ClassName),
   uri_file_name(Uri, File),
   store_triple(BNode, error-object, Uri).
 
 % HTTP status
-store_lod_exception(Md5, error(http_status(Status),_)):- !,
+store_lod_error(Md5, Kind, error(http_status(Status),_)):- !,
   (   between(400, 599, Status)
-  ->  store_triple(ll-Md5, llo-exception, http-Status)
+  ->  store_triple(ll-Md5, llo-Kind, http-Status)
   ;   true
   ),
-  store_triple(ll-Md5, llo-exception, http-Status).
+  store_triple(ll-Md5, llo-httpStatus, http-Status).
 
 % No RDF
-store_lod_exception(Md5, error(no_rdf(_))):- !,
+store_lod_error(Md5, _, error(no_rdf(_))):- !,
   store_triple(Md5, llo-serializationFormat, llo-unrecognizedFormat).
 
+% SGML parser
+store_lod_error(Md5, Kind, sgml(sgml_parser(_),_,Line,Message)):- !,
+  rdf_bnode(BNode),
+  store_triple(ll-Md5, llo-Kind, BNode),
+  store_triple(BNode, rdf-type, error-'SgmlParserWarning'),
+  store_triple(BNode, error-sourceLine, literal(type(xsd-integer,Line))),
+  store_triple(BNode, error-message, literal(type(xsd-string,Message))).
+
 % Socket error
-store_lod_exception(Md5, error(socket_error(Message),_)):-
+store_lod_error(Md5, Kind, error(socket_error(Message),_)):-
   (   Message == 'Connection timed out'
   ->  InstanceName = connectionTimedOut
   ;   Message == 'Connection refused'
@@ -69,16 +76,16 @@ store_lod_exception(Md5, error(socket_error(Message),_)):-
   ->  InstanceName = tryAgain
   ;   fail
   ), !,
-  store_triple(ll-Md5, llo-exception, llo-InstanceName).
+  store_triple(ll-Md5, llo-Kind, llo-InstanceName).
 
 % SSL error: SSL verify
-store_lod_exception(Md5, error(ssl_error(ssl_verify),_)):- !,
-  store_triple(ll-Md5, llo-exception, error-sslError).
+store_lod_error(Md5, Kind, error(ssl_error(ssl_verify),_)):- !,
+  store_triple(ll-Md5, llo-Kind, error-sslError).
 
 % Syntax error
-store_lod_exception(Md5, error(syntax_error(Message),stream(_Stream,Line,LinePosition,CharacterNumber))):- !,
+store_lod_error(Md5, Kind, error(syntax_error(Message),stream(_Stream,Line,LinePosition,CharacterNumber))):- !,
   rdf_bnode(BNode),
-  store_triple(ll-Md5, llo-warning, BNode),
+  store_triple(ll-Md5, llo-Kind, BNode),
   store_triple(BNode, rdf-type, error-'SyntaxError'),
   store_triple(BNode, error-sourceLine, literal(type(xsd-integer,Line))),
   store_triple(BNode, error-linePosition, literal(type(xsd-integer,LinePosition))),
@@ -86,29 +93,14 @@ store_lod_exception(Md5, error(syntax_error(Message),stream(_Stream,Line,LinePos
   store_triple(BNode, error-message, literal(type(xsd-string,Message))).
 
 % Timeout error: read
-store_lod_exception(Md5, error(timeout_error(read,_Stream),context(_Pred,_))):- !,
-  store_triple(ll-Md5, llo-exception, llo-readTimeoutException).
+store_lod_error(Md5, Kind, error(timeout_error(read,_Stream),context(_Pred,_))):- !,
+  store_triple(ll-Md5, llo-Kind, llo-readTimeoutException).
+
 
 % DEB
-store_lod_exception(Md5, Error):-
+store_lod_error(Md5, Kind, Error):-
   gtrace,
-  store_lod_exception(Md5, Error).
-
-
-
-% SGML parser
-store_lod_warning(Md5, sgml(sgml_parser(_),_,Line,Message)):- !,
-  rdf_bnode(BNode),
-  store_triple(ll-Md5, llo-warning, BNode),
-  store_triple(BNode, rdf-type, error-'SgmlParserWarning'),
-  store_triple(BNode, error-sourceLine, literal(type(xsd-integer,Line))),
-  store_triple(BNode, error-message, literal(type(xsd-string,Message))).
-
-% DEB
-store_lod_warning(Md5, Term):-
-  gtrace,
-  store_lod_warning(Md5, Term).
-
+  store_lod_error(Md5, Kind, Error).
 
 /*
 % Archive error.
