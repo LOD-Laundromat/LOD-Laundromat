@@ -31,6 +31,7 @@ Stores error term denoting exceptions in a LOD format.
 
 
 
+% Existence error: file
 store_lod_exception(Md5, error(existence_error(file,File),context(_Pred,Message))):-
   (   Message == 'No such file or directory'
   ->  ClassName = 'FileExistenceException'
@@ -42,6 +43,7 @@ store_lod_exception(Md5, error(existence_error(file,File),context(_Pred,Message)
   uri_file_name(Uri, File),
   store_triple(BNode, error-object, Uri).
 
+% HTTP status
 store_lod_exception(Md5, error(http_status(Status),_)):- !,
   (   between(400, 599, Status)
   ->  store_triple(ll-Md5, llo-exception, http-Status)
@@ -49,9 +51,11 @@ store_lod_exception(Md5, error(http_status(Status),_)):- !,
   ),
   store_triple(ll-Md5, llo-exception, http-Status).
 
+% No RDF
 store_lod_exception(Md5, error(no_rdf(_))):- !,
   store_triple(Md5, llo-serializationFormat, llo-unrecognizedFormat).
 
+% Socket error
 store_lod_exception(Md5, error(socket_error(Message),_)):-
   (   Message == 'Connection timed out'
   ->  InstanceName = connectionTimedOut
@@ -67,9 +71,11 @@ store_lod_exception(Md5, error(socket_error(Message),_)):-
   ), !,
   store_triple(ll-Md5, llo-exception, llo-InstanceName).
 
+% SSL error: SSL verify
 store_lod_exception(Md5, error(ssl_error(ssl_verify),_)):- !,
   store_triple(ll-Md5, llo-exception, error-sslError).
 
+% Timeout error: read
 store_lod_exception(Md5, error(timeout_error(read,_Stream),context(_Pred,_))):- !,
   store_triple(ll-Md5, llo-exception, llo-readTimeoutException).
 

@@ -296,10 +296,7 @@ number_of_duplicates_written(T) --> [' (~D dups)'-[T]].
 number_of_triples_written(0) --> !, [].
 number_of_triples_written(T) --> ['+~D'-[T]].
 
-
-
-% Helpers.
-
+/*
 error_code('EPERM',           1,   'Operation not permitted').
 error_code('ENOENT',          2,   'No such file or directory').
 error_code('ESRCH',           3,   'No such process').
@@ -431,13 +428,11 @@ error_code('EKEYREVOKED',     128, 'Key has been revoked').
 error_code('EKEYREJECTED',    129, 'Key was rejected by service').
 error_code('EOWNERDEAD',      130, 'Owner died').
 error_code('ENOTRECOVERABLE', 131, 'State not recoverable').
-
-error_code('EACCES',          'Permission denied').
-error_code('EAFNOSUPPORT',    'Address family not supported by protocol').
-error_code('EINVAL',          'Invalid argument').
-error_code('EMFILE',          'Too many open files').
-error_code('ENOBUFS',         'No buffer space available').
-error_code('ENOMEM',          'Cannot allocate memory').
-error_code('EPROTONOSUPPORT', 'Protocol not supported').
-error_code(X, Y):-
-  error_code(X, _, Y).
+error_code('EACCES',               'Permission denied').
+error_code('EAFNOSUPPORT',         'Address family not supported by protocol').
+error_code('EINVAL',               'Invalid argument').
+error_code('EMFILE',               'Too many open files').
+error_code('ENOBUFS',              'No buffer space available').
+error_code('ENOMEM',               'Cannot allocate memory').
+error_code('EPROTONOSUPPORT',      'Protocol not supported').
+*/
