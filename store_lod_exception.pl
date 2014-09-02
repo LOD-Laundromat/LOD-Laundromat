@@ -76,7 +76,7 @@ store_lod_exception(Md5, error(ssl_error(ssl_verify),_)):- !,
   store_triple(ll-Md5, llo-exception, error-sslError).
 
 % Syntax error
-store_lod_warning(Md5, error(syntax_error(Message),stream(_Stream,Line,LinePosition,CharacterNumber))):- !,
+store_lod_exception(Md5, error(syntax_error(Message),stream(_Stream,Line,LinePosition,CharacterNumber))):- !,
   rdf_bnode(BNode),
   store_triple(ll-Md5, llo-warning, BNode),
   store_triple(BNode, rdf-type, error-'SyntaxError'),
