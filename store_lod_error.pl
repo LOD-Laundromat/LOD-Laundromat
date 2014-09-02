@@ -35,7 +35,9 @@ Stores error term denoting exceptions in a LOD format.
 
 % Existence error: file
 store_lod_error(Md5, Kind, error(existence_error(file,File),context(_Pred,Message))):-
-  (   Message == 'No such file or directory'
+  (   Message == 'Directory not empty'
+  ->  ClassName = 'DirectoryNotEmpty'
+  ;   Message == 'No such file or directory'
   ->  ClassName = 'FileExistenceException'
   ;   fail
   ), !,
@@ -62,7 +64,7 @@ store_lod_error(Md5, Kind, error(http_status(Status),_)):- !,
   store_triple(ll-Md5, llo-httpStatus, http-Status).
 
 % IO error
-store_lod_error(Md5, Kind, error(io_error(read,_Stream),connect(_Pred,Message))):-
+store_lod_error(Md5, Kind, error(io_error(read,_Stream),context(_Pred,Message))):-
   (   Message == 'Connection reset by peer'
   ->  InstanceName = connectionResetByPeer
   ;   fail
