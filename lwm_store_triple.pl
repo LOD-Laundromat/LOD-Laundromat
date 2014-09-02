@@ -277,11 +277,11 @@ store_stream(Md5, Stream):-
 % @tbd Should we distinguish between `warning` and `error`
 %      in the second argument here?
 
-store_warning(Md5, message(Term,warning,_)):-
-  (  store_lod_error(Md5, warning, Term)
+store_warning(Md5, message(Term,Kind,_)):-
+  (  store_lod_error(Md5, Kind, Term)
   -> true
   ;  gtrace,
-     store_lod_error(Md5, warning, Term)
+     store_lod_error(Md5, Kind, Term)
   ).
 
 
