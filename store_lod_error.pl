@@ -51,11 +51,11 @@ store_lod_error(Md5, Kind, error(http_status(Status),_)):- !,
   store_triple(ll-Md5, llo-httpStatus, http-Status).
 
 % No RDF
-store_lod_error(Md5, _, error(no_rdf(_))):- !,
+store_lod_error(Md5, _Kind, error(no_rdf(_File))):- !,
   store_triple(Md5, llo-serializationFormat, llo-unrecognizedFormat).
 
 % SGML parser
-store_lod_error(Md5, Kind, sgml(sgml_parser(_),_,Line,Message)):- !,
+store_lod_error(Md5, Kind, sgml(sgml_parser(_Parser),_File,Line,Message)):- !,
   rdf_bnode(BNode),
   store_triple(ll-Md5, llo-Kind, BNode),
   store_triple(BNode, rdf-type, error-'SgmlParserWarning'),
