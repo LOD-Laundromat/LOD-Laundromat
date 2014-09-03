@@ -125,7 +125,14 @@ store_lod_error(Md5, Kind, error(syntax_error(Message),stream(_Stream,Line,LineP
 store_lod_error(Md5, Kind, error(timeout_error(read,_Stream),context(_Pred,_))):- !,
   store_triple(ll-Md5, llo-Kind, llo-readTimeoutException).
 
-% Unparsed RDF/XML
+% RDF/XML: multiple definitions
+store_lod_error(Md5, Kind, rdf(redefined_id(Uri))):- !,
+  rdf_bnode(BNode),
+  store_triple(ll-Md5, llo-Kind, BNode),
+  store_triple(BNode, rdf-type, error:redefinedRdfId),
+  store_triple(BNode, error-object, Uri).
+
+% RDF/XML: unparsable
 store_lod_error(Md5, Kind, rdf(unparsed(DOM))):- !,
   rdf_bnode(BNode),
   store_triple(ll-Md5, llo-Kind, BNode),
