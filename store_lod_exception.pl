@@ -55,6 +55,33 @@ store_lod_exception(Md5, error(http_status(Status),_)):- !,
 store_lod_exception(Md5, error(no_rdf(_))):- !,
   store_triple(Md5, llo-serializationFormat, llo-unrecognizedFormat).
 
+% Permission error: redirect
+store_lod_exception(
+  Md5,
+  error(permission_error(Action0,Type0,Object),context(_,Message))
+):- !,
+  rdf_bnode(BNode),
+  store_triple(ll-Md5, llo-exception, BNode),
+  store_triple(BNode, rdf-type, error-'PermissionError'),
+  
+  % Action
+  (   Action0 == redirect
+  ->  Action = redirectAction
+  ;   true
+  ),
+  store_triple(BNode, error-action, error-Action),
+  
+  % Object
+  store_triple(BNode, error-object, Object),
+  
+  % Type
+  (   Type0 == http
+  ->  ObjectClass = 'HttpUri'
+  ;   true
+  ),
+  store_triple(Object, error-object, error-ObjectClass).
+
+
 % Socket error
 store_lod_exception(Md5, error(socket_error(Message),_)):-
   (   Message == 'Connection timed out'
