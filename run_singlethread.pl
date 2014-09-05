@@ -32,7 +32,7 @@ See module [run_multithread] for the threaded version of this module.
 %! run_singlethread .
 
 run_singlethread:-
-  run_singlethread(10, 5).
+  run_singlethread(5, 3).
 
 %! run_singlethread(
 %!   +NumberOfUnpackLoops:nonneg,
