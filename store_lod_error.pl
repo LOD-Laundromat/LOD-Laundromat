@@ -33,6 +33,16 @@ Stores error term denoting exceptions in a LOD format.
 
 
 
+% Archive error
+store_lod_error(Md5, Kind, error(archive_error(Code,_))):-
+  (   Code == 2
+  ->  InstanceName = missingTypeKeywordInMtreeSpec
+  ;   true
+  ),
+  store_triple(ll-Md5, llo-Kind, error-InstanceName).
+
+
+
 % Existence error: file
 store_lod_error(
   Md5,
@@ -67,6 +77,8 @@ store_lod_error(
 ):-
   (   Message == 'Connection reset by peer'
   ->  InstanceName = connectionResetByPeer
+  ;   Message == 'Inappropriate ioctl for device'
+  ->  InstanceName = notATypewriter
   ;   fail
   ),
   store_triple(ll-Md5, llo-Kind, error-InstanceName).
@@ -125,6 +137,8 @@ store_lod_error(Md5, Kind, error(socket_error(Message),_)):-
   ->  InstanceName = connectionTimedOut
   ;   Message == 'Connection refused'
   ->  InstanceName = connectionRefused
+  ;   Message == 'No data'
+  ->  InstanceName = noData
   ;   Message == 'No route to host'
   ->  InstanceName = noRouteToHost
   ;   Message == 'Host not found'
