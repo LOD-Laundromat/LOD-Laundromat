@@ -33,18 +33,12 @@ Stores error term denoting exceptions in a LOD format.
 
 
 % Archive error
-store_lod_error(Md5, Kind, error(archive_error(Code,ReasonPhrase))):-
-  store_triple(ll-Md5, llo-Kind, ).
-
-% Archive error
 store_lod_error(Md5, Kind, error(archive_error(Code,_))):-
   (   Code == 2
   ->  InstanceName = missingTypeKeywordInMtreeSpec
   ;   true
   ),
   store_triple(ll-Md5, llo-Kind, error-InstanceName).
-
-
 
 % Existence error: file
 store_lod_error(
@@ -208,7 +202,6 @@ store_lod_error(Md5, Kind, rdf(unparsed(DOM))):- !,
   xml_dom_to_atom([], DOM, Atom1),
   atom_truncate(Atom1, 1000, Atom2),
   store_triple(BNode, error-dom, literal(type(xsd-string,Atom2))).
-
 
 % DEB
 store_lod_error(Md5, Kind, Error):-
