@@ -41,7 +41,7 @@ pick_pending(Md5):-
 
     % For the debug tools to work,
     % details from the LOD Basket have to be copied over.
-    (   debugging(lwm)
+    (   debugging(lwm_cp)
     ->  lod_basket_graph(BasketGraph),
         loop_until_true(
           sparql_select(

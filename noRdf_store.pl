@@ -71,8 +71,8 @@ post_rdf_triples0(Options):-
       % Use HTTP Graph Store on Virtuoso.
       sparql_post_named_graph(virtuoso_http, NG, Triples, Options),
 
-      % Use SPARQL Update on ClioPatria.
-      (   debugging(lwm)
+      % Use SPARQL Update on ClioPatria, supporting the debug tools.
+      (   debugging(lwm_cp)
       ->  sparql_insert_data(cliopatria_update, Triples, [NG], Options)
       ;   true
       )
