@@ -207,7 +207,7 @@ store_lod_error(
 store_lod_error(Md5, Kind, rdf(redefined_id(Uri))):- !,
   rdf_bnode(BNode),
   store_triple(ll-Md5, llo-Kind, BNode),
-  store_triple(BNode, rdf-type, error:redefinedRdfId),
+  store_triple(BNode, rdf-type, error-'RedefinedRdfId'),
   store_triple(BNode, error-object, Uri).
 
 % RDF/XML: unparsable
