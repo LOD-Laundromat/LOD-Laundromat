@@ -49,5 +49,4 @@ debug:debug_md5('3019899320737bfc88e28f323983139c'). % DirectoryExistenceError
 
 % Show progress.
 :- debug(lwm_progress(clean)).
-:- debug(lwm_progress(unpack)).
-
+%:- debug(lwm_progress(unpack)).
