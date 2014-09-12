@@ -33,7 +33,7 @@ Stores error term denoting exceptions in a LOD format.
 
 
 % Archive error
-store_lod_error(Md5, Kind, error(archive_error(Code,_))):-
+store_lod_error(Md5, Kind, error(archive_error(Code,_),_)):-
   (   Code == 2
   ->  InstanceName = missingTypeKeywordInMtreeSpec
   ;   true
@@ -136,7 +136,7 @@ store_lod_error(Md5, Kind, error(socket_error(Message),_)):-
   ->  InstanceName = connectionTimedOut
   ;   Message == 'Connection refused'
   ->  InstanceName = connectionRefused
-  ;   Message == 'No data'
+  ;   Message == 'No Data'
   ->  InstanceName = noData
   ;   Message == 'No route to host'
   ->  InstanceName = noRouteToHost
