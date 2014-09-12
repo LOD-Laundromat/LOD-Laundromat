@@ -27,7 +27,7 @@ Stores error term denoting exceptions in a LOD format.
 :- use_module(lwm(noRdf_store)).
 
 :- rdf_register_prefix(error, 'http://lodlaundromat.org/error/ontology/').
-:- rdf_register_prefix(httpo,  'http://lodlaundromat.org/http/ontology/').
+:- rdf_register_prefix(httpo, 'http://lodlaundromat.org/http/ontology/').
 :- rdf_register_prefix(ll,    'http://lodlaundromat.org/resource/').
 :- rdf_register_prefix(llo,   'http://lodlaundromat.org/ontology/').
 

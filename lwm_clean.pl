@@ -10,7 +10,7 @@
 The cleaning process performed by the LOD Washing Machine.
 
 @author Wouter Beek
-@version 2014/03-2014/06, 2014/08
+@version 2014/03-2014/06, 2014/08-2014/09
 */
 
 :- use_module(library(aggregate)).
@@ -21,7 +21,6 @@ The cleaning process performed by the LOD Washing Machine.
 :- use_module(library(uri)).
 :- use_module(library(zlib)).
 
-:- use_module(os(archive_ext)).
 :- use_module(pl(pl_log)).
 
 :- use_module(plRdf_ser(ctriples_write)).
@@ -56,13 +55,23 @@ lwm_clean_loop:-
 % Done for now. Check whether there are new jobs in one seconds.
 lwm_clean_loop:-
   sleep(1),
-  print_message(warning, lwm_idle_loop(clean)),
+
+  % DEB
+  (   debugging(lwm_idle_loop(clean))
+  ->  print_message(warning, lwm_idle_loop(clean))
+  ;   true
+  ),
+
   lwm_clean_loop.
 
 %! lwm_clean(+Md5:atom) is det.
 
 lwm_clean(Md5):-
-  print_message(informational, lwm_start(clean,Md5,Source)),
+  % DEB
+  (   debugging(lwm_progress(clean))
+  ->  print_message(informational, lwm_start(clean,Md5,Source))
+  ;   true
+  ),
 
   run_collect_messages(
     clean_md5(Md5),
@@ -70,11 +79,15 @@ lwm_clean(Md5):-
     Warnings
   ),
 
+  % DEB
+  (   debugging(lwm_progress(clean))
+  ->  print_message(informational, lwm_end(clean,Md5,Source,Status,Warnings))
+  ;   true
+  ),
+
   store_exception(Md5, Status),
   maplist(store_warning(Md5), Warnings),
-
-  store_end_clean(Md5),
-  print_message(informational, lwm_end(clean,Md5,Source,Status,Warnings)).
+  store_end_clean(Md5).
 
 
 %! clean_md5(+Md5:atom) is det.

@@ -10,7 +10,7 @@
 Unpacks files for the LOD Washing Machine to clean.
 
 @author Wouter Beek
-@version 2014/06, 2014/08
+@version 2014/06, 2014/08-2014/09
 */
 
 :- use_module(library(apply)).
@@ -38,6 +38,7 @@ Unpacks files for the LOD Washing Machine to clean.
 
 
 lwm_unpack_loop:-
+gtrace,
   % Pick a new source to process.
   catch(pick_pending(Md5), Exception, var(Exception)),
 
@@ -52,14 +53,24 @@ lwm_unpack_loop:-
 % Done for now. Check whether there are new jobs in one seconds.
 lwm_unpack_loop:-
   sleep(1),
-  print_message(warning, lwm_idle_loop(unpack)),
+
+  % DEB
+  (   debugging(lwm_idle_loop(unpack))
+  ->  print_message(warning, lwm_idle_loop(unpack))
+  ;   true
+  ),
+
   lwm_unpack_loop.
 
 
 %! lwm_unpack(+Md5:atom) is det.
 
 lwm_unpack(Md5):-
-  print_message(informational, lwm_start(unpack,Md5,Source)),
+  % DEB
+  (   debugging(lwm_progress(unpack))
+  ->  print_message(informational, lwm_start(unpack,Md5,Source))
+  ;   true
+  ),
 
   run_collect_messages(
     unpack_md5(Md5),
@@ -67,7 +78,12 @@ lwm_unpack(Md5):-
     Warnings
   ),
 
-  print_message(informational, lwm_end(unpack,Md5,Source,Status,Warnings)),
+  % DEB
+  (   debugging(lwm_progress(unpack))
+  ->  print_message(informational, lwm_end(unpack,Md5,Source,Status,Warnings))
+  ;   true
+  ),
+
   maplist(store_warning(Md5), Warnings),
   store_end_unpack(Md5, Status).
 
