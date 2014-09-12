@@ -40,6 +40,22 @@ store_lod_error(Md5, Kind, error(archive_error(Code,_),_)):-
   ),
   store_triple(ll-Md5, llo-Kind, error-InstanceName).
 
+% Existence error: directory
+store_lod_error(
+  Md5,
+  Kind,
+  error(existence_error(directory,Directory),context(_Pred,Message))
+):-
+  (   Message == 'File exists'
+  ->  ClassName = 'DirectoryExistenceError'
+  ;   fail
+  ), !,
+  rdf_bnode(BNode),
+  store_triple(ll-Md5, llo-Kind, BNode),
+  store_triple(BNode, rdf-type, error-ClassName),
+  uri_file_name(Uri, Directory),
+  store_triple(BNode, error-object, literal(type(xsd-anyURI,Uri))).
+
 % Existence error: file
 store_lod_error(
   Md5,
@@ -56,7 +72,7 @@ store_lod_error(
   store_triple(ll-Md5, llo-Kind, BNode),
   store_triple(BNode, rdf-type, error-ClassName),
   uri_file_name(Uri, File),
-  store_triple(BNode, error-object, Uri).
+  store_triple(BNode, error-object, literal(type(xsd-anyURI,Uri))).
 
 % HTTP status
 store_lod_error(Md5, Kind, error(http_status(Status),_)):- !,
