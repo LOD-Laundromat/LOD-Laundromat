@@ -21,9 +21,9 @@
 :- use_module(library(debug)).
 :- debug(lwm_generic).
 :- debug(lwm_idle_loop(clean)).
-:- debug(lwm_idle_loop(unpack)).
+%:- debug(lwm_idle_loop(unpack)).
 :- debug(lwm_progress(clean)).
-:- debug(lwm_progress(unpack)).
+%:- debug(lwm_progress(unpack)).
 %:- debug(sparql_request).
 %:- debug(sparql_reply).
 
