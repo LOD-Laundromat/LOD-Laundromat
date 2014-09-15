@@ -100,7 +100,7 @@ unpack_md5(Md5):-
   md5_directory(Md5, Md5Dir),
   relative_file_path(EntryFile2, Md5Dir, EntryPath),
   create_file_directory(EntryFile2),
-  mv(EntryFile1, EntryFile2),
+  mv2(EntryFile1, EntryFile2),
 
   unpack_file(Md5, EntryFile2).
 % The given MD5 denotes a URL.
@@ -185,7 +185,7 @@ unpack_file(Md5, ArchiveFile):-
 
     % Move the data file outside of the its entry path,
     % and put it directly inside its MD5 directory.
-    mv(DataFile, DirtyFile)
+    mv2(DataFile, DirtyFile)
 
     % The file is now ready for cleaning!
   ;
