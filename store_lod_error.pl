@@ -106,6 +106,13 @@ store_lod_error(Md5, Kind, io_warning(_Stream,Message)):-
   ),
   store_triple(ll-Md5, llo-Kind, llo-InstanceName).
 
+% Malformed URL
+store_lod_error(Md5, Kind, error(domain_error(url,Url),_)):- !,
+  rdf_bnode(BNode),
+  store_triple(BNode, rdf-type, error-'MalformedUrl'),
+  store_triple(BNode, error-object, literal(type(xsd-anyURI,Url))),
+  store_triple(ll-Md5, llo-Kind, BNode).
+
 % No RDF
 store_lod_error(Md5, _Kind, error(no_rdf(_File))):- !,
   store_triple(ll-Md5, llo-serializationFormat, llo-unrecognizedFormat).
