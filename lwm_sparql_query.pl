@@ -33,6 +33,7 @@ SPARQL queries for the LOD Washing Machine.
 */
 
 :- use_module(library(apply)).
+:- use_module(library(lists)).
 :- use_module(library(option)).
 
 :- use_module(generics(meta_ext)).
@@ -66,7 +67,8 @@ md5_cleaned(Md5):-
     lwm_sparql_select([llo], [md5],
         [rdf(var(md5res),llo:endClean,var(end_clean)),
          rdf(var(md5res),llo:md5,var(md5))],
-        [[Literal]], [limit(1),sparql_errors(fail)]),
+        Rows, [sparql_errors(fail)]),
+    member([Literal], Rows),
     rdf_literal(Literal, Md5, _)
   )).
 md5_cleaned(Md5):-
@@ -88,7 +90,8 @@ md5_cleaning(Md5):-
         [rdf(var(md5res),llo:startClean,var(start_clean)),
          not([rdf(var(md5res),llo:endClean,var(end_clean))]),
          rdf(var(md5res),llo:md5,var(md5))],
-        [[Literal]], [limit(1),sparql_errors(fail)]),
+        Rows, [sparql_errors(fail)]),
+    member([Literal], Rows),
     rdf_literal(Literal, Md5, _)
   )).
 md5_cleaning(Md5):-
@@ -144,9 +147,9 @@ md5_pending(Md5):-
       [rdf(var(md5res),llo:added,var(added)),
        rdf(var(md5res),llo:md5,var(md5)),
        not([rdf(var(md5res),llo:startUnpack,var(start))])],
-      [[Literal]],
-      [limit(1),sparql_errors(fail)]
+      Rows, [sparql_errors(fail)]
     ),
+    member([Literal], Rows),
     rdf_literal(Literal, Md5, _)
   )).
 md5_pending(Md5):-
@@ -202,7 +205,8 @@ md5_unpacked(Md5):-
         [rdf(var(md5res),llo:endUnpack,var(start)),
          not([rdf(var(md5res),llo:startClean,var(clean))]),
          rdf(var(md5res),llo:md5,var(md5))],
-        [[Literal]], [limit(1),sparql_errors(fail)]),
+        Rows, [sparql_errors(fail)]),
+    member([Literal], Rows),
     rdf_literal(Literal, Md5, _)
   )).
 md5_unpacked(Md5):-
@@ -225,7 +229,8 @@ md5_unpacking(Md5):-
         [rdf(var(md5res),llo:startUnpack,var(start)),
          not([rdf(var(md5res),llo:endUnpack,var(clean))]),
          rdf(var(md5res),llo:md5,var(md5))],
-        [[Literal]], [limit(1),sparql_errors(fail)]),
+        Rows, [sparql_errors(fail)]),
+    member([Literal], Rows),
     rdf_literal(Literal, Md5, _)
   )).
 md5_unpacking(Md5):-
