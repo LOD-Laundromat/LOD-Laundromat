@@ -109,6 +109,8 @@ store_lod_error(
   ->  InstanceName = connectionResetByPeer
   ;   Message == 'Inappropriate ioctl for device'
   ->  InstanceName = notATypewriter
+  ;   Message = 'Is a directory'
+  ->  InstanceName = isADirectory
   ;   fail
   ),
   store_triple(ll-Md5, llo-Kind, error-InstanceName).
@@ -121,7 +123,7 @@ store_lod_error(Md5, Kind, io_warning(_Stream,Message)):-
   ->  InstanceName = illegalUtf8Start
   ;   fail
   ),
-  store_triple(ll-Md5, llo-Kind, llo-InstanceName).
+  store_triple(ll-Md5, llo-Kind, error-InstanceName).
 
 % Malformed URL
 store_lod_error(Md5, Kind, error(domain_error(url,Url),_)):- !,
@@ -132,7 +134,7 @@ store_lod_error(Md5, Kind, error(domain_error(url,Url),_)):- !,
 
 % No RDF
 store_lod_error(Md5, _Kind, error(no_rdf(_File))):- !,
-  store_triple(ll-Md5, llo-serializationFormat, llo-unrecognizedFormat).
+  store_triple(ll-Md5, llo-serializationFormat, error-unrecognizedFormat).
 
 % Permission error: redirect
 store_lod_error(
@@ -162,6 +164,10 @@ store_lod_error(
   ),
   store_triple(Object, error-object, error-ObjectClass).
 
+% Resource error
+% Thrown by GUI tracer after a while.
+store_lod_error(_, _, error(resource_error(_),_)).
+
 % SGML parser
 store_lod_error(Md5, Kind, sgml(sgml_parser(_Parser),_File,Line,Message)):- !,
   rdf_bnode(BNode),
@@ -186,7 +192,7 @@ store_lod_error(Md5, Kind, error(socket_error(Message),_)):-
   ->  InstanceName = tryAgain
   ;   fail
   ), !,
-  store_triple(ll-Md5, llo-Kind, llo-InstanceName).
+  store_triple(ll-Md5, llo-Kind, error-InstanceName).
 
 % SSL error: SSL verify
 store_lod_error(Md5, Kind, error(ssl_error(ssl_verify),_)):- !,
@@ -210,7 +216,7 @@ store_lod_error(
   Kind,
   error(timeout_error(read,_Stream),context(_Pred,_))
 ):- !,
-  store_triple(ll-Md5, llo-Kind, llo-readTimeoutError).
+  store_triple(ll-Md5, llo-Kind, error-readTimeoutError).
 
 % Turtle: undefined prefix
 store_lod_error(

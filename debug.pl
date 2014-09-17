@@ -27,7 +27,9 @@
 :- dynamic(debug:debug_md5/1).
 :- multifile(debug:debug_md5/1).
 
-debug:debug_md5('3019899320737bfc88e28f323983139c'). % DirectoryExistenceError
+debug:debug_md5('3019899320737bfc88e28f323983139c'). % DirectoryExistenceError@self#clean
+debug:debug_md5('3556891a545416089794411f74d1aa95'). % isADirectory@self
+debug:debug_md5('82db0dbf95e635cddae8c385116b6120'). % isADirectory@archiveEntry
 
 
 
