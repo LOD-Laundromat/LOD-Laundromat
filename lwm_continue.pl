@@ -47,5 +47,8 @@ reset_md5(Md5):-
 
   % Remove the MD5 metadata triples.
   lwm_version_graph(NG),
+gtrace,
+  sparql_delete_where(virtuoso_update, [rdf(ll:Md5),var(p),var(o)], [NG], []),
   md5_describe(Md5, Triples),
   sparql_delete_data(cliopatria_update, Triples, [NG], []).
+

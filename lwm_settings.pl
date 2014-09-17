@@ -123,7 +123,7 @@ init_lwm_sparql_endpoints:-
     cliopatria
   ),
 
-  % Update (debug reset)
+  % Update (reset, continue)
   assert(lwm_sparql_endpoint(virtuoso_update)),
   sparql_register_endpoint(
     virtuoso_update,
