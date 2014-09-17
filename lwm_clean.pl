@@ -23,7 +23,7 @@ The cleaning process performed by the LOD Washing Machine.
 
 :- use_module(pl(pl_log)).
 
-:- use_module(plRdf_ser(ctriples_write)).
+:- use_module(plRdf_ser(ctriples_write_graph)).
 :- use_module(plRdf_ser(rdf_file_db)).
 :- use_module(plRdf_ser(rdf_guess_format)).
 
@@ -223,8 +223,9 @@ save_data_to_file(Md5, File, NumberOfTriples):-
   md5_bnode_base(Md5, BaseComponents),
   setup_call_cleanup(
     gzopen(CleanFile, write, Write),
-    ctriples_write(
+    ctriples_write_graph(
       Write,
+      _NoGraph,
       [
         bnode_base(BaseComponents),
         format(Format),
