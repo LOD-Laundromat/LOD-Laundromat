@@ -35,12 +35,6 @@ lwm_init:-
     _
   ),
 
-  % Process the debug option.
-  (   memberchk(debug(true), Opts)
-  ->  debug(lwm)
-  ;   true
-  ),
-
   % Process the directory option.
   memberchk(directory(Dir), Opts),
   make_directory_path(Dir),
@@ -48,8 +42,7 @@ lwm_init:-
   assert(user:file_search_path(data, Dir)),
 
   % Process the restart option.
-  (   debugging(lwm),
-      memberchk(restart(true), Opts)
+  (   memberchk(restart(true), Opts)
   ->  lwm_restart
   ;   debugging(lwm),
       memberchk(continue(true), Opts)

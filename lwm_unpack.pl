@@ -10,7 +10,7 @@
 Unpacks files for the LOD Washing Machine to clean.
 
 @author Wouter Beek
-@version 2014/06, 2014/08
+@version 2014/06, 2014/08-2014/09
 */
 
 :- use_module(library(apply)).
@@ -52,14 +52,24 @@ lwm_unpack_loop:-
 % Done for now. Check whether there are new jobs in one seconds.
 lwm_unpack_loop:-
   sleep(1),
-  print_message(warning, lwm_idle_loop(unpack)),
+
+  % DEB
+  (   debugging(lwm_idle_loop(unpack))
+  ->  print_message(warning, lwm_idle_loop(unpack))
+  ;   true
+  ),
+
   lwm_unpack_loop.
 
 
 %! lwm_unpack(+Md5:atom) is det.
 
 lwm_unpack(Md5):-
-  print_message(informational, lwm_start(unpack,Md5,Source)),
+  % DEB
+  (   debugging(lwm_progress(unpack))
+  ->  print_message(informational, lwm_start(unpack,Md5,Source))
+  ;   true
+  ),
 
   run_collect_messages(
     unpack_md5(Md5),
@@ -67,7 +77,12 @@ lwm_unpack(Md5):-
     Warnings
   ),
 
-  print_message(informational, lwm_end(unpack,Md5,Source,Status,Warnings)),
+  % DEB
+  (   debugging(lwm_progress(unpack))
+  ->  print_message(informational, lwm_end(unpack,Md5,Source,Status,Warnings))
+  ;   true
+  ),
+
   maplist(store_warning(Md5), Warnings),
   store_end_unpack(Md5, Status).
 
@@ -85,7 +100,7 @@ unpack_md5(Md5):-
   md5_directory(Md5, Md5Dir),
   relative_file_path(EntryFile2, Md5Dir, EntryPath),
   create_file_directory(EntryFile2),
-  mv(EntryFile1, EntryFile2),
+  mv2(EntryFile1, EntryFile2),
 
   unpack_file(Md5, EntryFile2).
 % The given MD5 denotes a URL.
@@ -170,7 +185,7 @@ unpack_file(Md5, ArchiveFile):-
 
     % Move the data file outside of the its entry path,
     % and put it directly inside its MD5 directory.
-    mv(DataFile, DirtyFile)
+    mv2(DataFile, DirtyFile)
 
     % The file is now ready for cleaning!
   ;
