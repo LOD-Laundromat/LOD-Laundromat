@@ -21,9 +21,6 @@ Stores error term denoting exceptions in a LOD format.
 :- use_module(generics(atom_ext)).
 :- use_module(xml(xml_dom)).
 
-:- use_module(plDcg(dcg_content)).
-:- use_module(plDcg(dcg_generic)).
-
 :- use_module(lwm(noRdf_store)).
 
 :- rdf_register_prefix(error, 'http://lodlaundromat.org/error/ontology/').

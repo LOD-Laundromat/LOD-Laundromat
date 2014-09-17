@@ -117,7 +117,7 @@ md5_content_type(_, _).
 md5_describe(Md5, Triples):-
   lwm_sparql_select([llo], [s,p,o],
       [rdf(var(s),llo:md5,literal(type(xsd:string,Md5))),
-       rdf(var(s),var(p),var(o))].
+       rdf(var(s),var(p),var(o))],
       TripleRows, [distinct(true)]),
   maplist(triple_row_to_compound, TripleRows, Triples).
 
