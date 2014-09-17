@@ -74,6 +74,23 @@ store_lod_error(
   uri_file_name(Uri, File),
   store_triple(BNode, error-object, literal(type(xsd-anyURI,Uri))).
 
+% Existence error: source sink?
+store_lod_error(
+  Md5,
+  Kind,
+  error(existence_error(source_sink,Path),context(_Pred,Message))
+):-
+  (   Message == 'Is a directory'
+  ->  ClassName = 'IsADirectoryError'
+  ;   fail
+  ), !,
+  rdf_bnode(BNode),
+  store_triple(Md5, llo-Kind, BNode),
+  store_triple(BNode, rdf-type, error-ClassName),
+  uri_file_name(Uri, Path),
+  store_triple(BNode, error-object, literal(type(xsd-anyURI,Uri))).
+
+
 % HTTP status
 store_lod_error(Md5, Kind, error(http_status(Status),_)):- !,
   (   between(400, 599, Status)
