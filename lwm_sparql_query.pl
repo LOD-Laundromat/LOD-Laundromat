@@ -8,6 +8,8 @@
     md5_cleaning/1, % ?Md5:atom
     md5_content_type/2, % +Md5:atom
                         % -ContentType:atom
+    md5_describe/2, % +Md5:atom
+                    % -Triples:list(compound)
     md5_file_extension/2, % +Md5:atom
                           % -FileExtension:atom
     md5_pending/1, % ?Md5:atom
@@ -27,7 +29,7 @@
 SPARQL queries for the LOD Washing Machine.
 
 @author Wouter Beek
-@version 2014/06, 2014/08
+@version 2014/06, 2014/08-2014/09
 */
 
 :- use_module(library(apply)).
@@ -108,6 +110,16 @@ md5_content_type(Md5, ContentType):-
       [[Literal]], [limit(1)]), !,
   rdf_literal(Literal, ContentType, _).
 md5_content_type(_, _).
+
+
+%! md5_describe(+Md5:atom, -Triples:list(compound)) is det.
+
+md5_describe(Md5, Triples):-
+  lwm_sparql_select([llo], [s,p,o],
+      [rdf(var(s),llo:md5,literal(type(xsd:string,Md5))),
+       rdf(var(s),var(p),var(o))].
+      TripleRows, [distinct(true)]),
+  maplist(triple_row_to_compound, TripleRows, Triples).
 
 
 %! md5_file_extension(+Md5:atom, -FileExtension:atom) is det.
@@ -260,3 +272,5 @@ lwm_sparql_select(Prefixes, Variables, Bgps, Result, Options1):-
     sparql_select(virtuoso_query, Prefixes, Variables, Bgps, Result, Options2)
   ).
 
+
+triple_row_to_compound([S,P,O], rdf(S,P,O)).

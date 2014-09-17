@@ -1,13 +1,13 @@
 :- module(
-  lwm_reset,
+  lwm_restart,
   [
-    lwm_reset/0
+    lwm_restart/0
   ]
 ).
 
 /** <module> LOD Washing Machine: reset
 
-Reset the LOD Washing Machine during debugging.
+Restart the LOD Washing Machine during debugging.
 
 @author Wouter Beek
 @version 2014/08
@@ -24,9 +24,9 @@ Reset the LOD Washing Machine during debugging.
 
 
 
-%! lwm_reset is det.
+%! lwm_restart is det.
 
-lwm_reset:-
+lwm_restart:-
   lwm_version_graph(Graph),
 
   % Virtuoso implements SPARQL Updates so irregularly,

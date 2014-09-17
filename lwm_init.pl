@@ -15,7 +15,7 @@ Initializes the LOD Washing Machine.
 
 :- use_module(os(dir_ext)).
 
-:- use_module(lwm(lwm_reset)).
+:- use_module(lwm(lwm_restart)).
 
 :- initialization(lwm_init).
 
@@ -28,7 +28,8 @@ lwm_init:-
     [
       [default(false),opt(debug),longflags([debug]),type(boolean)],
       [default(DefaultDir),opt(directory),longflags([dir]),type(atom)],
-      [default(false),opt(reset),longflags([reset]),type(boolean)]
+      [default(false),opt(restart),longflags([restart]),type(boolean)],
+      [default(false),opt(continue),longflags([continue]),type(boolean)]
     ],
     Opts,
     _
@@ -46,10 +47,13 @@ lwm_init:-
   retractall(user:file_search_path(data, _)),
   assert(user:file_search_path(data, Dir)),
 
-  % Process the reset option.
+  % Process the restart option.
   (   debugging(lwm),
-      memberchk(reset(true), Opts)
-  ->  lwm_reset
+      memberchk(restart(true), Opts)
+  ->  lwm_restart
+  ;   debugging(lwm),
+      memberchk(continue(true), Opts)
+  ->  lwm_continue
   ;   true
   ),
 
