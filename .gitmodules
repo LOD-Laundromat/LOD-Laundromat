@@ -9,21 +9,9 @@
 [submodule "plSparql"]
 	path = plSparql
 	url = https://github.com/wouterbeek/plSparql.git
-[submodule "plGraph"]
-	path = plGraph
-	url = https://github.com/wouterbeek/plGraph.git
-[submodule "plTree"]
-	path = plTree
-	url = https://github.com/wouterbeek/plTree.git
 [submodule "plXsd"]
 	path = plXsd
 	url = https://github.com/wouterbeek/plXsd.git
 [submodule "plDcg"]
 	path = plDcg
 	url = https://github.com/wouterbeek/plDcg.git
-[submodule "plGraphViz"]
-	path = plGraphViz
-	url = https://github.com/wouterbeek/plGraphViz.git
-[submodule "plHtml"]
-	path = plHtml
-	url = https://github.com/wouterbeek/plHtml.git
