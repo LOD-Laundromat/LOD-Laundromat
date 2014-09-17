@@ -67,10 +67,10 @@ md5_cleaned(Md5):-
     lwm_sparql_select([llo], [md5],
         [rdf(var(md5res),llo:endClean,var(end_clean)),
          rdf(var(md5res),llo:md5,var(md5))],
-        Rows, [sparql_errors(fail)]),
-    member([Literal], Rows),
-    rdf_literal(Literal, Md5, _)
-  )).
+        Rows, [sparql_errors(fail)])
+  )),
+  member([Literal], Rows),
+  rdf_literal(Literal, Md5, _).
 md5_cleaned(Md5):-
   with_mutex(lwm_endpoint, (
     lwm_sparql_ask([llo],
@@ -90,10 +90,10 @@ md5_cleaning(Md5):-
         [rdf(var(md5res),llo:startClean,var(start_clean)),
          not([rdf(var(md5res),llo:endClean,var(end_clean))]),
          rdf(var(md5res),llo:md5,var(md5))],
-        Rows, [sparql_errors(fail)]),
-    member([Literal], Rows),
-    rdf_literal(Literal, Md5, _)
-  )).
+        Rows, [sparql_errors(fail)])
+  )),
+  member([Literal], Rows),
+  rdf_literal(Literal, Md5, _).
 md5_cleaning(Md5):-
   with_mutex(lwm_endpoint, (
     lwm_sparql_ask([llo],
@@ -148,10 +148,10 @@ md5_pending(Md5):-
        rdf(var(md5res),llo:md5,var(md5)),
        not([rdf(var(md5res),llo:startUnpack,var(start))])],
       Rows, [sparql_errors(fail)]
-    ),
-    member([Literal], Rows),
-    rdf_literal(Literal, Md5, _)
-  )).
+    )
+  )),
+  member([Literal], Rows),
+  rdf_literal(Literal, Md5, _).
 md5_pending(Md5):-
   with_mutex(lwm_endpoint, (
     lwm_sparql_ask(
@@ -205,10 +205,10 @@ md5_unpacked(Md5):-
         [rdf(var(md5res),llo:endUnpack,var(start)),
          not([rdf(var(md5res),llo:startClean,var(clean))]),
          rdf(var(md5res),llo:md5,var(md5))],
-        Rows, [sparql_errors(fail)]),
-    member([Literal], Rows),
-    rdf_literal(Literal, Md5, _)
-  )).
+        Rows, [sparql_errors(fail)])
+  )),
+  member([Literal], Rows),
+  rdf_literal(Literal, Md5, _).
 md5_unpacked(Md5):-
   with_mutex(lwm_endpoint, (
     lwm_sparql_ask([llo],
@@ -224,15 +224,16 @@ md5_unpacked(Md5):-
 
 md5_unpacking(Md5):-
   var(Md5), !,
+  % Notice that choicepoints are closed within a mutex.
   with_mutex(lwm_endpoint, (
     lwm_sparql_select([llo], [md5],
         [rdf(var(md5res),llo:startUnpack,var(start)),
          not([rdf(var(md5res),llo:endUnpack,var(clean))]),
          rdf(var(md5res),llo:md5,var(md5))],
-        Rows, [sparql_errors(fail)]),
-    member([Literal], Rows),
-    rdf_literal(Literal, Md5, _)
-  )).
+        Rows, [sparql_errors(fail)])
+  )),
+  member([Literal], Rows),
+  rdf_literal(Literal, Md5, _).
 md5_unpacking(Md5):-
   with_mutex(lwm_endpoint, (
     lwm_sparql_ask([llo],
