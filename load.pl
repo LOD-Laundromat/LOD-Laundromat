@@ -1,4 +1,5 @@
-% The load file for the LOD-Laundromat project.
+% The load file for the LOD Washing Machine,
+% part of the LOD Laundromat project.
 
 :- use_module(library(ansi_term)).
 
@@ -11,12 +12,8 @@
 :- load_project([
     plc-'Prolog-Library-Collection',
     plDcg,
-    plGraph,
-    plTree,
     plXsd,
     plRdf,
-    plSparql,
-    plHtml,
-    plGraphViz
+    plSparql
 ]).
 
