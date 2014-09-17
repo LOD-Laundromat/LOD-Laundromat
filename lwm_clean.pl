@@ -165,8 +165,11 @@ clean_datastream(Md5, File, Read, ContentType, VoidUrls):-
   ),
 
   % Save the data in a cleaned format.
-  save_data_to_file(Md5, File, TOut),
-
+  (   TIn >= 1000000
+  ->  profile(save_data_to_file(Md5, File, TOut))
+  ;   save_data_to_file(Md5, File, TOut)
+  ),
+  
   % Store statistics about the number of (duplicate) triples.
   store_number_of_triples(Md5, TIn, TOut),
 

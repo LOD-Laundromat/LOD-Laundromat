@@ -26,7 +26,6 @@ Continues an interrupted LOD Washing Machine crawl.
 
 
 lwm_continue:-
-gtrace,
   % Collect zombie MD5s.
   aggregate_all(
     set(Md5),
