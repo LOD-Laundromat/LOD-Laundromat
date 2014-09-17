@@ -15,7 +15,7 @@ Continues an interrupted LOD Washing Machine crawl.
 
 :- use_module(library(aggregate)).
 :- use_module(library(apply)).
-:- use_module(library(lists)).
+:- use_module(library(filesex)).
 
 :- use_module(plSparql_update(sparql_update_api)).
 
@@ -26,6 +26,7 @@ Continues an interrupted LOD Washing Machine crawl.
 
 
 lwm_continue:-
+gtrace,
   % Collect zombie MD5s.
   aggregate_all(
     set(Md5),
@@ -36,15 +37,15 @@ lwm_continue:-
     ),
     Md5s
   ),
-  
+
   maplist(reset_md5, Md5s).
 
 
 reset_md5(Md5):-
   % Remove the MD5 directory.
   md5_directory(Md5, Directory),
-  delete_directory(Directory),
-  
+  delete_directory_and_contents(Directory),
+
   % Remove the MD5 metadata triples.
   lwm_version_graph(NG),
   md5_describe(Md5, Triples),

@@ -15,6 +15,7 @@ Initializes the LOD Washing Machine.
 
 :- use_module(os(dir_ext)).
 
+:- use_module(lwm(lwm_continue)).
 :- use_module(lwm(lwm_restart)).
 
 :- initialization(lwm_init).
@@ -44,8 +45,7 @@ lwm_init:-
   % Process the restart option.
   (   memberchk(restart(true), Opts)
   ->  lwm_restart
-  ;   debugging(lwm),
-      memberchk(continue(true), Opts)
+  ;   memberchk(continue(true), Opts)
   ->  lwm_continue
   ;   true
   ),
