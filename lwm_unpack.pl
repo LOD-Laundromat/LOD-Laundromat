@@ -35,16 +35,30 @@ Unpacks files for the LOD Washing Machine to clean.
 :- dynamic(debug:debug_md5/1).
 :- multifile(debug:debug_md5/1).
 
+:- dynamic(lwm:current_authority/1).
+:- multfile(lwm:current_authority/1).
+
 
 
 % Do not unpack more documents if the pending pool is already big enough.
 lwm_unpack_loop:-
   flag(number_of_pending_md5s, Id, Id),
   Id > 100, !,
+  
   lwm_unpack_loop.
 lwm_unpack_loop:-
   % Pick a new source to process.
-  catch(pick_pending(Md5), Exception, var(Exception)), !,
+  catch(pick_pending(Md5), Exception, var(Exception)),
+  
+  % Make sure that at no time two data documents are
+  % being downloaded from the same authority.
+  % This avoids being blocked by servers that do not allow
+  % multiple simultaneous requests.
+  (   md5_url(Md5, Url)
+  ->  uri_component(Uri, authority, Authority),
+      \+ current_authortity(Auhtority)
+  ;   assertz(current_authority(Authority))
+  ), !,
 
   % DEB
   (   debug:debug_md5(Md5)
@@ -54,7 +68,10 @@ lwm_unpack_loop:-
 
   % Process the URL we picked.
   lwm_unpack(Md5),
-
+  
+  % Additional data documents may now be downloaded from the same authority.
+  retractall(current_authortity(Authority)),
+  
   % Intermittent loop.
   lwm_unpack_loop.
 % Done for now. Check whether there are new jobs in one seconds.

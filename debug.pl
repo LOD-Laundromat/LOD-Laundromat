@@ -3,7 +3,7 @@
 
 
 % Avoid errors when using gtrace/0 in threads.
-:- initialization guitracer.
+:- initialization(guitracer).
 
 
 
@@ -19,6 +19,28 @@
      debugger_write_options,
      [max_depth(10),portrayed(true),spacing(next_argument)]
    ).
+
+
+
+% Show/hide debug messages per category.
+
+:- use_module(library(debug)).
+
+% ClioPatria debug tools.
+
+% This requires a running CP instance.
+:- debug(lwm_cp).
+
+% LOD Washing Machine-specific debug messages that do not fit anywhere else.
+:- debug(lwm_generic).
+
+% Show idle looping on threads.
+:- debug(lwm_idle_loop(clean)).
+:- debug(lwm_idle_loop(unpack)).
+
+% Show progress.
+:- debug(lwm_progress(clean)).
+%:- debug(lwm_progress(unpack)).
 
 
 
@@ -9620,24 +9642,3 @@ debug:debug_md5(ffe66eb5c5e2a331e9871041993bd40e).
 debug:debug_md5(fff8048e3c7cb39885bd78cf3532c2f3).
 debug:debug_md5(ffff20d14edb2ceab1d571cc33094deb).
 
-
-
-% Show/hide debug messages per category.
-
-:- use_module(library(debug)).
-
-% ClioPatria debug tools.
-
-% This requires a running CP instance.
-:- debug(lwm_cp).
-
-% LOD Washing Machine-specific debug messages that do not fit anywhere else.
-:- debug(lwm_generic).
-
-% Show idle looping on threads.
-:- debug(lwm_idle_loop(clean)).
-:- debug(lwm_idle_loop(unpack)).
-
-% Show progress.
-:- debug(lwm_progress(clean)).
-%:- debug(lwm_progress(unpack)).
