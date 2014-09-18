@@ -16,6 +16,7 @@ for storing the metadata. See module [lwm_settings] for this.
 :- use_module(library(optparse)).
 :- use_module(library(semweb/rdf_db)).
 
+:- use_module(math(float_ext)).
 :- use_module(os(dir_ext)).
 
 :- use_module(lwm(lwm_clean)).
@@ -44,15 +45,27 @@ init:-
   ),
 
   % Start the cleaning threads:
-  %   1. Clean dirty files that are smaller than or equal to 1 GB.
+  %   1. Clean small files.
+  forall(
+    between(1, 5, SmallCleanId),
+    (
+      format(atom(SmallCleanAlias), 'clean_small_~d', [SmallCleanId]),
+      thread_create(
+        lwm_clean_loop(float_between(_,0.25)),
+        _,
+        [alias(SmallCleanAlias),detached(true)]
+      )
+    )
+  ),
+  %   2. Clean medium files.
   thread_create(
-    lwm_clean_loop(=<(1.0)),
+    lwm_clean_loop(float_between(0.25,0.75)),
     _,
     [alias(clean_small),detached(true)]
   ),
-  %   2. Clean dirty files that are larger than 1 GB.
+  %   3. Clean large files.
   thread_create(
-    lwm_clean_loop( >(1.0)),
+    lwm_clean_loop(float_between(0.75,_)),
     _,
     [alias(clean_big),detached(true)]
   ).
