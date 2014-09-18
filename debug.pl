@@ -35,11 +35,15 @@
 :- debug(lwm_generic).
 
 % Show idle looping on threads.
-:- debug(lwm_idle_loop(clean)).
+:- debug(lwm_idle_loop(clean_large)).
+:- debug(lwm_idle_loop(clean_medium)).
+:- debug(lwm_idle_loop(clean_small)).
 :- debug(lwm_idle_loop(unpack)).
 
 % Show progress.
-:- debug(lwm_progress(clean)).
+:- debug(lwm_progress(clean_large)).
+:- debug(lwm_progress(clean_medium)).
+%:- debug(lwm_progress(clean_small)).
 %:- debug(lwm_progress(unpack)).
 
 

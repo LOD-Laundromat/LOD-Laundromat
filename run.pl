@@ -34,42 +34,33 @@ for storing the metadata. See module [lwm_settings] for this.
 init:-
   clean_lwm_state,
   process_command_line_arguments,
-
+  NumberOfUnpackThreads = 30,
+  NumberOfSmallCleanThreads = 7,
+  NumberOfMediumCleanThreads = 2,
+  NumberOfLargeCleanThreads = 1,
+  
   % Start the downloading+unpacking threads.
   forall(
-    between(1, 5, UnpackId),
-    (
-      format(atom(UnpackAlias), 'unpack_~d', [UnpackId]),
-      thread_create(lwm_unpack_loop, _, [alias(UnpackAlias),detached(true)])
-    )
+    between(1, NumberOfUnpackThreads, UnpackId),
+    start_unpack_thread(UnpackId)
   ),
-
+  
   % Start the cleaning threads:
   %   1. Clean small files.
   forall(
-    between(1, 5, SmallCleanId),
-    (
-      format(atom(SmallCleanAlias), 'clean_small_~d', [SmallCleanId]),
-      thread_create(
-        lwm_clean_loop(float_between(_,0.25)),
-        _,
-        [alias(SmallCleanAlias),detached(true)]
-      )
-    )
+    between(1, NumberOfSmallCleanThreads, SmallCleanId),
+    start_small_thread(SmallCleanId)
   ),
   %   2. Clean medium files.
-  thread_create(
-    lwm_clean_loop(float_between(0.25,0.75)),
-    _,
-    [alias(clean_medium),detached(true)]
+  forall(
+    between(1, NumberOfMediumCleanThreads, MediumCleanId),
+    start_medium_thread(MediumCleanId)
   ),
   %   3. Clean large files.
-  thread_create(
-    lwm_clean_loop(float_between(0.75,_)),
-    _,
-    [alias(clean_large),detached(true)]
+  forall(
+    between(1, NumberOfLargeCleanThreads, LargeCleanId),
+    start_large_thread(LargeCleanId)
   ).
-
 
 
 clean_lwm_state:-
@@ -77,8 +68,8 @@ clean_lwm_state:-
   % data documents are currently being downloaded.
   retractall(current_authority(_)),
 
-  % Reset the count of pending MD5s.
-  flag(number_of_pending_md5s, _, 0),
+  %%%%% Reset the count of pending MD5s.
+  %%%%flag(number_of_pending_md5s, _, 0),
 
   % Set the directory where the data is stored.
   absolute_file_name(data(.), DataDir, [access(write),file_type(directory)]),
@@ -92,7 +83,6 @@ clean_lwm_state:-
     rdf_unload_graph(G)
   ),
   rdf_retractall(_, _, _, _).
-
 
 
 process_command_line_arguments:-
@@ -122,4 +112,35 @@ process_command_line_arguments:-
   ->  lwm_continue
   ;   true
   ).
+
+
+
+% Helpers
+
+start_large_thread(Id):-
+  thread_create(
+    lwm_clean_loop(clean_large(Id), float_between(0.75,_)),
+    _,
+    [alias(clean_large(Id)),detached(true)]
+  ).
+
+
+start_medium_thread(Id):-
+  thread_create(
+    lwm_clean_loop(clean_medium(Id), float_between(0.25,0.75)),
+    _,
+    [alias(clean_medium(Id)),detached(true)]
+  ).
+
+
+start_small_thread(Id):-
+  thread_create(
+    lwm_clean_loop(clean_small(Id), float_between(_,0.25)),
+    _,
+    [alias(clean_small(Id)),detached(true)]
+  ).
+
+
+start_unpack_thread(Id):-
+  thread_create(lwm_unpack_loop, _, [alias(unpack(Id)),detached(true)]).
 

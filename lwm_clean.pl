@@ -1,7 +1,8 @@
 :- module(
   lwm_clean,
   [
-    lwm_clean_loop/1 % :Goal
+    lwm_clean_loop/2 % +Alias:compound
+                     % :Goal
   ]
 ).
 
@@ -34,14 +35,14 @@ The cleaning process performed by the LOD Washing Machine.
 :- use_module(lwm(md5)).
 :- use_module(lwm(noRdf_store)).
 
-:- meta_predicate(lwm_clean_loop(1)).
+:- meta_predicate(lwm_clean_loop(+,1)).
 
 :- dynamic(debug:debug_md5/1).
 :- multifile(debug:debug_md5/1).
 
 
 
-lwm_clean_loop(Goal):-
+lwm_clean_loop(Alias, Goal):-
   % Pick a new source to process.
   with_mutex(lod_washing_machine, (
     % Peek for an MD5 that has been downloaded+unpacked.
@@ -57,22 +58,22 @@ lwm_clean_loop(Goal):-
     
     % Tell the triple store we are now going to clean this MD5.
     store_start_clean(Md5)
-  )),
+  )), !,
 
   % DEB
   (debug:debug_md5(Md5) -> gtrace ; true),
 
   % Process the URL we picked.
-  lwm_clean(Md5),
+  lwm_clean(Alias, Md5),
   
-  % Make sure the unpacking threads do not create a pending pool
-  % that is (much) too big.
-  flag(number_of_pending_md5s, Id, Id - 1),
+  %%%%% Make sure the unpacking threads do not create a pending pool
+  %%%%% that is (much) too big.
+  %%%%flag(number_of_pending_md5s, Id, Id - 1),
   
   % Intermittent loop.
-  lwm_clean_loop(Goal).
+  lwm_clean_loop(Alias, Goal).
 % Done for now. Check whether there are new jobs in one seconds.
-lwm_clean_loop(Goal):-
+lwm_clean_loop(Alias, Goal):-
   sleep(1),
 
   % DEB
@@ -81,13 +82,16 @@ lwm_clean_loop(Goal):-
   ;   true
   ),
 
-  lwm_clean_loop(Goal).
+  lwm_clean_loop(Alias, Goal).
 
-%! lwm_clean(+Md5:atom) is det.
 
-lwm_clean(Md5):-
+%! lwm_clean(+Alias:compound, +Md5:atom) is det.
+
+lwm_clean(Alias, Md5):-
+  Alias =.. [CleanThreadCategory|_],
+  
   % DEB
-  (   debugging(lwm_progress(clean))
+  (   debugging(lwm_progress(CleanThreadCategory))
   ->  print_message(informational, lwm_start(clean,Md5,Source))
   ;   true
   ),
@@ -99,7 +103,7 @@ lwm_clean(Md5):-
   ),
 
   % DEB
-  (   debugging(lwm_progress(clean))
+  (   debugging(lwm_progress(CleanThreadCategory))
   ->  print_message(informational, lwm_end(clean,Md5,Source,Status,Warnings))
   ;   true
   ),

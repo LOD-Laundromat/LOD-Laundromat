@@ -46,12 +46,11 @@ Unpacks files for the LOD Washing Machine to clean.
 
 
 
-% Do not unpack more documents if the pending pool is already big enough.
-lwm_unpack_loop:-
-  flag(number_of_pending_md5s, Id, Id),
-  Id > 100, !,
-
-  lwm_unpack_loop.
+%%%%% Do not unpack more documents if the pending pool is already big enough.
+%%%%lwm_unpack_loop:-
+%%%%  flag(number_of_pending_md5s, Id, Id),
+%%%%  Id > 100, !,
+%%%%  lwm_unpack_loop.
 lwm_unpack_loop:-
   % Pick a new source to process.
   with_mutex(lod_washing_machine, (
