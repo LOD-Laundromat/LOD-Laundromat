@@ -42,14 +42,18 @@ The cleaning process performed by the LOD Washing Machine.
 
 lwm_clean_loop:-
   % Pick a new source to process.
-  catch(pick_unpacked(Md5), Exception, var(Exception)),
+  catch(pick_unpacked(Md5), Exception, var(Exception)), !,
 
   % DEB
   (debug:debug_md5(Md5) -> gtrace ; true),
 
   % Process the URL we picked.
   lwm_clean(Md5),
-
+  
+  % Make sure the unpacking threads do not create a pending pool
+  % that is (much) too big.
+  flag(number_of_pending_md5s, Id, Id - 1),
+  
   % Intermittent loop.
   lwm_clean_loop.
 % Done for now. Check whether there are new jobs in one seconds.

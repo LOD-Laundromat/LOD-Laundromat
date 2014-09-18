@@ -37,12 +37,20 @@ Unpacks files for the LOD Washing Machine to clean.
 
 
 
+% Do not unpack more documents if the pending pool is already big enough.
+lwm_unpack_loop:-
+  flag(number_of_pending_md5s, Id, Id),
+  Id > 100, !,
+  lwm_unpack_loop.
 lwm_unpack_loop:-
   % Pick a new source to process.
-  catch(pick_pending(Md5), Exception, var(Exception)),
+  catch(pick_pending(Md5), Exception, var(Exception)), !,
 
   % DEB
-  (debug:debug_md5(Md5) -> gtrace ; true),
+  (   debug:debug_md5(Md5)
+  ->  gtrace
+  ;   true
+  ),
 
   % Process the URL we picked.
   lwm_unpack(Md5),
