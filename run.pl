@@ -61,13 +61,13 @@ init:-
   thread_create(
     lwm_clean_loop(float_between(0.25,0.75)),
     _,
-    [alias(clean_small),detached(true)]
+    [alias(clean_medium),detached(true)]
   ),
   %   3. Clean large files.
   thread_create(
     lwm_clean_loop(float_between(0.75,_)),
     _,
-    [alias(clean_big),detached(true)]
+    [alias(clean_large),detached(true)]
   ).
 
 
