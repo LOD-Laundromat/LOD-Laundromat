@@ -49,7 +49,10 @@ lwm_init:-
   ->  lwm_continue
   ;   true
   ),
-
+  
+  % Reset the count of pending MD5s.
+  flag(number_of_pending_md5s, _, 0),
+  
   % Set the directory where the data is stored.
   absolute_file_name(data(.), DataDir, [access(write),file_type(directory)]),
   create_directory(DataDir),
