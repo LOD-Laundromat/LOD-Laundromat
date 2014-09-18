@@ -118,29 +118,33 @@ process_command_line_arguments:-
 % Helpers
 
 start_large_thread(Id):-
+  format(atom(Alias), 'clean_large_~d', [Id]),
   thread_create(
-    lwm_clean_loop(clean_large(Id), float_between(0.75,_)),
+    lwm_clean_loop(clean_large, float_between(0.75,_)),
     _,
-    [alias(clean_large(Id)),detached(true)]
+    [alias(Alias),detached(true)]
   ).
 
 
 start_medium_thread(Id):-
+  format(atom(Alias), 'clean_medium_~d', [Id]),
   thread_create(
-    lwm_clean_loop(clean_medium(Id), float_between(0.25,0.75)),
+    lwm_clean_loop(clean_medium, float_between(0.25,0.75)),
     _,
-    [alias(clean_medium(Id)),detached(true)]
+    [alias(Alias),detached(true)]
   ).
 
 
 start_small_thread(Id):-
+  format(atom(Alias), 'clean_small_~d', [Id]),
   thread_create(
-    lwm_clean_loop(clean_small(Id), float_between(_,0.25)),
+    lwm_clean_loop(clean_small, float_between(_,0.25)),
     _,
-    [alias(clean_small(Id)),detached(true)]
+    [alias(Alias),detached(true)]
   ).
 
 
 start_unpack_thread(Id):-
-  thread_create(lwm_unpack_loop, _, [alias(unpack(Id)),detached(true)]).
+  format(atom(Alias), 'unpack_~d', [Id]),
+  thread_create(lwm_unpack_loop, _, [alias(Alias),detached(true)]).
 

@@ -1,7 +1,7 @@
 :- module(
   lwm_clean,
   [
-    lwm_clean_loop/2 % +Alias:compound
+    lwm_clean_loop/2 % +CleanThreadCategory:atom
                      % :Goal
   ]
 ).
@@ -42,7 +42,7 @@ The cleaning process performed by the LOD Washing Machine.
 
 
 
-lwm_clean_loop(Alias, Goal):-
+lwm_clean_loop(CleanThreadCategory, Goal):-
   % Pick a new source to process.
   with_mutex(lod_washing_machine, (
     % Peek for an MD5 that has been downloaded+unpacked.
@@ -64,16 +64,16 @@ lwm_clean_loop(Alias, Goal):-
   (debug:debug_md5(Md5) -> gtrace ; true),
 
   % Process the URL we picked.
-  lwm_clean(Alias, Md5),
+  lwm_clean(CleanThreadCategory, Md5),
   
   %%%%% Make sure the unpacking threads do not create a pending pool
   %%%%% that is (much) too big.
   %%%%flag(number_of_pending_md5s, Id, Id - 1),
   
   % Intermittent loop.
-  lwm_clean_loop(Alias, Goal).
+  lwm_clean_loop(CleanThreadCategory, Goal).
 % Done for now. Check whether there are new jobs in one seconds.
-lwm_clean_loop(Alias, Goal):-
+lwm_clean_loop(CleanThreadCategory, Goal):-
   sleep(1),
 
   % DEB
@@ -82,14 +82,12 @@ lwm_clean_loop(Alias, Goal):-
   ;   true
   ),
 
-  lwm_clean_loop(Alias, Goal).
+  lwm_clean_loop(CleanThreadCategory, Goal).
 
 
-%! lwm_clean(+Alias:compound, +Md5:atom) is det.
+%! lwm_clean(+CleanThreadCategory:atom, +Md5:atom) is det.
 
-lwm_clean(Alias, Md5):-
-  Alias =.. [CleanThreadCategory|_],
-  
+lwm_clean(CleanThreadCategory, Md5):-
   % DEB
   (   debugging(lwm_progress(CleanThreadCategory))
   ->  print_message(informational, lwm_start(clean,Md5,Source))
