@@ -63,7 +63,7 @@ lwm_mode(unpack) --> ['UNPACK'].
 
 lwm_start_mode_specific_suffix(Md5, clean) --> !,
   {md5_size(Md5, NumberOfGigabytes)},
-  [' [~f]'-[NumberOfGigabytes]].
+  [' [~f GB]'-[NumberOfGigabytes]].
 lwm_start_mode_specific_suffix(_, unpack) --> [].
 
 warning(message(_,Kind,Lines)) -->

@@ -1,7 +1,7 @@
 :- module(
   lwm_clean,
   [
-    lwm_clean_loop/0
+    lwm_clean_loop/1 % :Goal
   ]
 ).
 
@@ -35,14 +35,24 @@ The cleaning process performed by the LOD Washing Machine.
 :- use_module(lwm(md5)).
 :- use_module(lwm(noRdf_store)).
 
+:- meta_predicate(lwm_clean_loop(1)).
+
 :- dynamic(debug:debug_md5/1).
 :- multifile(debug:debug_md5/1).
 
 
 
-lwm_clean_loop:-
+lwm_clean_loop(Goal):-
   % Pick a new source to process.
-  catch(pick_unpacked(Md5), Exception, var(Exception)), !,
+  catch(pick_unpacked(Md5), Exception, var(Exception)),
+  
+  % Do not process dirty data documents that are bigger than
+  % a given number of gigabytes in file size.
+  (   nonvar(Goal)
+  ->  md5_size(Md5, NumberOfGigabytes),
+      call(Goal, NumberOfGigabytes)
+  ;   true
+  ),
 
   % DEB
   (debug:debug_md5(Md5) -> gtrace ; true),
@@ -55,9 +65,9 @@ lwm_clean_loop:-
   flag(number_of_pending_md5s, Id, Id - 1),
   
   % Intermittent loop.
-  lwm_clean_loop.
+  lwm_clean_loop(Goal).
 % Done for now. Check whether there are new jobs in one seconds.
-lwm_clean_loop:-
+lwm_clean_loop(Goal):-
   sleep(1),
 
   % DEB
@@ -66,7 +76,7 @@ lwm_clean_loop:-
   ;   true
   ),
 
-  lwm_clean_loop.
+  lwm_clean_loop(Goal).
 
 %! lwm_clean(+Md5:atom) is det.
 

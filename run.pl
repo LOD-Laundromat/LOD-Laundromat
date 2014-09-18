@@ -31,14 +31,18 @@ for storing the metadata. See module [lwm_settings] for this.
 init:-
   clean_lwm_state,
   process_command_line_arguments,
+  
+  % Start downloading+unpacking threads.
   forall(
-    between(1, NumberOfUnpackLoops, _),
+    between(1, 5, _),
     thread_create(lwm_unpack_loop, _, [detached(true)])
   ),
-  forall(
-    between(1, NumberOfCleanLoops, _),
-    thread_create(lwm_clean_loop, _, [detached(true)])
-  ).
+  
+  % Start cleaning threads:
+  %   1. Clean dirty files that are smaller than or equal to 1 GB.
+  thread_create(lwm_clean_loop(=<(1.0)), _, [detached(true)]),
+  %   2. Clean dirty files that are larger than 1 GB.
+  thread_create(lwm_clean_loop( >(1.0)), _, [detached(true)]).
 
 
 
