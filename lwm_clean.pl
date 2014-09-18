@@ -77,11 +77,9 @@ lwm_clean_loop(CleanThreadCategory, Goal):-
   sleep(1),
 
   % DEB
-  ((    debugging(lwm_idle_loop(clean_large))
-  ;     debugging(lwm_idle_loop(clean_medium))
-  ;     debugging(lwm_idle_loop(clean_small))
-  ) ->  print_message(warning, lwm_idle_loop(clean))
-  ;     true
+  (   debugging(lwm_idle_loop(CleanThreadCategory))
+  ->  print_message(warning, lwm_idle_loop(CleanThreadCategory))
+  ;   true
   ),
 
   lwm_clean_loop(CleanThreadCategory, Goal).
@@ -209,7 +207,7 @@ clean_datastream(
   store_number_of_triples(CleanThreadCategory, Md5, TIn, TOut),
 
   % Make sure any VoID datadumps are added to the LOD Basket.
-  find_void_datasets(VoidUrls).
+  find_void_datasets(CleanThreadCategory, VoidUrls).
 
 
 
@@ -224,9 +222,12 @@ clean_file_name(File1, quads):-
   rename_file(File1, File2).
 
 
-%! find_void_datasets(-VoidUrls:ordset(url)) is det.
+%! find_void_datasets(
+%!   +CleanThreadCategory:atom,
+%!   -VoidUrls:ordset(url)
+%! ) is det.
 
-find_void_datasets(Urls):-
+find_void_datasets(CleanThreadCategory, Urls):-
   aggregate_all(
     set(Url),
     rdf(_, void:dataDump, Url),

@@ -30,10 +30,13 @@ prolog:message(lwm_end(Mode,Md5,Source,Status,Warnings)) -->
   ['] [~w] [~w]'-[Md5,Source]].
 
 
-% lwm_idle_loop(+Mode:oneof([clean,unpack]))
+% lwm_idle_loop(+Category:oneof([clean_large,clean_medium,clean_small,unpack]))
 
-prolog:message(lwm_idle_loop(Mode)) -->
-  {flag(number_of_idle_loops(Mode), X, X + 1)},
+prolog:message(lwm_idle_loop(Category)) -->
+  {
+    Flag =.. [number_of_idle_loops,Category],
+    flag(Flag, X, X + 1)
+  },
   ['['],
     ['IDLE '],
     lwm_mode(Mode),

@@ -230,9 +230,11 @@ store_number_of_triples(CleanThreadCategory, Md5, TIn, TOut):-
   store_triple(ll-Md5, llo-triples, literal(type(xsd-integer,TOut))),
   TDup is TIn - TOut,
   store_triple(ll-Md5, llo-duplicates, literal(type(xsd-integer,TDup))),
-  print_message(
-    informational,
-    rdf_ntriples_written(CleanThreadCategory,TOut,TDup)
+  
+  % DEB
+  (   debugging(lwm_idle_loop(CleanThreadCategory))
+  ->  print_message(informational, rdf_ntriples_written(TOut,TDup))
+  ;   true
   ).
 
 
@@ -295,13 +297,11 @@ store_warning(Md5, message(Term,Kind,_)):-
 
 :- multifile(prolog:message//1).
 
-prolog:message(rdf_ntriples_written(CleanThreadCategory,TOut,TDup)) -->
-  {debugging(lwm_idle_loop(CleanThreadCategory))}, !,
+prolog:message(rdf_ntriples_written(TOut,TDup)) -->
   ['  ['],
     number_of_triples_written(TOut),
     number_of_duplicates_written(TDup),
   [']'].
-prolog:message(rdf_ntriples_written(_,_,_)) --> [].
 
 number_of_duplicates_written(0) --> !, [].
 number_of_duplicates_written(T) --> [' (~D dups)'-[T]].
