@@ -36,7 +36,7 @@ Unpacks files for the LOD Washing Machine to clean.
 :- multifile(debug:debug_md5/1).
 
 :- dynamic(lwm:current_authority/1).
-:- multfile(lwm:current_authority/1).
+:- multifile(lwm:current_authority/1).
 
 
 

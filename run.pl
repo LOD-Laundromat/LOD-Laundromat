@@ -22,7 +22,7 @@ for storing the metadata. See module [lwm_settings] for this.
 :- use_module(lwm(lwm_restart)).
 
 :- dynamic(lwm:current_authority/1).
-:- multfile(lwm:current_authority/1).
+:- multifile(lwm:current_authority/1).
 
 :- initialization(init).
 
