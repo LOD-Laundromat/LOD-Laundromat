@@ -53,6 +53,7 @@
 :- dynamic(debug:debug_md5/1).
 :- multifile(debug:debug_md5/1).
 
+/*
 debug:debug_md5('000395afb9a9c7923171213733bf4a06').
 debug:debug_md5('000572f1c9d6b4c5dc531f1ad2b31327').
 debug:debug_md5('00084eabe5acfd5af56cc30314a4dfa2').
@@ -9645,4 +9646,4 @@ debug:debug_md5(ffdbbf12fa53f368243e56234ce01964).
 debug:debug_md5(ffe66eb5c5e2a331e9871041993bd40e).
 debug:debug_md5(fff8048e3c7cb39885bd78cf3532c2f3).
 debug:debug_md5(ffff20d14edb2ceab1d571cc33094deb).
-
+*/

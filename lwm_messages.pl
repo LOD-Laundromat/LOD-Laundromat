@@ -5,7 +5,7 @@
 Print messages for the LOD Washing Machine.
 
 @author Wouter Beek
-@version 2014/06, 2014/08
+@version 2014/06, 2014/08-2014/09
 */
 
 :- use_module(lwm(lwm_sparql_query)).
@@ -15,22 +15,22 @@ Print messages for the LOD Washing Machine.
 
 
 % lwm_end(
-%   +Mode:oneof([clean,unpack]),
+%   +Category:atom,
 %   +Md5:atom,
 %   +Source,
 %   +Status,
 %   +Warnings:list
 % )
 
-prolog:message(lwm_end(Mode,Md5,Source,Status,Warnings)) -->
+prolog:message(lwm_end(Category,Md5,Source,Status,Warnings)) -->
   status(Status),
   warnings(Warnings),
   ['[END '],
-  lwm_mode(Mode),
+  lwm_category(Category),
   ['] [~w] [~w]'-[Md5,Source]].
 
 
-% lwm_idle_loop(+Category:oneof([clean_large,clean_medium,clean_small,unpack]))
+% lwm_idle_loop(+Category:atom)
 
 prolog:message(lwm_idle_loop(Category)) -->
   {
@@ -39,18 +39,18 @@ prolog:message(lwm_idle_loop(Category)) -->
   },
   ['['],
     ['IDLE '],
-    lwm_mode(Mode),
+    lwm_category(Category),
   ['] ~D'-[X]].
 
 
-% lwm_start(+Mode:oneof([clean,unpack]), +Md5:atom, +Source)
+% lwm_start(+Category:atom, +Md5:atom, +Source)
 
-prolog:message(lwm_start(Mode,Md5,Source)) -->
+prolog:message(lwm_start(Category,Md5,Source)) -->
   {md5_source(Md5, Source)},
   ['[START '],
-  lwm_mode(Mode),
+  lwm_category(Category),
   ['] [~w] [~w]'-[Md5,Source]],
-  lwm_start_mode_specific_suffix(Md5, Mode).
+  lwm_start_mode_specific_suffix(Md5, Category).
 
 
 
@@ -61,13 +61,14 @@ lines([H|T]) -->
   [H],
   lines(T).
 
-lwm_mode(clean) --> ['CLEAN'].
-lwm_mode(unpack) --> ['UNPACK'].
+lwm_category(Category1) -->
+  {upcase_atom(Category1, Category2)},
+  [Category2].
 
-lwm_start_mode_specific_suffix(Md5, clean) --> !,
+lwm_start_mode_specific_suffix(_, unpack) --> !, [].
+lwm_start_mode_specific_suffix(Md5, _) -->
   {md5_size(Md5, NumberOfGigabytes)},
   [' [~f GB]'-[NumberOfGigabytes]].
-lwm_start_mode_specific_suffix(_, unpack) --> [].
 
 warning(message(_,Kind,Lines)) -->
   ['    [MESSAGE(~w)] '-[Kind]],

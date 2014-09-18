@@ -47,7 +47,7 @@ lwm_clean_loop(CleanThreadCategory, Goal):-
   with_mutex(lod_washing_machine, (
     % Peek for an MD5 that has been downloaded+unpacked.
     md5_unpacked(Md5),
-    
+
     % Do not process dirty data documents for which the given goal
     % does not succeed when applied to the dirty document's size.
     (   nonvar(Goal)
@@ -55,7 +55,7 @@ lwm_clean_loop(CleanThreadCategory, Goal):-
         call(Goal, NumberOfGigabytes)
     ;   true
     ),
-    
+
     % Tell the triple store we are now going to clean this MD5.
     store_start_clean(Md5)
   )), !,
@@ -65,11 +65,11 @@ lwm_clean_loop(CleanThreadCategory, Goal):-
 
   % Process the URL we picked.
   lwm_clean(CleanThreadCategory, Md5),
-  
+
   %%%%% Make sure the unpacking threads do not create a pending pool
   %%%%% that is (much) too big.
   %%%%flag(number_of_pending_md5s, Id, Id - 1),
-  
+
   % Intermittent loop.
   lwm_clean_loop(CleanThreadCategory, Goal).
 % Done for now. Check whether there are new jobs in one seconds.
@@ -233,7 +233,12 @@ find_void_datasets(CleanThreadCategory, Urls):-
     rdf(_, void:dataDump, Url),
     Urls
   ),
-  print_message(informational, found_void(Urls)).
+
+  % DEB
+  (   debugging(lwm_process(CleanThreadCategory))
+  ->  print_message(informational, found_void(Urls))
+  ;   true
+  ).
 
 
 %! rdf_guess_format_md5(
