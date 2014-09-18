@@ -34,17 +34,28 @@ init:-
   clean_lwm_state,
   process_command_line_arguments,
 
-  % Start downloading+unpacking threads.
+  % Start the downloading+unpacking threads.
   forall(
-    between(1, 5, _),
-    thread_create(lwm_unpack_loop, _, [detached(true)])
+    between(1, 5, UnpackId),
+    (
+      format(atom(UnpackAlias), 'unpack_~d', [UnpackId]),
+      thread_create(lwm_unpack_loop, _, [alias(UnpackAlias),detached(true)])
+    )
   ),
 
-  % Start cleaning threads:
+  % Start the cleaning threads:
   %   1. Clean dirty files that are smaller than or equal to 1 GB.
-  thread_create(lwm_clean_loop(=<(1.0)), _, [detached(true)]),
+  thread_create(
+    lwm_clean_loop(=<(1.0)),
+    _,
+    [alias(clean_small),detached(true)]
+  ),
   %   2. Clean dirty files that are larger than 1 GB.
-  thread_create(lwm_clean_loop( >(1.0)), _, [detached(true)]).
+  thread_create(
+    lwm_clean_loop( >(1.0)),
+    _,
+    [alias(clean_big),detached(true)]
+  ).
 
 
 

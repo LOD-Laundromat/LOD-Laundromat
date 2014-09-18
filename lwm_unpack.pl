@@ -14,20 +14,26 @@ Unpacks files for the LOD Washing Machine to clean.
 */
 
 :- use_module(library(apply)).
+:- use_module(library(debug)).
 :- use_module(library(lists)).
 :- use_module(library(ordsets)).
 :- use_module(library(pairs)).
+:- use_module(library(semweb/rdf_db)).
 
 :- use_module(generics(atom_ext)).
+:- use_module(generics(meta_ext)).
 :- use_module(generics(uri_ext)).
 :- use_module(http(http_download)).
 :- use_module(os(archive_ext)).
 :- use_module(os(file_ext)).
 :- use_module(pl(pl_log)).
 
+:- use_module(plSparql_query(sparql_query_api)).
+:- use_module(plSparql_update(sparql_update_api)).
+
 :- use_module(lwm(md5)).
-:- use_module(lwm(lwm_basket)).
 :- use_module(lwm(lwm_messages)).
+:- use_module(lwm(lwm_settings)).
 :- use_module(lwm(lwm_sparql_query)).
 :- use_module(lwm(lwm_store_triple)).
 :- use_module(lwm(noRdf_store)).
@@ -48,18 +54,49 @@ lwm_unpack_loop:-
   lwm_unpack_loop.
 lwm_unpack_loop:-
   % Pick a new source to process.
-  catch(pick_pending(Md5), Exception, var(Exception)),
-
-  % Make sure that at no time two data documents are
-  % being downloaded from the same authority.
-  % This avoids being blocked by servers that do not allow
-  % multiple simultaneous requests.
-  (   md5_url(Md5, Uri)
-  ->  uri_component(Uri, authority, Authority),
-      \+ current_authority(Authority)
-  ;   assertz(current_authority(Authority))
-  ), !,
-
+  with_mutex(lod_washing_machine, (
+    % Peek at pening MD5.
+    md5_pending(Md5),
+    
+    % Make sure that at no time two data documents are
+    % being downloaded from the same authority.
+    % This avoids being blocked by servers that do not allow
+    % multiple simultaneous requests.
+    (   md5_url(Md5, Uri)
+    ->  uri_component(Uri, authority, Authority),
+        \+ lwm:current_authority(Authority)
+    ;   assertz(lwm:current_authority(Authority))
+    ),
+    
+    % For the debug tools to work,
+    % details from the LOD Basket have to be copied over
+    % from the production tiple store to a ClioPatria instance.
+    (   debugging(lwm_cp)
+    ->  lod_basket_graph(BasketGraph),
+        loop_until_true(
+          sparql_select(
+            virtuoso_query,
+            [ll],
+            [p,o],
+            [rdf(ll:Md5,var(p),var(o))],
+            Result,
+            [default_graph(BasketGraph),distinct(true)]
+          )
+        ),
+        rdf_global_id(ll:Md5, S),
+        maplist(pair_to_triple(S), Result, Triples),
+        lwm_version_graph(NG),
+        loop_until_true(
+          sparql_insert_data(cliopatria_update, Triples, [NG], [])
+        )
+    ;   true
+    ),
+    
+    % Update the database, saying we are ready
+    % to begin downloading+unpacking this data document.
+    store_start_unpack(Md5)
+  )), !,
+  
   % DEB
   (   debug:debug_md5(Md5)
   ->  gtrace
@@ -70,7 +107,7 @@ lwm_unpack_loop:-
   lwm_unpack(Md5),
 
   % Additional data documents may now be downloaded from the same authority.
-  retractall(current_authority(Authority)),
+  retractall(lwm:current_authority(Authority)),
 
   % Intermittent loop.
   lwm_unpack_loop.
@@ -304,4 +341,7 @@ lod_content_type('text/n3',                0.8).
 lod_content_type('text/rdf+n3',            0.5).
 % All
 lod_content_type('*/*',                    0.1).
+
+
+pair_to_triple(S, [P,O], rdf(S,P,O)).
 

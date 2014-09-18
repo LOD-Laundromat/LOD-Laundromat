@@ -27,7 +27,6 @@ The cleaning process performed by the LOD Washing Machine.
 :- use_module(plRdf_ser(rdf_file_db)).
 :- use_module(plRdf_ser(rdf_guess_format)).
 
-:- use_module(lwm(lwm_basket)).
 :- use_module(lwm(lwm_messages)).
 :- use_module(lwm(lwm_settings)).
 :- use_module(lwm(lwm_sparql_query)).
@@ -44,15 +43,21 @@ The cleaning process performed by the LOD Washing Machine.
 
 lwm_clean_loop(Goal):-
   % Pick a new source to process.
-  catch(pick_unpacked(Md5), Exception, var(Exception)),
-  
-  % Do not process dirty data documents that are bigger than
-  % a given number of gigabytes in file size.
-  (   nonvar(Goal)
-  ->  md5_size(Md5, NumberOfGigabytes),
-      call(Goal, NumberOfGigabytes)
-  ;   true
-  ),
+  with_mutex(lod_washing_machine, (
+    % Peek for an MD5 that has been downloaded+unpacked.
+    md5_unpacked(Md5),
+    
+    % Do not process dirty data documents for which the given goal
+    % does not succeed when applied to the dirty document's size.
+    (   nonvar(Goal)
+    ->  md5_size(Md5, NumberOfGigabytes),
+        call(Goal, NumberOfGigabytes)
+    ;   true
+    ),
+    
+    % Tell the triple store we are now going to clean this MD5.
+    store_start_clean(Md5)
+  )),
 
   % DEB
   (debug:debug_md5(Md5) -> gtrace ; true),
