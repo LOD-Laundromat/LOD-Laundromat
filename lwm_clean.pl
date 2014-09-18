@@ -77,9 +77,11 @@ lwm_clean_loop(CleanThreadCategory, Goal):-
   sleep(1),
 
   % DEB
-  (   debugging(lwm_idle_loop(clean))
-  ->  print_message(warning, lwm_idle_loop(clean))
-  ;   true
+  ((    debugging(lwm_idle_loop(clean_large))
+  ;     debugging(lwm_idle_loop(clean_medium))
+  ;     debugging(lwm_idle_loop(clean_small))
+  ) ->  print_message(warning, lwm_idle_loop(clean))
+  ;     true
   ),
 
   lwm_clean_loop(CleanThreadCategory, Goal).
@@ -95,7 +97,7 @@ lwm_clean(CleanThreadCategory, Md5):-
   ),
 
   run_collect_messages(
-    clean_md5(Md5),
+    clean_md5(CleanThreadCategory, Md5),
     Status,
     Warnings
   ),
@@ -111,9 +113,9 @@ lwm_clean(CleanThreadCategory, Md5):-
   store_end_clean(Md5).
 
 
-%! clean_md5(+Md5:atom) is det.
+%! clean_md5(+CleanThreadCategory:atom, +Md5:atom) is det.
 
-clean_md5(Md5):-
+clean_md5(CleanThreadCategory, Md5):-
   % Construct the file name belonging to the given MD5.
   md5_directory(Md5, Md5Dir),
   absolute_file_name(dirty, DirtyFile, [access(read),relative_to(Md5Dir)]),
@@ -126,7 +128,14 @@ clean_md5(Md5):-
     open(DirtyFile, read, Read),
     (
       rdf_transaction(
-        clean_datastream(Md5, DirtyFile, Read, ContentType, VoidUrls),
+        clean_datastream(
+          CleanThreadCategory,
+          Md5,
+          DirtyFile,
+          Read,
+          ContentType,
+          VoidUrls
+        ),
         _,
         [snapshot(true)]
       ),
@@ -145,6 +154,7 @@ clean_md5(Md5):-
 
 
 %! clean_datastream(
+%!   +CleanThreadCategory:atom,
 %!   +Md5:atom,
 %!   +File:atom,
 %!   +Read:blob,
@@ -152,7 +162,14 @@ clean_md5(Md5):-
 %!   -VoidUrls:ordset(url)
 %! ) is det.
 
-clean_datastream(Md5, File, Read, ContentType, VoidUrls):-
+clean_datastream(
+  CleanThreadCategory,
+  Md5,
+  File,
+  Read,
+  ContentType,
+  VoidUrls
+):-
   % Guess the RDF serialization format,
   % using the content type and the file extension as suggestions.
   ignore(md5_file_extension(Md5, FileExtension)),
@@ -189,7 +206,7 @@ clean_datastream(Md5, File, Read, ContentType, VoidUrls):-
   save_data_to_file(Md5, File, TOut),
 
   % Store statistics about the number of (duplicate) triples.
-  store_number_of_triples(Md5, TIn, TOut),
+  store_number_of_triples(CleanThreadCategory, Md5, TIn, TOut),
 
   % Make sure any VoID datadumps are added to the LOD Basket.
   find_void_datasets(VoidUrls).
