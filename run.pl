@@ -18,8 +18,10 @@ for storing the metadata. See module [lwm_settings] for this.
 
 :- use_module(os(dir_ext)).
 
+:- use_module(lwm(lwm_clean)).
 :- use_module(lwm(lwm_continue)).
 :- use_module(lwm(lwm_restart)).
+:- use_module(lwm(lwm_unpack)).
 
 :- dynamic(lwm:current_authority/1).
 :- multifile(lwm:current_authority/1).
@@ -31,13 +33,13 @@ for storing the metadata. See module [lwm_settings] for this.
 init:-
   clean_lwm_state,
   process_command_line_arguments,
-  
+
   % Start downloading+unpacking threads.
   forall(
     between(1, 5, _),
     thread_create(lwm_unpack_loop, _, [detached(true)])
   ),
-  
+
   % Start cleaning threads:
   %   1. Clean dirty files that are smaller than or equal to 1 GB.
   thread_create(lwm_clean_loop(=<(1.0)), _, [detached(true)]),
@@ -50,10 +52,10 @@ clean_lwm_state:-
   % Reset the authorities from which
   % data documents are currently being downloaded.
   retractall(current_authority(_)),
-  
+
   % Reset the count of pending MD5s.
   flag(number_of_pending_md5s, _, 0),
-  
+
   % Set the directory where the data is stored.
   absolute_file_name(data(.), DataDir, [access(write),file_type(directory)]),
   create_directory(DataDir),
@@ -82,13 +84,13 @@ process_command_line_arguments:-
     Opts,
     _
   ),
-  
+
   % Process the directory option.
   memberchk(directory(Dir), Opts),
   make_directory_path(Dir),
   retractall(user:file_search_path(data, _)),
   assert(user:file_search_path(data, Dir)),
-  
+
   % Process the restart or continue option.
   (   memberchk(restart(true), Opts)
   ->  lwm_restart
