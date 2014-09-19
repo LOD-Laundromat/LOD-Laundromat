@@ -10,6 +10,8 @@ for storing the metadata. See module [lwm_settings] for this.
 @version 2014/06, 2014/08-2014/09
 */
 
+:- set_prolog_stack(global, limit(125*10**9)).
+
 :- [debug].
 :- [load].
 
