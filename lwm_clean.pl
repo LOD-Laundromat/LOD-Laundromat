@@ -147,7 +147,7 @@ clean_md5(Category, Md5):-
   delete_file(DirtyFile),
 
   % Add the new VoID URLs to the LOD Basket.
-  maplist(send_to_basket, VoidUrls).
+  maplist(store_new_url, VoidUrls).
 
 
 %! clean_datastream(
@@ -267,19 +267,4 @@ save_data_to_file(Md5, File, NumberOfTriples):-
   ),
   % Fix the file name, if needed.
   clean_file_name(CleanFile, Format).
-
-
-%! send_to_basket(+Url:url) is det.
-
-send_to_basket(Url):-
-  ll_scheme(Scheme),
-  ll_authority(Authority1),
-  atomic_list_concat([backend,Authority1], '.', Authority2),
-  uri_components(
-    BasketLocation1,
-    uri_components(Scheme,Authority2,'/',_,_)
-  ),
-  uri_query_add_nvpair(BasketLocation1, url, Url, BasketLocation2),
-  http_get(BasketLocation2, Reply, []),
-  debug(lwm_generics, '~w', [Reply]).
 
