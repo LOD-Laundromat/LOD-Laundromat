@@ -32,7 +32,7 @@ Unpacks files for the LOD Washing Machine to clean.
 :- use_module(plSparql_update(sparql_update_api)).
 
 :- use_module(lwm(md5)).
-:- use_module(lwm(lwm_debug_messages)).
+:- use_module(lwm(lwm_debug_message)).
 :- use_module(lwm(lwm_settings)).
 :- use_module(lwm(lwm_sparql_query)).
 :- use_module(lwm(lwm_store_triple)).

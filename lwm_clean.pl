@@ -28,7 +28,7 @@ The cleaning process performed by the LOD Washing Machine.
 :- use_module(plRdf_ser(rdf_file_db)).
 :- use_module(plRdf_ser(rdf_guess_format)).
 
-:- use_module(lwm(lwm_debug_messages)).
+:- use_module(lwm(lwm_debug_message)).
 :- use_module(lwm(lwm_settings)).
 :- use_module(lwm(lwm_sparql_query)).
 :- use_module(lwm(lwm_store_triple)).
