@@ -35,8 +35,8 @@ init:-
   clean_lwm_state,
   process_command_line_arguments,
   NumberOfUnpackThreads = 30,
-  NumberOfSmallCleanThreads = 7,
-  NumberOfMediumCleanThreads = 2,
+  NumberOfSmallCleanThreads = 10,
+  NumberOfMediumCleanThreads = 1,
   NumberOfLargeCleanThreads = 1,
   
   % Start the downloading+unpacking threads.
@@ -120,7 +120,7 @@ process_command_line_arguments:-
 start_large_thread(Id):-
   format(atom(Alias), 'clean_large_~d', [Id]),
   thread_create(
-    lwm_clean_loop(clean_large, float_between(0.75,_)),
+    lwm_clean_loop(clean_large, float_between(2.5,30)),
     _,
     [alias(Alias),detached(true)]
   ).
@@ -129,7 +129,7 @@ start_large_thread(Id):-
 start_medium_thread(Id):-
   format(atom(Alias), 'clean_medium_~d', [Id]),
   thread_create(
-    lwm_clean_loop(clean_medium, float_between(0.25,0.75)),
+    lwm_clean_loop(clean_medium, float_between(0.5,2.5)),
     _,
     [alias(Alias),detached(true)]
   ).
@@ -138,7 +138,7 @@ start_medium_thread(Id):-
 start_small_thread(Id):-
   format(atom(Alias), 'clean_small_~d', [Id]),
   thread_create(
-    lwm_clean_loop(clean_small, float_between(_,0.25)),
+    lwm_clean_loop(clean_small, float_between(_,0.5)),
     _,
     [alias(Alias),detached(true)]
   ).

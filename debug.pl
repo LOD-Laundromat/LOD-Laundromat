@@ -11,6 +11,8 @@
 
 :- use_module(library(ansi_term)).
 
+:- set_prolog_flag(verbose, silent).
+
 :- set_prolog_flag(
      answer_write_options,
      [max_depth(10),portrayed(true),spacing(next_argument)]
@@ -27,6 +29,8 @@
 :- use_module(library(debug)).
 
 % ClioPatria debug tools.
+
+%%%%:- debug(sparql_update).
 
 % This requires a running CP instance.
 :- debug(lwm_cp).
