@@ -16,12 +16,14 @@ The cleaning process performed by the LOD Washing Machine.
 
 :- use_module(library(aggregate)).
 :- use_module(library(apply)).
+:- use_module(library(debug)).
 :- use_module(library(http/http_client)).
 :- use_module(library(option)).
 :- use_module(library(semweb/rdf_db)).
 :- use_module(library(uri)).
 :- use_module(library(zlib)).
 
+:- use_module(generics(uri_query)).
 :- use_module(pl(pl_log)).
 
 :- use_module(plRdf_ser(ctriples_write_graph)).
@@ -271,11 +273,13 @@ save_data_to_file(Md5, File, NumberOfTriples):-
 
 send_to_basket(Url):-
   ll_scheme(Scheme),
-  ll_authority(Authority),
+  ll_authority(Authority1),
+  atomic_list_concat([backend,Authority1], '.', Authority2),
   uri_components(
-    BasketLocation,
-    uri_components(Scheme,Authority,'/basket',_,_)
+    BasketLocation1,
+    uri_components(Scheme,Authority,'/',_,_)
   ),
-  http_post(BasketLocation, atom(Url), Reply, []),
-  writeln(Reply).
+  uri_query_add_nvpair(BasketLocation1, url, Url, BasketLocation2),
+  http_get(BasketLocation2, Reply, []),
+  debug(lwm_generics, '~w', [Reply]).
 
