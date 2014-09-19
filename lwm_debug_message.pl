@@ -35,7 +35,7 @@ lwm_debug_message(Topic):-
 % Do not print debug message.
 lwm_debug_message(Topic, _):-
   nonvar(Topic),
-  debugging(Topic, false), !.
+  \+ debugging(Topic), !.
 
 % C-Triples written.
 lwm_debug_message(_, ctriples_written(_,0,_)):- !.
