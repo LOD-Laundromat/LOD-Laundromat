@@ -29,11 +29,12 @@ lwm_debug_message(Topic):-
   lwm_debug_message(Topic, Topic).
 
 
-%! lwm_debug_message(Topic, Message):-
+%! lwm_debug_message(Topic, Message) is det.
 % `Topic` is a debug topic, specified in `library(debug)`.
 
 % Do not print debug message.
 lwm_debug_message(Topic, _):-
+(Topic == lwm_idle_loop(clean_large) -> gtrace ; true),
   nonvar(Topic),
   \+ debugging(Topic), !.
 
