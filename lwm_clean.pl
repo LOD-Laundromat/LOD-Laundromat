@@ -274,7 +274,7 @@ send_to_basket(Url):-
   ll_authority(Authority),
   uri_components(
     BasketLocation,
-    uri_components(Scheme,Authority,basket,_,_)
+    uri_components(Scheme,Authority,'/basket',_,_)
   ),
   http_post(BasketLocation, atom(Url), Reply, []),
   writeln(Reply).
