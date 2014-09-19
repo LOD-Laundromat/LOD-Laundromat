@@ -34,9 +34,9 @@ for storing the metadata. See module [lwm_settings] for this.
 init:-
   clean_lwm_state,
   process_command_line_arguments,
-  NumberOfUnpackThreads = 30,
-  NumberOfSmallCleanThreads = 10,
-  NumberOfMediumCleanThreads = 1,
+  NumberOfUnpackThreads = 35,
+  NumberOfSmallCleanThreads = 20,
+  NumberOfMediumCleanThreads = 5,
   NumberOfLargeCleanThreads = 1,
   
   % Start the downloading+unpacking threads.

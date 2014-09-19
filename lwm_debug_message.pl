@@ -29,12 +29,19 @@ lwm_debug_message(Topic):-
   lwm_debug_message(Topic, Topic).
 
 
+% Idle loop.
+lwm_debug_message(Topic, lwm_idle_loop(Category)):-
+  % Every category has its own idle loop flag.
+  atomic_list_concat([number_of_idle_loops,Category], '_', Flag),
+  flag(Flag, X, X + 1),
+
+  debug(Topic, '[IDLE] ~a ~D', [Category,X]).
+
 %! lwm_debug_message(Topic, Message) is det.
 % `Topic` is a debug topic, specified in `library(debug)`.
 
 % Do not print debug message.
 lwm_debug_message(Topic, _):-
-(Topic == lwm_idle_loop(clean_large) -> gtrace ; true),
   nonvar(Topic),
   \+ debugging(Topic), !.
 
@@ -48,14 +55,6 @@ lwm_debug_message(Topic, ctriples_written(_,Triples,Duplicates)):-
   ),
 
   debug(Topic, '[+~D~s]', [Triples,DuplicatesString]).
-
-% Idle loop.
-lwm_debug_message(Topic, lwm_idle_loop(Category)):-
-  % Every category has its own idle loop flag.
-  atomic_list_concat([number_of_idle_loops,Category], '_', Flag),
-  flag(Flag, X, X + 1),
-
-  debug(Topic, '[IDLE] ~a ~D', [Category,X]).
 
 % End a process.
 lwm_debug_message(Topic, lwm_end(Category1,Md5,Source,Status,Warnings)):-

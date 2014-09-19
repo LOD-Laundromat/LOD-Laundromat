@@ -36,12 +36,12 @@
 :- debug(lwm_cp).
 
 % LOD Washing Machine-specific debug messages that do not fit anywhere else.
-:- debug(lwm_generic).
+%%%%:- debug(lwm_generic).
 
 % Show idle looping on threads.
-:- debug(lwm_idle_loop(clean_large)).
-:- debug(lwm_idle_loop(clean_medium)).
-:- debug(lwm_idle_loop(clean_small)).
+%%%%:- debug(lwm_idle_loop(clean_large)).
+%%%%:- debug(lwm_idle_loop(clean_medium)).
+%%%%:- debug(lwm_idle_loop(clean_small)).
 :- debug(lwm_idle_loop(unpack)).
 
 % Show progress.
@@ -64,3 +64,14 @@ debug:debug_md5('9642958d99a44d41e62943989e5d20f5', _).
 debug:debug_md5('d3c9349c6bdd8d4d477ace2e616b482e', _).
 debug:debug_md5('e12babad5e313f46734086426e475faa', _).
 
+
+
+show_idle:-
+  flag(number_of_idle_loops_clean_small, Small, Small),
+  flag(number_of_idle_loops_clean_medium, Medium, Medium),
+  flag(number_of_idle_loops_clean_large, Large, Large),
+  format(
+    user_output,
+    'Idle loops:\n  - Small: ~D\n  - Medium: ~D\n  - Large: ~D\n',
+    [Small,Medium,Large]
+  ).
