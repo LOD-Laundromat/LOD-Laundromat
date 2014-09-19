@@ -169,7 +169,7 @@ store_lod_error(_, _, error(resource_error(_),_)).
 store_lod_error(Md5, Kind, sgml(sgml_parser(_Parser),_File,Line,Message)):- !,
   rdf_bnode(BNode),
   store_triple(ll-Md5, llo-Kind, BNode),
-  store_triple(BNode, rdf-type, error-'SgmlParserWarning'),
+  store_triple(BNode, rdf-type, error-'SgmlParserError'),
   store_triple(BNode, error-sourceLine, literal(type(xsd-integer,Line))),
   store_triple(BNode, error-message, literal(type(xsd-string,Message))).
 
