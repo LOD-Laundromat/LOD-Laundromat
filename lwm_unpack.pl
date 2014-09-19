@@ -53,48 +53,55 @@ Unpacks files for the LOD Washing Machine to clean.
 %%%%  lwm_unpack_loop.
 lwm_unpack_loop:-
   % Pick a new source to process.
-  with_mutex(lod_washing_machine, (
-    % Peek at pening MD5.
-    md5_pending(Md5),
-    
-    % Make sure that at no time two data documents are
-    % being downloaded from the same authority.
-    % This avoids being blocked by servers that do not allow
-    % multiple simultaneous requests.
-    (   md5_url(Md5, Uri)
-    ->  uri_component(Uri, authority, Authority),
-        \+ lwm:current_authority(Authority)
-    ;   assertz(lwm:current_authority(Authority))
-    ),
-    
-    % For the debug tools to work,
-    % details from the LOD Basket have to be copied over
-    % from the production tiple store to a ClioPatria instance.
-    (   debugging(lwm_cp)
-    ->  lod_basket_graph(BasketGraph),
-        loop_until_true(
-          sparql_select(
-            virtuoso_query,
-            [ll],
-            [p,o],
-            [rdf(ll:Md5,var(p),var(o))],
-            Result,
-            [default_graph(BasketGraph),distinct(true)]
+  % If some exception is thrown here, the catch/3 makes it
+  % silently fail. This way, the unpacking thread is able
+  % to wait in case a SPARQL endpoint is temporarily down.
+  catch(
+    with_mutex(lod_washing_machine, (
+      % Peek at pening MD5.
+      md5_pending(Md5),
+      
+      % Make sure that at no time two data documents are
+      % being downloaded from the same authority.
+      % This avoids being blocked by servers that do not allow
+      % multiple simultaneous requests.
+      (   md5_url(Md5, Uri)
+      ->  uri_component(Uri, authority, Authority),
+          \+ lwm:current_authority(Authority)
+      ;   assertz(lwm:current_authority(Authority))
+      ),
+      
+      % For the debug tools to work,
+      % details from the LOD Basket have to be copied over
+      % from the production tiple store to a ClioPatria instance.
+      (   debugging(lwm_cp)
+      ->  lod_basket_graph(BasketGraph),
+          loop_until_true(
+            sparql_select(
+              virtuoso_query,
+              [ll],
+              [p,o],
+              [rdf(ll:Md5,var(p),var(o))],
+              Result,
+              [default_graph(BasketGraph),distinct(true)]
+            )
+          ),
+          rdf_global_id(ll:Md5, S),
+          maplist(pair_to_triple(S), Result, Triples),
+          lwm_version_graph(NG),
+          loop_until_true(
+            sparql_insert_data(cliopatria_update, Triples, [NG], [])
           )
-        ),
-        rdf_global_id(ll:Md5, S),
-        maplist(pair_to_triple(S), Result, Triples),
-        lwm_version_graph(NG),
-        loop_until_true(
-          sparql_insert_data(cliopatria_update, Triples, [NG], [])
-        )
-    ;   true
-    ),
-    
-    % Update the database, saying we are ready
-    % to begin downloading+unpacking this data document.
-    store_start_unpack(Md5)
-  )), !,
+      ;   true
+      ),
+      
+      % Update the database, saying we are ready
+      % to begin downloading+unpacking this data document.
+      store_start_unpack(Md5)
+    )),
+    Exception,
+    var(Exception)
+  ), !,
   
   % DEB
   (   debug:debug_md5(Md5)

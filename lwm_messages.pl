@@ -34,7 +34,7 @@ prolog:message(lwm_end(Category,Md5,Source,Status,Warnings)) -->
 
 prolog:message(lwm_idle_loop(Category)) -->
   {
-    Flag =.. [number_of_idle_loops,Category],
+    atomic_list_concat([number_of_idle_loops,Category], '_', Flag),
     flag(Flag, X, X + 1)
   },
   ['['],
