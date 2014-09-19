@@ -36,7 +36,7 @@ lwm_debug_message(Topic):-
 lwm_debug_message(Topic, _):-
 (Topic == lwm_idle_loop(clean_large) -> gtrace ; true),
   nonvar(Topic),
-  debugging(Topic, false), !.
+  \+ debugging(Topic), !.
 
 % C-Triples written.
 lwm_debug_message(_, ctriples_written(_,0,_)):- !.
