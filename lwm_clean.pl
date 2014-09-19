@@ -277,7 +277,7 @@ send_to_basket(Url):-
   atomic_list_concat([backend,Authority1], '.', Authority2),
   uri_components(
     BasketLocation1,
-    uri_components(Scheme,Authority,'/',_,_)
+    uri_components(Scheme,Authority2,'/',_,_)
   ),
   uri_query_add_nvpair(BasketLocation1, url, Url, BasketLocation2),
   http_get(BasketLocation2, Reply, []),
