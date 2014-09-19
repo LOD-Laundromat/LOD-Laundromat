@@ -168,11 +168,7 @@ store_end_unpack0(Md5):-
 store_exception(_, true):- !.
 % Format exceptions.
 store_exception(Md5, exception(Error)):-
-  (  store_lod_error(Md5, exception, Error)
-  -> true
-  ;  gtrace,
-     store_lod_error(Md5, exception, Error)
-  ).
+  store_lod_error(Md5, exception, Error).
 
 
 %! store_file_extension(+Md5:atom, +FileExtension:atom) is det.
@@ -286,9 +282,5 @@ store_stream(Md5, Stream):-
 %      in the second argument here?
 
 store_warning(Md5, message(Term,Kind,_)):-
-  (  store_lod_error(Md5, Kind, Term)
-  -> true
-  ;  gtrace,
-     store_lod_error(Md5, Kind, Term)
-  ).
+  store_lod_error(Md5, Kind, Term).
 
