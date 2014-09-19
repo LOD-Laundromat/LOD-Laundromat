@@ -106,7 +106,12 @@ void_found(Topic, Url):-
 
 %! warning(+Topic:compound, +Message:compound) is det.
 
-warning(Topic, message(_,Kind,Lines)):-
-  atomic_list_concat(Lines, '\n', Content),
-  debug(Topic, '  [MESSAGE(~w)] ~a', [Kind,Content]).
+warning(Topic, message(_,_,Lines)):-
+  maplist(warning_line(Topic), Lines).
+
+
+%! warning_line(+Topic:compound, +Format:atom, -Arguments:list) is det.
+
+warning_line(Topic, Format-Arguments):-
+  debug(Topic, Format, Arguments).
 
