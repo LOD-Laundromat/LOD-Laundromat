@@ -248,8 +248,7 @@ store_lod_error(Md5, Kind, rdf(unparsed(DOM))):- !,
 
 % DEB
 store_lod_error(Md5, Kind, Error):-
-  gtrace,
-  store_lod_error(Md5, Kind, Error).
+  format(atom(user_output), 'ERROR:\n  ~w\n  ~w\n  ~w\n', [Md5,Kind,Error]).
 
 
 

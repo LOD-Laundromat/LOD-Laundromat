@@ -91,7 +91,7 @@ lwm_clean_loop(Category, Goal):-
 
 lwm_clean(Category, Md5):-
   % DEB
-  lwm_debug_message(lwm_progress(Category), lwm_start(clean,Md5,Source)),
+  lwm_debug_message(lwm_progress(Category), lwm_start(Category,Md5,Source)),
 
   run_collect_messages(
     clean_md5(Category, Md5),

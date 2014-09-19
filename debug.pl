@@ -3,7 +3,7 @@
 
 
 % Avoid errors when using gtrace/0 in threads.
-:- initialization(guitracer).
+%%%%:- initialization(guitracer).
 
 
 
@@ -57,12 +57,12 @@
 :- dynamic(debug:debug_md5/2).
 :- multifile(debug:debug_md5/2).
 
-debug:debug_md5('000395afb9a9c7923171213733bf4a06', _).
-debug:debug_md5('7e0d80c3fb3a10c96ea998373027ecbf', _).
-debug:debug_md5('7fcd76754bb711160d4f661ca4bb5d65', _).
-debug:debug_md5('9642958d99a44d41e62943989e5d20f5', _).
-debug:debug_md5('d3c9349c6bdd8d4d477ace2e616b482e', _).
-debug:debug_md5('e12babad5e313f46734086426e475faa', _).
+%debug:debug_md5('000395afb9a9c7923171213733bf4a06', _).
+%debug:debug_md5('7e0d80c3fb3a10c96ea998373027ecbf', _).
+%debug:debug_md5('7fcd76754bb711160d4f661ca4bb5d65', _).
+%debug:debug_md5('9642958d99a44d41e62943989e5d20f5', _).
+%debug:debug_md5('d3c9349c6bdd8d4d477ace2e616b482e', _).
+%debug:debug_md5('e12babad5e313f46734086426e475faa', _).
 
 
 
