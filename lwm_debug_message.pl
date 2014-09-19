@@ -35,6 +35,17 @@ lwm_debug_message(Topic, _):-
   nonvar(Topic),
   debugging(Topic, false), !.
 
+% C-Triples written.
+lwm_debug_message(_, ctriples_written(_,0,_)):- !.
+lwm_debug_message(Topic, ctriples_written(Category,Triples,Duplicates)):-
+  % Duplicates
+  (   Duplicates == 0
+  ->  DuplicatesString = ''
+  ;   format(string(DuplicatesString), ' (~D duplicates)', [Duplicates])
+  ),
+  
+  debug(Topic, '[+~D~s]', [Triples,DuplicatesString]).
+
 % Idle loop.
 lwm_debug_message(Topic, lwm_idle_loop(Category)):-
   % Every category has its own idle loop flag.
@@ -50,10 +61,10 @@ lwm_debug_message(Topic, lwm_end(Category1,Md5,Source,Status,Warnings)):-
   
   % Status
   (   Status == true
-  ->  StatusString = ''
+  ->  true
   ;   Status == false
-  ->  StatusString = 'FALSE'
-  ;   StatusString = Status
+  ->  debug(Topic, '  [STATUS] FALSE', [])
+  ;   debug(Topic, '  [STATUS] ~w', [Status])
   ),
   
   % Warnings
@@ -72,14 +83,24 @@ lwm_debug_message(Topic, lwm_start(Category1,Md5,Source)):-
   (   Category1 == unpack
   ->  SizeSuffix = ''
   ;   md5_size(Md5, NumberOfGigabytes),
-      format(atom(SizeSuffix), ' (~f GB)', [NumberOfGigabytes])
+      format(string(SizeString), ' (~f GB)', [NumberOfGigabytes])
   ),
   
-  debug(Topic, '[START ~a] ~w ~w~a', [Category2,Md5,Source,Size]).
+  debug(Topic, '[START ~a] ~w ~w~s', [Category2,Md5,Source,SizeString]).
+
+% VoID description found
+lwm_debug_message(Topic, void_found(Urls)):-
+  maplist(void_found(Topic), Urls).
 
 
 
 % Helpers
+
+%! void_found(+Topic:compound, +Url:atom) is det.
+
+void_found(Topic, Url):-
+  debug(Topic, '  [VOID] ~a', [Url]).
+
 
 %! warning(+Topic:compound, +Message:compound) is det.
 

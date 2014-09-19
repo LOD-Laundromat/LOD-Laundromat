@@ -18,7 +18,7 @@
                   % ?ContentLength:nonneg
                   % ?ContentType:atom
                   % ?LastModified:nonneg
-    store_number_of_triples/4, % +CleanThreadCategory:atom
+    store_number_of_triples/4, % +Category:atom
                                % +Md5:atom
                                % +ReadTriples:nonneg
                                % +WrittenTriples:nonneg
@@ -40,7 +40,7 @@ the stored triples are sent in a SPARQL Update request
 (see module [noRdf_store].
 
 @author Wouter Beek
-@version 2014/04-2014/06, 2014/08
+@version 2014/04-2014/06, 2014/08-2014/09
 */
 
 :- use_module(library(lists)).
@@ -52,6 +52,7 @@ the stored triples are sent in a SPARQL Update request
 
 :- use_module(plXsd_datetime(xsd_dateTime_ext)).
 
+:- use_module(lwm(lwm_debug_message)).
 :- use_module(lwm(noRdf_store)).
 :- use_module(lwm(store_lod_error)).
 
@@ -220,21 +221,21 @@ store_http(Md5, ContentLength, ContentType, LastModified):-
 
 
 %! store_number_of_triples(
-%!   +CleanThreadCategory:atom,
+%!   +Category:atom,
 %!   +Md5:atom,
 %!   +ReadTriples:nonneg,
 %!   +WrittenTriples:nonneg
 %! ) is det.
 
-store_number_of_triples(CleanThreadCategory, Md5, TIn, TOut):-
+store_number_of_triples(Category, Md5, TIn, TOut):-
   store_triple(ll-Md5, llo-triples, literal(type(xsd-integer,TOut))),
   TDup is TIn - TOut,
   store_triple(ll-Md5, llo-duplicates, literal(type(xsd-integer,TDup))),
   
   % DEB
-  (   debugging(lwm_idle_loop(CleanThreadCategory))
-  ->  print_message(informational, rdf_ntriples_written(TOut,TDup))
-  ;   true
+  lwm_debug_message(
+    lwm_progress(Category),
+    ctriples_written(Category,TOut,TDup)
   ).
 
 
@@ -290,22 +291,4 @@ store_warning(Md5, message(Term,Kind,_)):-
   ;  gtrace,
      store_lod_error(Md5, Kind, Term)
   ).
-
-
-
-% Messages
-
-:- multifile(prolog:message//1).
-
-prolog:message(rdf_ntriples_written(TOut,TDup)) -->
-  ['  ['],
-    number_of_triples_written(TOut),
-    number_of_duplicates_written(TDup),
-  [']'].
-
-number_of_duplicates_written(0) --> !, [].
-number_of_duplicates_written(T) --> [' (~D dups)'-[T]].
-
-number_of_triples_written(0) --> !, [].
-number_of_triples_written(T) --> ['+~D'-[T]].
 

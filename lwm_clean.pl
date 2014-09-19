@@ -226,10 +226,7 @@ find_void_datasets(Category, Urls):-
   ),
 
   % DEB
-  (   debugging(lwm_process(Category))
-  ->  print_message(informational, found_void(Urls))
-  ;   true
-  ).
+  lwm_debug_message(lwm_process(Category), void_found(Urls)).
 
 
 %! rdf_guess_format_md5(
@@ -281,15 +278,4 @@ send_to_basket(Url):-
   ),
   http_post(BasketLocation, atom(Url), Reply, []),
   writeln(Reply).
-
-
-
-% Messages
-
-:- multifile(prolog:message//1).
-
-prolog:message(found_void([])) --> !, [].
-prolog:message(found_void([H|T])) -->
-  ['    [VoID] Found: ',H,nl],
-  prolog:message(found_void(T)).
 
