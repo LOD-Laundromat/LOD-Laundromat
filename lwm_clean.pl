@@ -1,7 +1,7 @@
 :- module(
   lwm_clean,
   [
-    lwm_clean_loop/2 % +CleanThreadCategory:atom
+    lwm_clean_loop/2 % +Category:atom
                      % :Goal
   ]
 ).
@@ -28,7 +28,7 @@ The cleaning process performed by the LOD Washing Machine.
 :- use_module(plRdf_ser(rdf_file_db)).
 :- use_module(plRdf_ser(rdf_guess_format)).
 
-:- use_module(lwm(lwm_messages)).
+:- use_module(lwm(lwm_debug_messages)).
 :- use_module(lwm(lwm_settings)).
 :- use_module(lwm(lwm_sparql_query)).
 :- use_module(lwm(lwm_store_triple)).
@@ -42,7 +42,7 @@ The cleaning process performed by the LOD Washing Machine.
 
 
 
-lwm_clean_loop(CleanThreadCategory, Goal):-
+lwm_clean_loop(Category, Goal):-
   % Pick a new source to process.
   with_mutex(lod_washing_machine, (
     % Peek for an MD5 that has been downloaded+unpacked.
@@ -61,49 +61,46 @@ lwm_clean_loop(CleanThreadCategory, Goal):-
   )), !,
 
   % DEB
-  (debug:debug_md5(Md5) -> gtrace ; true),
+  (   debug:debug_md5(Md5)
+  ->  gtrace
+  ;   true
+  ),
 
   % Process the URL we picked.
-  lwm_clean(CleanThreadCategory, Md5),
+  lwm_clean(Category, Md5),
 
   %%%%% Make sure the unpacking threads do not create a pending pool
   %%%%% that is (much) too big.
   %%%%flag(number_of_pending_md5s, Id, Id - 1),
 
   % Intermittent loop.
-  lwm_clean_loop(CleanThreadCategory, Goal).
+  lwm_clean_loop(Category, Goal).
 % Done for now. Check whether there are new jobs in one seconds.
-lwm_clean_loop(CleanThreadCategory, Goal):-
+lwm_clean_loop(Category, Goal):-
   sleep(1),
 
   % DEB
-  (   debugging(lwm_idle_loop(CleanThreadCategory))
-  ->  print_message(warning, lwm_idle_loop(CleanThreadCategory))
-  ;   true
-  ),
+  lwm_debug_message(lwm_idle_loop(Category)),
 
-  lwm_clean_loop(CleanThreadCategory, Goal).
+  lwm_clean_loop(Category, Goal).
 
 
-%! lwm_clean(+CleanThreadCategory:atom, +Md5:atom) is det.
+%! lwm_clean(+Category:atom, +Md5:atom) is det.
 
-lwm_clean(CleanThreadCategory, Md5):-
+lwm_clean(Category, Md5):-
   % DEB
-  (   debugging(lwm_progress(CleanThreadCategory))
-  ->  print_message(informational, lwm_start(clean,Md5,Source))
-  ;   true
-  ),
+  lwm_debug_message(lwm_progress(Category), lwm_start(clean,Md5,Source)),
 
   run_collect_messages(
-    clean_md5(CleanThreadCategory, Md5),
+    clean_md5(Category, Md5),
     Status,
     Warnings
   ),
 
   % DEB
-  (   debugging(lwm_progress(CleanThreadCategory))
-  ->  print_message(informational, lwm_end(clean,Md5,Source,Status,Warnings))
-  ;   true
+  lwm_debug_message(
+    lwm_progress(Category),
+    lwm_end(Category,Md5,Source,Status,Warnings)
   ),
 
   store_exception(Md5, Status),
@@ -111,9 +108,9 @@ lwm_clean(CleanThreadCategory, Md5):-
   store_end_clean(Md5).
 
 
-%! clean_md5(+CleanThreadCategory:atom, +Md5:atom) is det.
+%! clean_md5(+Category:atom, +Md5:atom) is det.
 
-clean_md5(CleanThreadCategory, Md5):-
+clean_md5(Category, Md5):-
   % Construct the file name belonging to the given MD5.
   md5_directory(Md5, Md5Dir),
   absolute_file_name(dirty, DirtyFile, [access(read),relative_to(Md5Dir)]),
@@ -127,7 +124,7 @@ clean_md5(CleanThreadCategory, Md5):-
     (
       rdf_transaction(
         clean_datastream(
-          CleanThreadCategory,
+          Category,
           Md5,
           DirtyFile,
           Read,
@@ -152,7 +149,7 @@ clean_md5(CleanThreadCategory, Md5):-
 
 
 %! clean_datastream(
-%!   +CleanThreadCategory:atom,
+%!   +Category:atom,
 %!   +Md5:atom,
 %!   +File:atom,
 %!   +Read:blob,
@@ -161,7 +158,7 @@ clean_md5(CleanThreadCategory, Md5):-
 %! ) is det.
 
 clean_datastream(
-  CleanThreadCategory,
+  Category,
   Md5,
   File,
   Read,
@@ -182,12 +179,9 @@ clean_datastream(
       [base_uri(Base),format(Format),graph(user),register_namespaces(false)],
 
   % Add options that are specific to the RDFa serialization format.
-  (
-    Format == rdfa
-  ->
-    merge_options([max_errors(-1),syntax(style)], Options1, Options2)
-  ;
-    Options2 = Options1
+  (   Format == rdfa
+  ->  merge_options([max_errors(-1),syntax(style)], Options1, Options2)
+  ;   Options2 = Options1
   ),
 
   rdf_load(stream(Read), Options2),
@@ -204,10 +198,10 @@ clean_datastream(
   save_data_to_file(Md5, File, TOut),
 
   % Store statistics about the number of (duplicate) triples.
-  store_number_of_triples(CleanThreadCategory, Md5, TIn, TOut),
+  store_number_of_triples(Category, Md5, TIn, TOut),
 
   % Make sure any VoID datadumps are added to the LOD Basket.
-  find_void_datasets(CleanThreadCategory, VoidUrls).
+  find_void_datasets(Category, VoidUrls).
 
 
 
@@ -222,12 +216,9 @@ clean_file_name(File1, quads):-
   rename_file(File1, File2).
 
 
-%! find_void_datasets(
-%!   +CleanThreadCategory:atom,
-%!   -VoidUrls:ordset(url)
-%! ) is det.
+%! find_void_datasets(+Category:atom, -VoidUrls:ordset(url)) is det.
 
-find_void_datasets(CleanThreadCategory, Urls):-
+find_void_datasets(Category, Urls):-
   aggregate_all(
     set(Url),
     rdf(_, void:dataDump, Url),
@@ -235,7 +226,7 @@ find_void_datasets(CleanThreadCategory, Urls):-
   ),
 
   % DEB
-  (   debugging(lwm_process(CleanThreadCategory))
+  (   debugging(lwm_process(Category))
   ->  print_message(informational, found_void(Urls))
   ;   true
   ).

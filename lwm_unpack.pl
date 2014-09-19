@@ -32,14 +32,14 @@ Unpacks files for the LOD Washing Machine to clean.
 :- use_module(plSparql_update(sparql_update_api)).
 
 :- use_module(lwm(md5)).
-:- use_module(lwm(lwm_messages)).
+:- use_module(lwm(lwm_debug_messages)).
 :- use_module(lwm(lwm_settings)).
 :- use_module(lwm(lwm_sparql_query)).
 :- use_module(lwm(lwm_store_triple)).
 :- use_module(lwm(noRdf_store)).
 
-:- dynamic(debug:debug_md5/1).
-:- multifile(debug:debug_md5/1).
+:- dynamic(debug:debug_md5/2).
+:- multifile(debug:debug_md5/2).
 
 :- dynamic(lwm:current_authority/1).
 :- multifile(lwm:current_authority/1).
@@ -104,7 +104,7 @@ lwm_unpack_loop:-
   ), !,
   
   % DEB
-  (   debug:debug_md5(Md5)
+  (   debug:debug_md5(Md5, unpack)
   ->  gtrace
   ;   true
   ),
@@ -122,10 +122,7 @@ lwm_unpack_loop:-
   sleep(1),
 
   % DEB
-  (   debugging(lwm_idle_loop(unpack))
-  ->  print_message(warning, lwm_idle_loop(unpack))
-  ;   true
-  ),
+  lwm_debug_message(lwm_idle_loop(unpack)),
 
   lwm_unpack_loop.
 
@@ -134,10 +131,7 @@ lwm_unpack_loop:-
 
 lwm_unpack(Md5):-
   % DEB
-  (   debugging(lwm_progress(unpack))
-  ->  print_message(informational, lwm_start(unpack,Md5,Source))
-  ;   true
-  ),
+  lwm_debug_message(lwm_progress(unpack), lwm_start(unpack,Md5,Source)),
 
   run_collect_messages(
     unpack_md5(Md5),
@@ -146,9 +140,9 @@ lwm_unpack(Md5):-
   ),
 
   % DEB
-  (   debugging(lwm_progress(unpack))
-  ->  print_message(informational, lwm_end(unpack,Md5,Source,Status,Warnings))
-  ;   true
+  lwm_debug_message(
+    lwm_progress(unpack),
+    lwm_end(unpack,Md5,Source,Status,Warnings)
   ),
 
   maplist(store_warning(Md5), Warnings),
@@ -214,6 +208,7 @@ unpack_md5(Md5):-
 
   unpack_file(Md5, DownloadFile).
 
+
 %! unpack_file(+Md5:atom, +ArchiveFile:atom) is det.
 
 unpack_file(Md5, ArchiveFile):-
@@ -276,6 +271,7 @@ unpack_file(Md5, ArchiveFile):-
     maplist(store_archive_entry(Md5), EntryPaths, EntryProperties2),
     store_skip_clean(Md5)
   ),
+  
   % Remove the archive file.
   delete_file(ArchiveFile).
 
