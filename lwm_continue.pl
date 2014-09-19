@@ -50,7 +50,8 @@ reset_md5(Md5):-
 gtrace,
   sparql_delete_where(
     virtuoso_update,
-    [rdf(ll:Md5),var(p),var(o)],
+    [ll],
+    [rdf(ll:Md5,var(p),var(o))],
     [NG],
     [],
     []

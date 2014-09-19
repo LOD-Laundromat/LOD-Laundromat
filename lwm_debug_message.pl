@@ -1,7 +1,8 @@
 :- module(
   lwm_debug_message,
   [
-    lwm_debug_message/2 % ?DebugTopic:compound
+    lwm_debug_message/1, % ?Topic:compound
+    lwm_debug_message/2 % ?Topic:compound
                         % +Message:compound
   ]
 ).
@@ -29,6 +30,7 @@ lwm_debug_message(Topic):-
 
 
 %! lwm_debug_message(Topic, Message):-
+% `Topic` is a debug topic, specified in `library(debug)`.
 
 % Do not print debug message.
 lwm_debug_message(Topic, _):-
@@ -37,13 +39,13 @@ lwm_debug_message(Topic, _):-
 
 % C-Triples written.
 lwm_debug_message(_, ctriples_written(_,0,_)):- !.
-lwm_debug_message(Topic, ctriples_written(Category,Triples,Duplicates)):-
+lwm_debug_message(Topic, ctriples_written(_,Triples,Duplicates)):-
   % Duplicates
   (   Duplicates == 0
   ->  DuplicatesString = ''
   ;   format(string(DuplicatesString), ' (~D duplicates)', [Duplicates])
   ),
-  
+
   debug(Topic, '[+~D~s]', [Triples,DuplicatesString]).
 
 % Idle loop.
@@ -51,14 +53,14 @@ lwm_debug_message(Topic, lwm_idle_loop(Category)):-
   % Every category has its own idle loop flag.
   atomic_list_concat([number_of_idle_loops,Category], '_', Flag),
   flag(Flag, X, X + 1),
-  
-  debug(Topic, '[IDLE] ~a ~D'], [Category,X]).
+
+  debug(Topic, '[IDLE] ~a ~D', [Category,X]).
 
 % End a process.
 lwm_debug_message(Topic, lwm_end(Category1,Md5,Source,Status,Warnings)):-
   % Category
   upcase_atom(Category1, Category2),
-  
+
   % Status
   (   Status == true
   ->  true
@@ -66,26 +68,26 @@ lwm_debug_message(Topic, lwm_end(Category1,Md5,Source,Status,Warnings)):-
   ->  debug(Topic, '  [STATUS] FALSE', [])
   ;   debug(Topic, '  [STATUS] ~w', [Status])
   ),
-  
+
   % Warnings
   maplist(warning(Topic), Warnings),
-  
+
   debug(Topic, '[END ~a] ~w ~w', [Category2,Md5,Source]).
 
 % Start a process.
 lwm_debug_message(Topic, lwm_start(Category1,Md5,Source)):-
   upcase_atom(Category1, Category2),
-  
+
   % File source: URL or archive
   md5_source(Md5, Source),
-  
+
   % File size
   (   Category1 == unpack
-  ->  SizeSuffix = ''
+  ->  SizeString = ""
   ;   md5_size(Md5, NumberOfGigabytes),
       format(string(SizeString), ' (~f GB)', [NumberOfGigabytes])
   ),
-  
+
   debug(Topic, '[START ~a] ~w ~w~s', [Category2,Md5,Source,SizeString]).
 
 % VoID description found
