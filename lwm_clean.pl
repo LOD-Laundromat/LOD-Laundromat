@@ -37,8 +37,8 @@ The cleaning process performed by the LOD Washing Machine.
 
 :- meta_predicate(lwm_clean_loop(+,1)).
 
-:- dynamic(debug:debug_md5/1).
-:- multifile(debug:debug_md5/1).
+:- dynamic(debug:debug_md5/2).
+:- multifile(debug:debug_md5/2).
 
 
 
@@ -61,7 +61,7 @@ lwm_clean_loop(Category, Goal):-
   )), !,
 
   % DEB
-  (   debug:debug_md5(Md5)
+  (   debug:debug_md5(Md5, clean)
   ->  gtrace
   ;   true
   ),
