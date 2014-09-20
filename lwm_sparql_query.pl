@@ -52,7 +52,7 @@ SPARQL queries for the LOD Washing Machine.
 existing_url(Url):-
   lwm_sparql_ask(
     [llo],
-    [rdf(var(md5),llo-url,var(Url2)],
+    [rdf(var(md5),llo-url,var(Url2))],
     [sparql_error(fail)]
   ).
 
