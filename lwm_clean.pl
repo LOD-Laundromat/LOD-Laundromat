@@ -79,7 +79,7 @@ lwm_clean_loop(Category, Goal):-
   lwm_clean_loop(Category, Goal).
 % Done for now. Check whether there are new jobs in one seconds.
 lwm_clean_loop(Category, Goal):-
-  sleep(1),
+  sleep(30),
 
   % DEB
   lwm_debug_message(lwm_idle_loop(Category)),
