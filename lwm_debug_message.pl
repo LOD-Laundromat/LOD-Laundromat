@@ -91,6 +91,10 @@ lwm_debug_message(Topic, lwm_start(Category1,Md5,Source)):-
 lwm_debug_message(Topic, void_found(Urls)):-
   maplist(void_found(Topic), Urls).
 
+lwm_debug_message(Topic, Message):-
+  gtrace,
+  lwm_debug_message(Topic, Message).
+
 
 
 % Helpers
