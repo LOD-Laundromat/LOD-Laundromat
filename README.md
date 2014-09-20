@@ -49,7 +49,7 @@ Endpoints
     <th>What it does</th>
   </td>
   <tr>
-    <td><a href="http://cliopatria.lodlaundromat.d2s.labs.vu.nl">http://cliopatria.lodlaundromat.d2s.labs.vu.nl</a><td>
+    <td><a href="http://cliopatria.lodlaundromat.d2s.labs.vu.nl">http://cliopatria.lodlaundromat.d2s.labs.vu.nl</a></td>
     <td><code>GET</code></td>
     <td>HTTP authentication</td>
     <td>Does not support RDF Datasets.</td>
@@ -67,7 +67,7 @@ Endpoints
     </td>
   </tr>
   <tr>
-    <td><code>http://localhost:8890/sparql</code><td>
+    <td><code>http://localhost:8890/sparql</code></td>
     <td><code>GET</code></td>
     <td><code>query</code></td>
     <td>SPARQL 1.1 Query</td>
@@ -114,7 +114,7 @@ Endpoint aliases
     </td>
   </tr>
   <tr>
-    <td><a href="http://download.lodlaundromat.org">http://download.lodlaundromat.org</a><td>
+    <td><a href="http://download.lodlaundromat.org">http://download.lodlaundromat.org</a></td>
     <td><code>http://localhost:8686</code></td>
     <td>
       Web Service for downloading clean data files.
