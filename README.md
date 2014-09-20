@@ -50,7 +50,7 @@ Endpoints
   </td>
   <tr>
     <td><a href="http://cliopatria.lodlaundromat.d2s.labs.vu.nl">http://cliopatria.lodlaundromat.d2s.labs.vu.nl</a><td>
-    <td>`GET`</td>
+    <td><code>GET</code></td>
     <td>HTTP authentication</td>
     <td>Does not support RDF Datasets.</td>
     <td>This is used to debug the LOD Washing Machine during development.</td>
