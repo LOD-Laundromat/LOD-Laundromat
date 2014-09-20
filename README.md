@@ -56,9 +56,9 @@ Endpoints
     <td>This is used to debug the LOD Washing Machine during development.</td>
   </tr>
   <tr>
-    <td>`http://localhost:8686`</td>
-    <td>`GET`</td>
-    <td>`url`</td>
+    <td><code>http://localhost:8686</code></td>
+    <td><code>GET</code></td>
+    <td><code>url</code></td>
     <td></td>
     <td>
       The NodeJS backend of the LOD Laundromat site,
@@ -67,27 +67,25 @@ Endpoints
     </td>
   </tr>
   <tr>
-    <td>`http://localhost:8890/sparql`<td>
-    <td>`GET`</td>
-    <td>`query`</td>
+    <td><code>http://localhost:8890/sparql</code><td>
+    <td><code>GET</code></td>
+    <td><code>query</code></td>
     <td>SPARQL 1.1 Query</td>
     <td>
       The SPARQL endpoint that is used by the LOD Laundromat Web Services.
     </td>
   </tr>
   <tr>
-    <td>`http://localhost:8890/sparql-auth`</td>
-    <td>`POST`</td>
-    <td>Search=[query]</td>
-    <td>
-      SPARQL 1.1 Protocol, SPARQL 1.1 Query, SPARQL 1.1 Update
-    </td>
+    <td><code>http://localhost:8890/sparql-auth</code></td>
+    <td><code>POST</code></td>
+    <td><code>query</code></td>
+    <td>SPARQL 1.1 Protocol, SPARQL 1.1 Query, SPARQL 1.1 Update</td>
     <td>
       The first SPARQL Endpoint that is used by the LOD Washing Machine.
     </td>
   </tr>
   <tr>
-    <td>`http://localhost:8890/sparql-graph-crud`</td>
+    <td><code>http://localhost:8890/sparql-graph-crud</code></td>
     <td></td>
     <td></td>
     <td>SPARQL 1.1 Graph Store HTTP Protocol</td>
@@ -108,29 +106,29 @@ Endpoint aliases
     <th>Description</th>
   </tr>
   <tr>
-    <td>`http://backend.lodlaundromat.org`</td>
-    <td>`http://localhost:8686`</td>
+    <td><a href="http://backend.lodlaundromat.org">http://backend.lodlaundromat.org</a></td>
+    <td><code>http://localhost:8686</code></td>
     <td>
       Web Service for adding items to the LOD Basket
       (i.e., the LOD Laundromat seed list).
     </td>
   </tr>
   <tr>
-    <td>`http://download.lodlaundromat.org`<td>
-    <td>`http://localhost:8686`</td>
+    <td><a href="http://download.lodlaundromat.org">http://download.lodlaundromat.org</a><td>
+    <td><code>http://localhost:8686</code></td>
     <td>
       Web Service for downloading clean data files.
-      The URL path must be set to `/MD5`.
+      The URL path must be set to <code>/MD5</code>.
     </td>
   </tr>
   <tr>
-    <td>`http://lodlaundromat.org/sparql`</td>
-    <td>`http://sparql.backend.lodlaundromat.org`</td>
+    <td><a href="http://lodlaundromat.org/sparql">http://lodlaundromat.org/sparql</a></td>
+    <td><a href="http://sparql.backend.lodlaundromat.org">http://sparql.backend.lodlaundromat.org</a></td>
     <td>Use to preserve consistency in the Web interface.</td>
   </tr>
   <tr>
-    <td>`http://sparql.backend.lodlaundromat.org`</td>
-    <td>`http://localhost:8890/sparql`</td>
+    <td><a href="http://sparql.backend.lodlaundromat.org">http://sparql.backend.lodlaundromat.org</a></td>
+    <td><code>http://localhost:8890/sparql</code></td>
     <td>Web Service for querying the LOD Laundromat metadata.</td>
   </tr>
 </table>
