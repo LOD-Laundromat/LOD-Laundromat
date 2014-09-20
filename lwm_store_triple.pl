@@ -55,6 +55,7 @@ the stored triples are sent in a SPARQL Update request
 :- use_module(plXsd_datetime(xsd_dateTime_ext)).
 
 :- use_module(lwm(lwm_debug_message)).
+:- use_module(lwm(lwm_sparql_query)).
 :- use_module(lwm(noRdf_store)).
 :- use_module(lwm(store_lod_error)).
 
@@ -220,13 +221,15 @@ store_http(Md5, ContentLength, ContentType, LastModified):-
 
 %! store_new_url(+Url:atom) is det.
 
-store_new_url(Url1):-
-  uri_iri(Url2, Url1),
-  rdf_atom_md5(Url2, 1, Md5),
-  store_triple(ll-Md5, rdf-type, llo-'URL'),
-  store_triple(ll-Md5, llo-md5, literal(type(xsd-string,Md5))),
-  store_triple(ll-Md5, llo-url, Url2),
-  store_added(Md5).
+store_new_url(Url):-
+  (   exisiting_url(Url)
+  ->  true
+  ;   rdf_atom_md5(Url, 1, Md5),
+      store_triple(ll-Md5, rdf-type, llo-'URL'),
+      store_triple(ll-Md5, llo-md5, literal(type(xsd-string,Md5))),
+      store_triple(ll-Md5, llo-url, Url),
+      store_added(Md5)
+  ).
 
 
 %! store_number_of_triples(
