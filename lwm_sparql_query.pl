@@ -214,7 +214,7 @@ md5_unpacked(Md5):-
     lwm_sparql_ask([llo],
         [rdf(var(md5),llo:md5,literal(type(xsd:string,Md5))),
          rdf(var(md5),llo:endUnpack,var(start)),
-         not([rdf(var(md5res),ll:startClean,var(clean))])],
+         not([rdf(var(md5res),llo:startClean,var(clean))])],
         [sparql_errors(fail)])
   )).
 
