@@ -46,21 +46,28 @@ The cleaning process performed by the LOD Washing Machine.
 
 lwm_clean_loop(Category, Goal):-
   % Pick a new source to process.
-  with_mutex(lod_washing_machine, (
-    % Peek for an MD5 that has been downloaded+unpacked.
-    md5_unpacked(Md5),
-
-    % Do not process dirty data documents for which the given goal
-    % does not succeed when applied to the dirty document's size.
-    (   nonvar(Goal)
-    ->  md5_size(Md5, NumberOfGigabytes),
-        call(Goal, NumberOfGigabytes)
-    ;   true
-    ),
-
-    % Tell the triple store we are now going to clean this MD5.
-    store_start_clean(Md5)
-  )), !,
+  % If some exception is thrown here, the catch/3 makes it
+  % silently fail. This way, the unpacking thread is able
+  % to wait in case a SPARQL endpoint is temporarily down.
+  catch(
+    with_mutex(lod_washing_machine, (
+      % Peek for an MD5 that has been downloaded+unpacked.
+      md5_unpacked(Md5),
+  
+      % Do not process dirty data documents for which the given goal
+      % does not succeed when applied to the dirty document's size.
+      (   nonvar(Goal)
+      ->  md5_size(Md5, NumberOfGigabytes),
+          call(Goal, NumberOfGigabytes)
+      ;   true
+      ),
+  
+      % Tell the triple store we are now going to clean this MD5.
+      store_start_clean(Md5)
+    )),
+    Exception,
+    var(Exception)
+  ), !,
 
   % DEB
   (   debug:debug_md5(Md5, clean)
