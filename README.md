@@ -137,3 +137,13 @@ Endpoint aliases
 
 Virtuoso RDF dataset
 --------------------
+
+SSH config file
+---------------
+
+File path: `~/.ssh/config`
+
+~~~
+Host *
+  ServerAliveInterval 60
+~~~

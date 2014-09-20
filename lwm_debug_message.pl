@@ -57,7 +57,7 @@ lwm_debug_message(Topic, ctriples_written(_,Triples,Duplicates)):-
   debug(Topic, '[+~D~s]', [Triples,DuplicatesString]).
 
 % End a process.
-lwm_debug_message(Topic, lwm_end(Category1,Md5,Source,Status,Warnings)):-
+lwm_debug_message(Topic, lwm_end(Category1,Md5,Source,Status,_)):-
   % Category
   upcase_atom(Category1, Category2),
 
@@ -68,9 +68,6 @@ lwm_debug_message(Topic, lwm_end(Category1,Md5,Source,Status,Warnings)):-
   ->  debug(Topic, '  [STATUS] FALSE', [])
   ;   debug(Topic, '  [STATUS] ~w', [Status])
   ),
-
-  % Warnings
-  maplist(warning(Topic), Warnings),
 
   debug(Topic, '[END ~a] ~w ~w', [Category2,Md5,Source]).
 
@@ -106,16 +103,3 @@ lwm_debug_message(Topic, Message):-
 
 void_found(Topic, Url):-
   debug(Topic, '  [VOID] ~a', [Url]).
-
-
-%! warning(+Topic:compound, +Message:compound) is det.
-
-warning(Topic, message(_,_,Lines)):-
-  maplist(warning_line(Topic), Lines).
-
-
-%! warning_line(+Topic:compound, +Format:atom, -Arguments:list) is det.
-
-warning_line(Topic, Format-Arguments):-
-  debug(Topic, Format, Arguments).
-
