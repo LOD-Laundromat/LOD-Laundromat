@@ -222,7 +222,7 @@ store_http(Md5, ContentLength, ContentType, LastModified):-
 %! store_new_url(+Url:atom) is det.
 
 store_new_url(Url):-
-  (   exisiting_url(Url)
+  (   existing_url(Url)
   ->  true
   ;   rdf_atom_md5(Url, 1, Md5),
       store_triple(ll-Md5, rdf-type, llo-'URL'),
