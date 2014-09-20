@@ -49,7 +49,7 @@ Endpoints
     <th>What it does</th>
   </td>
   <tr>
-    <td>(http://cliopatria.lodlaundromat.d2s.labs.vu.nl)<td>
+    <td><a href="http://cliopatria.lodlaundromat.d2s.labs.vu.nl">http://cliopatria.lodlaundromat.d2s.labs.vu.nl</a><td>
     <td>`GET`</td>
     <td>HTTP authentication</td>
     <td>Does not support RDF Datasets.</td>
