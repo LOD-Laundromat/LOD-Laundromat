@@ -108,6 +108,9 @@ lwm_unpack_loop:-
   lwm_debug_message(lwm_idle_loop(unpack)),
 
   lwm_unpack_loop.
+lwm_unpack_loop:-
+  gtrace,
+  lwm_unpack_loop.
 
 
 %! lwm_unpack(+Md5:atom) is det.
