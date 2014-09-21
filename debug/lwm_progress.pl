@@ -53,7 +53,7 @@ pending_table -->
           not([rdf(var(md5),llo:startUnpack,var(start))])
         ],
         Rows,
-        [limit(5),sparql_errors(fail)]
+        [sparql_errors(fail)]
       )
     ))
   },
@@ -73,7 +73,7 @@ unpacking_table -->
           not([rdf(var(md5),llo:endUnpack,var(clean))])
         ],
         Rows,
-        [limit(5),sparql_errors(fail)]
+        [sparql_errors(fail)]
       )
     ))
   },
@@ -93,7 +93,7 @@ unpacked_table -->
           not([rdf(var(md5),llo:startClean,var(clean))])
         ],
         Rows,
-        [limit(5),sparql_errors(fail)]
+        [sparql_errors(fail)]
       )
     ))
   },
@@ -113,7 +113,7 @@ cleaning_table -->
           not([rdf(var(md5),llo:endClean,var(end_clean))])
         ],
         Rows,
-        [limit(5),sparql_errors(fail)]
+        [sparql_errors(fail)]
       )
     ))
   },
@@ -130,7 +130,7 @@ cleaned_table -->
         [md5],
         [rdf(var(md5),llo:endClean,var(end_clean))],
         Rows,
-        [limit(5),sparql_errors(fail)]
+        [sparql_errors(fail)]
       )
     ))
   },
