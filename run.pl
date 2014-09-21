@@ -37,13 +37,14 @@ for storing the metadata. See module [lwm_settings] for this.
 
 :- start_app_server([]).
 
-:- http_handler(root(.), lwm_progress, [id(lwm_progress),prefix,priority(-1)]).
+:- http_handler(root(progress), lwm_progress, [id(lwm_progress)]).
 
 :- dynamic(user:web_module/2).
 :- multifile(user:web_module/2).
    user:web_module('LWM Progress', lwm_progress).
 
 lwm_progress(Request):-
+gtrace,
   lwm_progress(Request, plServer_style).
 
 :- initialization(init).
