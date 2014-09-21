@@ -1,6 +1,7 @@
 :- module(
   noRdf_store,
   [
+    post_rdf_triples/0,
     post_rdf_triples/1, % +Md5:atom
     store_triple/3 % +Subject
                    % +Predicate
@@ -16,7 +17,7 @@ This means that we can use RDF transactions + snapshots
 and at the same time send small RDF messages using SPARQL Update requests.
 
 @author Wouter Beek
-@version 2014/05-2014/06, 2014/08
+@version 2014/05-2014/06, 2014/08-2014/09
 */
 
 :- use_module(library(debug)).
@@ -41,6 +42,14 @@ and at the same time send small RDF messages using SPARQL Update requests.
 
 :- thread_local(rdf_triple/3).
 
+
+
+%! post_rdf_triples is det.
+
+post_rdf_triples:-
+  with_mutex(lod_washing_machine,
+    post_rdf_triples0([])
+  ).
 
 
 %! post_rdf_triples(+Md5:atom) is det.

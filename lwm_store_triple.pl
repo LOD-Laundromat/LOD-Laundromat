@@ -224,13 +224,15 @@ store_http(Md5, ContentLength, ContentType, LastModified):-
 
 store_new_urls(Urls):-
   maplist(store_new_url, Urls),
-  store_added(Md5).
+  post_rdf_triples.
 
 store_new_url(Url):-
   rdf_atom_md5(Url, 1, Md5),
   store_triple(ll-Md5, rdf-type, llo-'URL'),
   store_triple(ll-Md5, llo-md5, literal(type(xsd-string,Md5))),
-  store_triple(ll-Md5, llo-url, Url).
+  store_triple(ll-Md5, llo-url, Url),
+  get_dateTime(Added),
+  store_triple(ll-Md5, llo-added, literal(type(xsd-dateTime,Added))).
 
 
 %! store_number_of_triples(
