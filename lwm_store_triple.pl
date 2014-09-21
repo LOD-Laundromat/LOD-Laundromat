@@ -18,7 +18,7 @@
                   % ?ContentLength:nonneg
                   % ?ContentType:atom
                   % ?LastModified:nonneg
-    store_new_url/1, % +Url:atom
+    store_new_urls/1, % +Urls:list(atom)
     store_number_of_triples/4, % +Category:atom
                                % +Md5:atom
                                % +ReadTriples:nonneg
@@ -44,6 +44,7 @@ the stored triples are sent in a SPARQL Update request
 @version 2014/04-2014/06, 2014/08-2014/09
 */
 
+:- use_module(library(apply)).
 :- use_module(library(lists)).
 :- use_module(library(semweb/rdf_db)).
 :- use_module(library(uri)).
@@ -219,17 +220,17 @@ store_http(Md5, ContentLength, ContentType, LastModified):-
   ).
 
 
-%! store_new_url(+Url:atom) is det.
+%! store_new_urls(+Url:list(atom)) is det.
+
+store_new_urls(Urls):-
+  maplist(store_new_url, Urls),
+  store_added(Md5).
 
 store_new_url(Url):-
-  (   existing_url(Url)
-  ->  true
-  ;   rdf_atom_md5(Url, 1, Md5),
-      store_triple(ll-Md5, rdf-type, llo-'URL'),
-      store_triple(ll-Md5, llo-md5, literal(type(xsd-string,Md5))),
-      store_triple(ll-Md5, llo-url, Url),
-      store_added(Md5)
-  ).
+  rdf_atom_md5(Url, 1, Md5),
+  store_triple(ll-Md5, rdf-type, llo-'URL'),
+  store_triple(ll-Md5, llo-md5, literal(type(xsd-string,Md5))),
+  store_triple(ll-Md5, llo-url, Url).
 
 
 %! store_number_of_triples(
