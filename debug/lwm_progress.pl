@@ -15,39 +15,34 @@ A Web-based debug tool for tracking the progress of the LOD Washing Machine.
 */
 
 :- use_module(library(http/html_write)).
-:- use_module(library(semweb/rdf_db)).
 
 :- use_module(plHtml(html_pl_term)).
 
-:- use_module(plRdf_term(rdf_literal)).
-
 :- use_module(plTabular(rdf_html_table)).
 
-:- use_module(lwm(lwm_settings)).
 :- use_module(lwm(lwm_sparql_query)).
 
 
 
-%! lwm_deb_progress(+Request:list(nvpair), +HtmlStyle)// is det.
+%! lwm_progress(+Request:list(nvpair), +HtmlStyle)// is det.
 
-lwm_deb_progress(_, HtmlStyle):-
-  lle_version_graph(Graph),
+lwm_progress(_, HtmlStyle):-
   reply_html_page(
     HtmlStyle,
     title('LOD Laundromat'),
     html([
-      \pending_table(Graph),
-      \unpacking_table(Graph),
-      \unpacked_table(Graph),
-      \cleaning_table(Graph),
-      \cleaned_table(Graph)
+      \pending_table,
+      \unpacking_table,
+      \unpacked_table,
+      \cleaning_table,
+      \cleaned_table
     ])
   ).
 
 
-%! pending_table(+Graph:atom)// is det.
+%! pending_table// is det.
 
-pending_table(Graph) -->
+pending_table -->
   {
     with_mutex(lod_washing_machine, (
       lwm_sparql_select(
@@ -55,7 +50,7 @@ pending_table(Graph) -->
         [md5],
         [
           rdf(var(md5),llo:added,var(added)),
-          not([rdf(var(md5),llo:startUnpack,var(start))]),
+          not([rdf(var(md5),llo:startUnpack,var(start))])
         ],
         Rows,
         [limit(5),sparql_errors(fail)]
@@ -67,7 +62,7 @@ pending_table(Graph) -->
 
 %! unpacking_table(+Graph:atom)// is det.
 
-unpacking_table(Graph) -->
+unpacking_table -->
   {
     with_mutex(lod_washing_machine, (
       lwm_sparql_select(
@@ -85,9 +80,9 @@ unpacking_table(Graph) -->
   progress_table(' data documents are being unpacked.', Rows).
 
 
-%! unpacked_table(+Graph:atom)// is det.
+%! unpacked_table// is det.
 
-unpacked_table(Graph) -->
+unpacked_table -->
   {
     with_mutex(lod_washing_machine, (
       lwm_sparql_select(
@@ -95,7 +90,7 @@ unpacked_table(Graph) -->
         [md5],
         [
           rdf(var(md5),llo:endUnpack,var(start)),
-          not([rdf(var(md5),llo:startClean,var(clean))]),
+          not([rdf(var(md5),llo:startClean,var(clean))])
         ],
         Rows,
         [limit(5),sparql_errors(fail)]
@@ -105,9 +100,9 @@ unpacked_table(Graph) -->
   progress_table(' unpacked data documents.', Rows).
 
 
-%! cleaning_table(+Graph:atom)// is det.
+%! cleaning_table// is det.
 
-cleaning_table(Graph) -->
+cleaning_table -->
   {
     with_mutex(lod_washing_machine, (
       lwm_sparql_select(
@@ -115,7 +110,7 @@ cleaning_table(Graph) -->
         [md5],
         [
           rdf(var(md5),llo:startClean,var(start_clean)),
-          not([rdf(var(md5),llo:endClean,var(end_clean))]),
+          not([rdf(var(md5),llo:endClean,var(end_clean))])
         ],
         Rows,
         [limit(5),sparql_errors(fail)]
@@ -125,9 +120,9 @@ cleaning_table(Graph) -->
   progress_table(' data documents are being cleaned.', Rows).
 
 
-%! cleaned_table(+Graph:atom)// is det.
+%! cleaned_table// is det.
 
-cleaned_table(Graph) -->
+cleaned_table -->
   {
     with_mutex(lod_washing_machine, (
       lwm_sparql_select(
@@ -145,17 +140,13 @@ cleaned_table(Graph) -->
 
 % Helpers
 
-%! progress_table(
-%!   +CaptionPostfix:atom,
-%!   +ColumnHeader:atom,
-%!   +Rows:list(list(iri))
-%! )// is det.
+%! progress_table(+CaptionPostfix:atom, +Rows:list(list(iri)))// is det.
 
-progress_table(CaptionPostfix, ColumnHeader, Rows) -->
+progress_table(CaptionPostfix, Rows) -->
   {length(Rows, Length)},
   rdf_html_table(
-    ['Data document'],
-    Rows,
+		html([\html_pl_term(lwm_progress,Length),CaptionPostfix]),
+    [['Data document']|Rows],
     [
       header_column(true),
       header_row(true),
@@ -163,4 +154,5 @@ progress_table(CaptionPostfix, ColumnHeader, Rows) -->
       maximum_number_of_rows(5)
     ]
   ).
+
 

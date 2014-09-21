@@ -53,7 +53,7 @@ lwm_clean_loop(Category, Goal):-
     with_mutex(lod_washing_machine, (
       % Peek for an MD5 that has been downloaded+unpacked.
       md5_unpacked(Md5),
-  
+
       % Do not process dirty data documents for which the given goal
       % does not succeed when applied to the dirty document's size.
       (   nonvar(Goal)
@@ -61,7 +61,7 @@ lwm_clean_loop(Category, Goal):-
           call(Goal, NumberOfGigabytes)
       ;   true
       ),
-  
+
       % Tell the triple store we are now going to clean this MD5.
       store_start_clean(Md5)
     )),
@@ -154,7 +154,7 @@ clean_md5(Category, Md5):-
   delete_file(DirtyFile),
 
   % Add the new VoID URLs to the LOD Basket.
-  maplist(store_new_url, VoidUrls).
+  store_new_urls(VoidUrls).
 
 
 %! clean_datastream(

@@ -15,3 +15,12 @@
 [submodule "plDcg"]
 	path = plDcg
 	url = https://github.com/wouterbeek/plDcg.git
+[submodule "plHtml"]
+	path = plHtml
+	url = https://github.com/wouterbeek/plHtml.git
+[submodule "plTabular"]
+	path = plTabular
+	url = https://github.com/wouterbeek/plTabular.git
+[submodule "plServer"]
+	path = plServer
+	url = https://github.com/wouterbeek/plServer.git

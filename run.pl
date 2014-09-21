@@ -15,19 +15,36 @@ for storing the metadata. See module [lwm_settings] for this.
 :- [debug].
 :- [load].
 
+:- use_module(library(http/http_dispatch)).
 :- use_module(library(optparse)).
 :- use_module(library(semweb/rdf_db)).
 
 :- use_module(math(float_ext)).
 :- use_module(os(dir_ext)).
 
+:- use_module(plServer(app_server)).
+:- use_module(plServer(plServer)).
+:- use_module(plServer(web_modules)). % Web module registration.
+
 :- use_module(lwm(lwm_clean)).
 :- use_module(lwm(lwm_continue)).
 :- use_module(lwm(lwm_restart)).
 :- use_module(lwm(lwm_unpack)).
+:- use_module(lwm_deb(lwm_progress)).
 
 :- dynamic(lwm:current_authority/1).
 :- multifile(lwm:current_authority/1).
+
+:- start_app_server([]).
+
+:- http_handler(root(.), lwm_progress, [id(lwm_progress),prefix,priority(-1)]).
+
+:- dynamic(user:web_module/2).
+:- multifile(user:web_module/2).
+   user:web_module('LWM Progress', lwm_progress).
+
+lwm_progress(Request):-
+  lwm_progress(Request, plServer_style).
 
 :- initialization(init).
 
