@@ -32,11 +32,7 @@ for storing the metadata. See module [lwm_settings] for this.
 :- use_module(lwm(lwm_unpack)).
 :- use_module(lwm_deb(lwm_progress)).
 
-:- http_handler(
-     root(progress),
-     lwm_progress,
-     [id(lwm_progress),location(lwm_progress)]
-   ).
+:- http_handler(root(progress), lwm_progress, [id(lwm_progress)]).
 
 :- dynamic(user:web_module/2).
 :- multifile(user:web_module/2).

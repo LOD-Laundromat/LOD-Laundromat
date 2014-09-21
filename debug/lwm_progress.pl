@@ -151,8 +151,8 @@ progress_table(CaptionPostfix, Rows) -->
       header_column(true),
       header_row(true),
       indexed(true),
+      location(lwm_progress),
       maximum_number_of_rows(5)
     ]
   ).
-
 
