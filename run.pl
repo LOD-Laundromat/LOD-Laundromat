@@ -32,26 +32,30 @@ for storing the metadata. See module [lwm_settings] for this.
 :- use_module(lwm(lwm_unpack)).
 :- use_module(lwm_deb(lwm_progress)).
 
-:- dynamic(lwm:current_authority/1).
-:- multifile(lwm:current_authority/1).
-
-:- start_app_server([]).
-
-:- http_handler(root(progress), lwm_progress, [id(lwm_progress)]).
+:- http_handler(
+     root(progress),
+     lwm_progress,
+     [id(lwm_progress),location(lwm_progress)]
+   ).
 
 :- dynamic(user:web_module/2).
 :- multifile(user:web_module/2).
-   user:web_module('LWM Progress', lwm_progress).
+
+user:web_module('LWM Progress', lwm_progress).
+
+:- dynamic(lwm:current_authority/1).
+:- multifile(lwm:current_authority/1).
+
+
 
 lwm_progress(Request):-
-gtrace,
   lwm_progress(Request, plServer_style).
 
 :- initialization(init).
 
-
-
 init:-
+  start_app_server([]),
+  
   clean_lwm_state,
   process_command_line_arguments,
   NumberOfUnpackThreads = 20,
