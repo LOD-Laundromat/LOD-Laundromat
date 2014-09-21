@@ -20,11 +20,9 @@ and at the same time send small RDF messages using SPARQL Update requests.
 @version 2014/05-2014/06, 2014/08-2014/09
 */
 
-:- use_module(library(debug)).
 :- use_module(library(semweb/rdf_db)).
 
 :- use_module(plSparql_http(sparql_graph_store)).
-:- use_module(plSparql_update(sparql_update_api)).
 
 :- use_module(lwm(lwm_settings)).
 :- use_module(lwm(md5)).
@@ -47,9 +45,7 @@ and at the same time send small RDF messages using SPARQL Update requests.
 %! post_rdf_triples is det.
 
 post_rdf_triples:-
-  with_mutex(lod_washing_machine,
-    post_rdf_triples0([])
-  ).
+  post_rdf_triples0([]).
 
 
 %! post_rdf_triples(+Md5:atom) is det.
@@ -61,9 +57,7 @@ post_rdf_triples:-
 
 post_rdf_triples(Md5):-
   md5_bnode_base(Md5, BaseComponents),
-  with_mutex(lod_washing_machine,
-    post_rdf_triples0([bnode_base(BaseComponents)])
-  ).
+  post_rdf_triples0([bnode_base(BaseComponents)]).
 
 post_rdf_triples0(Options):-
   % Named graph argument.
@@ -76,16 +70,10 @@ post_rdf_triples0(Options):-
       rdf_triple(S, P, O),
       Triples
     ),
-    (
-      % Use HTTP Graph Store on Virtuoso.
-      sparql_post_named_graph(virtuoso_http, NG, Triples, Options),
-
-      % Use SPARQL Update on ClioPatria, supporting the debug tools.
-      (   debugging(lwm_cp)
-      ->  sparql_insert_data(cliopatria_update, Triples, [NG], Options)
-      ;   true
-      )
-    ),
+    % Use HTTP Graph Store on Virtuoso.
+    with_mutex(lod_washing_machine, (
+      sparql_post_named_graph(virtuoso_http, NG, Triples, Options)
+    )),
     retractall(rdf_triple(_,_,_))
   ).
 

@@ -16,14 +16,10 @@ The cleaning process performed by the LOD Washing Machine.
 
 :- use_module(library(aggregate)).
 :- use_module(library(apply)).
-:- use_module(library(debug)).
-:- use_module(library(http/http_client)).
 :- use_module(library(option)).
 :- use_module(library(semweb/rdf_db)).
-:- use_module(library(uri)).
 :- use_module(library(zlib)).
 
-:- use_module(generics(uri_query)).
 :- use_module(pl(pl_log)).
 
 :- use_module(plRdf_ser(ctriples_write_graph)).
@@ -31,7 +27,6 @@ The cleaning process performed by the LOD Washing Machine.
 :- use_module(plRdf_ser(rdf_guess_format)).
 
 :- use_module(lwm(lwm_debug_message)).
-:- use_module(lwm(lwm_settings)).
 :- use_module(lwm(lwm_sparql_query)).
 :- use_module(lwm(lwm_store_triple)).
 :- use_module(lwm(md5)).
@@ -51,13 +46,24 @@ lwm_clean_loop(Category, Goal):-
   % to wait in case a SPARQL endpoint is temporarily down.
   catch(
     with_mutex(lod_washing_machine, (
-      % Peek for an MD5 that has been downloaded+unpacked.
-      md5_unpacked(Md5),
+      lwm_sparql_select(
+        [llo],
+        [md5,size],
+        [
+          rdf(var(datadoc),llo:endUnpack,var(endUnpack)),
+          not([rdf(var(datadoc),llo:startClean,var(startClean))]),
+          rdf(var(datadoc),llo:md5,var(md5)),
+          rdf(var(datadoc),llo:size,var(size))
+        ],
+        [[literal(Md5),literal(type(_,NumberOfBytes1))]],
+        [limit(1)]
+      ),
 
       % Do not process dirty data documents for which the given goal
       % does not succeed when applied to the dirty document's size.
       (   nonvar(Goal)
-      ->  md5_size(Md5, NumberOfGigabytes),
+      ->  atom_number(NumberOfBytes1, NumberOfBytes2),
+          NumberOfGigabytes is NumberOfBytes2 / (1024 ** 3),
           call(Goal, NumberOfGigabytes)
       ;   true
       ),

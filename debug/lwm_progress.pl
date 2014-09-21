@@ -43,97 +43,77 @@ lwm_progress(_, HtmlStyle):-gtrace,
 %! pending_table// is det.
 
 pending_table -->
-  {
-    with_mutex(lod_washing_machine, (
-      lwm_sparql_select(
-        [llo],
-        [md5],
-        [
-          rdf(var(md5),llo:added,var(added)),
-          not([rdf(var(md5),llo:startUnpack,var(start))])
-        ],
-        Rows,
-        [sparql_errors(fail)]
-      )
-    ))
-  },
+  {lwm_sparql_select(
+    [llo],
+    [md5],
+    [
+      rdf(var(md5),llo:added,var(added)),
+      not([rdf(var(md5),llo:startUnpack,var(start))])
+    ],
+    Rows,
+    []
+  )},
   progress_table(' pending data documents.', Rows).
 
 
 %! unpacking_table(+Graph:atom)// is det.
 
 unpacking_table -->
-  {
-    with_mutex(lod_washing_machine, (
-      lwm_sparql_select(
-        [llo],
-        [md5],
-        [
-          rdf(var(md5),llo:startUnpack,var(start)),
-          not([rdf(var(md5),llo:endUnpack,var(clean))])
-        ],
-        Rows,
-        [sparql_errors(fail)]
-      )
-    ))
-  },
+  {lwm_sparql_select(
+    [llo],
+    [md5],
+    [
+      rdf(var(md5),llo:startUnpack,var(start)),
+      not([rdf(var(md5),llo:endUnpack,var(clean))])
+    ],
+    Rows,
+    []
+  )},
   progress_table(' data documents are being unpacked.', Rows).
 
 
 %! unpacked_table// is det.
 
 unpacked_table -->
-  {
-    with_mutex(lod_washing_machine, (
-      lwm_sparql_select(
-        [llo],
-        [md5],
-        [
-          rdf(var(md5),llo:endUnpack,var(start)),
-          not([rdf(var(md5),llo:startClean,var(clean))])
-        ],
-        Rows,
-        [sparql_errors(fail)]
-      )
-    ))
-  },
+  {lwm_sparql_select(
+    [llo],
+    [md5],
+    [
+      rdf(var(md5),llo:endUnpack,var(start)),
+      not([rdf(var(md5),llo:startClean,var(clean))])
+    ],
+    Rows,
+    []
+  )},
   progress_table(' unpacked data documents.', Rows).
 
 
 %! cleaning_table// is det.
 
 cleaning_table -->
-  {
-    with_mutex(lod_washing_machine, (
-      lwm_sparql_select(
-        [llo],
-        [md5],
-        [
-          rdf(var(md5),llo:startClean,var(start_clean)),
-          not([rdf(var(md5),llo:endClean,var(end_clean))])
-        ],
-        Rows,
-        [sparql_errors(fail)]
-      )
-    ))
-  },
+  {lwm_sparql_select(
+    [llo],
+    [md5],
+    [
+      rdf(var(md5),llo:startClean,var(start_clean)),
+      not([rdf(var(md5),llo:endClean,var(end_clean))])
+    ],
+    Rows,
+    []
+  )},
   progress_table(' data documents are being cleaned.', Rows).
 
 
 %! cleaned_table// is det.
 
 cleaned_table -->
-  {
-    with_mutex(lod_washing_machine, (
-      lwm_sparql_select(
-        [llo],
-        [md5],
-        [rdf(var(md5),llo:endClean,var(end_clean))],
-        Rows,
-        [sparql_errors(fail)]
-      )
-    ))
-  },
+  {lwm_sparql_select(
+    [llo],
+    [md5],
+    [rdf(var(md5),llo:endClean,var(end_clean))],
+    Rows,
+    []
+  )},
   progress_table(' cleaned data documents.', Rows).
 
 

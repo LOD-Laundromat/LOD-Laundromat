@@ -32,9 +32,6 @@
 
 %%%%:- debug(sparql_update).
 
-% This requires a running CP instance.
-%%%%:- debug(lwm_cp).
-
 % LOD Washing Machine-specific debug messages that do not fit anywhere else.
 %%%%:- debug(lwm_generic).
 
