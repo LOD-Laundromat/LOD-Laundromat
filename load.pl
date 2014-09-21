@@ -12,8 +12,11 @@
 :- load_project([
     plc-'Prolog-Library-Collection',
     plDcg,
+    plHtml,
+    plServer,
     plXsd,
     plRdf,
+    plTabular,
     plSparql
 ]).
 

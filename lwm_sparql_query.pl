@@ -1,6 +1,14 @@
 :- module(
   lwm_sparql_query,
   [
+    lwm_sparql_ask/3, % +Prefixes:list(atom)
+                      % +Bgps:list(compound)
+                      % +Options:list(nvpair)
+    lwm_sparql_select/5, % +Prefixes:list(atom)
+                         % +Variables:list(atom)
+                         % +Bgps:list(compound)
+                         % -Result:list(list)
+                         % +Options:list(nvpair)
     md5_archive_entry/3, % +Md5:atom
                          % -ParentMd5:atom
                          % -EntryPath:atom
@@ -45,6 +53,34 @@ SPARQL queries for the LOD Washing Machine.
 :- use_module(lwm(lwm_settings)).
 
 
+
+% GENERICS
+
+lwm_sparql_ask(Prefixes, Bgps, Options1):-
+  lwm_version_graph(Graph),
+  merge_options([named_graph(Graph)], Options1, Options2),
+  loop_until_true(
+    sparql_ask(virtuoso_query, Prefixes, Bgps, Options2)
+  ).
+
+
+lwm_sparql_select(Prefixes, Variables, Bgps, Result, Options1):-
+  % Set the RDF Dataset over which SPARQL Queries are executed.
+  lod_basket_graph(BasketGraph),
+  lwm_version_graph(LwmGraph),
+  merge_options(
+    [default_graph(BasketGraph),default_graph(LwmGraph)],
+    Options1,
+    Options2
+  ),
+
+  loop_until_true(
+    sparql_select(virtuoso_query, Prefixes, Variables, Bgps, Result, Options2)
+  ).
+
+
+
+% QUERIES
 
 %! md5_archive_entry(+Md5:atom, -ParentMd5:atom, -EntryPath:atom) is det.
 
@@ -255,28 +291,5 @@ md5_url(Md5, Url):-
 
 
 % Helpers.
-
-lwm_sparql_ask(Prefixes, Bgps, Options1):-
-  lwm_version_graph(Graph),
-  merge_options([named_graph(Graph)], Options1, Options2),
-  loop_until_true(
-    sparql_ask(virtuoso_query, Prefixes, Bgps, Options2)
-  ).
-
-
-lwm_sparql_select(Prefixes, Variables, Bgps, Result, Options1):-
-  % Set the RDF Dataset over which SPARQL Queries are executed.
-  lod_basket_graph(BasketGraph),
-  lwm_version_graph(LwmGraph),
-  merge_options(
-    [default_graph(BasketGraph),default_graph(LwmGraph)],
-    Options1,
-    Options2
-  ),
-
-  loop_until_true(
-    sparql_select(virtuoso_query, Prefixes, Variables, Bgps, Result, Options2)
-  ).
-
 
 triple_row_to_compound([S,P,O], rdf(S,P,O)).
