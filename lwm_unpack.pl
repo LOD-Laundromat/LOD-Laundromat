@@ -49,6 +49,7 @@ lwm_unpack_loop:-
   % If some exception is thrown here, the catch/3 makes it
   % silently fail. This way, the unpacking thread is able
   % to wait in case a SPARQL endpoint is temporarily down.
+  gtrace,
   catch(
     with_mutex(lod_washing_machine, (
       lwm_sparql_select(
