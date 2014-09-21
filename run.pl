@@ -50,7 +50,7 @@ lwm_progress(Request):-
 :- initialization(init).
 
 init:-
-  start_app_server([]),
+  start_app_server([workers(2)]),
   
   clean_lwm_state,
   process_command_line_arguments,

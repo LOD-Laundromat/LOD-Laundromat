@@ -54,13 +54,18 @@ lwm_unpack_loop:-
     with_mutex(lod_washing_machine, (
       lwm_sparql_select(
         [llo],
-        [md5],
+        [md5,url],
         [
-          rdf(var(datadoc),llo:added,var(added)),
-          not([rdf(var(datadoc),llo:startUnpack,var(startUnpack))]),
-          rdf(var(datadoc),llo:md5,var(md5))
+          rdf(var(datadoc), llo:added, var(added)),
+          not([
+            rdf(var(datadoc), llo:startUnpack, var(startUnpack))
+          ]),
+          rdf(var(datadoc), llo:md5, var(md5)),
+          optional([
+            rdf(var(datadoc), llo:url, var(url))
+          ])
         ],
-        [[literal(Md5)]],
+        [[literal(Md5),Url]],
         [limit(1)]
       ),
 
@@ -68,8 +73,8 @@ lwm_unpack_loop:-
       % being downloaded from the same authority.
       % This avoids being blocked by servers that do not allow
       % multiple simultaneous requests.
-      (   md5_url(Md5, Uri)
-      ->  uri_component(Uri, authority, Authority),
+      (   nonvar(Url)
+      ->  uri_component(Url, authority, Authority),
           \+ lwm:current_authority(Authority)
       ;   assertz(lwm:current_authority(Authority))
       ),
