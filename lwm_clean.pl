@@ -55,7 +55,7 @@ lwm_clean_loop(Category, Goal):-
           rdf(var(datadoc),llo:md5,var(md5)),
           rdf(var(datadoc),llo:size,var(size))
         ],
-        [[literal(Md5),literal(type(_,NumberOfBytes1))]],
+        [[literal(type(_,Md5)),literal(type(_,NumberOfBytes1))]],
         [limit(1)]
       ),
 
