@@ -26,7 +26,7 @@ A Web-based debug tool for tracking the progress of the LOD Washing Machine.
 
 %! lwm_progress(+Request:list(nvpair), +HtmlStyle)// is det.
 
-lwm_progress(_, HtmlStyle):-
+lwm_progress(_, HtmlStyle):-gtrace,
   reply_html_page(
     HtmlStyle,
     title('LOD Laundromat'),

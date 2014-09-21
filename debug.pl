@@ -3,7 +3,7 @@
 
 
 % Avoid errors when using gtrace/0 in threads.
-%%%%:- initialization(guitracer).
+:- initialization(guitracer).
 
 
 
@@ -11,7 +11,7 @@
 
 :- use_module(library(ansi_term)).
 
-:- set_prolog_flag(verbose, silent).
+%%%%:- set_prolog_flag(verbose, silent).
 
 :- set_prolog_flag(
      answer_write_options,
@@ -33,7 +33,7 @@
 %%%%:- debug(sparql_update).
 
 % This requires a running CP instance.
-:- debug(lwm_cp).
+%%%%:- debug(lwm_cp).
 
 % LOD Washing Machine-specific debug messages that do not fit anywhere else.
 %%%%:- debug(lwm_generic).
