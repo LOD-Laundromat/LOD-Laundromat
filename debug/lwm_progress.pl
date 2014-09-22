@@ -63,8 +63,10 @@ unpacking_table -->
     [llo],
     [md5],
     [
-      rdf(var(md5),llo:startUnpack,var(start)),
-      not([rdf(var(md5),llo:endUnpack,var(clean))])
+      rdf(var(md5),llo:startUnpack,var(startUnpack)),
+      not([
+        rdf(var(md5),llo:endUnpack,var(endUnpack))
+      ])
     ],
     Rows,
     []

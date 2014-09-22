@@ -48,14 +48,13 @@ lwm_clean_loop(Category, Goal):-
     with_mutex(lod_washing_machine, (
       lwm_sparql_select(
         [llo],
-        [md5,size],
+        [datadoc,size],
         [
           rdf(var(datadoc),llo:endUnpack,var(endUnpack)),
           not([rdf(var(datadoc),llo:startClean,var(startClean))]),
-          rdf(var(datadoc),llo:md5,var(md5)),
           rdf(var(datadoc),llo:size,var(size))
         ],
-        [[literal(type(_,Md5)),literal(type(_,NumberOfBytes1))]],
+        [[Datadoc,literal(type(_,NumberOfBytes1))]],
         [limit(1)]
       ),
 
@@ -69,7 +68,8 @@ lwm_clean_loop(Category, Goal):-
       ),
 
       % Tell the triple store we are now going to clean this MD5.
-      store_start_clean(Md5)
+      rdf_global_id(ll:Md5, Datadoc),
+      store_start_clean(Datadoc)
     )),
     Exception,
     var(Exception)
@@ -82,7 +82,7 @@ lwm_clean_loop(Category, Goal):-
   ),
 
   % Process the URL we picked.
-  lwm_clean(Category, Md5),
+  lwm_clean(Category, Md5, Datadoc),
 
   %%%%% Make sure the unpacking threads do not create a pending pool
   %%%%% that is (much) too big.
@@ -100,14 +100,17 @@ lwm_clean_loop(Category, Goal):-
   lwm_clean_loop(Category, Goal).
 
 
-%! lwm_clean(+Category:atom, +Md5:atom) is det.
+%! lwm_clean(+Category:atom, +Md5:atom, +Datadoc:url) is det.
 
-lwm_clean(Category, Md5):-
+lwm_clean(Category, Md5, Datadoc):-
   % DEB
-  lwm_debug_message(lwm_progress(Category), lwm_start(Category,Md5,Source)),
+  lwm_debug_message(
+    lwm_progress(Category),
+    lwm_start(Category,Datadoc,Source)
+  ),
 
   run_collect_messages(
-    clean_md5(Category, Md5),
+    clean_md5(Category, Md5, Datadoc),
     Status,
     Warnings
   ),
@@ -118,20 +121,20 @@ lwm_clean(Category, Md5):-
     lwm_end(Category,Md5,Source,Status,Warnings)
   ),
 
-  store_exception(Md5, Status),
-  maplist(store_warning(Md5), Warnings),
-  store_end_clean(Md5).
+  store_exception(Datadoc, Status),
+  maplist(store_warning(Datadoc), Warnings),
+  store_end_clean(Md5, Datadoc).
 
 
-%! clean_md5(+Category:atom, +Md5:atom) is det.
+%! clean_md5(+Category:atom, +Md5:atom, +Datadoc:url) is det.
 
-clean_md5(Category, Md5):-
+clean_md5(Category, Md5, Datadoc):-
   % Construct the file name belonging to the given MD5.
   md5_directory(Md5, Md5Dir),
   absolute_file_name(dirty, DirtyFile, [access(read),relative_to(Md5Dir)]),
 
   % Retrieve the content type, if it was previously determined.
-  md5_content_type(Md5, ContentType),
+  datadoc_content_type(Datadoc, ContentType),
 
   % Clean the data document in an RDF transaction.
   setup_call_cleanup(
@@ -141,6 +144,7 @@ clean_md5(Category, Md5):-
         clean_datastream(
           Category,
           Md5,
+          Datadoc,
           DirtyFile,
           Read,
           ContentType,
@@ -149,7 +153,7 @@ clean_md5(Category, Md5):-
         _,
         [snapshot(true)]
       ),
-      store_stream(Md5,Read)
+      store_stream(Datadoc, Read)
     ),
     close(Read)
   ),
@@ -166,6 +170,7 @@ clean_md5(Category, Md5):-
 %! clean_datastream(
 %!   +Category:atom,
 %!   +Md5:atom,
+%!   +Datadoc:url,
 %!   +File:atom,
 %!   +Read:blob,
 %!   +ContentType:atom,
@@ -175,6 +180,7 @@ clean_md5(Category, Md5):-
 clean_datastream(
   Category,
   Md5,
+  Datadoc,
   File,
   Read,
   ContentType,
@@ -182,10 +188,10 @@ clean_datastream(
 ):-
   % Guess the RDF serialization format,
   % using the content type and the file extension as suggestions.
-  ignore(md5_file_extension(Md5, FileExtension)),
-  rdf_guess_format_md5(Md5, Read, FileExtension, ContentType, Format),
+  ignore(datadoc_file_extension(Datadoc, FileExtension)),
+  rdf_guess_format(Datadoc, Read, FileExtension, ContentType, Format),
   rdf_serialization(_, _, Format, _, Uri),
-  store_triple(ll-Md5, llo-serializationFormat, Uri),
+  store_triple(Datadoc, llo-serializationFormat, Uri),
 
   % Load all triples by parsing the data document
   % according to the guessed RDF serialization format.
@@ -213,7 +219,7 @@ clean_datastream(
   save_data_to_file(Md5, File, TOut),
 
   % Store statistics about the number of (duplicate) triples.
-  store_number_of_triples(Category, Md5, TIn, TOut),
+  store_number_of_triples(Category, Datadoc, TIn, TOut),
 
   % Make sure any VoID datadumps are added to the LOD Basket.
   find_void_datasets(Category, VoidUrls).
@@ -244,18 +250,18 @@ find_void_datasets(Category, Urls):-
   lwm_debug_message(lwm_process(Category), void_found(Urls)).
 
 
-%! rdf_guess_format_md5(
-%!   +Md5:atom,
+%! rdf_guess_format(
+%!   +Datadoc:url,
 %!   +Read:blob,
 %!   +FileExtension:atom,
 %!   +ContentType:atom,
 %!   -Format:atom
 %! ) is semidet.
 
-rdf_guess_format_md5(_, Read, FileExtension, ContentType, Format):-
+rdf_guess_format(_, Read, FileExtension, ContentType, Format):-
   rdf_guess_format(Read, FileExtension, ContentType, Format), !.
-rdf_guess_format_md5(Md5, _, _, _, _):-
-  md5_source(Md5, Source),
+rdf_guess_format(Datadoc, _, _, _, _):-
+  datadoc_source(Datadoc, Source),
   throw(error(no_rdf(Source))).
 
 

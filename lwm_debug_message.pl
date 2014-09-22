@@ -17,6 +17,7 @@ Prints debug messages for the LOD Washing Machine.
 
 :- use_module(library(apply)).
 :- use_module(library(debug)).
+:- use_module(library(semweb/rdf_db)).
 
 :- use_module(lwm(lwm_sparql_query)).
 
@@ -29,6 +30,9 @@ lwm_debug_message(Topic):-
   lwm_debug_message(Topic, Topic).
 
 
+%! lwm_debug_message(+Topic:compound, +Message:compound) is det.
+% `Topic` is a debug topic, specified in `library(debug)`.
+
 % Idle loop.
 lwm_debug_message(Topic, lwm_idle_loop(Category)):-
   % Every category has its own idle loop flag.
@@ -36,9 +40,6 @@ lwm_debug_message(Topic, lwm_idle_loop(Category)):-
   flag(Flag, X, X + 1),
 
   debug(Topic, '[IDLE] ~a ~D', [Category,X]).
-
-%! lwm_debug_message(Topic, Message) is det.
-% `Topic` is a debug topic, specified in `library(debug)`.
 
 % Do not print debug message.
 lwm_debug_message(Topic, _):-
@@ -60,7 +61,7 @@ lwm_debug_message(Topic, ctriples_written(_,Triples,Duplicates)):-
 lwm_debug_message(Topic, lwm_end(Category1,Md5,Source,Status,_)):-
   % Category
   upcase_atom(Category1, Category2),
-
+  
   % Status
   (   Status == true
   ->  true
@@ -72,16 +73,17 @@ lwm_debug_message(Topic, lwm_end(Category1,Md5,Source,Status,_)):-
   debug(Topic, '[END ~a] ~w ~w', [Category2,Md5,Source]).
 
 % Start a process.
-lwm_debug_message(Topic, lwm_start(Category1,Md5,Source)):-
+lwm_debug_message(Topic, lwm_start(Category1,Datadoc,Source)):-
+  % Category
   upcase_atom(Category1, Category2),
-
+  
   % File source: URL or archive
-  md5_source(Md5, Source),
-
+  datadoc_source(Datadoc, Source),
+  
   % File size
   (   Category1 == unpack
   ->  SizeString = ""
-  ;   md5_size(Md5, NumberOfGigabytes),
+  ;   datadoc_size(Datadoc, NumberOfGigabytes),
       format(string(SizeString), ' (~f GB)', [NumberOfGigabytes])
   ),
 

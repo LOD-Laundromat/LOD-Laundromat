@@ -39,11 +39,6 @@ Unpacks files for the LOD Washing Machine to clean.
 
 
 
-%%%%% Do not unpack more documents if the pending pool is already big enough.
-%%%%lwm_unpack_loop:-
-%%%%  flag(number_of_pending_md5s, Id, Id),
-%%%%  Id > 100, !,
-%%%%  lwm_unpack_loop.
 lwm_unpack_loop:-
   % Pick a new source to process.
   % If some exception is thrown here, the catch/3 makes it
@@ -53,18 +48,17 @@ lwm_unpack_loop:-
     with_mutex(lod_washing_machine, (
       lwm_sparql_select(
         [llo],
-        [md5,url],
+        [datadoc,url],
         [
           rdf(var(datadoc), llo:added, var(added)),
           not([
             rdf(var(datadoc), llo:startUnpack, var(startUnpack))
           ]),
-          rdf(var(datadoc), llo:md5, var(md5)),
           optional([
             rdf(var(datadoc), llo:url, var(url))
           ])
         ],
-        [[literal(type(_,Md5)),Url]],
+        [[Datadoc,Url]],
         [limit(1)]
       ),
 
@@ -80,7 +74,8 @@ lwm_unpack_loop:-
 
       % Update the database, saying we are ready
       % to begin downloading+unpacking this data document.
-      store_start_unpack(Md5)
+      rdf_global_id(ll:Md5, Datadoc),
+      store_start_unpack(Datadoc)
     )),
     Exception,
     var(Exception)
@@ -93,7 +88,7 @@ lwm_unpack_loop:-
   ),
 
   % Process the URL we picked.
-  lwm_unpack(Md5),
+  lwm_unpack(Md5, Datadoc),
 
   % Additional data documents may now be downloaded from the same authority.
   retractall(lwm:current_authority(Authority)),
@@ -113,14 +108,14 @@ lwm_unpack_loop:-
   lwm_unpack_loop.
 
 
-%! lwm_unpack(+Md5:atom) is det.
+%! lwm_unpack(+Md5:atom, +Datadoc:url) is det.
 
-lwm_unpack(Md5):-
+lwm_unpack(Md5, Datadoc):-
   % DEB
-  lwm_debug_message(lwm_progress(unpack), lwm_start(unpack,Md5,Source)),
+  lwm_debug_message(lwm_progress(unpack), lwm_start(unpack,Datadoc,Source)),
 
   run_collect_messages(
-    unpack_md5(Md5),
+    unpack_md5(Md5, Datadoc),
     Status,
     Warnings
   ),
@@ -131,15 +126,15 @@ lwm_unpack(Md5):-
     lwm_end(unpack,Md5,Source,Status,Warnings)
   ),
 
-  maplist(store_warning(Md5), Warnings),
-  store_end_unpack(Md5, Status).
+  maplist(store_warning(Datadoc), Warnings),
+  store_end_unpack(Md5, Datadoc, Status).
 
 
-%! unpack_md5(+Md5:atom) is det.
+%! unpack_md5(+Md5:atom, +Datadoc:url) is det.
 
 % The given MD5 denotes an archive entry.
-unpack_md5(Md5):-
-  md5_archive_entry(Md5, ParentMd5, EntryPath), !,
+unpack_md5(Md5, Datadoc):-
+  datadoc_archive_entry(Datadoc, ParentMd5, EntryPath), !,
 
   % Move the entry file from the parent directory into
   % an MD5 directory of its own.
@@ -150,11 +145,11 @@ unpack_md5(Md5):-
   create_file_directory(EntryFile2),
   mv2(EntryFile1, EntryFile2),
 
-  unpack_file(Md5, EntryFile2).
+  unpack_file(Md5, Datadoc, EntryFile2).
 % The given MD5 denotes a URL.
-unpack_md5(Md5):-
-  md5_url(Md5, Url), !,
-  store_triple(ll-Md5, rdf-type, llo-'URL'),
+unpack_md5(Md5, Datadoc):-
+  datadoc_url(Datadoc, Url), !,
+  store_triple(Datadoc, rdf-type, llo-'URL'),
 
   % Create a directory for the dirty version of the given Md5.
   md5_directory(Md5, Md5Dir),
@@ -187,27 +182,27 @@ unpack_md5(Md5):-
 
   % Store the file size of the dirty file.
   size_file(DownloadFile, ByteSize),
-  store_triple(ll-Md5, llo-size, literal(type(xsd-integer,ByteSize))),
+  store_triple(Datadoc, llo-size, literal(type(xsd-integer,ByteSize))),
 
   % Store HTTP statistics.
-  store_http(Md5, ContentLength, ContentType, LastModified),
+  store_http(Datadoc, ContentLength, ContentType, LastModified),
 
-  unpack_file(Md5, DownloadFile).
+  unpack_file(Md5, Datadoc, DownloadFile).
 
 
-%! unpack_file(+Md5:atom, +ArchiveFile:atom) is det.
+%! unpack_file(+Md5:atom, +Datadoc:url, +ArchiveFile:atom) is det.
 
-unpack_file(Md5, ArchiveFile):-
+unpack_file(Md5, Datadoc, ArchiveFile):-
   % Store the file extension, if any.
   file_name_extension(_, FileExtension, ArchiveFile),
   (   FileExtension == ''
   ->  true
-  ;   store_file_extension(Md5, FileExtension)
+  ;   store_file_extension(Datadoc, FileExtension)
   ),
 
   % Extract archive.
   archive_extract(ArchiveFile, _, ArchiveFilters, EntryPairs),
-  store_archive_filters(Md5, ArchiveFilters),
+  store_archive_filters(Datadoc, ArchiveFilters),
 
   md5_directory(Md5, Md5Dir),
   (
@@ -249,13 +244,13 @@ unpack_file(Md5, ArchiveFile):-
     ),
     distill_archive_format(ArchiveFormats, ArchiveFormat),
     store_triple(
-      ll-Md5,
+      Datadoc,
       llo-archiveFormat,
       literal(type(xsd-string,ArchiveFormat))
     ),
 
-    maplist(store_archive_entry(Md5), EntryPaths, EntryProperties2),
-    store_skip_clean(Md5)
+    maplist(store_archive_entry(Md5, Datadoc), EntryPaths, EntryProperties2),
+    store_skip_clean(Datadoc)
   ),
 
   % Remove the archive file.
