@@ -2,7 +2,6 @@
   noRdf_store,
   [
     post_rdf_triples/0,
-    post_rdf_triples/1, % +Md5:atom
     store_triple/3 % +Subject
                    % +Predicate
                    % +Object
@@ -25,7 +24,6 @@ and at the same time send small RDF messages using SPARQL Update requests.
 :- use_module(plSparql_http(sparql_graph_store)).
 
 :- use_module(lwm(lwm_settings)).
-:- use_module(lwm(md5)).
 
 %! rdf_triple(
 %!   ?Subject:or([bnode,iri]),
@@ -43,23 +41,13 @@ and at the same time send small RDF messages using SPARQL Update requests.
 
 
 %! post_rdf_triples is det.
-
-post_rdf_triples:-
-  post_rdf_triples0([]).
-
-
-%! post_rdf_triples(+Md5:atom) is det.
 % Sends a SPARQL Update request to the LOD Laundromat Endpoint
 % containing all current noRdf triples, for a particular MD5.
 %
 % The thread-local rdf_triple/3 statements form the contents
 % of the update request.
 
-post_rdf_triples(Md5):-
-  md5_bnode_base(Md5, BaseComponents),
-  post_rdf_triples0([bnode_base(BaseComponents)]).
-
-post_rdf_triples0(Options):-
+post_rdf_triples:-
   % Named graph argument.
   lwm_version_graph(NG),
 
@@ -71,9 +59,23 @@ post_rdf_triples0(Options):-
       Triples
     ),
     % Use HTTP Graph Store on Virtuoso.
-    with_mutex(lod_washing_machine, (
-      sparql_post_named_graph(virtuoso_http, NG, Triples, Options)
-    )),
+    (
+      with_mutex(lod_washing_machine, (
+        sparql_post_named_graph(
+          virtuoso_http,
+          NG,
+          Triples,
+          [status_code(Code)]
+        )
+      )),
+
+      % DEB
+      (   between(200, 299, Code)
+      ->  true
+      ;   gtrace,
+          format(user_output, '~w\n', [Code])
+      )
+    ),
     retractall(rdf_triple(_,_,_))
   ).
 

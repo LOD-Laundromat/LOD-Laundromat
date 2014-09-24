@@ -5,8 +5,6 @@
                     % -Base:url
     md5_bnode_base/2, % +Md5:atom
                       % -BaseComponents:compound
-    md5_clean_url/2, % +Md5:atom
-                     % -Location:url
     md5_directory/2 % +Md5:atom
                     % -Directory:atom
   ]
@@ -17,7 +15,7 @@
 MD5 support predicates.
 
 @author Wouter Beek
-@version 2014/06, 2014/08
+@version 2014/06, 2014/08-2014/09
 */
 
 :- use_module(library(filesex)).
@@ -44,13 +42,6 @@ md5_base_url(Md5, Base):-
 md5_bnode_base(Md5, Scheme-Authority-Md5):-
   ll_scheme(Scheme),
   ll_authority(Authority).
-
-
-%! md5_clean_url(+Md5:atom, -Location:url) is det.
-
-md5_clean_url(Md5, Location):-
-  atomic_list_concat([Md5,'clean.nt.gz'], '/', Path),
-  http_link_to_id(clean, path_postfix(Path), Location).
 
 
 %! md5_directory(+Md5:atom, -Directory:atom) is det.

@@ -37,27 +37,27 @@ for storing the metadata. See module [lwm_settings] for this.
 :- dynamic(user:web_module/2).
 :- multifile(user:web_module/2).
 
-user:web_module('LWM Progress', lwm_progress).
-
 :- dynamic(lwm:current_authority/1).
 :- multifile(lwm:current_authority/1).
 
-
+user:web_module('LWM Progress', lwm_progress).
 
 lwm_progress(Request):-
   lwm_progress(Request, plServer_style).
 
 :- initialization(init).
 
+
+
 init:-
   start_app_server([workers(2)]),
   
   clean_lwm_state,
   process_command_line_arguments,
-  NumberOfUnpackThreads = 1,
+  NumberOfUnpackThreads = 5,
   NumberOfSmallCleanThreads = 1,
-  NumberOfMediumCleanThreads = 1,
-  NumberOfLargeCleanThreads = 1,
+  NumberOfMediumCleanThreads = 0,
+  NumberOfLargeCleanThreads = 0,
   
   % Start the downloading+unpacking threads.
   forall(

@@ -16,6 +16,7 @@ Continues an interrupted LOD Washing Machine crawl.
 :- use_module(library(aggregate)).
 :- use_module(library(apply)).
 :- use_module(library(filesex)).
+:- use_module(library(semweb/rdf_db)).
 
 :- use_module(plSparql_update(sparql_update_api)).
 
@@ -25,37 +26,39 @@ Continues an interrupted LOD Washing Machine crawl.
 
 
 
+%! lwm_continue is det.
+
 lwm_continue:-
-  % Collect zombie MD5s.
+  % Collect zombie data documents.
   aggregate_all(
-    set(Md5),
+    set(Datadoc),
     (
-      md5_unpacking(Md5)
+      datadoc_unpacking(Datadoc)
     ;
-      md5_cleaning(Md5)
+      datadoc_cleaning(Datadoc)
     ),
-    Md5s
+    Datadocs
   ),
 
-  maplist(reset_md5, Md5s).
+  maplist(reset_datadoc, Datadocs).
 
 
-reset_md5(Md5):-
+%! reset_datadoc(+Datadoc:url) is det.
+
+reset_datadoc(Datadoc):-
   % Remove the MD5 directory.
+  rdf_global_id(ll:Md5, Datadoc),
   md5_directory(Md5, Directory),
   delete_directory_and_contents(Directory),
 
-  % Remove the MD5 metadata triples.
+  % Remove the metadata triples that were stored for the given data document.
   lwm_version_graph(NG),
-gtrace,
   sparql_delete_where(
     virtuoso_update,
     [ll],
-    [rdf(ll:Md5,var(p),var(o))],
+    [rdf(Datadoc,var(p),var(o))],
     [NG],
     [],
     []
-  ),
-  md5_describe(Md5, Triples),
-  sparql_delete_data(cliopatria_update, Triples, [NG], []).
+  ).
 

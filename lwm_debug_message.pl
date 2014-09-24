@@ -20,6 +20,8 @@ Prints debug messages for the LOD Washing Machine.
 
 :- use_module(lwm(lwm_sparql_query)).
 
+:- discontiguous(lwm_debug_message/2).
+
 
 
 %! lwm_debug_message(+Topic:compound) is det.
@@ -29,6 +31,9 @@ lwm_debug_message(Topic):-
   lwm_debug_message(Topic, Topic).
 
 
+%! lwm_debug_message(+Topic:compound, +Message:compound) is det.
+% `Topic` is a debug topic, specified in `library(debug)`.
+
 % Idle loop.
 lwm_debug_message(Topic, lwm_idle_loop(Category)):-
   % Every category has its own idle loop flag.
@@ -37,13 +42,12 @@ lwm_debug_message(Topic, lwm_idle_loop(Category)):-
 
   debug(Topic, '[IDLE] ~a ~D', [Category,X]).
 
-%! lwm_debug_message(Topic, Message) is det.
-% `Topic` is a debug topic, specified in `library(debug)`.
 
 % Do not print debug message.
 lwm_debug_message(Topic, _):-
   nonvar(Topic),
   \+ debugging(Topic), !.
+
 
 % C-Triples written.
 lwm_debug_message(_, ctriples_written(_,0,_)):- !.
@@ -55,6 +59,7 @@ lwm_debug_message(Topic, ctriples_written(_,Triples,Duplicates)):-
   ),
 
   debug(Topic, '[+~D~s]', [Triples,DuplicatesString]).
+
 
 % End a process.
 lwm_debug_message(Topic, lwm_end(Category1,Md5,Source,Status,_)):-
@@ -71,26 +76,35 @@ lwm_debug_message(Topic, lwm_end(Category1,Md5,Source,Status,_)):-
 
   debug(Topic, '[END ~a] ~w ~w', [Category2,Md5,Source]).
 
+
 % Start a process.
-lwm_debug_message(Topic, lwm_start(Category1,Md5,Source)):-
+lwm_debug_message(Topic, lwm_start(unpack,Md5,Datadoc,Source)):- !,
+  lwm_start_generic(Topic, unpack, Md5, Datadoc, Source, "").
+
+lwm_debug_message(
+  Topic,
+  lwm_start(Category,Md5,Datadoc,Source,NumberOfBytes)
+):-
+  NumberOfGigabytes is NumberOfBytes / (1024 ** 3),
+  format(string(SizeString), ' (~f GB)', [NumberOfGigabytes]),
+  lwm_start_generic(Topic, Category, Md5, Datadoc, Source, SizeString).
+
+lwm_start_generic(Topic, Category1, Md5, Datadoc, Source, SizeString):-
+  % Category
   upcase_atom(Category1, Category2),
 
   % File source: URL or archive
-  md5_source(Md5, Source),
-
-  % File size
-  (   Category1 == unpack
-  ->  SizeString = ""
-  ;   md5_size(Md5, NumberOfGigabytes),
-      format(string(SizeString), ' (~f GB)', [NumberOfGigabytes])
-  ),
+  datadoc_source(Datadoc, Source),
 
   debug(Topic, '[START ~a] ~w ~w~s', [Category2,Md5,Source,SizeString]).
+
 
 % VoID description found
 lwm_debug_message(Topic, void_found(Urls)):-
   maplist(void_found(Topic), Urls).
 
+
+% DEB
 lwm_debug_message(Topic, Message):-
   gtrace,
   lwm_debug_message(Topic, Message).
