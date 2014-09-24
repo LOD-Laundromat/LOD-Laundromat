@@ -28,7 +28,7 @@
 
 % ClioPatria debug tools.
 
-%%%%:- debug(sparql_graph_store).
+:- debug(sparql_graph_store).
 %%%%:- debug(sparql_update).
 
 % LOD Washing Machine-specific debug messages that do not fit anywhere else.

@@ -61,7 +61,7 @@ post_rdf_triples:-
       Triples
     ),
     % Use HTTP Graph Store on Virtuoso.
-    (gtrace,
+    (
       with_mutex(lod_washing_machine, (
         sparql_post_named_graph(
           virtuoso_http,
@@ -75,7 +75,9 @@ post_rdf_triples:-
       (   between(200, 299, Code)
       ->  true
       ;   writeln(Code),
-          maplist(writeln, Triples)
+          maplist(writeln, Triples),
+          gtrace,
+          post_rdf_triples
       )
     ),
     retractall(rdf_triple(_,_,_))

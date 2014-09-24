@@ -54,7 +54,7 @@ init:-
   
   clean_lwm_state,
   process_command_line_arguments,
-  NumberOfUnpackThreads = 5,
+  NumberOfUnpackThreads = 1,
   NumberOfSmallCleanThreads = 1,
   NumberOfMediumCleanThreads = 0,
   NumberOfLargeCleanThreads = 0,
