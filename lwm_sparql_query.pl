@@ -24,8 +24,10 @@
     datadoc_source/2, % +Datadoc:url
                       % -Source:atom
     datadoc_unpacking/1, % -Datadoc:url
-    datadoc_url/2 % +Datadoc:url
-                  % -Url:url
+    datadoc_url/2, % +Datadoc:url
+                   % -Url:url
+    get_one_pending_datadoc/2 % -Datadoc:url
+                              % -Dirty:url
   ]
 ).
 
@@ -215,6 +217,26 @@ datadoc_url(Datadoc, Url):-
     [url],
     [rdf(Datadoc, llo:url, var(url))],
     [[Url]],
+    [limit(1)]
+  ).
+
+
+%! get_one_pending_datadoc(-Datadoc:url, -Dirty:url) is det.
+
+get_one_pending_datadoc(Datadoc, Dirty):-
+  lwm_sparql_select(
+    [llo],
+    [datadoc,dirty],
+    [
+      rdf(var(datadoc), llo:added, var(added)),
+      not([
+        rdf(var(datadoc), llo:startUnpack, var(startUnpack))
+      ]),
+      optional([
+        rdf(var(datadoc), llo:url, var(dirty))
+      ])
+    ],
+    [[Datadoc,Dirty]],
     [limit(1)]
   ).
 

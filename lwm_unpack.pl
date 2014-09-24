@@ -46,41 +46,29 @@ lwm_unpack_loop:-
   % to wait in case a SPARQL endpoint is temporarily down.
   catch(
     with_mutex(lod_washing_machine, (
-      lwm_sparql_select(
-        [llo],
-        [datadoc,url],
-        [
-          rdf(var(datadoc), llo:added, var(added)),
-          not([
-            rdf(var(datadoc), llo:startUnpack, var(startUnpack))
-          ]),
-          optional([
-            rdf(var(datadoc), llo:url, var(url))
-          ])
-        ],
-        [[Datadoc,Url]],
-        [limit(1)]
-      ),
+      get_one_pending_datadoc(Datadoc, DirtyUrl),
 
       % Make sure that at no time two data documents are
       % being downloaded from the same authority.
       % This avoids being blocked by servers that do not allow
       % multiple simultaneous requests.
-      (   nonvar(Url)
-      ->  uri_component(Url, authority, Authority),
+      (   nonvar(DirtyUrl)
+      ->  uri_component(DirtyUrl, authority, Authority),
           \+ lwm:current_authority(Authority)
       ;   assertz(lwm:current_authority(Authority))
       ),
 
       % Update the database, saying we are ready
       % to begin downloading+unpacking this data document.
-      rdf_global_id(ll:Md5, Datadoc),
       store_start_unpack(Datadoc)
     )),
     Exception,
     var(Exception)
   ), !,
-
+  
+  % We sometimes need the MD5 atom.
+  rdf_global_id(ll:Md5, Datadoc),
+  
   % DEB
   (   debug:debug_md5(Md5, unpack)
   ->  gtrace
