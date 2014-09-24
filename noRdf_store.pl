@@ -60,9 +60,23 @@ post_rdf_triples:-
       Triples
     ),
     % Use HTTP Graph Store on Virtuoso.
-    with_mutex(lod_washing_machine, (
-      sparql_post_named_graph(virtuoso_http, NG, Triples, [])
-    )),
+    (
+      with_mutex(lod_washing_machine, (
+        sparql_post_named_graph(
+          virtuoso_http,
+          NG,
+          Triples,
+          [status_code(Code)]
+        )
+      )),
+      
+      % DEB
+      (   between(200, 299, Code)
+      ->  true
+      ;   gtrace,
+          format(user_output, '~w\n', [Code])
+      )
+    ),
     retractall(rdf_triple(_,_,_))
   ).
 
