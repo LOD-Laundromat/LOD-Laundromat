@@ -61,7 +61,7 @@ post_rdf_triples:-
       Triples
     ),
     % Use HTTP Graph Store on Virtuoso.
-    (
+    (gtrace,
       with_mutex(lod_washing_machine, (
         sparql_post_named_graph(
           virtuoso_http,
@@ -89,9 +89,6 @@ store_triple(S1, P1, O1):-
   assert(rdf_triple(S2, P2, O2)).
 
 
-rdf_term_map(X, Y):-
-  rdf_is_bnode(X), !,
-  with_output_to(atom(Y), rdf_bnode_write(X)).
 rdf_term_map(X-Y0, Z):- !,
   (   number(Y0)
   ->  atom_number(Y, Y0)
