@@ -24,10 +24,10 @@
     datadoc_source/2, % +Datadoc:url
                       % -Source:atom
     datadoc_unpacking/1, % -Datadoc:url
-    datadoc_url/2, % +Datadoc:url
-                   % -Url:url
-    get_one_pending_datadoc/2 % -Datadoc:url
-                              % -Dirty:url
+    get_one_pending_datadoc/2, % -Datadoc:url
+                               % -Dirty:url
+    get_one_unpacked_datadoc/2 % -Datadoc:url
+                               % -Size:nonneg
   ]
 ).
 
@@ -90,11 +90,12 @@ datadoc_archive_entry(Datadoc, ParentMd5, EntryPath):-
     [
       rdf(Datadoc, llo:path, var(entryPath)),
       rdf(var(md5parent), llo:containsEntry, Datadoc),
-      rdf(var(md5parent),llo:md5,var(parentMd5))
+      rdf(var(md5parent), llo:md5, var(parentMd5))
     ],
-    [[literal(ParentMd5),literal(EntryPath)]],
+    [Row],
     [limit(1)]
-  ).
+  ),
+  maplist(rdf_literal, Row, [ParentMd5,EntryPath]).
 
 
 %! datadoc_cleaning(-Datadoc:url) is nondet.
@@ -123,9 +124,10 @@ datadoc_content_type(Datadoc, ContentType):-
     [llo],
     [contentType],
     [rdf(Datadoc, llo:contentType, var(contentType))],
-    [[literal(type(_,ContentType))]],
+    [ContentTypeLiteral],
     [limit(1)]
-  ), !.
+  ),
+  rdf_literal(ContentTypeLiteral, ContentType).
 datadoc_content_type(_, _VAR).
 
 
@@ -135,7 +137,7 @@ datadoc_describe(Datadoc, Triples):-
   lwm_sparql_select(
     [llo],
     [p,o],
-    [rdf(Datadoc,var(p),var(o))],
+    [rdf(Datadoc, var(p), var(o))],
     Rows,
     [distinct(true)]
   ),
@@ -149,23 +151,10 @@ datadoc_file_extension(Datadoc, FileExtension):-
     [llo],
     [fileExtension],
     [rdf(Datadoc, llo:fileExtension, var(fileExtension))],
-    [[literal(type(_,FileExtension))]],
+    [FileExtensionLiteral],
     [limit(1)]
-  ).
-
-
-%! datadoc_size(+Datadoc:url, -NumberOfGigabytes:between(0.0,inf)) is det.
-
-datadoc_size(Datadoc, NumberOfGigabytes):-
-  lwm_sparql_select(
-    [llo],
-    [size],
-    [rdf(Datadoc, llo:size, var(size))],
-    [[literal(type(_,NumberOfBytes1))]],
-    [limit(1)]
-  ), !,
-  atom_number(NumberOfBytes1, NumberOfBytes2),
-  NumberOfGigabytes is NumberOfBytes2 / (1024 ** 3).
+  ),
+  rdf_literal(FileExtensionLiteral, [FileExtension]).
 
 
 %! datadoc_source(+Datadoc:url, -Source:atom) is det.
@@ -174,8 +163,16 @@ datadoc_size(Datadoc, NumberOfGigabytes):-
 % This is either a URL simpliciter,
 % or a URL suffixed by an archive entry path.
 
+% The data document derives from a URL.
 datadoc_source(Datadoc, Url):-
-  datadoc_url(Datadoc, Url), !.
+  lwm_sparql_select(
+    [llo],
+    [url],
+    [rdf(Datadoc, llo:url, var(url))],
+    [[Url]],
+    [limit(1)]
+  ), !.
+% The data document derives from an archive entry.
 datadoc_source(Datadoc, Source):-
   lwm_sparql_select(
     [llo],
@@ -184,9 +181,10 @@ datadoc_source(Datadoc, Source):-
       rdf(Datadoc, llo:path, var(path)),
       rdf(var(parent), llo:containsEntry, Datadoc)
     ],
-    [[Parent,literal(type(_,Path))]],
+    [[Parent,PathLiteral]],
     [limit(1)]
-  ), !,
+  ),
+  rdf_literal(PathLiteral, Path),
   datadoc_source(Parent, ParentSource),
   atomic_concat(ParentSource, Path, Source).
 
@@ -209,19 +207,7 @@ datadoc_unpacking(Datadoc):-
   member([Datadoc], Rows).
 
 
-%! datadoc_url(+Datadoc:url, -Url:url) is det.
-
-datadoc_url(Datadoc, Url):-
-  lwm_sparql_select(
-    [llo],
-    [url],
-    [rdf(Datadoc, llo:url, var(url))],
-    [[Url]],
-    [limit(1)]
-  ).
-
-
-%! get_one_pending_datadoc(-Datadoc:url, -Dirty:url) is det.
+%! get_one_pending_datadoc(-Datadoc:url, -Dirty:url) is semidet.
 
 get_one_pending_datadoc(Datadoc, Dirty):-
   lwm_sparql_select(
@@ -241,7 +227,28 @@ get_one_pending_datadoc(Datadoc, Dirty):-
   ).
 
 
+%! get_one_unpacked_datadoc(-Datadoc:url, -Size:nonneg) is semidet.
+% Size is expressed as the number of bytes.
+
+get_one_unpacked_datadoc(Datadoc, Size):-
+  lwm_sparql_select(
+    [llo],
+    [datadoc,size],
+    [
+      rdf(var(datadoc), llo:endUnpack, var(endUnpack)),
+      not([
+        rdf(var(datadoc), llo:startClean, var(startClean))
+      ]),
+      rdf(var(datadoc), llo:size, var(size))
+    ],
+    [[Datadoc,SizeLiteral]],
+    [limit(1)]
+  ),
+  rdf_literal(SizeLiteral, Size).
+
+
 
 % Helpers.
 
 pair_to_triple(S, [P,O], rdf(S,P,O)).
+

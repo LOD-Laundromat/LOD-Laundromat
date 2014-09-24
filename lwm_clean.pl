@@ -40,30 +40,20 @@ The cleaning process performed by the LOD Washing Machine.
 
 
 lwm_clean_loop(Category, Goal):-
+gtrace,
   % Pick a new source to process.
   % If some exception is thrown here, the catch/3 makes it
   % silently fail. This way, the unpacking thread is able
   % to wait in case a SPARQL endpoint is temporarily down.
   catch(
     with_mutex(lod_washing_machine, (
-      lwm_sparql_select(
-        [llo],
-        [datadoc,size],
-        [
-          rdf(var(datadoc),llo:endUnpack,var(endUnpack)),
-          not([rdf(var(datadoc),llo:startClean,var(startClean))]),
-          rdf(var(datadoc),llo:size,var(size))
-        ],
-        [[Datadoc,literal(type(_,NumberOfBytes1))]],
-        [limit(1)]
-      ),
-
+      get_one_unpacked_datadoc(Datadoc, NumberOfBytes),
+      NumberOfGigabytes is NumberOfBytes / (1024 ** 3),
+      
       % Do not process dirty data documents for which the given goal
       % does not succeed when applied to the dirty document's size.
       (   nonvar(Goal)
-      ->  atom_number(NumberOfBytes1, NumberOfBytes2),
-          NumberOfGigabytes is NumberOfBytes2 / (1024 ** 3),
-          call(Goal, NumberOfGigabytes)
+      ->  call(Goal, NumberOfGigabytes)
       ;   true
       ),
 
@@ -81,9 +71,29 @@ lwm_clean_loop(Category, Goal):-
   ;   true
   ),
 
-  % Process the URL we picked.
-  lwm_clean(Category, Md5, Datadoc),
+  % DEB: *start* cleaning a specific data document.
+  lwm_debug_message(
+    lwm_progress(Category),
+    lwm_start(Category, Datadoc, Source, NumberOfGigabytes)
+  ),
+  
+  run_collect_messages(
+    clean_md5(Category, Md5, Datadoc),
+    Status,
+    Warnings
+  ),
 
+  % DEB: *end* cleaning a specific data document.
+  lwm_debug_message(
+    lwm_progress(Category),
+    lwm_end(Category,Md5,Source,Status,Warnings)
+  ),
+  
+  % Store warnings and status as metadata.
+  store_exception(Datadoc, Status),
+  maplist(store_warning(Datadoc), Warnings),
+  store_end_clean(Md5, Datadoc),
+  
   %%%%% Make sure the unpacking threads do not create a pending pool
   %%%%% that is (much) too big.
   %%%%flag(number_of_pending_md5s, Id, Id - 1),
@@ -98,32 +108,6 @@ lwm_clean_loop(Category, Goal):-
   lwm_debug_message(lwm_idle_loop(Category)),
 
   lwm_clean_loop(Category, Goal).
-
-
-%! lwm_clean(+Category:atom, +Md5:atom, +Datadoc:url) is det.
-
-lwm_clean(Category, Md5, Datadoc):-
-  % DEB
-  lwm_debug_message(
-    lwm_progress(Category),
-    lwm_start(Category,Datadoc,Source)
-  ),
-
-  run_collect_messages(
-    clean_md5(Category, Md5, Datadoc),
-    Status,
-    Warnings
-  ),
-
-  % DEB
-  lwm_debug_message(
-    lwm_progress(Category),
-    lwm_end(Category,Md5,Source,Status,Warnings)
-  ),
-
-  store_exception(Datadoc, Status),
-  maplist(store_warning(Datadoc), Warnings),
-  store_end_clean(Md5, Datadoc).
 
 
 %! clean_md5(+Category:atom, +Md5:atom, +Datadoc:url) is det.

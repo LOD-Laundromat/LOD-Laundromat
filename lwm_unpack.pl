@@ -40,24 +40,29 @@ Unpacks files for the LOD Washing Machine to clean.
 
 
 lwm_unpack_loop:-
+gtrace,
   % Pick a new source to process.
   % If some exception is thrown here, the catch/3 makes it
   % silently fail. This way, the unpacking thread is able
   % to wait in case a SPARQL endpoint is temporarily down.
   catch(
     with_mutex(lod_washing_machine, (
+      % `DirtyUrl` is only instantiated if `Datadoc`
+      % is not an archive entry.
       get_one_pending_datadoc(Datadoc, DirtyUrl),
-
+      
       % Make sure that at no time two data documents are
       % being downloaded from the same authority.
       % This avoids being blocked by servers that do not allow
       % multiple simultaneous requests.
       (   nonvar(DirtyUrl)
       ->  uri_component(DirtyUrl, authority, Authority),
-          \+ lwm:current_authority(Authority)
-      ;   assertz(lwm:current_authority(Authority))
+          \+ lwm:current_authority(Authority),
+          % Set a lock on this authority for other unpacking threads.
+          assertz(lwm:current_authority(Authority))
+      ;   true
       ),
-
+      
       % Update the database, saying we are ready
       % to begin downloading+unpacking this data document.
       store_start_unpack(Datadoc)
@@ -75,10 +80,28 @@ lwm_unpack_loop:-
   ;   true
   ),
 
-  % Process the URL we picked.
-  lwm_unpack(Md5, Datadoc),
+  % DEB: *start* of downloading+unpacking..
+  lwm_debug_message(lwm_progress(unpack), lwm_start(unpack,Datadoc,Source)),
+  
+  % Downloading+unpacking of a specific data document.
+  run_collect_messages(
+    unpack_datadoc(Md5, Datadoc, DirtyUrl),
+    Status,
+    Warnings
+  ),
 
-  % Additional data documents may now be downloaded from the same authority.
+  % DEB: *end* of downloading+unpacking.
+  lwm_debug_message(
+    lwm_progress(unpack),
+    lwm_end(unpack,Md5,Source,Status,Warnings)
+  ),
+  
+  % Store the warnings and status as metadata.
+  maplist(store_warning(Datadoc), Warnings),
+  store_end_unpack(Md5, Datadoc, Status),
+  
+  % Remove the lock from this authority: additional data documents
+  % can now be downloaded from the same authority.
   retractall(lwm:current_authority(Authority)),
 
   % Intermittent loop.
@@ -91,38 +114,16 @@ lwm_unpack_loop:-
   lwm_debug_message(lwm_idle_loop(unpack)),
 
   lwm_unpack_loop.
-lwm_unpack_loop:-
-  gtrace,
-  lwm_unpack_loop.
 
 
-%! lwm_unpack(+Md5:atom, +Datadoc:url) is det.
-
-lwm_unpack(Md5, Datadoc):-
-  % DEB
-  lwm_debug_message(lwm_progress(unpack), lwm_start(unpack,Datadoc,Source)),
-
-  run_collect_messages(
-    unpack_md5(Md5, Datadoc),
-    Status,
-    Warnings
-  ),
-
-  % DEB
-  lwm_debug_message(
-    lwm_progress(unpack),
-    lwm_end(unpack,Md5,Source,Status,Warnings)
-  ),
-
-  maplist(store_warning(Datadoc), Warnings),
-  store_end_unpack(Md5, Datadoc, Status).
-
-
-%! unpack_md5(+Md5:atom, +Datadoc:url) is det.
+%! unpack_datadoc(+Md5:atom, +Datadoc:url, ?DirtyUrl:url) is det.
 
 % The given MD5 denotes an archive entry.
-unpack_md5(Md5, Datadoc):-
-  datadoc_archive_entry(Datadoc, ParentMd5, EntryPath), !,
+unpack_datadoc(Md5, Datadoc, DirtyUrl):-
+  var(DirtyUrl), !,
+  
+  % Retrieve entry path and parent MD5.
+  datadoc_archive_entry(Datadoc, ParentMd5, EntryPath),
 
   % Move the entry file from the parent directory into
   % an MD5 directory of its own.
@@ -135,15 +136,12 @@ unpack_md5(Md5, Datadoc):-
 
   unpack_file(Md5, Datadoc, EntryFile2).
 % The given MD5 denotes a URL.
-unpack_md5(Md5, Datadoc):-
-  datadoc_url(Datadoc, Url), !,
-  store_triple(Datadoc, rdf-type, llo-'URL'),
-
+unpack_datadoc(Md5, Datadoc, DirtyUrl):-
   % Create a directory for the dirty version of the given Md5.
   md5_directory(Md5, Md5Dir),
 
   % Extracting and store the file extensions from the download URL, if any.
-  (   url_file_extension(Url, FileExtension)
+  (   url_file_extension(DirtyUrl, FileExtension)
   ->  true
   ;   FileExtension = ''
   ),
@@ -155,7 +153,7 @@ unpack_md5(Md5, Datadoc):-
   % Download the dirty file for the given Md5.
   lod_accept_header_value(AcceptValue),
   download_to_file(
-    Url,
+    DirtyUrl,
     DownloadFile,
     [
       cert_verify_hook(ssl_verify),
