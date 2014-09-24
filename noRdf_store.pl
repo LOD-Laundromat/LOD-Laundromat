@@ -74,8 +74,8 @@ post_rdf_triples:-
       % DEB
       (   between(200, 299, Code)
       ->  true
-      ;   gtrace,
-          format(user_output, '~w\n', [Code])
+      ;   writeln(Code),
+          maplist(writeln, Triples)
       )
     ),
     retractall(rdf_triple(_,_,_))
