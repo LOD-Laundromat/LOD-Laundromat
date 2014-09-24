@@ -57,6 +57,8 @@ gtrace,
       % multiple simultaneous requests.
       (   nonvar(DirtyUrl)
       ->  uri_component(DirtyUrl, authority, Authority),
+lwm:current_authority(Authority), %DEB
+gtrace, %DEB
           \+ lwm:current_authority(Authority),
           % Set a lock on this authority for other unpacking threads.
           assertz(lwm:current_authority(Authority))
