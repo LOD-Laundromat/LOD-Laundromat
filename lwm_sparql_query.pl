@@ -19,13 +19,13 @@
                     % -Triples:list(compound)
     datadoc_file_extension/2, % +Datadoc:url
                               % -FileExtension:atom
+    datadoc_pending/2, % -Datadoc:url
+                       % -Dirty:url
     datadoc_source/2, % +Datadoc:url
                       % -Source:atom
-    datadoc_unpacking/1, % -Datadoc:url
-    get_one_pending_datadoc/2, % -Datadoc:url
-                               % -Dirty:url
-    get_one_unpacked_datadoc/2 % -Datadoc:url
-                               % -Size:nonneg
+    datadoc_unpacked/2, % -Datadoc:url
+                        % -Size:nonneg
+    datadoc_unpacking/1 % -Datadoc:url
   ]
 ).
 
@@ -155,6 +155,26 @@ datadoc_file_extension(Datadoc, FileExtension):-
   rdf_literal_value2(FileExtensionLiteral, [FileExtension]).
 
 
+%! datadoc_pending(-Datadoc:url, -Dirty:url) is nondet.
+
+datadoc_pending(Datadoc, Dirty):-
+  lwm_sparql_select(
+    [llo],
+    [datadoc,dirty],
+    [
+      rdf(var(datadoc), llo:added, var(added)),
+      not([
+        rdf(var(datadoc), llo:startUnpack, var(startUnpack))
+      ]),
+      optional([
+        rdf(var(datadoc), llo:url, var(dirty))
+      ])
+    ],
+    [[Datadoc,Dirty]],
+    [iteratively(true)]
+  ).
+
+
 %! datadoc_source(+Datadoc:url, -Source:atom) is det.
 % Returns the original source of the given datadocument.
 %
@@ -187,6 +207,26 @@ datadoc_source(Datadoc, Source):-
   atomic_concat(ParentSource, Path, Source).
 
 
+%! datadoc_unpacked(-Datadoc:url, -Size:nonneg) is semidet.
+% Size is expressed as the number of bytes.
+
+datadoc_unpacked(Datadoc, Size):-
+  lwm_sparql_select(
+    [llo],
+    [datadoc,size],
+    [
+      rdf(var(datadoc), llo:endUnpack, var(endUnpack)),
+      not([
+        rdf(var(datadoc), llo:startClean, var(startClean))
+      ]),
+      rdf(var(datadoc), llo:size, var(size))
+    ],
+    [[Datadoc,SizeLiteral]],
+    [limit(1)]
+  ),
+  rdf_literal_value2(SizeLiteral, Size).
+
+
 %! datadoc_unpacking(-Datadoc:url) is nondet.
 
 datadoc_unpacking(Datadoc):-
@@ -203,46 +243,6 @@ datadoc_unpacking(Datadoc):-
     []
   ),
   member([Datadoc], Rows).
-
-
-%! get_one_pending_datadoc(-Datadoc:url, -Dirty:url) is semidet.
-
-get_one_pending_datadoc(Datadoc, Dirty):-
-  lwm_sparql_select(
-    [llo],
-    [datadoc,dirty],
-    [
-      rdf(var(datadoc), llo:added, var(added)),
-      not([
-        rdf(var(datadoc), llo:startUnpack, var(startUnpack))
-      ]),
-      optional([
-        rdf(var(datadoc), llo:url, var(dirty))
-      ])
-    ],
-    [[Datadoc,Dirty]],
-    [limit(1)]
-  ).
-
-
-%! get_one_unpacked_datadoc(-Datadoc:url, -Size:nonneg) is semidet.
-% Size is expressed as the number of bytes.
-
-get_one_unpacked_datadoc(Datadoc, Size):-
-  lwm_sparql_select(
-    [llo],
-    [datadoc,size],
-    [
-      rdf(var(datadoc), llo:endUnpack, var(endUnpack)),
-      not([
-        rdf(var(datadoc), llo:startClean, var(startClean))
-      ]),
-      rdf(var(datadoc), llo:size, var(size))
-    ],
-    [[Datadoc,SizeLiteral]],
-    [limit(1)]
-  ),
-  rdf_literal_value2(SizeLiteral, Size).
 
 
 

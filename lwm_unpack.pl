@@ -40,6 +40,7 @@ Unpacks files for the LOD Washing Machine to clean.
 
 
 lwm_unpack_loop:-
+gtrace,
   % Pick a new source to process.
   % If some exception is thrown here, the catch/3 makes it
   % silently fail. This way, the unpacking thread is able
@@ -48,7 +49,7 @@ lwm_unpack_loop:-
     with_mutex(lod_washing_machine, (
       % `DirtyUrl` is only instantiated if `Datadoc`
       % is not an archive entry.
-      get_one_pending_datadoc(Datadoc, DirtyUrl),
+      datadoc_pending(Datadoc, DirtyUrl),
 
       % Make sure that at no time two data documents are
       % being downloaded from the same authority.
@@ -80,7 +81,10 @@ lwm_unpack_loop:-
   ),
 
   % DEB: *start* of downloading+unpacking..
-  lwm_debug_message(lwm_progress(unpack), lwm_start(unpack,Md5,Datadoc,Source)),
+  lwm_debug_message(
+    lwm_progress(unpack),
+    lwm_start(unpack,Md5,Datadoc,Source)
+  ),
 
   % Downloading+unpacking of a specific data document.
   run_collect_messages(

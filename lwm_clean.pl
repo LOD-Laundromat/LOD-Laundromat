@@ -46,7 +46,7 @@ lwm_clean_loop(Category, Goal):-
   % to wait in case a SPARQL endpoint is temporarily down.
   catch(
     with_mutex(lod_washing_machine, (
-      get_one_unpacked_datadoc(Datadoc, NumberOfBytes),
+      datadoc_unpacked(Datadoc, NumberOfBytes),
       NumberOfGigabytes is NumberOfBytes / (1024 ** 3),
 
       % Do not process dirty data documents for which the given goal
