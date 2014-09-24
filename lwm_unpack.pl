@@ -34,8 +34,8 @@ Unpacks files for the LOD Washing Machine to clean.
 :- dynamic(debug:debug_md5/2).
 :- multifile(debug:debug_md5/2).
 
-:- dynamic(lwm:current_authority/1).
-:- multifile(lwm:current_authority/1).
+:- dynamic(lwm:current_host/1).
+:- multifile(lwm:current_host/1).
 
 
 
@@ -51,18 +51,14 @@ lwm_unpack_loop:-
       datadoc_pending(Datadoc, DirtyUrl),
 
       % Make sure that at no time two data documents are
-      % being downloaded from the same authority.
+      % being downloaded from the same host.
       % This avoids being blocked by servers that do not allow
       % multiple simultaneous requests.
       (   nonvar(DirtyUrl)
-      ->  uri_component(DirtyUrl, authority, Authority),
-          (   lwm:current_authority(Authority)
-          ->  gtrace,
-              fail
-          ;   true
-          ),
-          % Set a lock on this authority for other unpacking threads.
-          assertz(lwm:current_authority(Authority))
+      ->  uri_component(DirtyUrl, host, Host),
+          \+ lwm:current_host(Host),
+          % Set a lock on this host for other unpacking threads.
+          assertz(lwm:current_host(Host))
       ;   true
       ), !,
 
@@ -106,9 +102,9 @@ lwm_unpack_loop:-
   maplist(store_warning(Datadoc), Warnings),
   store_end_unpack(Md5, Datadoc, Status),
 
-  % Remove the lock from this authority: additional data documents
-  % can now be downloaded from the same authority.
-  retractall(lwm:current_authority(Authority)),
+  % Remove the lock from this host: additional data documents
+  % can now be downloaded from the same host.
+  retractall(lwm:current_host(Host)),
 
   % Intermittent loop.
   lwm_unpack_loop.

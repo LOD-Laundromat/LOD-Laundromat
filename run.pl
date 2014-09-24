@@ -37,8 +37,8 @@ for storing the metadata. See module [lwm_settings] for this.
 :- dynamic(user:web_module/2).
 :- multifile(user:web_module/2).
 
-:- dynamic(lwm:current_authority/1).
-:- multifile(lwm:current_authority/1).
+:- dynamic(lwm:current_host/1).
+:- multifile(lwm:current_host/1).
 
 user:web_module('LWM Progress', lwm_progress).
 
@@ -84,9 +84,8 @@ init:-
 
 
 clean_lwm_state:-
-  % Reset the authorities from which
-  % data documents are currently being downloaded.
-  retractall(current_authority(_)),
+  % Reset the hosts from which data documents are currently being downloaded.
+  retractall(current_host(_)),
 
   %%%%% Reset the count of pending MD5s.
   %%%%flag(number_of_pending_md5s, _, 0),
