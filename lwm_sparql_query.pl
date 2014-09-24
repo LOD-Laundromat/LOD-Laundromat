@@ -125,7 +125,7 @@ datadoc_content_type(Datadoc, ContentType):-
     [ContentTypeLiteral],
     [limit(1)]
   ),
-  rdf_literal_value(ContentTypeLiteral, ContentType).
+  rdf_literal_value2(ContentTypeLiteral, ContentType).
 datadoc_content_type(_, _VAR).
 
 
@@ -152,7 +152,7 @@ datadoc_file_extension(Datadoc, FileExtension):-
     [FileExtensionLiteral],
     [limit(1)]
   ),
-  rdf_literal_value(FileExtensionLiteral, [FileExtension]).
+  rdf_literal_value2(FileExtensionLiteral, [FileExtension]).
 
 
 %! datadoc_source(+Datadoc:url, -Source:atom) is det.
@@ -182,7 +182,7 @@ datadoc_source(Datadoc, Source):-
     [[Parent,PathLiteral]],
     [limit(1)]
   ),
-  rdf_literal_value(PathLiteral, Path),
+  rdf_literal_value2(PathLiteral, Path),
   datadoc_source(Parent, ParentSource),
   atomic_concat(ParentSource, Path, Source).
 
@@ -242,7 +242,7 @@ get_one_unpacked_datadoc(Datadoc, Size):-
     [[Datadoc,SizeLiteral]],
     [limit(1)]
   ),
-  rdf_literal_value(SizeLiteral, Size).
+  rdf_literal_value2(SizeLiteral, Size).
 
 
 
