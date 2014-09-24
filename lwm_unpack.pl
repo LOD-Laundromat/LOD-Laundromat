@@ -50,7 +50,7 @@ gtrace,
       % `DirtyUrl` is only instantiated if `Datadoc`
       % is not an archive entry.
       get_one_pending_datadoc(Datadoc, DirtyUrl),
-      
+
       % Make sure that at no time two data documents are
       % being downloaded from the same authority.
       % This avoids being blocked by servers that do not allow
@@ -62,7 +62,7 @@ gtrace,
           assertz(lwm:current_authority(Authority))
       ;   true
       ),
-      
+
       % Update the database, saying we are ready
       % to begin downloading+unpacking this data document.
       store_start_unpack(Datadoc)
@@ -70,10 +70,10 @@ gtrace,
     Exception,
     var(Exception)
   ), !,
-  
+
   % We sometimes need the MD5 atom.
   rdf_global_id(ll:Md5, Datadoc),
-  
+
   % DEB
   (   debug:debug_md5(Md5, unpack)
   ->  gtrace
@@ -82,7 +82,7 @@ gtrace,
 
   % DEB: *start* of downloading+unpacking..
   lwm_debug_message(lwm_progress(unpack), lwm_start(unpack,Md5,Datadoc,Source)),
-  
+
   % Downloading+unpacking of a specific data document.
   run_collect_messages(
     unpack_datadoc(Md5, Datadoc, DirtyUrl),
@@ -95,11 +95,11 @@ gtrace,
     lwm_progress(unpack),
     lwm_end(unpack,Md5,Source,Status,Warnings)
   ),
-  
+
   % Store the warnings and status as metadata.
   maplist(store_warning(Datadoc), Warnings),
   store_end_unpack(Md5, Datadoc, Status),
-  
+
   % Remove the lock from this authority: additional data documents
   % can now be downloaded from the same authority.
   retractall(lwm:current_authority(Authority)),
@@ -121,7 +121,7 @@ lwm_unpack_loop:-
 % The given MD5 denotes an archive entry.
 unpack_datadoc(Md5, Datadoc, DirtyUrl):-
   var(DirtyUrl), !,
-  
+
   % Retrieve entry path and parent MD5.
   datadoc_archive_entry(Datadoc, ParentMd5, EntryPath),
 
@@ -236,7 +236,7 @@ unpack_file(Md5, Datadoc, ArchiveFile):-
     ),
 
     maplist(store_archive_entry(Md5, Datadoc), EntryPaths, EntryProperties2),
-    store_skip_clean(Datadoc)
+    store_skip_clean(Md5, Datadoc)
   ),
 
   % Remove the archive file.

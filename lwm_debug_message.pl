@@ -17,9 +17,10 @@ Prints debug messages for the LOD Washing Machine.
 
 :- use_module(library(apply)).
 :- use_module(library(debug)).
-:- use_module(library(semweb/rdf_db)).
 
 :- use_module(lwm(lwm_sparql_query)).
+
+:- discontiguous(lwm_debug_message/2).
 
 
 

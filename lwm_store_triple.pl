@@ -26,7 +26,8 @@
                                % +Datadoc:url
                                % +ReadTriples:nonneg
                                % +WrittenTriples:nonneg
-    store_skip_clean/1, % +Datadoc:url
+    store_skip_clean/2, % +Md5:atom
+                        % +Datadoc:url
     store_warning/2, % +Datadoc:url
                      % +Warning:compound
     store_start_clean/1, % +Datadoc:url
@@ -54,12 +55,10 @@ the stored triples are sent in a SPARQL Update request
 :- use_module(library(semweb/rdf_db)).
 
 :- use_module(pl(pl_control)).
-:- use_module(pl(pl_log)).
 
 :- use_module(plXsd_datetime(xsd_dateTime_ext)).
 
 :- use_module(lwm(lwm_debug_message)).
-:- use_module(lwm(lwm_sparql_query)).
 :- use_module(lwm(noRdf_store)).
 :- use_module(lwm(store_lod_error)).
 
@@ -143,14 +142,14 @@ store_end_clean(Md5, Datadoc):-
 store_end_clean0(Md5, Datadoc):-
   get_dateTime(Now),
   store_triple(Datadoc, llo-endClean, literal(type(xsd-dateTime,Now))),
-  
+
   % Construct the download URL.
   atom_concat('/', Md5, Path),
   uri_components(
     Datadump,
     uri_components(http,'download.lodlaundromat.org',Path,_,_)
   ),
-  
+
   store_triple(Datadoc, void-dataDump, Datadump).
 
 
@@ -256,7 +255,7 @@ store_number_of_triples(Category, Datadoc, TIn, TOut):-
   store_triple(Datadoc, llo-triples, literal(type(xsd-integer,TOut))),
   TDup is TIn - TOut,
   store_triple(Datadoc, llo-duplicates, literal(type(xsd-integer,TDup))),
-  
+
   % DEB
   lwm_debug_message(
     lwm_progress(Category),
@@ -264,19 +263,19 @@ store_number_of_triples(Category, Datadoc, TIn, TOut):-
   ).
 
 
-%! store_skip_clean(+Datadoc:url) is det.
+%! store_skip_clean(+Md5:atom, +Datadoc:url) is det.
 
-store_skip_clean(Datadoc):-
+store_skip_clean(Md5, Datadoc):-
   store_start_clean0(Datadoc),
   store_end_clean0(Md5, Datadoc),
-  post_rdf_triples(Datadoc).
+  post_rdf_triples.
 
 
 %! store_start_clean(+Datadoc:url) is det.
 
 store_start_clean(Datadoc):-
   store_start_clean0(Datadoc),
-  post_rdf_triples(Datadoc).
+  post_rdf_triples.
 
 store_start_clean0(Datadoc):-
   get_dateTime(Now),
@@ -312,4 +311,13 @@ store_stream(Datadoc, Stream):-
 
 store_warning(Datadoc, message(Term,Kind,_)):-
   store_lod_error(Datadoc, Kind, Term).
+
+
+
+
+
+
+
+
+
 

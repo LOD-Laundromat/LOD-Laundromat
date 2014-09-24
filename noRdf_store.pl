@@ -24,7 +24,6 @@ and at the same time send small RDF messages using SPARQL Update requests.
 :- use_module(plSparql_http(sparql_graph_store)).
 
 :- use_module(lwm(lwm_settings)).
-:- use_module(lwm(md5)).
 
 %! rdf_triple(
 %!   ?Subject:or([bnode,iri]),
@@ -69,7 +68,7 @@ post_rdf_triples:-
           [status_code(Code)]
         )
       )),
-      
+
       % DEB
       (   between(200, 299, Code)
       ->  true
