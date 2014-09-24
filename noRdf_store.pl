@@ -21,7 +21,7 @@ and at the same time send small RDF messages using SPARQL Update requests.
 
 :- use_module(library(semweb/rdf_db)).
 
-:- use_module(plRdf(rdf_bnode_write)).
+:- use_module(plRdf_ser(rdf_bnode_write)).
 
 :- use_module(plSparql_http(sparql_graph_store)).
 
@@ -91,7 +91,7 @@ store_triple(S1, P1, O1):-
 
 rdf_term_map(X, Y):-
   rdf_is_bnode(X), !,
-  with_ouput_to(atom(Y), rdf_bnode_write(X)).
+  with_output_to(atom(Y), rdf_bnode_write(X)).
 rdf_term_map(X-Y0, Z):- !,
   (   number(Y0)
   ->  atom_number(Y, Y0)

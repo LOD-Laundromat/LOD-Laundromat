@@ -40,7 +40,6 @@ The cleaning process performed by the LOD Washing Machine.
 
 
 lwm_clean_loop(Category, Goal):-
-gtrace,
   % Pick a new source to process.
   % If some exception is thrown here, the catch/3 makes it
   % silently fail. This way, the unpacking thread is able
@@ -49,7 +48,7 @@ gtrace,
     with_mutex(lod_washing_machine, (
       get_one_unpacked_datadoc(Datadoc, NumberOfBytes),
       NumberOfGigabytes is NumberOfBytes / (1024 ** 3),
-      
+
       % Do not process dirty data documents for which the given goal
       % does not succeed when applied to the dirty document's size.
       (   nonvar(Goal)
@@ -76,7 +75,7 @@ gtrace,
     lwm_progress(Category),
     lwm_start(Category,Md5,Datadoc,Source,NumberOfGigabytes)
   ),
-  
+
   run_collect_messages(
     clean_md5(Category, Md5, Datadoc),
     Status,
@@ -88,12 +87,12 @@ gtrace,
     lwm_progress(Category),
     lwm_end(Category,Md5,Source,Status,Warnings)
   ),
-  
+
   % Store warnings and status as metadata.
   store_exception(Datadoc, Status),
   maplist(store_warning(Datadoc), Warnings),
   store_end_clean(Md5, Datadoc),
-  
+
   %%%%% Make sure the unpacking threads do not create a pending pool
   %%%%% that is (much) too big.
   %%%%flag(number_of_pending_md5s, Id, Id - 1),
