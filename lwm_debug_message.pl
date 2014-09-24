@@ -64,7 +64,7 @@ lwm_debug_message(Topic, ctriples_written(_,Triples,Duplicates)):-
 lwm_debug_message(Topic, lwm_end(Category1,Md5,Source,Status,_)):-
   % Category
   upcase_atom(Category1, Category2),
-  
+
   % Status
   (   Status == true
   ->  true
@@ -77,24 +77,24 @@ lwm_debug_message(Topic, lwm_end(Category1,Md5,Source,Status,_)):-
 
 
 % Start a process.
-lwm_debug_message(Topic, lwm_start(unpack, Datadoc, Source)):- !,
-  lwm_start_generic(Topic, unpack, Datadoc, Source, "").
+lwm_debug_message(Topic, lwm_start(unpack,Md5,Datadoc,Source)):- !,
+  lwm_start_generic(Topic, unpack, Md5, Datadoc, Source, "").
 
 lwm_debug_message(
   Topic,
-  lwm_start(Category, Datadoc, Source, NumberOfBytes)
+  lwm_start(Category,Md5,Datadoc,Source,NumberOfBytes)
 ):-
   NumberOfGigabytes is NumberOfBytes / (1024 ** 3),
   format(string(SizeString), ' (~f GB)', [NumberOfGigabytes]),
-  lwm_start_generic(Topic, Category, Datadoc, Source, SizeString).
+  lwm_start_generic(Topic, Category, Md5, Datadoc, Source, SizeString).
 
-lwm_start_generic(Topic, Category1, Datadoc, Source, SizeString):-
+lwm_start_generic(Topic, Category1, Md5, Datadoc, Source, SizeString):-
   % Category
   upcase_atom(Category1, Category2),
-  
+
   % File source: URL or archive
   datadoc_source(Datadoc, Source),
-  
+
   debug(Topic, '[START ~a] ~w ~w~s', [Category2,Md5,Source,SizeString]).
 
 

@@ -81,7 +81,7 @@ gtrace,
   ),
 
   % DEB: *start* of downloading+unpacking..
-  lwm_debug_message(lwm_progress(unpack), lwm_start(unpack,Datadoc,Source)),
+  lwm_debug_message(lwm_progress(unpack), lwm_start(unpack,Md5,Datadoc,Source)),
   
   % Downloading+unpacking of a specific data document.
   run_collect_messages(

@@ -19,8 +19,6 @@
                     % -Triples:list(compound)
     datadoc_file_extension/2, % +Datadoc:url
                               % -FileExtension:atom
-    datadoc_size/2, % +Datadoc:url
-                    % -Size:nonneg
     datadoc_source/2, % +Datadoc:url
                       % -Source:atom
     datadoc_unpacking/1, % -Datadoc:url

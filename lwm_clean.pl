@@ -74,7 +74,7 @@ gtrace,
   % DEB: *start* cleaning a specific data document.
   lwm_debug_message(
     lwm_progress(Category),
-    lwm_start(Category, Datadoc, Source, NumberOfGigabytes)
+    lwm_start(Category,Md5,Datadoc,Source,NumberOfGigabytes)
   ),
   
   run_collect_messages(
