@@ -1,7 +1,7 @@
 :- module(
   store_lod_error,
   [
-    store_lod_error/3 % +Md5:atom
+    store_lod_error/3 % +Datadoc:url
                       % +Kind:oneof([exception,warning])
                       % +ErrorTerm:compound
   ]
@@ -30,16 +30,16 @@ Stores error term denoting exceptions in a LOD format.
 
 
 % Archive error
-store_lod_error(Md5, Kind, error(archive_error(Code,_),_)):-
+store_lod_error(Datadoc, Kind, error(archive_error(Code,_),_)):-
   (   Code == 2
   ->  InstanceName = missingTypeKeywordInMtreeSpec
   ;   true
   ),
-  store_triple(ll-Md5, llo-Kind, error-InstanceName).
+  store_triple(Datadoc, llo-Kind, error-InstanceName).
 
 % Existence error: directory
 store_lod_error(
-  Md5,
+  Datadoc,
   Kind,
   error(existence_error(directory,Directory),context(_Pred,Message))
 ):-
@@ -48,14 +48,14 @@ store_lod_error(
   ;   fail
   ), !,
   rdf_bnode(BNode),
-  store_triple(ll-Md5, llo-Kind, BNode),
+  store_triple(Datadoc, llo-Kind, BNode),
   store_triple(BNode, rdf-type, error-ClassName),
   uri_file_name(Uri, Directory),
   store_triple(BNode, error-object, literal(type(xsd-anyURI,Uri))).
 
 % Existence error: file
 store_lod_error(
-  Md5,
+  Datadoc,
   Kind,
   error(existence_error(file,File),context(_Pred,Message))
 ):-
@@ -66,14 +66,14 @@ store_lod_error(
   ;   fail
   ), !,
   rdf_bnode(BNode),
-  store_triple(ll-Md5, llo-Kind, BNode),
+  store_triple(Datadoc, llo-Kind, BNode),
   store_triple(BNode, rdf-type, error-ClassName),
   uri_file_name(Uri, File),
   store_triple(BNode, error-object, literal(type(xsd-anyURI,Uri))).
 
 % Existence error: source sink?
 store_lod_error(
-  Md5,
+  Datadoc,
   Kind,
   error(existence_error(source_sink,Path),context(_Pred,Message))
 ):-
@@ -82,23 +82,23 @@ store_lod_error(
   ;   fail
   ), !,
   rdf_bnode(BNode),
-  store_triple(Md5, llo-Kind, BNode),
+  store_triple(Datadoc, llo-Kind, BNode),
   store_triple(BNode, rdf-type, error-ClassName),
   uri_file_name(Uri, Path),
   store_triple(BNode, error-object, literal(type(xsd-anyURI,Uri))).
 
 
 % HTTP status
-store_lod_error(Md5, Kind, error(http_status(Status),_)):- !,
+store_lod_error(Datadoc, Kind, error(http_status(Status),_)):- !,
   (   between(400, 599, Status)
-  ->  store_triple(ll-Md5, llo-Kind, httpo-Status)
+  ->  store_triple(Datadoc, llo-Kind, httpo-Status)
   ;   true
   ),
-  store_triple(ll-Md5, llo-httpStatus, httpo-Status).
+  store_triple(Datadoc, llo-httpStatus, httpo-Status).
 
 % IO error
 store_lod_error(
-  Md5,
+  Datadoc,
   Kind,
   error(io_error(read,_Stream),context(_Pred,Message))
 ):-
@@ -110,37 +110,37 @@ store_lod_error(
   ->  InstanceName = isADirectory
   ;   fail
   ),
-  store_triple(ll-Md5, llo-Kind, error-InstanceName).
+  store_triple(Datadoc, llo-Kind, error-InstanceName).
 
 % IO warning
-store_lod_error(Md5, Kind, io_warning(_Stream,Message)):-
+store_lod_error(Datadoc, Kind, io_warning(_Stream,Message)):-
   (   Message == 'Illegal UTF-8 continuation'
   ->  InstanceName = illegalUtf8Continuation
   ;   Message == 'Illegal UTF-8 start'
   ->  InstanceName = illegalUtf8Start
   ;   fail
   ),
-  store_triple(ll-Md5, llo-Kind, error-InstanceName).
+  store_triple(Datadoc, llo-Kind, error-InstanceName).
 
 % Malformed URL
-store_lod_error(Md5, Kind, error(domain_error(url,Url),_)):- !,
+store_lod_error(Datadoc, Kind, error(domain_error(url,Url),_)):- !,
   rdf_bnode(BNode),
   store_triple(BNode, rdf-type, error-'MalformedUrl'),
   store_triple(BNode, error-object, literal(type(xsd-anyURI,Url))),
-  store_triple(ll-Md5, llo-Kind, BNode).
+  store_triple(Datadoc, llo-Kind, BNode).
 
 % No RDF
-store_lod_error(Md5, _Kind, error(no_rdf(_File))):- !,
-  store_triple(ll-Md5, llo-serializationFormat, error-unrecognizedFormat).
+store_lod_error(Datadoc, _Kind, error(no_rdf(_File))):- !,
+  store_triple(Datadoc, llo-serializationFormat, error-unrecognizedFormat).
 
 % Permission error: redirect
 store_lod_error(
-  Md5,
+  Datadoc,
   Kind,
   error(permission_error(Action0,Type0,Object),context(_,Message))
 ):- !,
   rdf_bnode(BNode),
-  store_triple(ll-Md5, llo-Kind, BNode),
+  store_triple(Datadoc, llo-Kind, BNode),
   store_triple(BNode, rdf-type, error-'PermissionError'),
   store_triple(BNode, error-message, literal(type(xsd-string,Message))),
 
@@ -166,15 +166,15 @@ store_lod_error(
 store_lod_error(_, _, error(resource_error(_),_)).
 
 % SGML parser
-store_lod_error(Md5, Kind, sgml(sgml_parser(_Parser),_File,Line,Message)):- !,
+store_lod_error(Datadoc, Kind, sgml(sgml_parser(_Parser),_File,Line,Message)):- !,
   rdf_bnode(BNode),
-  store_triple(ll-Md5, llo-Kind, BNode),
+  store_triple(Datadoc, llo-Kind, BNode),
   store_triple(BNode, rdf-type, error-'SgmlParserError'),
   store_triple(BNode, error-sourceLine, literal(type(xsd-integer,Line))),
   store_triple(BNode, error-message, literal(type(xsd-string,Message))).
 
 % Socket error
-store_lod_error(Md5, Kind, error(socket_error(Message),_)):-
+store_lod_error(Datadoc, Kind, error(socket_error(Message),_)):-
   (   Message == 'Connection timed out'
   ->  InstanceName = connectionTimedOut
   ;   Message == 'Connection refused'
@@ -189,35 +189,35 @@ store_lod_error(Md5, Kind, error(socket_error(Message),_)):-
   ->  InstanceName = tryAgain
   ;   fail
   ), !,
-  store_triple(ll-Md5, llo-Kind, error-InstanceName).
+  store_triple(Datadoc, llo-Kind, error-InstanceName).
 
 % SSL error: SSL verify
-store_lod_error(Md5, Kind, error(ssl_error(ssl_verify),_)):- !,
-  store_triple(ll-Md5, llo-Kind, error-sslError).
+store_lod_error(Datadoc, Kind, error(ssl_error(ssl_verify),_)):- !,
+  store_triple(Datadoc, llo-Kind, error-sslError).
 
 % Syntax error
 store_lod_error(
-  Md5,
+  Datadoc,
   Kind,
   error(syntax_error(Message),stream(_Stream,Line,Column,Character))
 ):- !,
   rdf_bnode(BNode),
-  store_triple(ll-Md5, llo-Kind, BNode),
+  store_triple(Datadoc, llo-Kind, BNode),
   store_triple(BNode, rdf-type, error-'SyntaxError'),
   store_position(BNode, Line, Column, Character),
   store_triple(BNode, error-message, literal(type(xsd-string,Message))).
 
 % Timeout error: read
 store_lod_error(
-  Md5,
+  Datadoc,
   Kind,
   error(timeout_error(read,_Stream),context(_Pred,_))
 ):- !,
-  store_triple(ll-Md5, llo-Kind, error-readTimeoutError).
+  store_triple(Datadoc, llo-Kind, error-readTimeoutError).
 
 % Turtle: undefined prefix
 store_lod_error(
-  Md5,
+  Datadoc,
   Kind,
   error(
     existence_error(turtle_prefix,Prefix),
@@ -225,29 +225,30 @@ store_lod_error(
   )
 ):- !,
   rdf_bnode(BNode),
-  store_triple(ll-Md5, llo-Kind, BNode),
+  store_triple(Datadoc, llo-Kind, BNode),
   store_triple(BNode, rdf-type, error-'MissingTurtlePrefixDefintion'),
   store_triple(BNode, error-prefix, literal(type(xsd-string,Prefix))),
   store_position(BNode, Line, Column, CharacterNumber).
 
 % RDF/XML: multiple definitions
-store_lod_error(Md5, Kind, rdf(redefined_id(Uri))):- !,
+store_lod_error(Datadoc, Kind, rdf(redefined_id(Uri))):- !,
   rdf_bnode(BNode),
-  store_triple(ll-Md5, llo-Kind, BNode),
+  store_triple(Datadoc, llo-Kind, BNode),
   store_triple(BNode, rdf-type, error-'RedefinedRdfId'),
   store_triple(BNode, error-object, Uri).
 
 % RDF/XML: unparsable
-store_lod_error(Md5, Kind, rdf(unparsed(DOM))):- !,
+store_lod_error(Datadoc, Kind, rdf(unparsed(DOM))):- !,
   rdf_bnode(BNode),
-  store_triple(ll-Md5, llo-Kind, BNode),
+  store_triple(Datadoc, llo-Kind, BNode),
   store_triple(BNode, rdf-type, error-'RdfXmlParserError'),
   xml_dom_to_atom([], DOM, Atom1),
   atom_truncate(Atom1, 1000, Atom2),
   store_triple(BNode, error-dom, literal(type(xsd-string,Atom2))).
 
 % DEB
-store_lod_error(Md5, Kind, Error):-
+store_lod_error(Datadoc, Kind, Error):-
+  rdf_global_id(ll:Md5, Datadoc),
   format(atom(user_output), 'ERROR:\n  ~w\n  ~w\n  ~w\n', [Md5,Kind,Error]).
 
 
