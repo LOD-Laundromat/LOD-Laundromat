@@ -40,7 +40,6 @@ Unpacks files for the LOD Washing Machine to clean.
 
 
 lwm_unpack_loop:-
-gtrace,
   % Pick a new source to process.
   % If some exception is thrown here, the catch/3 makes it
   % silently fail. This way, the unpacking thread is able
@@ -57,14 +56,16 @@ gtrace,
       % multiple simultaneous requests.
       (   nonvar(DirtyUrl)
       ->  uri_component(DirtyUrl, authority, Authority),
-lwm:current_authority(Authority), %DEB
-gtrace, %DEB
-          \+ lwm:current_authority(Authority),
+          (   lwm:current_authority(Authority)
+          ->  gtrace,
+              fail
+          ;   true
+          ),
           % Set a lock on this authority for other unpacking threads.
           assertz(lwm:current_authority(Authority))
       ;   true
       ), !,
-      
+
       % Update the database, saying we are ready
       % to begin downloading+unpacking this data document.
       store_start_unpack(Datadoc)
