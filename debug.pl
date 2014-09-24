@@ -11,8 +11,6 @@
 
 :- use_module(library(ansi_term)).
 
-%%%%:- set_prolog_flag(verbose, silent).
-
 :- set_prolog_flag(
      answer_write_options,
      [max_depth(10),portrayed(true),spacing(next_argument)]
@@ -54,7 +52,6 @@
 :- dynamic(debug:debug_md5/2).
 :- multifile(debug:debug_md5/2).
 
-debug:debug_md5('22b519cadb37c5e56034a826b742e727', unpack).
 %debug:debug_md5('000395afb9a9c7923171213733bf4a06', _).
 %debug:debug_md5('7e0d80c3fb3a10c96ea998373027ecbf', _).
 %debug:debug_md5('7fcd76754bb711160d4f661ca4bb5d65', _).

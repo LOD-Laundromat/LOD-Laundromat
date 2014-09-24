@@ -180,8 +180,13 @@ clean_datastream(
   % Load all triples by parsing the data document
   % according to the guessed RDF serialization format.
   md5_base_url(Md5, Base),
-  Options1 =
-      [base_uri(Base),format(Format),graph(user),register_namespaces(false)],
+  Options1 = [
+      base_uri(Base),
+      format(Format),
+      graph(user),
+      register_namespaces(false),
+      silent(true)
+  ],
 
   % Add options that are specific to the RDFa serialization format.
   (   Format == rdfa
