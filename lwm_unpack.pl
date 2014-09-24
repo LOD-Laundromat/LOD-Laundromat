@@ -63,15 +63,15 @@ gtrace, %DEB
           % Set a lock on this authority for other unpacking threads.
           assertz(lwm:current_authority(Authority))
       ;   true
-      ),
-
+      ), !,
+      
       % Update the database, saying we are ready
       % to begin downloading+unpacking this data document.
       store_start_unpack(Datadoc)
     )),
     Exception,
     var(Exception)
-  ), !,
+  ),
 
   % We sometimes need the MD5 atom.
   rdf_global_id(ll:Md5, Datadoc),

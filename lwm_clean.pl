@@ -54,7 +54,7 @@ lwm_clean_loop(Category, Goal):-
       (   nonvar(Goal)
       ->  call(Goal, NumberOfGigabytes)
       ;   true
-      ),
+      ), !,
 
       % Tell the triple store we are now going to clean this MD5.
       rdf_global_id(ll:Md5, Datadoc),
@@ -62,7 +62,7 @@ lwm_clean_loop(Category, Goal):-
     )),
     Exception,
     var(Exception)
-  ), !,
+  ),
 
   % DEB
   (   debug:debug_md5(Md5, clean)
