@@ -142,7 +142,7 @@ store_lod_error(
   rdf_bnode(BNode),
   store_triple(ll-Md5, llo-Kind, BNode),
   store_triple(BNode, rdf-type, error-'PermissionError'),
-  store_triple(BNode, error-message, Message),
+  store_triple(BNode, error-message, literal(type(xsd-string,Message))),
 
   % Action
   (   Action0 == redirect
