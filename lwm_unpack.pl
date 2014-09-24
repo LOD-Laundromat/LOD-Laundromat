@@ -40,7 +40,6 @@ Unpacks files for the LOD Washing Machine to clean.
 
 
 lwm_unpack_loop:-
-gtrace,
   % Pick a new source to process.
   % If some exception is thrown here, the catch/3 makes it
   % silently fail. This way, the unpacking thread is able
