@@ -93,7 +93,7 @@ datadoc_archive_entry(Datadoc, ParentMd5, EntryPath):-
     [Row],
     [limit(1)]
   ),
-  maplist(rdf_literal, Row, [ParentMd5,EntryPath]).
+  maplist(rdf_literal_value2, Row, [ParentMd5,EntryPath]).
 
 
 %! datadoc_cleaning(-Datadoc:url) is nondet.
@@ -149,7 +149,7 @@ datadoc_file_extension(Datadoc, FileExtension):-
     [llo],
     [fileExtension],
     [rdf(Datadoc, llo:fileExtension, var(fileExtension))],
-    [FileExtensionLiteral],
+    [[FileExtensionLiteral]],
     [limit(1)]
   ),
   rdf_literal_value2(FileExtensionLiteral, [FileExtension]).
