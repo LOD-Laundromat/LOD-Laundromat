@@ -43,7 +43,7 @@ SPARQL queries for the LOD Washing Machine.
 
 :- use_module(generics(meta_ext)).
 
-:- use_module(plRdf_term(rdf_literal)).
+:- use_module(plRdf_term(rdf_datatype)).
 
 :- use_module(plSparql_query(sparql_query_api)).
 
@@ -125,7 +125,7 @@ datadoc_content_type(Datadoc, ContentType):-
     [ContentTypeLiteral],
     [limit(1)]
   ),
-  rdf_literal(ContentTypeLiteral, ContentType).
+  rdf_literal_value(ContentTypeLiteral, ContentType).
 datadoc_content_type(_, _VAR).
 
 
@@ -152,7 +152,7 @@ datadoc_file_extension(Datadoc, FileExtension):-
     [FileExtensionLiteral],
     [limit(1)]
   ),
-  rdf_literal(FileExtensionLiteral, [FileExtension]).
+  rdf_literal_value(FileExtensionLiteral, [FileExtension]).
 
 
 %! datadoc_source(+Datadoc:url, -Source:atom) is det.
@@ -182,7 +182,7 @@ datadoc_source(Datadoc, Source):-
     [[Parent,PathLiteral]],
     [limit(1)]
   ),
-  rdf_literal(PathLiteral, Path),
+  rdf_literal_value(PathLiteral, Path),
   datadoc_source(Parent, ParentSource),
   atomic_concat(ParentSource, Path, Source).
 
@@ -242,7 +242,7 @@ get_one_unpacked_datadoc(Datadoc, Size):-
     [[Datadoc,SizeLiteral]],
     [limit(1)]
   ),
-  rdf_literal(SizeLiteral, Size).
+  rdf_literal_value(SizeLiteral, Size).
 
 
 
