@@ -122,7 +122,7 @@ datadoc_content_type(Datadoc, ContentType):-
     [llo],
     [contentType],
     [rdf(Datadoc, llo:contentType, var(contentType))],
-    [ContentTypeLiteral],
+    [[ContentTypeLiteral]],
     [limit(1)]
   ),
   rdf_literal_value2(ContentTypeLiteral, ContentType).
