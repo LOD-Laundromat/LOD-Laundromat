@@ -54,10 +54,10 @@ init:-
   
   clean_lwm_state,
   process_command_line_arguments,
-  NumberOfUnpackThreads = 10,
-  NumberOfSmallCleanThreads = 1,
-  NumberOfMediumCleanThreads = 0,
-  NumberOfLargeCleanThreads = 0,
+  NumberOfUnpackThreads = 20,
+  NumberOfSmallCleanThreads = 10,
+  NumberOfMediumCleanThreads = 3,
+  NumberOfLargeCleanThreads = 1,
   
   % Start the downloading+unpacking threads.
   forall(
@@ -146,7 +146,7 @@ start_large_thread(Id):-
 
 start_medium_thread(Id):-
   format(atom(Alias), 'clean_medium_~d', [Id]),
-  GlobalStack is 25 * (1024 * 6), % 25 GB
+  GlobalStack is 25 * (1024 ** 3), % 25 GB
   Min is 0.5 * (1024 ** 3), % 0.5 GB
   Max is 2.5 * (1024 ** 3), % 2.5 GB
   thread_create(

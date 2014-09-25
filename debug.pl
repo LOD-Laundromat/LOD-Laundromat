@@ -53,7 +53,7 @@
 :- dynamic(debug:debug_md5/2).
 :- multifile(debug:debug_md5/2).
 
-debug:debug_md5('3e380c1a60d23f82271346f8c132633b', clean).
+%debug:debug_md5('3e380c1a60d23f82271346f8c132633b', clean).
 
 
 
