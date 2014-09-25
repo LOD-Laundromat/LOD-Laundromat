@@ -21,8 +21,6 @@ and at the same time send small RDF messages using SPARQL Update requests.
 
 :- use_module(library(semweb/rdf_db)).
 
-:- use_module(plRdf_ser(rdf_bnode_write)).
-
 :- use_module(plSparql_http(sparql_graph_store)).
 
 :- use_module(lwm(lwm_settings)).
@@ -53,34 +51,33 @@ post_rdf_triples:-
   % Named graph argument.
   lwm_version_graph(NG),
 
-  setup_call_cleanup(
-    % Collect contents.
-    aggregate_all(
-      set(rdf(S,P,O)),
-      rdf_triple(S, P, O),
-      Triples
-    ),
-    % Use HTTP Graph Store on Virtuoso.
-    (
-      with_mutex(lod_washing_machine, (
-        sparql_post_named_graph(
-          virtuoso_http,
-          NG,
-          Triples,
-          [status_code(Code)]
-        )
-      )),
-      % DEB
-      (   between(200, 299, Code)
-      ->  true
-      ;   writeln(Code),
-          maplist(writeln, Triples),
-          gtrace,
-          post_rdf_triples
-      )
-    ),
-    retractall(rdf_triple(_,_,_))
-  ).
+  % Collect contents.
+  aggregate_all(
+    set(rdf(S,P,O)),
+    rdf_triple(S, P, O),
+    Triples
+  ),
+
+  % Use HTTP Graph Store on Virtuoso.
+  with_mutex(lod_washing_machine, (
+    sparql_post_named_graph(
+      virtuoso_http,
+      NG,
+      Triples,
+      [status_code(Code)]
+    )
+  )),
+  % DEB
+  (   between(200, 299, Code)
+  ->  true
+  ;   writeln(Code),
+      maplist(writeln, Triples),
+      gtrace,
+      post_rdf_triples
+  ),
+
+  % Cleanup.
+  retractall(rdf_triple(_,_,_)).
 
 
 %! store_triple(+Subject, +Predicate, +Object) is det.

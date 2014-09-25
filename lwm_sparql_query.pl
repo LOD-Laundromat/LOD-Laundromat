@@ -222,7 +222,7 @@ datadoc_unpacked(Datadoc, Size):-
       rdf(var(datadoc), llo:size, var(size))
     ],
     [[Datadoc,SizeLiteral]],
-    [limit(1)]
+    [iteratively(true)]
   ),
   rdf_literal_value2(SizeLiteral, Size).
 
