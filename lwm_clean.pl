@@ -55,10 +55,10 @@ lwm_clean_loop(Category, Min, Max):-
     Exception,
     var(Exception)
   ),
-  
+
   % We sometimes need the MD5 of the data document.
   rdf_global_id(ll:Md5, Datadoc),
-  
+
   % DEB
   (   debug:debug_md5(Md5, clean)
   ->  gtrace

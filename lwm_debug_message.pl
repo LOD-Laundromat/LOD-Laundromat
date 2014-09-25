@@ -35,7 +35,7 @@ lwm_debug_message(Topic):-
 % `Topic` is a debug topic, specified in `library(debug)`.
 
 % Idle loop.
-lwm_debug_message(Topic, lwm_idle_loop(Category)):-
+lwm_debug_message(Topic, lwm_idle_loop(Category)):- !,
   % Every category has its own idle loop flag.
   atomic_list_concat([number_of_idle_loops,Category], '_', Flag),
   flag(Flag, X, X + 1),
@@ -62,7 +62,7 @@ lwm_debug_message(Topic, ctriples_written(_,Triples,Duplicates)):-
 
 
 % End a process.
-lwm_debug_message(Topic, lwm_end(Category1,Md5,Source,Status,_)):-
+lwm_debug_message(Topic, lwm_end(Category1,Md5,Source,Status,_)):- !,
   % Category
   upcase_atom(Category1, Category2),
 
@@ -81,7 +81,7 @@ lwm_debug_message(Topic, lwm_end(Category1,Md5,Source,Status,_)):-
 lwm_debug_message(Topic, lwm_start(unpack,Md5,Datadoc,Source)):- !,
   lwm_start_generic(Topic, unpack, Md5, Datadoc, Source, "").
 
-lwm_debug_message(Topic, lwm_start(Category,Md5,Datadoc,Source,Size)):-
+lwm_debug_message(Topic, lwm_start(Category,Md5,Datadoc,Source,Size)):- !,
   % `Size` is the number of bytes.
   NumberOfGigabytes is Size / (1024 ** 3),
   format(string(SizeString), ' (~f GB)', [NumberOfGigabytes]),

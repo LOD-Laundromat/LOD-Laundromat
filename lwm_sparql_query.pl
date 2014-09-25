@@ -154,7 +154,7 @@ datadoc_file_extension(Datadoc, FileExtension):-
     [[FileExtensionLiteral]],
     [limit(1)]
   ),
-  rdf_literal_value2(FileExtensionLiteral, [FileExtension]).
+  rdf_literal_value2(FileExtensionLiteral, FileExtension).
 
 
 %! datadoc_pending(-Datadoc:url, -Dirty:url) is nondet.
@@ -218,7 +218,6 @@ datadoc_source(Datadoc, Source):-
 % Size is expressed as the number of bytes.
 
 datadoc_unpacked(Min, Max, Datadoc, Size):-
-gtrace,
   Query1 = [
     rdf(var(datadoc), llo:endUnpack, var(endUnpack)),
     not([
@@ -226,7 +225,7 @@ gtrace,
     ]),
     rdf(var(datadoc), llo:size, var(size))
   ],
-  
+
   % Insert the range restriction on size as a filter.
   (   nonvar(Min)
   ->  MinFilter = >(var(size),Min)
@@ -241,7 +240,7 @@ gtrace,
   ->  append(Query1, [filter(FilterContent)], Query2)
   ;   Query2 = Query1
   ),
-  
+
   lwm_sparql_select(
     [llo],
     [datadoc,size],
