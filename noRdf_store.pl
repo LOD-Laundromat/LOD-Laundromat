@@ -70,7 +70,6 @@ post_rdf_triples:-
           [status_code(Code)]
         )
       )),
-
       % DEB
       (   between(200, 299, Code)
       ->  true
