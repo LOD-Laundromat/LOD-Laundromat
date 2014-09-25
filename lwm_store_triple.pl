@@ -237,7 +237,8 @@ store_new_urls(Urls):-
   post_rdf_triples.
 
 store_new_url(Url):-
-  rdf_atom_md5(Url, 1, Datadoc),
+  rdf_atom_md5(Url, 1, Md5),
+  rdf_global_id(ll:Md5, Datadoc),
   store_triple(Datadoc, rdf-type, llo-'URL'),
   store_triple(Datadoc, llo-url, Url),
   get_dateTime(Added),
