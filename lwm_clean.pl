@@ -1,8 +1,9 @@
 :- module(
   lwm_clean,
   [
-    lwm_clean_loop/2 % +Category:atom
-                     % :Goal
+    lwm_clean_loop/3 % +Category:atom
+                     % ?Min:nonneg
+                     % ?Max:nonneg
   ]
 ).
 
@@ -32,29 +33,21 @@ The cleaning process performed by the LOD Washing Machine.
 :- use_module(lwm(md5)).
 :- use_module(lwm(noRdf_store)).
 
-:- meta_predicate(lwm_clean_loop(+,1)).
-
 :- dynamic(debug:debug_md5/2).
 :- multifile(debug:debug_md5/2).
 
 
 
-lwm_clean_loop(Category, Goal):-
+lwm_clean_loop(Category, Min, Max):-
   % Pick a new source to process.
   % If some exception is thrown here, the catch/3 makes it
   % silently fail. This way, the unpacking thread is able
   % to wait in case a SPARQL endpoint is temporarily down.
   catch(
     with_mutex(lod_washing_machine, (
-      datadoc_unpacked(Datadoc, NumberOfBytes),
-      NumberOfGigabytes is NumberOfBytes / (1024 ** 3),
-
-      % Do not process dirty data documents for which the given goal
-      % does not succeed when applied to the dirty document's size.
-      (   nonvar(Goal)
-      ->  call(Goal, NumberOfGigabytes)
-      ;   true
-      ), !,
+      % Do not process dirty data documents that do not conform
+      % to the given minimum and/or maximum file size constraints.
+      datadoc_unpacked(Min, Max, Datadoc, Size),
 
       % Tell the triple store we are now going to clean this MD5.
       rdf_global_id(ll:Md5, Datadoc),
@@ -73,7 +66,7 @@ lwm_clean_loop(Category, Goal):-
   % DEB: *start* cleaning a specific data document.
   lwm_debug_message(
     lwm_progress(Category),
-    lwm_start(Category,Md5,Datadoc,Source,NumberOfGigabytes)
+    lwm_start(Category,Md5,Datadoc,Source,Size)
   ),
 
   run_collect_messages(
@@ -98,15 +91,15 @@ lwm_clean_loop(Category, Goal):-
   %%%%flag(number_of_pending_md5s, Id, Id - 1),
 
   % Intermittent loop.
-  lwm_clean_loop(Category, Goal).
+  lwm_clean_loop(Category, Min, Max).
 % Done for now. Check whether there are new jobs in one seconds.
-lwm_clean_loop(Category, Goal):-
+lwm_clean_loop(Category, Min, Max):-
   sleep(30),
 
   % DEB
   lwm_debug_message(lwm_idle_loop(Category)),
 
-  lwm_clean_loop(Category, Goal).
+  lwm_clean_loop(Category, Min, Max).
 
 
 %! clean_md5(+Category:atom, +Md5:atom, +Datadoc:url) is det.

@@ -23,7 +23,9 @@
                        % -Dirty:url
     datadoc_source/2, % +Datadoc:url
                       % -Source:atom
-    datadoc_unpacked/2, % -Datadoc:url
+    datadoc_unpacked/4, % ?Min:nonneg
+                        % ?Max:nonneg
+                        % -Datadoc:url
                         % -Size:nonneg
     datadoc_unpacking/1 % -Datadoc:url
   ]
@@ -207,24 +209,50 @@ datadoc_source(Datadoc, Source):-
   atomic_concat(ParentSource, Path, Source).
 
 
-%! datadoc_unpacked(-Datadoc:url, -Size:nonneg) is semidet.
+%! datadoc_unpacked(
+%!   ?Min:nonneg,
+%!   ?Max:nonneg,
+%!   -Datadoc:url,
+%!   -Size:nonneg
+%! ) is semidet.
 % Size is expressed as the number of bytes.
 
-datadoc_unpacked(Datadoc, Size):-
+datadoc_unpacked(Min, Max, Datadoc, Size):-
+gtrace,
+  Query1 = [
+    rdf(var(datadoc), llo:endUnpack, var(endUnpack)),
+    not([
+      rdf(var(datadoc), llo:startClean, var(startClean))
+    ]),
+    rdf(var(datadoc), llo:size, var(size))
+  ],
+  
+  % Insert the range restriction on size as a filter.
+  (   nonvar(Min)
+  ->  MinFilter = >(var(size),Min)
+  ;   true
+  ),
+  (   nonvar(Max)
+  ->  MaxFilter = <(var(size),Max)
+  ;   true
+  ),
+  exclude(var, [MinFilter,MaxFilter], FilterComponents),
+  (   conjunctive_filter(FilterComponents, FilterContent)
+  ->  append(Query1, [filter(FilterContent)], Query2)
+  ;   Query2 = Query1
+  ),
+  
   lwm_sparql_select(
     [llo],
     [datadoc,size],
-    [
-      rdf(var(datadoc), llo:endUnpack, var(endUnpack)),
-      not([
-        rdf(var(datadoc), llo:startClean, var(startClean))
-      ]),
-      rdf(var(datadoc), llo:size, var(size))
-    ],
+    Query2,
     [[Datadoc,SizeLiteral]],
-    [iteratively(true)]
+    [limit(1)]
   ),
   rdf_literal_value2(SizeLiteral, Size).
+conjunctive_filter([H], H):- !.
+conjunctive_filter([H|T1], and(H,T2)):-
+  conjunctive_filter(T1, T2).
 
 
 %! datadoc_unpacking(-Datadoc:url) is nondet.
