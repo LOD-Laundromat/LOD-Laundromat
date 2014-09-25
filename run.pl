@@ -134,9 +134,11 @@ process_command_line_arguments:-
 
 start_large_thread(Id):-
   format(atom(Alias), 'clean_large_~d', [Id]),
-  GlobalStack is 125*10**6,
+  GlobalStack is 125 * (1024 ** 3), % 125 GB
+  Min is 2.5 * (1024 ** 3), % 2.5 GB
+  Max is 30 * (1024 ** 3), % 30 GB
   thread_create(
-    lwm_clean_loop(clean_large, float_between(2.5,30)),
+    lwm_clean_loop(clean_large, Min, Max),
     _,
     [alias(Alias),detached(true),global(GlobalStack)]
   ).
@@ -144,9 +146,11 @@ start_large_thread(Id):-
 
 start_medium_thread(Id):-
   format(atom(Alias), 'clean_medium_~d', [Id]),
-  GlobalStack is 25*10**6,
+  GlobalStack is 25 * (1024 * 6), % 25 GB
+  Min is 0.5 * (1024 ** 3), % 0.5 GB
+  Max is 2.5 * (1024 ** 3), % 2.5 GB
   thread_create(
-    lwm_clean_loop(clean_medium, float_between(0.5,2.5)),
+    lwm_clean_loop(clean_medium, Min, Max),
     _,
     [alias(Alias),detached(true),global(GlobalStack)]
   ).
@@ -154,9 +158,10 @@ start_medium_thread(Id):-
 
 start_small_thread(Id):-
   format(atom(Alias), 'clean_small_~d', [Id]),
-  GlobalStack is 5*10**6,
+  GlobalStack is 5 * (1024 ** 3), % 5GB
+  Max is 0.5 * (1024 ** 3), % 0.5 GB
   thread_create(
-    lwm_clean_loop(clean_small, float_between(_,0.5)),
+    lwm_clean_loop(clean_small, _, Max),
     _,
     [alias(Alias),detached(true),global(GlobalStack)]
   ).

@@ -81,11 +81,9 @@ lwm_debug_message(Topic, lwm_end(Category1,Md5,Source,Status,_)):-
 lwm_debug_message(Topic, lwm_start(unpack,Md5,Datadoc,Source)):- !,
   lwm_start_generic(Topic, unpack, Md5, Datadoc, Source, "").
 
-lwm_debug_message(
-  Topic,
-  lwm_start(Category,Md5,Datadoc,Source,NumberOfBytes)
-):-
-  NumberOfGigabytes is NumberOfBytes / (1024 ** 3),
+lwm_debug_message(Topic, lwm_start(Category,Md5,Datadoc,Source,Size)):-
+  % `Size` is the number of bytes.
+  NumberOfGigabytes is Size / (1024 ** 3),
   format(string(SizeString), ' (~f GB)', [NumberOfGigabytes]),
   lwm_start_generic(Topic, Category, Md5, Datadoc, Source, SizeString).
 
