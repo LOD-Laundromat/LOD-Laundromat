@@ -146,7 +146,7 @@ start_large_thread(Id):-
 
 start_medium_thread(Id):-
   format(atom(Alias), 'clean_medium_~d', [Id]),
-  GlobalStack is 25 * (1024 ** 3), % 25 GB
+  GlobalStack is 30 * (1024 ** 3), % 30 GB
   Min is 0.5 * (1024 ** 3), % 0.5 GB
   Max is 2.5 * (1024 ** 3), % 2.5 GB
   thread_create(

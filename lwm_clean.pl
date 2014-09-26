@@ -142,14 +142,14 @@ clean_md5(Category, Md5, Datadoc):-
   % Keep the old/dirty file around in compressed form,
   % or throw it away.
   %%%%archive_create(DirtyFile, _),
-  delete_file(DirtyFile).
+  delete_file(DirtyFile),
 
   % Add the new VoID URLs to the LOD Basket.
-  %%%%thread_create(
-  %%%%  maplist(store_new_url(Datadoc), VoidUrls),
-  %%%%  _,
-  %%%%  [alias(Md5),detached(true)]
-  %%%%).
+  thread_create(
+    maplist(store_new_url(Datadoc), VoidUrls),
+    _,
+    [alias(Md5),detached(true)]
+  ).
 
 
 %! clean_datastream(
