@@ -19,9 +19,6 @@ for storing the metadata. See module [lwm_settings] for this.
 :- use_module(library(optparse)).
 :- use_module(library(semweb/rdf_db)).
 
-:- use_module(math(float_ext)).
-:- use_module(os(dir_ext)).
-
 :- use_module(plServer(app_server)).
 :- use_module(plServer(plServer)).
 :- use_module(plServer(web_modules)). % Web module registration.
@@ -55,7 +52,7 @@ init:-
   clean_lwm_state,
   process_command_line_arguments,
   NumberOfUnpackThreads = 10,
-  NumberOfSmallCleanThreads = 8,
+  NumberOfSmallCleanThreads = 10,
   NumberOfMediumCleanThreads = 1,
   NumberOfLargeCleanThreads = 1,
 
@@ -89,7 +86,7 @@ clean_lwm_state:-
 
   %%%%flag(number_of_pending_md5s, _, 0),
   flag(store_new_url, _, 0),
-  
+
   % Each file is loaded in an RDF serialization + snapshot.
   % These inherit the triples that are not in an RDF serialization.
   % We therefore have to clear all such triples before we begin.
