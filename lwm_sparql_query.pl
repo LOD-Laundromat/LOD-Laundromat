@@ -241,33 +241,11 @@ datadoc_source(Datadoc, Source):-
 % Size is expressed as the number of bytes.
 
 datadoc_unpacked(Min, Max, Datadoc, Size):-
-  Query1 = [
-    rdf(var(datadoc), llo:endUnpack, var(endUnpack)),
-    not([
-      rdf(var(datadoc), llo:startClean, var(startClean))
-    ]),
-    rdf(var(datadoc), llo:size, var(size))
-  ],
-
-  % Insert the range restriction on size as a filter.
-  (   nonvar(Min)
-  ->  MinFilter = >(var(size),Min)
-  ;   true
-  ),
-  (   nonvar(Max)
-  ->  MaxFilter = <(var(size),Max)
-  ;   true
-  ),
-  exclude(var, [MinFilter,MaxFilter], FilterComponents),
-  (   conjunctive_filter(FilterComponents, FilterContent)
-  ->  append(Query1, [filter(FilterContent)], Query2)
-  ;   Query2 = Query1
-  ),
-
+  build_unpacked_query(Min, Max, Query),
   lwm_sparql_select(
     [llo],
     [datadoc,size],
-    Query2,
+    Query,
     [[Datadoc,SizeLiteral]],
     [limit(1)]
   ),
@@ -297,6 +275,33 @@ datadoc_unpacking(Datadoc):-
 
 
 % Helpers.
+
+%! build_unpacked_query(?Min:nonneg, ?Max:nonneg, -Query:atom) is det.
+
+build_unpacked_query(Min, Max, Query2):-
+  Query1 = [
+    rdf(var(datadoc), llo:endUnpack, var(endUnpack)),
+    not([
+      rdf(var(datadoc), llo:startClean, var(startClean))
+    ]),
+    rdf(var(datadoc), llo:size, var(size))
+  ],
+
+  % Insert the range restriction on size as a filter.
+  (   nonvar(Min)
+  ->  MinFilter = >(var(size),Min)
+  ;   true
+  ),
+  (   nonvar(Max)
+  ->  MaxFilter = <(var(size),Max)
+  ;   true
+  ),
+  exclude(var, [MinFilter,MaxFilter], FilterComponents),
+  (   conjunctive_filter(FilterComponents, FilterContent)
+  ->  append(Query1, [filter(FilterContent)], Query2)
+  ;   Query2 = Query1
+  ).
+
 
 pair_to_triple(S, [P,O], rdf(S,P,O)).
 
