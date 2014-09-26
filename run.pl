@@ -87,9 +87,9 @@ clean_lwm_state:-
   % Reset the hosts from which data documents are currently being downloaded.
   retractall(current_host(_)),
 
-  %%%%% Reset the count of pending MD5s.
   %%%%flag(number_of_pending_md5s, _, 0),
-
+  flag(store_new_url, _, 0),
+  
   % Each file is loaded in an RDF serialization + snapshot.
   % These inherit the triples that are not in an RDF serialization.
   % We therefore have to clear all such triples before we begin.
