@@ -51,20 +51,20 @@ lwm_progress(Request):-
 
 init:-
   start_app_server([workers(2)]),
-  
+
   clean_lwm_state,
   process_command_line_arguments,
   NumberOfUnpackThreads = 10,
   NumberOfSmallCleanThreads = 8,
   NumberOfMediumCleanThreads = 1,
   NumberOfLargeCleanThreads = 1,
-  
+
   % Start the downloading+unpacking threads.
   forall(
     between(1, NumberOfUnpackThreads, UnpackId),
     start_unpack_thread(UnpackId)
   ),
-  
+
   % Start the cleaning threads:
   %   1. Clean small files.
   forall(

@@ -38,8 +38,8 @@ Generic predicates for the LOD Washing Machine.
 :- dynamic(sparql_endpoint_option0/3).
 :- multifile(sparql_endpoint_option0/3).
 
-lwm:lwm_server(cliopatria).
-%%%%lwm:lwm_server(virtuoso).
+%%%%lwm:lwm_server(cliopatria).
+lwm:lwm_server(virtuoso).
 
 :- initialization(init_lwm_sparql_endpoints).
 
@@ -123,7 +123,7 @@ init_lwm_sparql_endpoints:-
   assert(lwm_sparql_endpoint(cliopatria_localhost)),
   sparql_register_endpoint(
     cliopatria_localhost,
-    ['http://localhost:3030'],
+    ['http://localhost:3020'],
     cliopatria
   ),
   register_service(cliopatria_localhost, lwm, lwmlwm),
