@@ -54,9 +54,9 @@ init:-
   
   clean_lwm_state,
   process_command_line_arguments,
-  NumberOfUnpackThreads = 20,
-  NumberOfSmallCleanThreads = 10,
-  NumberOfMediumCleanThreads = 3,
+  NumberOfUnpackThreads = 10,
+  NumberOfSmallCleanThreads = 8,
+  NumberOfMediumCleanThreads = 1,
   NumberOfLargeCleanThreads = 1,
   
   % Start the downloading+unpacking threads.
