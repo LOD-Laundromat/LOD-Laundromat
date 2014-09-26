@@ -25,8 +25,9 @@ Stores error term denoting exceptions in a LOD format.
 
 :- rdf_register_prefix(error, 'http://lodlaundromat.org/error/ontology/').
 :- rdf_register_prefix(httpo, 'http://lodlaundromat.org/http/ontology/').
-:- rdf_register_prefix(ll,    'http://lodlaundromat.org/resource/').
-:- rdf_register_prefix(llo,   'http://lodlaundromat.org/ontology/').
+:- rdf_register_prefix(ll, 'http://lodlaundromat.org/resource/').
+:- rdf_register_prefix(llo, 'http://lodlaundromat.org/ontology/').
+
 
 
 % Archive error
@@ -137,12 +138,13 @@ store_lod_error(Datadoc, _Kind, error(no_rdf(_File))):- !,
 store_lod_error(
   Datadoc,
   Kind,
-  error(permission_error(Action0,Type0,Object),context(_,Message))
+  error(permission_error(Action0,Type0,Object),context(_,Message1))
 ):- !,
   rdf_bnode(BNode),
   store_triple(Datadoc, llo-Kind, BNode),
   store_triple(BNode, rdf-type, error-'PermissionError'),
-  store_triple(BNode, error-message, literal(type(xsd-string,Message))),
+  atom_truncate(Message1, 1000, Message2),
+  store_triple(BNode, error-message, literal(type(xsd-string,Message2))),
 
   % Action
   (   Action0 == redirect
@@ -166,12 +168,17 @@ store_lod_error(
 store_lod_error(_, _, error(resource_error(_),_)).
 
 % SGML parser
-store_lod_error(Datadoc, Kind, sgml(sgml_parser(_Parser),_File,Line,Message)):- !,
+store_lod_error(
+  Datadoc,
+  Kind,
+  sgml(sgml_parser(_Parser),_File,Line,Message1)
+):- !,
   rdf_bnode(BNode),
   store_triple(Datadoc, llo-Kind, BNode),
   store_triple(BNode, rdf-type, error-'SgmlParserError'),
   store_triple(BNode, error-sourceLine, literal(type(xsd-integer,Line))),
-  store_triple(BNode, error-message, literal(type(xsd-string,Message))).
+  atom_truncate(Message1, 1000, Message2),
+  store_triple(BNode, error-message, literal(type(xsd-string,Message2))).
 
 % Socket error
 store_lod_error(Datadoc, Kind, error(socket_error(Message),_)):-
@@ -199,13 +206,14 @@ store_lod_error(Datadoc, Kind, error(ssl_error(ssl_verify),_)):- !,
 store_lod_error(
   Datadoc,
   Kind,
-  error(syntax_error(Message),stream(_Stream,Line,Column,Character))
+  error(syntax_error(Message1),stream(_Stream,Line,Column,Character))
 ):- !,
   rdf_bnode(BNode),
   store_triple(Datadoc, llo-Kind, BNode),
   store_triple(BNode, rdf-type, error-'SyntaxError'),
   store_position(BNode, Line, Column, Character),
-  store_triple(BNode, error-message, literal(type(xsd-string,Message))).
+  atom_truncate(Message1, 1000, Message2),
+  store_triple(BNode, error-message, literal(type(xsd-string,Message2))).
 
 % Timeout error: read
 store_lod_error(
