@@ -142,14 +142,14 @@ clean_md5(Category, Md5, Datadoc):-
   % Keep the old/dirty file around in compressed form,
   % or throw it away.
   %%%%archive_create(DirtyFile, _),
-  delete_file(DirtyFile),
+  delete_file(DirtyFile).
 
   % Add the new VoID URLs to the LOD Basket.
-  thread_create(
-    maplist(store_new_url(Datadoc), VoidUrls),
-    _,
-    [alias(Md5),detached(true)]
-  ).
+  %%%%thread_create(
+  %%%%  maplist(store_new_url(Datadoc), VoidUrls),
+  %%%%  _,
+  %%%%  [alias(Md5),detached(true)]
+  %%%%).
 
 
 %! clean_datastream(
@@ -283,14 +283,13 @@ save_data_to_file(Md5, File, NumberOfTriples):-
 store_new_url(Datadoc, Url):-
   catch(
     (
-      flag(store_new_url, X, X + 1),
       uri_query_components(Query, [from(Datadoc),lazy(1),url(Url)]),
       uri_components(
         BackendLocation,
         uri_components(http, 'backend.lodlaundromat.org', '/', Query, _)
       ),
       http_get(BackendLocation, Reply, [status_code(Code)]),
-    
+
       % DEB
       (   between(200, 299, Code)
       ->  true
@@ -303,7 +302,7 @@ store_new_url(Datadoc, Url):-
     ),
     Exception,
     (   var(Exception)
-    ->  true
+    ->  flag(store_new_url, X, X + 1)
     ;   debug(store_new_url, '[STORE_NEW_URL EXCEPTION] ~w', [Exception])
     )
   ), !.
