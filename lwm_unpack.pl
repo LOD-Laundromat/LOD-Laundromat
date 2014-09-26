@@ -75,7 +75,7 @@ lwm_unpack_loop:-
 
   % DEB
   (   debug:debug_md5(Md5, unpack)
-  ->  gtrace
+  ->  gtrace %DEB
   ;   true
   ),
 

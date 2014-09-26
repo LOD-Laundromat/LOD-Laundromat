@@ -64,7 +64,7 @@ lwm_clean_loop(Category, Min, Max):-
 
   % DEB
   (   debug:debug_md5(Md5, clean)
-  ->  gtrace
+  ->  gtrace %DEB
   ;   true
   ),
 

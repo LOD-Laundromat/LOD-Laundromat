@@ -72,7 +72,7 @@ post_rdf_triples:-
   ->  true
   ;   writeln(Code),
       maplist(writeln, Triples),
-      gtrace,
+      gtrace, %DEB
       post_rdf_triples
   ),
 

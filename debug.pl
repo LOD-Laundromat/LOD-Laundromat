@@ -2,7 +2,7 @@
 
 
 
-% Avoid errors when using gtrace/0 in threads.
+% Avoid errors when tracing in threads.
 :- initialization(guitracer).
 
 

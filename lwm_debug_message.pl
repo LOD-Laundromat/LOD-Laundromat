@@ -102,12 +102,6 @@ lwm_debug_message(Topic, void_found(Urls)):-
   maplist(void_found(Topic), Urls).
 
 
-% DEB
-lwm_debug_message(Topic, Message):-
-  gtrace,
-  lwm_debug_message(Topic, Message).
-
-
 
 % Helpers
 
