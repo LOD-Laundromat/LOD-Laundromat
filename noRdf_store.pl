@@ -73,7 +73,7 @@ post_rdf_triples:-
   ;   lwm:lwm_server(cliopatria)
   ->  with_mutex(lod_washing_machine, (
         sparql_insert_data(
-          cliopatria_update,
+          cliopatria_localhost,
           Triples,
           [],
           [NG],

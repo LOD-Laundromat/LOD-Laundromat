@@ -64,7 +64,7 @@ reset_datadoc(Datadoc):-
       )
   ;   lwm:lwm_server(cliopatria)
   ->  sparql_delete_where(
-        cliopatria_update,
+        cliopatria_localhost,
         [ll],
         [rdf(Datadoc,var(p),var(o))],
         [NG],

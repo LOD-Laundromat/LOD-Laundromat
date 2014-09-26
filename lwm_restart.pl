@@ -42,6 +42,6 @@ lwm_restart:-
       http_get(Url2, Reply, []), !,
       debug(lwm_restart, '~a', [Reply])
   ;   lwm:lwm_server(cliopatria)
-  ->  sparql_drop_graph(cliopatria_update, Graph, [])
+  ->  sparql_drop_graph(cliopatria_localhost, Graph, [])
   ).
 

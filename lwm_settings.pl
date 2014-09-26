@@ -15,13 +15,14 @@
 Generic predicates for the LOD Washing Machine.
 
 @author Wouter Beek
-@version 2014/06, 2014/08
+@version 2014/06, 2014/08-2014/09
 */
 
 :- use_module(library(filesex)).
 :- use_module(library(semweb/rdf_db)).
 :- use_module(library(uri)).
 
+:- use_module(generics(service_db)).
 :- use_module(void(void_db)). % Namespace.
 
 :- use_module(plSparql(sparql_db)).
@@ -119,12 +120,13 @@ lwm_version_number(11).
 
 init_lwm_sparql_endpoints:-
   % Update (debug tools)
-  assert(lwm_sparql_endpoint(cliopatria_update)),
+  assert(lwm_sparql_endpoint(cliopatria_localhost)),
   sparql_register_endpoint(
-    cliopatria_update,
-    ['http://localhost:3020'],
+    cliopatria_localhost,
+    ['http://localhost:3030'],
     cliopatria
   ),
+  register_service(cliopatria_localhost, lwm, lwmlwm),
 
   % Update (reset, continue)
   assert(lwm_sparql_endpoint(virtuoso_update)),

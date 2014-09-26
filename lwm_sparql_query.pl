@@ -61,7 +61,7 @@ lwm_sparql_ask(Prefixes, Bgps, Options1):-
   (   lwm:lwm_server(virtuoso)
   ->  Endpoint = virtuoso_query
   ;   lwm:lwm_server(cliopatria)
-  ->  Endpoint = cliopatria_query
+  ->  Endpoint = cliopatria_localhost
   ),
   loop_until_true(
     sparql_ask(Endpoint, Prefixes, Bgps, Options2)
@@ -80,7 +80,7 @@ lwm_sparql_select(Prefixes, Variables, Bgps, Result, Options1):-
   (   lwm:lwm_server(virtuoso)
   ->  Endpoint = virtuoso_query
   ;   lwm:lwm_server(cliopatria)
-  ->  Endpoint = cliopatria_query
+  ->  Endpoint = cliopatria_localhost
   ),
   loop_until_true(
     sparql_select(Endpoint, Prefixes, Variables, Bgps, Result, Options2)
