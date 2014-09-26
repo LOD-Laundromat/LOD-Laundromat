@@ -145,7 +145,11 @@ clean_md5(Category, Md5, Datadoc):-
   delete_file(DirtyFile),
 
   % Add the new VoID URLs to the LOD Basket.
-  maplist(store_new_url(Datadoc), VoidUrls).
+  thread_create(
+    maplist(store_new_url(Datadoc), VoidUrls),
+    _,
+    [alias(Md5),detached(true)]
+  ).
 
 
 %! clean_datastream(
