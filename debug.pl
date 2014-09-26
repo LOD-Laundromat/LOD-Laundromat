@@ -31,8 +31,12 @@
 %%%%:- debug(sparql_graph_store).
 %%%%:- debug(sparql_update).
 
-% LOD Washing Machine-specific debug messages that do not fit anywhere else.
-%%%%:- debug(lwm_generic).
+% Currently used for adding (new) links to datadumps coming from
+% VoID descriptions.
+:- debug(store_new_url).
+
+% Clear the graph that stores the LOD Washing Machine's clawling metadata.
+%%%%:- debug(lwm_restart).
 
 % Show idle looping on threads.
 %%%%:- debug(lwm_idle_loop(clean_large)).

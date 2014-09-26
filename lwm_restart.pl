@@ -38,5 +38,5 @@ lwm_restart:-
   format(atom(Query), 'DROP SILENT GRAPH <~a>', [Graph]),
   uri_query_add_nvpair(Url1, query, Query, Url2),
   http_get(Url2, Reply, []), !,
-  debug(lwm_generic, '~a', [Reply]).
+  debug(lwm_restart, '~a', [Reply]).
 

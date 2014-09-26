@@ -17,8 +17,11 @@ The cleaning process performed by the LOD Washing Machine.
 
 :- use_module(library(aggregate)).
 :- use_module(library(apply)).
+:- use_module(library(debug)).
+:- use_module(library(http/http_client)).
 :- use_module(library(option)).
 :- use_module(library(semweb/rdf_db)).
+:- use_module(library(uri)).
 :- use_module(library(zlib)).
 
 :- use_module(pl(pl_log)).
@@ -142,7 +145,7 @@ clean_md5(Category, Md5, Datadoc):-
   delete_file(DirtyFile),
 
   % Add the new VoID URLs to the LOD Basket.
-  store_new_urls(VoidUrls).
+  maplist(store_new_url(Datadoc), VoidUrls).
 
 
 %! clean_datastream(
@@ -269,4 +272,22 @@ save_data_to_file(Md5, File, NumberOfTriples):-
   ),
   % Fix the file name, if needed.
   clean_file_name(CleanFile, Format).
+
+
+%! store_new_url(+Datadoc:url, +Url:atom) is det.
+
+store_new_url(Datadoc, Url):-
+gtrace,
+  uri_query_components(Query, [from(Datadoc),lazy(1),url(Url)]),
+  uri_components(
+    Url,
+    uri_components(http, 'backend.lodlaundromat.org', '/', Query, _)
+  ),
+  http_get(Url, Reply, [status_code(Code)]),
+  
+  % DEB
+  (   between(200, 299, Code)
+  ->  true
+  ;   debug(store_new_url, '~a', [Reply])
+  ).
 

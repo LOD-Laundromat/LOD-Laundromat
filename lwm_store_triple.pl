@@ -21,7 +21,6 @@
                   % ?ContentLength:nonneg
                   % ?ContentType:atom
                   % ?LastModified:nonneg
-    store_new_urls/1, % +Urls:list(atom)
     store_number_of_triples/4, % +Category:atom
                                % +Datadoc:url
                                % +ReadTriples:nonneg
@@ -230,21 +229,6 @@ store_http(Datadoc, ContentLength, ContentType, LastModified):-
   ).
 
 
-%! store_new_urls(+Url:list(atom)) is det.
-
-store_new_urls(Urls):-
-  maplist(store_new_url, Urls),
-  post_rdf_triples.
-
-store_new_url(Url):-
-  rdf_atom_md5(Url, 1, Md5),
-  rdf_global_id(ll:Md5, Datadoc),
-  store_triple(Datadoc, rdf-type, llo-'URL'),
-  store_triple(Datadoc, llo-url, Url),
-  get_dateTime(Added),
-  store_triple(Datadoc, llo-added, literal(type(xsd-dateTime,Added))).
-
-
 %! store_number_of_triples(
 %!   +Category:atom,
 %!   +Datadoc:url,
@@ -312,13 +296,4 @@ store_stream(Datadoc, Stream):-
 
 store_warning(Datadoc, message(Term,Kind,_)):-
   store_lod_error(Datadoc, Kind, Term).
-
-
-
-
-
-
-
-
-
 
