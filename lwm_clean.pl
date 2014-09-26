@@ -281,17 +281,32 @@ save_data_to_file(Md5, File, NumberOfTriples):-
 %! store_new_url(+Datadoc:url, +Url:atom) is det.
 
 store_new_url(Datadoc, Url):-
-  flag(store_new_url, X, X + 1),
-  uri_query_components(Query, [from(Datadoc),lazy(1),url(Url)]),
-  uri_components(
-    BackendLocation,
-    uri_components(http, 'backend.lodlaundromat.org', '/', Query, _)
-  ),
-  http_get(BackendLocation, Reply, [status_code(Code)]),
-
-  % DEB
-  (   between(200, 299, Code)
-  ->  true
-  ;   debug(store_new_url, '[STORE_NEW_URL] ~d\n~a', [Code,Reply])
-  ).
+  catch(
+    (
+      flag(store_new_url, X, X + 1),
+      uri_query_components(Query, [from(Datadoc),lazy(1),url(Url)]),
+      uri_components(
+        BackendLocation,
+        uri_components(http, 'backend.lodlaundromat.org', '/', Query, _)
+      ),
+      http_get(BackendLocation, Reply, [status_code(Code)]),
+    
+      % DEB
+      (   between(200, 299, Code)
+      ->  true
+      ;   debug(
+            store_new_url,
+            '[STORE_NEW_URL HTTP ~d] ~a\n~a',
+            [Code,Url,Reply]
+          )
+      )
+    ),
+    Exception,
+    (   var(Exception)
+    ->  true
+    ;   debug(store_new_url, '[STORE_NEW_URL EXCEPTION] ~w', [Exception])
+    )
+  ), !.
+store_new_url(Datadoc, Url):-
+  store_new_url(Datadoc, Url).
 
