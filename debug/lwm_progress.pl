@@ -33,7 +33,9 @@ lwm_progress(_, HtmlStyle):-
     html([
       \pending_table,
       \unpacking_table,
-      \unpacked_table,
+      \unpacked_table_small,
+      \unpacked_table_medium,
+      \unpacked_table_large,
       \cleaning_table,
       \cleaned_table
     ])
@@ -45,10 +47,10 @@ lwm_progress(_, HtmlStyle):-
 pending_table -->
   {lwm_sparql_select(
     [llo],
-    [md5],
+    [datadoc],
     [
-      rdf(var(md5),llo:added,var(added)),
-      not([rdf(var(md5),llo:startUnpack,var(start))])
+      rdf(var(datadoc),llo:added,var(added)),
+      not([rdf(var(datadoc),llo:startUnpack,var(start))])
     ],
     Rows,
     []
@@ -61,11 +63,11 @@ pending_table -->
 unpacking_table -->
   {lwm_sparql_select(
     [llo],
-    [md5],
+    [datadoc],
     [
-      rdf(var(md5),llo:startUnpack,var(startUnpack)),
+      rdf(var(datadoc),llo:startUnpack,var(startUnpack)),
       not([
-        rdf(var(md5),llo:endUnpack,var(endUnpack))
+        rdf(var(datadoc),llo:endUnpack,var(endUnpack))
       ])
     ],
     Rows,
@@ -74,20 +76,39 @@ unpacking_table -->
   progress_table(' data documents are being unpacked.', Rows).
 
 
-%! unpacked_table// is det.
+%! unpacked_table_small// is det.
 
-unpacked_table -->
-  {lwm_sparql_select(
-    [llo],
-    [md5],
-    [
-      rdf(var(md5),llo:endUnpack,var(start)),
-      not([rdf(var(md5),llo:startClean,var(clean))])
-    ],
-    Rows,
-    []
-  )},
-  progress_table(' unpacked data documents.', Rows).
+unpacked_table_small -->
+  {
+    Max is 0.5 * (1024 ** 3), % 0.5 GB
+    lwm_sparql_query:build_unpacked_query(_, Max, Query),
+    lwm_sparql_select([llo], [datadoc], Query, Rows, [])
+  },
+  progress_table(' SMALL unpacked data documents.', Rows).
+
+
+%! unpacked_table_medium// is det.
+
+unpacked_table_medium -->
+  {
+    Min is 0.5 * (1024 ** 3), % 0.5 GB
+    Max is 2.5 * (1024 ** 3), % 2.5 GB
+    lwm_sparql_query:build_unpacked_query(Min, Max, Query),
+    lwm_sparql_select([llo], [datadoc], Query, Rows, [])
+  },
+  progress_table(' MEDIUM unpacked data documents.', Rows).
+
+
+%! unpacked_table_large// is det.
+
+unpacked_table_large -->
+  {
+    Min is 2.5 * (1024 ** 3), % 2.5 GB
+    Max is 30 * (1024 ** 3), % 30 GB
+    lwm_sparql_query:build_unpacked_query(Min, Max, Query),
+    lwm_sparql_select([llo], [datadoc], Query, Rows, [])
+  },
+  progress_table(' LARGE unpacked data documents.', Rows).
 
 
 %! cleaning_table// is det.
@@ -95,10 +116,10 @@ unpacked_table -->
 cleaning_table -->
   {lwm_sparql_select(
     [llo],
-    [md5],
+    [datadoc],
     [
-      rdf(var(md5),llo:startClean,var(start_clean)),
-      not([rdf(var(md5),llo:endClean,var(end_clean))])
+      rdf(var(datadoc),llo:startClean,var(start_clean)),
+      not([rdf(var(datadoc),llo:endClean,var(end_clean))])
     ],
     Rows,
     []
@@ -111,8 +132,8 @@ cleaning_table -->
 cleaned_table -->
   {lwm_sparql_select(
     [llo],
-    [md5],
-    [rdf(var(md5),llo:endClean,var(end_clean))],
+    [datadoc],
+    [rdf(var(datadoc),llo:endClean,var(end_clean))],
     Rows,
     []
   )},
@@ -134,7 +155,7 @@ progress_table(CaptionPostfix, Rows) -->
       header_row(true),
       indexed(true),
       location(lwm_progress),
-      maximum_number_of_rows(5)
+      maximum_number_of_rows(3)
     ]
   ).
 
