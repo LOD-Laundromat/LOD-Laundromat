@@ -281,6 +281,7 @@ save_data_to_file(Md5, File, NumberOfTriples):-
 %! store_new_url(+Datadoc:url, +Url:atom) is det.
 
 store_new_url(Datadoc, Url):-
+  flag(store_new_url, X, X + 1),
   uri_query_components(Query, [from(Datadoc),lazy(1),url(Url)]),
   uri_components(
     BackendLocation,
