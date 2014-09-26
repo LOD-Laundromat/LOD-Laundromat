@@ -277,14 +277,13 @@ save_data_to_file(Md5, File, NumberOfTriples):-
 %! store_new_url(+Datadoc:url, +Url:atom) is det.
 
 store_new_url(Datadoc, Url):-
-gtrace,
   uri_query_components(Query, [from(Datadoc),lazy(1),url(Url)]),
   uri_components(
-    Url,
+    BackendLocation,
     uri_components(http, 'backend.lodlaundromat.org', '/', Query, _)
   ),
-  http_get(Url, Reply, [status_code(Code)]),
-  
+  http_get(BackendLocation, Reply, [status_code(Code)]),
+
   % DEB
   (   between(200, 299, Code)
   ->  true
