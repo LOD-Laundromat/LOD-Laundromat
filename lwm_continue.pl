@@ -53,12 +53,23 @@ reset_datadoc(Datadoc):-
 
   % Remove the metadata triples that were stored for the given data document.
   lwm_version_graph(NG),
-  sparql_delete_where(
-    virtuoso_update,
-    [ll],
-    [rdf(Datadoc,var(p),var(o))],
-    [NG],
-    [],
-    []
+  (   lwm:lwm_server(virtuoso)
+  ->  sparql_delete_where(
+        virtuoso_update,
+        [ll],
+        [rdf(Datadoc,var(p),var(o))],
+        [NG],
+        [],
+        []
+      )
+  ;   lwm:lwm_server(cliopatria)
+  ->  sparql_delete_where(
+        cliopatria_update,
+        [ll],
+        [rdf(Datadoc,var(p),var(o))],
+        [NG],
+        [],
+        []
+      )
   ).
 

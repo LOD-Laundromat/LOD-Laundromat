@@ -58,8 +58,13 @@ SPARQL queries for the LOD Washing Machine.
 lwm_sparql_ask(Prefixes, Bgps, Options1):-
   lwm_version_graph(Graph),
   merge_options([named_graph(Graph),sparql_errors(fail)], Options1, Options2),
+  (   lwm:lwm_server(virtuoso)
+  ->  Endpoint = virtuoso_query
+  ;   lwm:lwm_server(cliopatria)
+  ->  Endpoint = cliopatria_query
+  ),
   loop_until_true(
-    sparql_ask(virtuoso_query, Prefixes, Bgps, Options2)
+    sparql_ask(Endpoint, Prefixes, Bgps, Options2)
   ).
 
 
@@ -72,9 +77,13 @@ lwm_sparql_select(Prefixes, Variables, Bgps, Result, Options1):-
     Options1,
     Options2
   ),
-
+  (   lwm:lwm_server(virtuoso)
+  ->  Endpoint = virtuoso_query
+  ;   lwm:lwm_server(cliopatria)
+  ->  Endpoint = cliopatria_query
+  ),
   loop_until_true(
-    sparql_select(virtuoso_query, Prefixes, Variables, Bgps, Result, Options2)
+    sparql_select(Endpoint, Prefixes, Variables, Bgps, Result, Options2)
   ).
 
 

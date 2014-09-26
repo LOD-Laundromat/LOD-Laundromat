@@ -10,7 +10,7 @@
 Restart the LOD Washing Machine during debugging.
 
 @author Wouter Beek
-@version 2014/08
+@version 2014/08-2014/09
 */
 
 :- use_module(library(debug)).
@@ -19,6 +19,7 @@ Restart the LOD Washing Machine during debugging.
 :- use_module(generics(uri_query)).
 
 :- use_module(plSparql(sparql_db)).
+:- use_module(plSparql_update(sparql_update_api)).
 
 :- use_module(lwm(lwm_settings)).
 
@@ -34,9 +35,13 @@ lwm_restart:-
   % (1) No support for direct POST bodies (only URL encoded).
   % (2) GET method for DROP GRAPH.
   % (3) Required SILENT keyword.
-  sparql_endpoint_location(virtuoso_update, update, Url1),
-  format(atom(Query), 'DROP SILENT GRAPH <~a>', [Graph]),
-  uri_query_add_nvpair(Url1, query, Query, Url2),
-  http_get(Url2, Reply, []), !,
-  debug(lwm_restart, '~a', [Reply]).
+  (   lwm:lwm_server(virtuoso)
+  ->  sparql_endpoint_location(virtuoso_update, update, Url1),
+      format(atom(Query), 'DROP SILENT GRAPH <~a>', [Graph]),
+      uri_query_add_nvpair(Url1, query, Query, Url2),
+      http_get(Url2, Reply, []), !,
+      debug(lwm_restart, '~a', [Reply])
+  ;   lwm:lwm_server(cliopatria)
+  ->  sparql_drop_graph(cliopatria_update, Graph, [])
+  ).
 

@@ -22,6 +22,7 @@ and at the same time send small RDF messages using SPARQL Update requests.
 :- use_module(library(semweb/rdf_db)).
 
 :- use_module(plSparql_http(sparql_graph_store)).
+:- use_module(plSparql_update(sparql_update_api)).
 
 :- use_module(lwm(lwm_settings)).
 
@@ -59,14 +60,27 @@ post_rdf_triples:-
   ),
 
   % Use HTTP Graph Store on Virtuoso.
-  with_mutex(lod_washing_machine, (
-    sparql_post_named_graph(
-      virtuoso_http,
-      NG,
-      Triples,
-      [status_code(Code)]
-    )
-  )),
+  % Use SPARQL Update on ClioPatria.
+  (   lwm:lwm_server(virtuoso)
+  ->  with_mutex(lod_washing_machine, (
+        sparql_post_named_graph(
+          virtuoso_http,
+          NG,
+          Triples,
+          [status_code(Code)]
+        )
+      ))
+  ;   lwm:lwm_server(cliopatria)
+  ->  with_mutex(lod_washing_machine, (
+        sparql_insert_data(
+          cliopatria_update,
+          Triples,
+          [],
+          [NG],
+          [status_code(Code)]
+        )
+      ))
+  ),
   % DEB
   (   between(200, 299, Code)
   ->  true
