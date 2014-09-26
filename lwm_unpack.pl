@@ -50,18 +50,6 @@ lwm_unpack_loop:-
       % is not an archive entry.
       datadoc_pending(Datadoc, DirtyUrl),
 
-      % Make sure that at no time two data documents are
-      % being downloaded from the same host.
-      % This avoids being blocked by servers that do not allow
-      % multiple simultaneous requests.
-      (   nonvar(DirtyUrl)
-      ->  uri_component(DirtyUrl, host, Host),
-          \+ lwm:current_host(Host),
-          % Set a lock on this host for other unpacking threads.
-          assertz(lwm:current_host(Host))
-      ;   true
-      ), !,
-
       % Update the database, saying we are ready
       % to begin downloading+unpacking this data document.
       store_start_unpack(Datadoc)
@@ -102,9 +90,9 @@ lwm_unpack_loop:-
   maplist(store_warning(Datadoc), Warnings),
   store_end_unpack(Md5, Datadoc, Status),
 
-  % Remove the lock from this host: additional data documents
-  % can now be downloaded from the same host.
-  retractall(lwm:current_host(Host)),
+  %%%%% @tbd Remove the lock from this host: additional data documents
+  %%%%%      can now be downloaded from the same host.
+  %%%%retractall(lwm:current_host(Host)),
 
   % Intermittent loop.
   lwm_unpack_loop.

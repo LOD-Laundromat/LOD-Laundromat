@@ -158,6 +158,20 @@ datadoc_file_extension(Datadoc, FileExtension):-
 
 
 %! datadoc_pending(-Datadoc:url, -Dirty:url) is nondet.
+% @tbd Make sure that at no time two data documents are
+%      being downloaded from the same host.
+%      This avoids being blocked by servers that do not allow
+%      multiple simultaneous requests.
+%      ~~~{.pl}
+%      (   nonvar(DirtyUrl)
+%      ->  uri_component(DirtyUrl, host, Host),
+%          \+ lwm:current_host(Host),
+%          % Set a lock on this host for other unpacking threads.
+%          assertz(lwm:current_host(Host))
+%      ;   true
+%      ), !,
+%      ~~~
+%      Add argument `Host` for releasing the lock in [lwm_unpack].
 
 datadoc_pending(Datadoc, Dirty):-
   lwm_sparql_select(
@@ -173,7 +187,7 @@ datadoc_pending(Datadoc, Dirty):-
       ])
     ],
     [[Datadoc,Dirty]],
-    [iteratively(true)]
+    [limit(1)]
   ).
 
 
