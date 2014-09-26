@@ -292,6 +292,6 @@ store_new_url(Datadoc, Url):-
   % DEB
   (   between(200, 299, Code)
   ->  true
-  ;   debug(store_new_url, '~a', [Reply])
+  ;   debug(store_new_url, '[STORE_NEW_URL] ~d\n~a', [Code,Reply])
   ).
 
