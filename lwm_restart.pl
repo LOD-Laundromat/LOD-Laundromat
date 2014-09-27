@@ -28,6 +28,12 @@ Restart the LOD Washing Machine during debugging.
 %! lwm_restart is det.
 
 lwm_restart:-
+  % Delete the URL seed list.
+  (   absolute_file_name(data(url), File, [access(read),file_errors(fail)])
+  ->  delete_file(File)
+  ;   true
+  ),
+
   lwm_version_graph(Graph),
 
   % Virtuoso implements SPARQL Updates so irregularly,

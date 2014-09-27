@@ -24,6 +24,7 @@ The cleaning process performed by the LOD Washing Machine.
 :- use_module(library(uri)).
 :- use_module(library(zlib)).
 
+:- use_module(os(io_ext)).
 :- use_module(pl(pl_log)).
 
 :- use_module(plRdf_ser(ctriples_write_graph)).
@@ -280,7 +281,14 @@ save_data_to_file(Md5, File, NumberOfTriples):-
 
 %! store_new_url(+Datadoc:url, +Url:atom) is det.
 
-store_new_url(Datadoc, Url):-
+store_new_url(_, Url):-
+  absolute_file_name(data(url), File, [access(write)]),
+  setup_call_cleanup(
+    open(File, write, Write),
+    writeln(Write, Url),
+    close(Write)
+  ).
+/*
   catch(
     (
       uri_query_components(Query, [from(Datadoc),lazy(1),url(Url)]),
@@ -297,15 +305,18 @@ store_new_url(Datadoc, Url):-
             store_new_url,
             '[STORE_NEW_URL HTTP ~d] ~a\n~a',
             [Code,Url,Reply]
-          )
+          ),
+          fail
       )
     ),
     Exception,
     (   var(Exception)
-    ->  flag(store_new_url, X, X + 1)
-    ;   debug(store_new_url, '[STORE_NEW_URL EXCEPTION] ~w', [Exception])
+    ->  true
+    ;   debug(store_new_url, '[STORE_NEW_URL EXCEPTION] ~w', [Exception]),
+        fail
     )
-  ), !.
+  ), !,
+  flag(store_new_url, X, X + 1).
 store_new_url(Datadoc, Url):-
   store_new_url(Datadoc, Url).
-
+*/
