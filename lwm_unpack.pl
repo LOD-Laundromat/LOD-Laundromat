@@ -19,6 +19,7 @@ Unpacks files for the LOD Washing Machine to clean.
 :- use_module(library(pairs)).
 
 :- use_module(generics(atom_ext)).
+:- use_module(generics(typecheck)).
 :- use_module(generics(uri_ext)).
 :- use_module(http(http_download)).
 :- use_module(os(archive_ext)).
@@ -110,7 +111,7 @@ lwm_unpack_loop:-
 
 % The given MD5 denotes an archive entry.
 unpack_datadoc(Md5, Datadoc, DirtyUrl):-
-  var(DirtyUrl), !,
+  \+ is_url(DirtyUrl), !,
 
   % Retrieve entry path and parent MD5.
   datadoc_archive_entry(Datadoc, ParentMd5, EntryPath),

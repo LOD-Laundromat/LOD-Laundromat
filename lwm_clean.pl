@@ -144,9 +144,9 @@ clean_md5(Category, Md5, Datadoc):-
 
   % Add the new VoID URLs to the LOD Basket.
   with_mutex(store_new_url, (
-    absolute_file_name(data('url.txt'), File, [access(write)]),
+    absolute_file_name(data('url.txt'), File, [access(append)]),
     setup_call_cleanup(
-      open(File, write, Write),
+      open(File, append, Write),
       maplist(writeln(Write), VoidUrls),
       close(Write)
     )
