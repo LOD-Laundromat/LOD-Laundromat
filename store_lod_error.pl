@@ -176,7 +176,11 @@ store_lod_error(
   rdf_bnode(BNode),
   store_triple(Datadoc, llo-Kind, BNode),
   store_triple(BNode, rdf-type, error-'SgmlParserError'),
-  store_triple(BNode, error-sourceLine, literal(type(xsd-integer,Line))),
+  store_triple(
+    BNode,
+    error-sourceLine,
+    literal(type(xsd-nonNegativeInteger,Line))
+  ),
   atom_truncate(Message1, 1000, Message2),
   store_triple(BNode, error-message, literal(type(xsd-string,Message2))).
 
@@ -274,7 +278,15 @@ store_position(Resource, Line, Column, Character):-
   rdf_bnode(BNode),
   store_triple(Resource, error-streamPosition, BNode),
   store_triple(BNode, rdf-type, error-'StreamPosition'),
-  store_triple(BNode, error-line, literal(type(xsd-integer,Line))),
-  store_triple(BNode, error-linePosition, literal(type(xsd-integer,Column))),
-  store_triple(BNode, error-character, literal(type(xsd-integer,Character))).
+  store_triple(BNode, error-line, literal(type(xsd-nonNegativeInteger,Line))),
+  store_triple(
+    BNode,
+    error-linePosition,
+    literal(type(xsd-nonNegativeInteger,Column))
+  ),
+  store_triple(
+    BNode,
+    error-character,
+    literal(type(xsd-nonNegativeInteger,Character))
+  ).
 

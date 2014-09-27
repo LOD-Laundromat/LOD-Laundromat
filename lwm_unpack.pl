@@ -158,8 +158,12 @@ unpack_datadoc(Md5, Datadoc, DirtyUrl):-
   ),
 
   % Store the file size of the dirty file.
-  size_file(DownloadFile, ByteSize),
-  store_triple(Datadoc, llo-size, literal(type(xsd-integer,ByteSize))),
+  size_file(DownloadFile, DownloadSize),
+  store_triple(
+    Datadoc,
+    llo-downloadSize,
+    literal(type(xsd-nonNegativeInteger,DownloadSize))
+  ),
 
   % Store HTTP statistics.
   store_http(Datadoc, ContentLength, ContentType, LastModified),
@@ -206,8 +210,13 @@ unpack_file(Md5, Datadoc, ArchiveFile):-
 
     % Move the data file outside of the its entry path,
     % and put it directly inside its MD5 directory.
-    mv2(DataFile, DirtyFile)
-
+    mv2(DataFile, DirtyFile),
+    size_file(DirtyFile, UnpackedSize),
+    store_triple(
+      Datadoc,
+      llo-unpackedSize,
+      literal(type(xsd-nonNegativeInteger,UnpackedSize))
+    )
     % The file is now ready for cleaning!
   ;
     % Store the archive entries for future processing.

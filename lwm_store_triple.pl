@@ -94,14 +94,14 @@ store_archive_entry(ParentMd5, Parent, EntryPath, EntryProperties1):-
   store_triple(
     Entry,
     llo-archiveLastModified,
-    literal(type(xsd-integer,LastModified))
+    literal(type(xsd-string,LastModified))
   ),
 
   selectchk(size(ByteSize), EntryProperties2, EntryProperties3),
   store_triple(
     Entry,
     llo-archiveSize,
-    literal(type(xsd-integer,ByteSize))
+    literal(type(xsd-nonNegativeInteger,ByteSize))
   ),
 
   selectchk(filetype(ArchiveFileType), EntryProperties3, []),
@@ -207,7 +207,7 @@ store_http(Datadoc, ContentLength, ContentType, LastModified):-
     store_triple(
       Datadoc,
       llo-contentLength,
-      literal(type(xsd-integer,ContentLength))
+      literal(type(xsd-nonNegativeInteger,ContentLength))
     )
   ),
   unless(
@@ -237,9 +237,17 @@ store_http(Datadoc, ContentLength, ContentType, LastModified):-
 %! ) is det.
 
 store_number_of_triples(Category, Datadoc, TIn, TOut):-
-  store_triple(Datadoc, llo-triples, literal(type(xsd-integer,TOut))),
+  store_triple(
+    Datadoc,
+    llo-triples,
+    literal(type(xsd-nonNegativeInteger,TOut))
+  ),
   TDup is TIn - TOut,
-  store_triple(Datadoc, llo-duplicates, literal(type(xsd-integer,TDup))),
+  store_triple(
+    Datadoc,
+    llo-duplicates,
+    literal(type(xsd-nonNegativeInteger,TDup))
+  ),
 
   % DEB
   lwm_debug_message(
@@ -281,13 +289,25 @@ store_stream(Datadoc, Stream):-
   stream_property(Stream, position(Position)),
 
   stream_position_data(byte_count, Position, ByteCount),
-  store_triple(Datadoc, llo-byteCount, literal(type(xsd-integer,ByteCount))),
+  store_triple(
+    Datadoc,
+    llo-byteCount,
+    literal(type(xsd-nonNegativeInteger,ByteCount))
+  ),
 
   stream_position_data(char_count, Position, CharCount),
-  store_triple(Datadoc, llo-charCount, literal(type(xsd-integer,CharCount))),
+  store_triple(
+    Datadoc,
+    llo-charCount,
+    literal(type(xsd-nonNegativeInteger,CharCount))
+  ),
 
   stream_position_data(line_count, Position, LineCount),
-  store_triple(Datadoc, llo-lineCount, literal(type(xsd-integer,LineCount))).
+  store_triple(
+    Datadoc,
+    llo-lineCount,
+    literal(type(xsd-nonNegativeInteger,LineCount))
+  ).
 
 
 %! store_warning(+Datadoc:url, +Warning:compound) is det.

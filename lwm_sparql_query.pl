@@ -236,20 +236,20 @@ datadoc_source(Datadoc, Source):-
 %!   ?Min:nonneg,
 %!   ?Max:nonneg,
 %!   -Datadoc:url,
-%!   -Size:nonneg
+%!   -UnpackedSize:nonneg
 %! ) is semidet.
-% Size is expressed as the number of bytes.
+% UnpackedSize is expressed as the number of bytes.
 
-datadoc_unpacked(Min, Max, Datadoc, Size):-
+datadoc_unpacked(Min, Max, Datadoc, UnpackedSize):-
   build_unpacked_query(Min, Max, Query),
   lwm_sparql_select(
     [llo],
-    [datadoc,size],
+    [datadoc,unpackedSize],
     Query,
-    [[Datadoc,SizeLiteral]],
+    [[Datadoc,UnpackedSizeLiteral]],
     [limit(1)]
   ),
-  rdf_literal_value2(SizeLiteral, Size).
+  rdf_literal_value2(UnpackedSizeLiteral, UnpackedSize).
 conjunctive_filter([H], H):- !.
 conjunctive_filter([H|T1], and(H,T2)):-
   conjunctive_filter(T1, T2).
@@ -284,16 +284,16 @@ build_unpacked_query(Min, Max, Query2):-
     not([
       rdf(var(datadoc), llo:startClean, var(startClean))
     ]),
-    rdf(var(datadoc), llo:size, var(size))
+    rdf(var(datadoc), llo:unpackedSize, var(unpackedSize))
   ],
 
-  % Insert the range restriction on size as a filter.
+  % Insert the range restriction on the unpacked file size as a filter.
   (   nonvar(Min)
-  ->  MinFilter = >(var(size),Min)
+  ->  MinFilter = >(var(unpackedSize),Min)
   ;   true
   ),
   (   nonvar(Max)
-  ->  MaxFilter = <(var(size),Max)
+  ->  MaxFilter = <(var(unpackedSize),Max)
   ;   true
   ),
   exclude(var, [MinFilter,MaxFilter], FilterComponents),
