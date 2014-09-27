@@ -89,7 +89,7 @@ lwm_clean_loop(Category, Min, Max):-
 
   % Store warnings and status as metadata.
   store_exception(Datadoc, Status),
-  maplist(store_warning(Datadoc), Warnings),
+  maplist(store_warning(Datadoc), Warnings2),
   store_end_clean(Md5, Datadoc),
 
   %%%%% Make sure the unpacking threads do not create a pending pool

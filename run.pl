@@ -143,7 +143,7 @@ start_large_thread(Id):-
 
 start_medium_thread(Id):-
   format(atom(Alias), 'clean_medium_~d', [Id]),
-  GlobalStack is 12.5 * (1024 ** 3), % 12.5 GB
+  GlobalStack is 12 * (1024 ** 3), % 12 GB
   Min is 0.5 * (1024 ** 3), % 0.5 GB
   Max is 2.5 * (1024 ** 3), % 2.5 GB
   thread_create(
@@ -155,7 +155,7 @@ start_medium_thread(Id):-
 
 start_small_thread(Id):-
   format(atom(Alias), 'clean_small_~d', [Id]),
-  GlobalStack is 2.5 * (1024 ** 3), % 2.5GB
+  GlobalStack is 2 * (1024 ** 3), % 2 GB
   Max is 0.5 * (1024 ** 3), % 0.5 GB
   thread_create(
     lwm_clean_loop(clean_small, _, Max),
