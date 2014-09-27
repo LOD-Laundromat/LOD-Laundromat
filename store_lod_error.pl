@@ -31,7 +31,7 @@ Stores error term denoting exceptions in a LOD format.
 
 
 % Archive error
-store_lod_error(Datadoc, Kind, error(archive_error(Code,_),_)):-
+store_lod_error(Datadoc, Kind, error(archive_error(Code,_),_)):- !,
   (   Code == 2
   ->  InstanceName = missingTypeKeywordInMtreeSpec
   ;   true
@@ -43,11 +43,11 @@ store_lod_error(
   Datadoc,
   Kind,
   error(existence_error(directory,Directory),context(_Pred,Message))
-):-
+):- !,
   (   Message == 'File exists'
   ->  ClassName = 'DirectoryExistenceError'
   ;   fail
-  ), !,
+  ),
   rdf_bnode(BNode),
   store_triple(Datadoc, llo-Kind, BNode),
   store_triple(BNode, rdf-type, error-ClassName),
@@ -59,13 +59,13 @@ store_lod_error(
   Datadoc,
   Kind,
   error(existence_error(file,File),context(_Pred,Message))
-):-
+):- !,
   (   Message == 'Directory not empty'
   ->  ClassName = 'DirectoryNotEmpty'
   ;   Message == 'No such file or directory'
   ->  ClassName = 'FileExistenceError'
   ;   fail
-  ), !,
+  ),
   rdf_bnode(BNode),
   store_triple(Datadoc, llo-Kind, BNode),
   store_triple(BNode, rdf-type, error-ClassName),
@@ -77,7 +77,7 @@ store_lod_error(
   Datadoc,
   Kind,
   error(existence_error(source_sink,Path),context(_Pred,Message))
-):-
+):- !,
   (   Message == 'Is a directory'
   ->  ClassName = 'IsADirectoryError'
   ;   fail
@@ -97,12 +97,12 @@ store_lod_error(Datadoc, Kind, error(http_status(Status),_)):- !,
   ),
   store_triple(Datadoc, llo-httpStatus, httpo-Status).
 
-% IO error
+% IO error: read
 store_lod_error(
   Datadoc,
   Kind,
   error(io_error(read,_Stream),context(_Pred,Message))
-):-
+):- !,
   (   Message == 'Connection reset by peer'
   ->  InstanceName = connectionResetByPeer
   ;   Message == 'Inappropriate ioctl for device'
@@ -113,8 +113,20 @@ store_lod_error(
   ),
   store_triple(Datadoc, llo-Kind, error-InstanceName).
 
+% IO error: write
+store_lod_error(
+  Datadoc,
+  Kind,
+  error(io_error(write,_Stream),context(_Pred,Message))
+):- !,
+  (   Message == 'Encoding cannot represent character'
+  ->  InstanceName = encodingError
+  ;   fail
+  ),
+  store_triple(Datadoc, llo-Kind, error-InstanceName).
+
 % IO warning
-store_lod_error(Datadoc, Kind, io_warning(_Stream,Message)):-
+store_lod_error(Datadoc, Kind, io_warning(_Stream,Message)):- !,
   (   Message == 'Illegal UTF-8 continuation'
   ->  InstanceName = illegalUtf8Continuation
   ;   Message == 'Illegal UTF-8 start'
@@ -143,7 +155,7 @@ store_lod_error(
   rdf_bnode(BNode),
   store_triple(Datadoc, llo-Kind, BNode),
   store_triple(BNode, rdf-type, error-'PermissionError'),
-  atom_truncate(Message1, 1000, Message2),
+  atom_truncate(Message1, 500, Message2),
   store_triple(BNode, error-message, literal(type(xsd-string,Message2))),
 
   % Action
@@ -163,10 +175,6 @@ store_lod_error(
   ),
   store_triple(Object, error-object, error-ObjectClass).
 
-% Resource error
-% Thrown by GUI tracer after a while.
-store_lod_error(_, _, error(resource_error(_),_)).
-
 % SGML parser
 store_lod_error(
   Datadoc,
@@ -181,11 +189,11 @@ store_lod_error(
     error-sourceLine,
     literal(type(xsd-nonNegativeInteger,Line))
   ),
-  atom_truncate(Message1, 1000, Message2),
+  atom_truncate(Message1, 500, Message2),
   store_triple(BNode, error-message, literal(type(xsd-string,Message2))).
 
 % Socket error
-store_lod_error(Datadoc, Kind, error(socket_error(Message),_)):-
+store_lod_error(Datadoc, Kind, error(socket_error(Message),_)):- !,
   (   Message == 'Connection timed out'
   ->  InstanceName = connectionTimedOut
   ;   Message == 'Connection refused'
@@ -199,7 +207,7 @@ store_lod_error(Datadoc, Kind, error(socket_error(Message),_)):-
   ;   Message == 'Try Again'
   ->  InstanceName = tryAgain
   ;   fail
-  ), !,
+  ),
   store_triple(Datadoc, llo-Kind, error-InstanceName).
 
 % SSL error: SSL verify
@@ -216,7 +224,7 @@ store_lod_error(
   store_triple(Datadoc, llo-Kind, BNode),
   store_triple(BNode, rdf-type, error-'SyntaxError'),
   store_position(BNode, Line, Column, Character),
-  atom_truncate(Message1, 1000, Message2),
+  atom_truncate(Message1, 500, Message2),
   store_triple(BNode, error-message, literal(type(xsd-string,Message2))).
 
 % Timeout error: read
@@ -249,19 +257,26 @@ store_lod_error(Datadoc, Kind, rdf(redefined_id(Uri))):- !,
   store_triple(BNode, rdf-type, error-'RedefinedRdfId'),
   store_triple(BNode, error-object, Uri).
 
+% RDF/XML: name
+store_lod_error(Datadoc, Kind, rdf(not_a_name(XmlName))):- !,
+  rdf_bnode(BNode),
+  store_triple(Datadoc, llo-Kind, BNode),
+  store_triple(BNode, rdf-type, error-'XmlNameError'),
+  store_triple(BNode, error-object, literal(type(xsd-string,XmlName))).
+
 % RDF/XML: unparsable
 store_lod_error(Datadoc, Kind, rdf(unparsed(DOM))):- !,
   rdf_bnode(BNode),
   store_triple(Datadoc, llo-Kind, BNode),
   store_triple(BNode, rdf-type, error-'RdfXmlParserError'),
   xml_dom_to_atom([], DOM, Atom1),
-  atom_truncate(Atom1, 1000, Atom2),
+  atom_truncate(Atom1, 500, Atom2),
   store_triple(BNode, error-dom, literal(type(xsd-string,Atom2))).
 
 % DEB
 store_lod_error(Datadoc, Kind, Error):-
-  rdf_global_id(ll:Md5, Datadoc),
-  format(atom(user_output), 'ERROR:\n  ~w\n  ~w\n  ~w\n', [Md5,Kind,Error]).
+  gtrace,
+  store_lod_error(Datadoc, Kind, Error).
 
 
 

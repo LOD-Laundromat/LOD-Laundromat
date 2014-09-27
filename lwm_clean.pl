@@ -21,6 +21,7 @@ The cleaning process performed by the LOD Washing Machine.
 :- use_module(library(semweb/rdf_db)).
 :- use_module(library(zlib)).
 
+:- use_module(generics(list_ext)).
 :- use_module(os(io_ext)).
 :- use_module(pl(pl_log)).
 
@@ -75,13 +76,15 @@ lwm_clean_loop(Category, Min, Max):-
   run_collect_messages(
     clean_md5(Category, Md5, Datadoc),
     Status,
-    Warnings
+    Warnings1
   ),
+  % @tbd Virtuoso gives 413 HTTP status codes.
+  list_truncate(Warnings1, 100, Warnings2),
 
   % DEB: *end* cleaning a specific data document.
   lwm_debug_message(
     lwm_progress(Category),
-    lwm_end(Category,Md5,Source,Status,Warnings)
+    lwm_end(Category,Md5,Source,Status,Warnings2)
   ),
 
   % Store warnings and status as metadata.
