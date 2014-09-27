@@ -111,7 +111,8 @@ lwm_unpack_loop:-
 
 % The given MD5 denotes an archive entry.
 unpack_datadoc(Md5, Datadoc, DirtyUrl):-
-  \+ is_url(DirtyUrl), !,
+  % Uninstantiated SPARQL variable (using keyword OPTIONAL).
+  DirtyUrl == '$null$', !,
 
   % Retrieve entry path and parent MD5.
   datadoc_archive_entry(Datadoc, ParentMd5, EntryPath),
