@@ -16,7 +16,14 @@ A Web-based debug tool for tracking the progress of the LOD Washing Machine.
 
 :- use_module(library(http/html_write)).
 
+:- use_module(plDcg(dcg_generics)).
+
 :- use_module(plHtml(html_pl_term)).
+
+:- use_module(plRdf(rdf_name)).
+:- use_module(plRdf(rdf_parse)).
+
+:- use_module(plSparql_query(sparql_query_api)).
 
 :- use_module(plTabular(rdf_html_table)).
 
@@ -26,10 +33,45 @@ A Web-based debug tool for tracking the progress of the LOD Washing Machine.
 
 %! lwm_progress(+Request:list(nvpair), +HtmlStyle)// is det.
 
+% SPARQL DESCRIBE the given (subject) term.
+lwm_progress(Request, HtmlStyle):-
+  request_query_nvpair(Request, term, T0), !,
+  
+  % Parse the term atom to extract the corresponding RDF term.
+  once(dcg_phrase(rdf_parse_term(T1), T0)),
+  rdf_global_id(T1, T2),
+  
+  sparql_select(
+    virtuoso_query,
+    [llo],
+    [p,o],
+    [rdf(T2, var(p), var(o))],
+    Rows,
+    []
+  ),
+  
+  reply_html_page(
+    HtmlStyle,
+    title(['LOD Washing Machine - DESCRIBE ',\rdf_term_name(T2)]),
+    html(
+      \rdf_html_table(
+		    html(\html_rdf_term(lwm_progress,T2)),
+        [['Predicate','Object']|Rows],
+        [
+          header_column(true),
+          header_row(true),
+          indexed(true),
+          location(lwm_progress),
+          maximum_number_of_rows(3)
+        ]
+      )
+    )
+  ).
+% Overview of LOD Washing Machine progress.
 lwm_progress(_, HtmlStyle):-
   reply_html_page(
     HtmlStyle,
-    title('LOD Laundromat'),
+    title('LOD Washing Machine - Progress'),
     html([
       \pending_table,
       \unpacking_table,
