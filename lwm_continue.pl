@@ -46,11 +46,6 @@ lwm_continue:-
 %! reset_datadoc(+Datadoc:url) is det.
 
 reset_datadoc(Datadoc):-
-  % Remove the MD5 directory.
-  rdf_global_id(ll:Md5, Datadoc),
-  md5_directory(Md5, Directory),
-  delete_directory_and_contents(Directory),
-
   % Remove the metadata triples that were stored for the given data document.
   lwm_version_graph(NG),
   (   lwm:lwm_server(virtuoso)
