@@ -38,6 +38,13 @@ store_lod_error(Datadoc, Kind, error(archive_error(Code,_),_)):- !,
   ),
   store_triple(Datadoc, llo-Kind, error-InstanceName).
 
+% Encoding: character
+store_lod_error(Datadoc, Kind, error(type_error(character,Char),context(_Pred,_Var))):- !,
+  rdf_bnode(BNode),
+  store_triple(Datadoc, llo-Kind, BNode),
+  store_triple(BNode, rdf-type, error-'EncodingError'),
+  store_triple(BNode, error-object, literal(type(xsd-integer,Char))).
+
 % Existence error: directory
 store_lod_error(
   Datadoc,

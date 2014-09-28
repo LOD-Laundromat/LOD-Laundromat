@@ -45,8 +45,8 @@
 :- debug(lwm_idle_loop(unpack)).
 
 % Show progress.
-:- debug(lwm_progress(clean_large)).
-:- debug(lwm_progress(clean_medium)).
+%%%%:- debug(lwm_progress(clean_large)).
+%%%%:- debug(lwm_progress(clean_medium)).
 %%%%:- debug(lwm_progress(clean_small)).
 %%%%:- debug(lwm_progress(unpack)).
 
@@ -57,7 +57,7 @@
 :- dynamic(debug:debug_md5/2).
 :- multifile(debug:debug_md5/2).
 
-%debug:debug_md5('827b1bf83d15f8355e8df9d31a4ea949', clean).
+%%%%debug:debug_md5('827b1bf83d15f8355e8df9d31a4ea949', clean).
 
 
 
