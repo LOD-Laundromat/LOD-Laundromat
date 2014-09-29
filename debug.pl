@@ -42,7 +42,7 @@
 %%%%:- debug(lwm_idle_loop(clean_large)).
 %%%%:- debug(lwm_idle_loop(clean_medium)).
 %%%%:- debug(lwm_idle_loop(clean_small)).
-:- debug(lwm_idle_loop(unpack)).
+%%%%:- debug(lwm_idle_loop(unpack)).
 
 % Show progress.
 %%%%:- debug(lwm_progress(clean_large)).
