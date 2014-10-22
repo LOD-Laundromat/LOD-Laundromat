@@ -284,11 +284,6 @@ store_lod_error(Datadoc, Kind, rdf(unparsed(DOM))):- !,
   atom_truncate(Atom1, 500, Atom2),
   store_triple(BNode, error-dom, literal(type(xsd-string,Atom2))).
 
-% RDFa: Processing Instruction
-% @tbd This seems to be incorrectly identified as an error by the RDFa parser.
-store_lod_error(Datadoc, Kind, error(type_error(xml_dom, pi(_PI)),_)):- !,
-  store_triple(Datadoc, error-Kind, error-processingInstruction).
-
 % DEB
 store_lod_error(Datadoc, Kind, Error):-
   gtrace,
