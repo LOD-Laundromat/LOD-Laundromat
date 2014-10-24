@@ -25,6 +25,8 @@ Unpacks files for the LOD Washing Machine to clean.
 :- use_module(os(file_ext)).
 :- use_module(pl(pl_log)).
 
+:- use_module(plRdf_ser(rdf_file_db)).
+
 :- use_module(lwm(md5)).
 :- use_module(lwm(lwm_debug_message)).
 :- use_module(lwm(lwm_sparql_query)).
