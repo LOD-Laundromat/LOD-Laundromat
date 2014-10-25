@@ -179,7 +179,7 @@ clean_datastream(
   % using the content type and the file extension as suggestions.
   ignore(datadoc_file_extension(Datadoc, FileExtension)),
   rdf_guess_format(Datadoc, Read, FileExtension, ContentType, Format),
-  rdf_serialization(_, _, Format, _, Uri),
+  rdf_serialization(_, Format, _, Uri),
   store_triple(Datadoc, llo-serializationFormat, Uri),
 
   % Load all triples by parsing the data document
