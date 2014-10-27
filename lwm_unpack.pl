@@ -216,8 +216,7 @@ unpack_file(Md5, Datadoc, ArchiveFile):-
         literal(type(xsd-nonNegativeInteger,UnpackedSize))
       )
       % The file is now ready for cleaning!
-  ;
-      % Store the archive entries for future processing.
+  ;   % Store the archive entries for future processing.
       pairs_keys_values(EntryPairs, EntryPaths, EntryProperties1),
       
       % Store the archive format.
