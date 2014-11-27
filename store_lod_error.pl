@@ -15,11 +15,12 @@ Stores error term denoting exceptions in a LOD format.
 @version 2014/09
 */
 
-:- use_module(library(semweb/rdf_db)).
+:- use_module(library(semweb/rdf_db), except([rdf_node/1])).
 :- use_module(library(uri)).
 
 :- use_module(generics(atom_ext)).
-:- use_module(xml(xml_dom)).
+
+:- use_module(plXml(xml_dom)).
 
 :- use_module(lwm(noRdf_store)).
 
@@ -27,6 +28,8 @@ Stores error term denoting exceptions in a LOD format.
 :- rdf_register_prefix(httpo, 'http://lodlaundromat.org/http/ontology/').
 :- rdf_register_prefix(ll, 'http://lodlaundromat.org/resource/').
 :- rdf_register_prefix(llo, 'http://lodlaundromat.org/ontology/').
+
+
 
 
 

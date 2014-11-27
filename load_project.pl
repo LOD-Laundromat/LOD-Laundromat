@@ -16,7 +16,7 @@ Generic code for loading a project:
   * Load the index of subprojects onto the file search path.
 
 @author Wouter Beek
-@version 2014/08/20
+@version 2014/11/22
 */
 
 :- use_module(library(ansi_term)). % Colorized terminal messages.

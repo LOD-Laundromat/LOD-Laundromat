@@ -18,16 +18,16 @@ The cleaning process performed by the LOD Washing Machine.
 :- use_module(library(aggregate)).
 :- use_module(library(apply)).
 :- use_module(library(option)).
-:- use_module(library(semweb/rdf_db)).
+:- use_module(library(semweb/rdf_db), except([rdf_node/1])).
 :- use_module(library(zlib)).
 
 :- use_module(generics(list_ext)).
 :- use_module(os(io_ext)).
 :- use_module(pl(pl_log)).
 
-:- use_module(plRdf_ser(ctriples_write_graph)).
-:- use_module(plRdf_ser(rdf_file_db)).
-:- use_module(plRdf_ser(rdf_guess_format)).
+:- use_module(plRdf(management/rdf_file_db)).
+:- use_module(plRdf(management/rdf_guess_format)).
+:- use_module(plRdf(syntax/ctriples/ctriples_write_graph)).
 
 :- use_module(lwm(lwm_debug_message)).
 :- use_module(lwm(lwm_sparql_query)).
@@ -37,6 +37,8 @@ The cleaning process performed by the LOD Washing Machine.
 
 :- dynamic(debug:debug_md5/2).
 :- multifile(debug:debug_md5/2).
+
+
 
 
 

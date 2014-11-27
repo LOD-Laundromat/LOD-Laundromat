@@ -19,11 +19,10 @@ Generic predicates for the LOD Washing Machine.
 */
 
 :- use_module(library(filesex)).
-:- use_module(library(semweb/rdf_db)).
+:- use_module(library(semweb/rdf_db), except([rdf_node/1])).
 :- use_module(library(uri)).
 
 :- use_module(generics(service_db)).
-:- use_module(void(void_db)). % Namespace.
 
 :- use_module(plSparql(sparql_db)).
 

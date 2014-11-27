@@ -16,10 +16,10 @@ Restart the LOD Washing Machine during debugging.
 :- use_module(library(debug)).
 :- use_module(library(http/http_client)).
 
-:- use_module(generics(uri_query)).
+:- use_module(plUri(uri_query)).
 
 :- use_module(plSparql(sparql_db)).
-:- use_module(plSparql_update(sparql_update_api)).
+:- use_module(plSparql(update/sparql_update_api)).
 
 :- use_module(lwm(lwm_settings)).
 
