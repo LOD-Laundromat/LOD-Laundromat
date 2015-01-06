@@ -10,20 +10,25 @@
 Unpacks files for the LOD Washing Machine to clean.
 
 @author Wouter Beek
-@version 2014/06, 2014/08-2014/09
+@version 2014/06, 2014/08-2014/09, 2014/11, 2015/01
 */
 
 :- use_module(library(apply)).
-:- use_module(library(lists)).
+:- use_module(library(lists), except([delete/3,subset/2])).
 :- use_module(library(ordsets)).
 :- use_module(library(pairs)).
 
 :- use_module(generics(atom_ext)).
-:- use_module(generics(uri_ext)).
-:- use_module(http(http_download)).
 :- use_module(os(archive_ext)).
 :- use_module(os(file_ext)).
+:- use_module(os(file_gnu)).
 :- use_module(pl(pl_log)).
+
+:- use_module(plUri(uri_ext)).
+
+:- use_module(plHttp(download_to_file)).
+
+:- use_module(plRdf(management/rdf_file_db)).
 
 :- use_module(lwm(md5)).
 :- use_module(lwm(lwm_debug_message)).
@@ -34,12 +39,14 @@ Unpacks files for the LOD Washing Machine to clean.
 :- dynamic(debug:debug_md5/2).
 :- multifile(debug:debug_md5/2).
 
-:- dynamic(lwm:current_host/1).
-:- multifile(lwm:current_host/1).
+
+
+
 
 
 
 lwm_unpack_loop:-
+gtrace,
   % Pick a new source to process.
   % If some exception is thrown here, the catch/3 makes it
   % silently fail. This way, the unpacking thread is able
@@ -90,10 +97,6 @@ lwm_unpack_loop:-
   maplist(store_warning(Datadoc), Warnings),
   store_end_unpack(Md5, Datadoc, Status),
 
-  %%%%% @tbd Remove the lock from this host: additional data documents
-  %%%%%      can now be downloaded from the same host.
-  %%%%retractall(lwm:current_host(Host)),
-
   % Intermittent loop.
   lwm_unpack_loop.
 % Done for now. Check whether there are new jobs in one seconds.
@@ -132,7 +135,7 @@ unpack_datadoc(Md5, Datadoc, DirtyUrl):-
   md5_directory(Md5, Md5Dir),
 
   % Extracting and store the file extensions from the download URL, if any.
-  (   url_file_extension(DirtyUrl, FileExtension)
+  (   uri_file_extension(DirtyUrl, FileExtension)
   ->  true
   ;   FileExtension = ''
   ),
@@ -142,7 +145,7 @@ unpack_datadoc(Md5, Datadoc, DirtyUrl):-
   directory_file_path(Md5Dir, LocalDownloadFile, DownloadFile),
 
   % Download the dirty file for the given Md5.
-  lod_accept_header_value(AcceptValue),
+  rdf_accept_header_value(AcceptValue),
   download_to_file(
     DirtyUrl,
     DownloadFile,
@@ -186,59 +189,54 @@ unpack_file(Md5, Datadoc, ArchiveFile):-
   store_archive_filters(Datadoc, ArchiveFilters),
 
   md5_directory(Md5, Md5Dir),
-  (
-    EntryPairs == []
-  ->
-    % There is no file for cleaning.
-    % To keep the process simple / consistent with other cases,
-    % we create an empty dirty file.
-    directory_file_path(Md5Dir, dirty, DirtyFile),
-    touch_file(DirtyFile)
-  ;
-    % Exactly one raw file.
-    % This file is completely unarchived
-    % and should be moved to the cleaning phase.
-    EntryPairs = [data-EntryProperties],
-    memberchk(format(raw), EntryProperties)
-  ->
-    % Construct the data file name.
-    file_directory_name(ArchiveFile, ArchiveDir),
-    directory_file_path(ArchiveDir, data, DataFile),
-
-    % Construct the dirty file name.
-    directory_file_path(Md5Dir, dirty, DirtyFile),
-
-    % Move the data file outside of the its entry path,
-    % and put it directly inside its MD5 directory.
-    mv2(DataFile, DirtyFile),
-    size_file(DirtyFile, UnpackedSize),
-    store_triple(
-      Datadoc,
-      llo-unpackedSize,
-      literal(type(xsd-nonNegativeInteger,UnpackedSize))
-    )
-    % The file is now ready for cleaning!
-  ;
-    % Store the archive entries for future processing.
-    pairs_keys_values(EntryPairs, EntryPaths, EntryProperties1),
-
-    % Store the archive format.
-    filter_archive_formats(
-      EntryProperties1,
-      ArchiveFormats,
-      EntryProperties2
-    ),
-    distill_archive_format(ArchiveFormats, ArchiveFormat),
-    store_triple(
-      Datadoc,
-      llo-archiveFormat,
-      literal(type(xsd-string,ArchiveFormat))
-    ),
-
-    maplist(store_archive_entry(Md5, Datadoc), EntryPaths, EntryProperties2),
-    store_skip_clean(Md5, Datadoc)
+  (   EntryPairs == []
+  ->  % There is no file for cleaning.
+      % To keep the process simple / consistent with other cases,
+      % we create an empty dirty file.
+      directory_file_path(Md5Dir, dirty, DirtyFile),
+      touch_file(DirtyFile)
+  ;   % Exactly one raw file.
+      % This file is completely unarchived
+      % and should be moved to the cleaning phase.
+      EntryPairs = [data-EntryProperties],
+      memberchk(format(raw), EntryProperties)
+  ->  % Construct the data file name.
+      file_directory_name(ArchiveFile, ArchiveDir),
+      directory_file_path(ArchiveDir, data, DataFile),
+      
+      % Construct the dirty file name.
+      directory_file_path(Md5Dir, dirty, DirtyFile),
+      
+      % Move the data file outside of the its entry path,
+      % and put it directly inside its MD5 directory.
+      mv2(DataFile, DirtyFile),
+      size_file(DirtyFile, UnpackedSize),
+      store_triple(
+        Datadoc,
+        llo-unpackedSize,
+        literal(type(xsd-nonNegativeInteger,UnpackedSize))
+      )
+      % The file is now ready for cleaning!
+  ;   % Store the archive entries for future processing.
+      pairs_keys_values(EntryPairs, EntryPaths, EntryProperties1),
+      
+      % Store the archive format.
+      filter_archive_formats(
+        EntryProperties1,
+        ArchiveFormats,
+        EntryProperties2
+      ),
+      distill_archive_format(ArchiveFormats, ArchiveFormat),
+      store_triple(
+        Datadoc,
+        llo-archiveFormat,
+        literal(type(xsd-string,ArchiveFormat))
+      ),
+      
+      maplist(store_archive_entry(Md5, Datadoc), EntryPaths, EntryProperties2),
+      store_skip_clean(Md5, Datadoc)
   ),
-
+  
   % Remove the archive file.
   delete_file(ArchiveFile).
 
@@ -266,50 +264,6 @@ filter_archive_formats([L1|Ls1], Fs1, [L2|Ls2]):-
   selectchk(format(F), L1, L2),
   filter_archive_formats(Ls1, Fs2, Ls2),
   ord_add_element(Fs2, F, Fs1).
-
-
-%! lod_accept_header_value(-Value:atom) is det.
-
-lod_accept_header_value(Value):-
-  findall(
-    Value,
-    (
-      lod_content_type(ContentType, Q),
-      format(atom(Value), '~a; q=~1f', [ContentType,Q])
-    ),
-    Values
-  ),
-  atomic_list_concat(Values, ', ', Value).
-
-
-%! lod_content_type(?ContentType:atom, ?QValue:between(0.0,1.0)) is nondet.
-
-% RDFa
-lod_content_type('text/html',              0.3).
-% N-Quads
-lod_content_type('application/n-quads',    0.8).
-% N-Triples
-lod_content_type('application/n-triples',  0.8).
-% RDF/XML
-lod_content_type('application/rdf+xml',    0.7).
-lod_content_type('text/rdf+xml',           0.7).
-lod_content_type('application/xhtml+xml',  0.3).
-lod_content_type('application/xml',        0.3).
-lod_content_type('text/xml',               0.3).
-lod_content_type('application/rss+xml',    0.5).
-% Trig
-lod_content_type('application/trig',       0.8).
-lod_content_type('application/x-trig',     0.5).
-% Turtle
-lod_content_type('text/turtle',            0.9).
-lod_content_type('application/x-turtle',   0.5).
-lod_content_type('application/turtle',     0.5).
-lod_content_type('application/rdf+turtle', 0.5).
-% N3
-lod_content_type('text/n3',                0.8).
-lod_content_type('text/rdf+n3',            0.5).
-% All
-lod_content_type('*/*',                    0.1).
 
 
 pair_to_triple(S, [P,O], rdf(S,P,O)).

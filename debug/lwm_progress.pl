@@ -1,8 +1,7 @@
 :- module(
   lwm_progress,
   [
-    lwm_progress/2 % +Request:list(nvpair)
-                   % +HtmlStyle
+    lwm_progress/1 % +Request:list(nvpair)
   ]
 ).
 
@@ -11,54 +10,59 @@
 A Web-based debug tool for tracking the progress of the LOD Washing Machine.
 
 @author Wouter Beek
-@version 2014/09
+@version 2014/09, 2014/11, 2015/01
 */
 
 :- use_module(library(http/html_write)).
-
-:- use_module(generics(request_ext)).
+:- use_module(library(http/http_dispatch)).
+:- use_module(library(semweb/rdf_db), except([rdf_node/1])).
 
 :- use_module(plDcg(dcg_generics)).
+
+:- use_module(plHttp(request_ext)).
 
 :- use_module(plHtml(html_pl_term)).
 
 :- use_module(plRdf(rdf_name)).
-:- use_module(plRdf(rdf_parse)).
+:- use_module(plRdf(term/rdf_term)).
 
-:- use_module(plSparql_query(sparql_query_api)).
+:- use_module(plSparql(query/sparql_query_api)).
 
 :- use_module(plTabular(rdf_html_table)).
 :- use_module(plTabular(rdf_term_html)).
 
 :- use_module(lwm(lwm_sparql_query)).
 
+:- http_handler(root(progress), lwm_progress, [id(lwm_progress)]).
 
 
-%! lwm_progress(+Request:list(nvpair), +HtmlStyle)// is det.
+
+
+
+%! lwm_progress(+Request:list(nvpair))// is det.
 
 % SPARQL DESCRIBE the given (subject) term.
-lwm_progress(Request, HtmlStyle):-
+lwm_progress(Request):-
   request_query_nvpair(Request, term, T0), !,
-
-  % Parse the term atom to extract the corresponding RDF term.
-  once(dcg_phrase(rdf_parse_term(T1), T0)),
-  rdf_global_id(T1, T2),
-
+  rdf_global_id(T0, T),
+  rdf_is_term(T),
+  
   sparql_select(
     virtuoso_query,
     [llo],
     [p,o],
-    [rdf(T2, var(p), var(o))],
+    [rdf(T,var(p),var(o))],
     Rows,
     []
   ),
-
+  
+  user:current_html_style(HtmlStyle),
   reply_html_page(
     HtmlStyle,
-    title(['LOD Washing Machine - DESCRIBE ',\rdf_term_name(T2)]),
+    title(['LOD Washing Machine - DESCRIBE ',\rdf_term_name(T)]),
     html(
       \rdf_html_table(
-		    html(\rdf_term_html(lwm_progress,T2)),
+        html(\rdf_term_html(lwm_progress,T)),
         [['Predicate','Object']|Rows],
         [
           header_column(true),
@@ -70,7 +74,8 @@ lwm_progress(Request, HtmlStyle):-
     )
   ).
 % Overview of LOD Washing Machine progress.
-lwm_progress(_, HtmlStyle):-
+lwm_progress(_):-
+  user:current_html_style(HtmlStyle),
   reply_html_page(
     HtmlStyle,
     title('LOD Washing Machine - Progress'),

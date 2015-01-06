@@ -10,13 +10,28 @@
 
 :- use_module(load_project).
 :- load_project([
-    plc-'Prolog-Library-Collection',
-    plDcg,
-    plHtml,
-    plServer,
-    plXsd,
-    plRdf,
-    plTabular,
-    plSparql
+     mt-'ModelTheory',
+     plc-'Prolog-Library-Collection',
+     plDcg,
+     plGraph,
+     plGraphDraw,
+     plGraphViz,
+     plHtml,
+     plHttp,
+     plLangTag,
+     plLattice,
+     plLatticeDraw,
+     plRdf,
+     plServer,
+     plSet,
+     plSparql,
+     plSvg,
+     plTabular,
+     plTms,
+     plTree,
+     plTreeDraw,
+     plUri,
+     plXml,
+     plXsd
 ]).
 

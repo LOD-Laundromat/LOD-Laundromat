@@ -7,40 +7,39 @@ that serves the cleaned files and an accessible SPARQL endpoint
 for storing the metadata. See module [lwm_settings] for this.
 
 @author Wouter Beek
-@version 2014/06, 2014/08-2014/09
+@version 2014/06, 2014/08-2014/09, 2014/11
 */
 
 :- set_prolog_stack(global, limit(125*10**9)).
 
-:- [debug].
-:- [load].
 
-:- use_module(library(http/http_dispatch)).
+:- if(current_prolog_flag(argv, ['--debug'])).
+  :- ensure_loaded(debug).
+:- else.
+  :- ensure_loaded(load).
+:- endif.
+
+
 :- use_module(library(optparse)).
-:- use_module(library(semweb/rdf_db)).
+:- use_module(library(semweb/rdf_db), except([rdf_node/1])).
 
 :- use_module(plServer(app_server)).
-:- use_module(plServer(plServer)).
 :- use_module(plServer(web_modules)). % Web module registration.
 
 :- use_module(lwm(lwm_clean)).
 :- use_module(lwm(lwm_continue)).
 :- use_module(lwm(lwm_restart)).
 :- use_module(lwm(lwm_unpack)).
-:- use_module(lwm_deb(lwm_progress)).
+:- use_module(lwm(debug/lwm_progress)).
 
 :- http_handler(root(progress), lwm_progress, [id(lwm_progress)]).
 
 :- dynamic(user:web_module/2).
 :- multifile(user:web_module/2).
 
-:- dynamic(lwm:current_host/1).
-:- multifile(lwm:current_host/1).
+user:current_html_style(menu_page).
 
 user:web_module('LWM Progress', lwm_progress).
-
-lwm_progress(Request):-
-  lwm_progress(Request, plServer_style).
 
 :- initialization(init).
 
@@ -53,8 +52,8 @@ init:-
   process_command_line_arguments,
   NumberOfUnpackThreads = 1,
   NumberOfSmallCleanThreads = 1,
-  NumberOfMediumCleanThreads = 1,
-  NumberOfLargeCleanThreads = 1,
+  NumberOfMediumCleanThreads = 0,
+  NumberOfLargeCleanThreads = 0,
 
   % Start the downloading+unpacking threads.
   forall(
@@ -81,9 +80,6 @@ init:-
 
 
 clean_lwm_state:-
-  % Reset the hosts from which data documents are currently being downloaded.
-  retractall(current_host(_)),
-
   %%%%flag(number_of_pending_md5s, _, 0),
   flag(store_new_url, _, 0),
 

@@ -10,15 +10,15 @@
 Continues an interrupted LOD Washing Machine crawl.
 
 @author Wouter Beek
-@version 2014/09
+@version 2014/09, 2015/01
 */
 
 :- use_module(library(aggregate)).
 :- use_module(library(apply)).
 :- use_module(library(filesex)).
-:- use_module(library(semweb/rdf_db)).
+:- use_module(library(semweb/rdf_db), except([rdf_node/1])).
 
-:- use_module(plSparql_update(sparql_update_api)).
+:- use_module(plSparql(update/sparql_update_api)).
 
 :- use_module(lwm(lwm_settings)).
 :- use_module(lwm(lwm_sparql_query)).

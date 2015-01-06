@@ -36,20 +36,22 @@
 SPARQL queries for the LOD Washing Machine.
 
 @author Wouter Beek
-@version 2014/06, 2014/08-2014/09
+@version 2014/06, 2014/08-2014/09, 2014/11, 2015/01
 */
 
 :- use_module(library(apply)).
-:- use_module(library(lists)).
+:- use_module(library(lists), except([delete/3,subset/2])).
 :- use_module(library(option)).
 
 :- use_module(generics(meta_ext)).
 
-:- use_module(plRdf_term(rdf_datatype)).
+:- use_module(plRdf(term/rdf_literal)).
 
-:- use_module(plSparql_query(sparql_query_api)).
+:- use_module(plSparql(query/sparql_query_api)).
 
 :- use_module(lwm(lwm_settings)).
+
+
 
 
 
@@ -104,7 +106,7 @@ datadoc_archive_entry(Datadoc, ParentMd5, EntryPath):-
     [Row],
     [limit(1)]
   ),
-  maplist(rdf_literal_value2, Row, [ParentMd5,EntryPath]).
+  maplist(rdf_literal_data(value), Row, [ParentMd5,EntryPath]).
 
 
 %! datadoc_cleaning(-Datadoc:url) is nondet.
@@ -136,7 +138,7 @@ datadoc_content_type(Datadoc, ContentType):-
     [[ContentTypeLiteral]],
     [limit(1)]
   ),
-  rdf_literal_value2(ContentTypeLiteral, ContentType).
+  rdf_literal_data(value, ContentTypeLiteral, ContentType).
 datadoc_content_type(_, _VAR).
 
 
@@ -163,7 +165,7 @@ datadoc_file_extension(Datadoc, FileExtension):-
     [[FileExtensionLiteral]],
     [limit(1)]
   ),
-  rdf_literal_value2(FileExtensionLiteral, FileExtension).
+  rdf_literal_data(value, FileExtensionLiteral, FileExtension).
 
 
 %! datadoc_pending(-Datadoc:url, -Dirty:url) is nondet.
@@ -227,7 +229,7 @@ datadoc_source(Datadoc, Source):-
     [[Parent,PathLiteral]],
     [limit(1)]
   ),
-  rdf_literal_value2(PathLiteral, Path),
+  rdf_literal_data(value, PathLiteral, Path),
   datadoc_source(Parent, ParentSource),
   atomic_concat(ParentSource, Path, Source).
 
@@ -249,7 +251,7 @@ datadoc_unpacked(Min, Max, Datadoc, UnpackedSize):-
     [[Datadoc,UnpackedSizeLiteral]],
     [limit(1)]
   ),
-  rdf_literal_value2(UnpackedSizeLiteral, UnpackedSize).
+  rdf_literal_data(value, UnpackedSizeLiteral, UnpackedSize).
 conjunctive_filter([H], H):- !.
 conjunctive_filter([H|T1], and(H,T2)):-
   conjunctive_filter(T1, T2).
