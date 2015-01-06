@@ -1,7 +1,8 @@
 :- module(
   debug_project,
   [
-    debug_all_files/0
+    debug_all_files/0,
+    start_pldoc_server/0
   ]
 ).
 
@@ -11,20 +12,33 @@ Generic code for debugging a project:
   * Load all subdirectories and Prolog files contained in those directories.
 
 @author Wouter Beek
-@version 2014/11/19
+@version 2014/12/30
 */
 
 :- use_module(library(ansi_term)).
 :- use_module(library(apply)).
+:- use_module(library(pldoc)).
+:- use_module(library(portray_text)).
 
-:- use_module(os(dir_ext)).
+:- set_prolog_flag(
+  answer_write_options,
+  [max_depth(100),portrayed(true),spacing(next_argument)]
+).
+:- set_prolog_flag(
+  debugger_write_options,
+  [max_depth(100),portrayed(true),spacing(next_argument)]
+).
+:- set_portray_text(ellipsis, 1000).
 
-% Avoid errors when using gtrace/0 in threads.
-:- initialization(guitracer).
+:- dynamic(user:debug_mode).
+:- multifile(user:debug_mode).
+
+:- initialization(init_debug_mode).
 
 
 
 debug_all_files:-
+  ensure_loaded(os(dir_ext)),
   absolute_file_name(project(.), Dir, [access(read),file_type(directory)]),
   directory_files(
     Dir,
@@ -55,6 +69,30 @@ do_not_load0(index).
 do_not_load0(load).
 do_not_load0(load_project).
 do_not_load0(run).
+do_not_load0(style).
+
+
+
+%! start_pldoc_server is det.
+% The plDoc server should be started *before* documented modules are loaded.
+
+start_pldoc_server:-
+  doc_server(9999).
+
+
+
+
+
+% INITIALIZATION
+
+init_debug_mode:-
+  % Set the debug mode flag.
+  (   user:debug_mode
+  ->  true
+  ;   assert(user:debug_mode)
+  ),
+  % Avoid errors when using gtrace/0 in threads.
+  guitracer.
 
 
 

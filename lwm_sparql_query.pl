@@ -36,7 +36,7 @@
 SPARQL queries for the LOD Washing Machine.
 
 @author Wouter Beek
-@version 2014/06, 2014/08-2014/09, 2015/01
+@version 2014/06, 2014/08-2014/09, 2014/11, 2015/01
 */
 
 :- use_module(library(apply)).
@@ -45,7 +45,6 @@ SPARQL queries for the LOD Washing Machine.
 
 :- use_module(generics(meta_ext)).
 
-:- use_module(plRdf(term/rdf_datatype)).
 :- use_module(plRdf(term/rdf_literal)).
 
 :- use_module(plSparql(query/sparql_query_api)).

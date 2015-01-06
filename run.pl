@@ -7,15 +7,19 @@ that serves the cleaned files and an accessible SPARQL endpoint
 for storing the metadata. See module [lwm_settings] for this.
 
 @author Wouter Beek
-@version 2014/06, 2014/08-2014/09
+@version 2014/06, 2014/08-2014/09, 2014/11
 */
 
 :- set_prolog_stack(global, limit(125*10**9)).
 
-:- [debug].
-:- [load].
 
-:- use_module(library(http/http_dispatch)).
+:- if(current_prolog_flag(argv, ['--debug'])).
+  :- ensure_loaded(debug).
+:- else.
+  :- ensure_loaded(load).
+:- endif.
+
+
 :- use_module(library(optparse)).
 :- use_module(library(semweb/rdf_db), except([rdf_node/1])).
 
@@ -33,13 +37,7 @@ for storing the metadata. See module [lwm_settings] for this.
 :- dynamic(user:web_module/2).
 :- multifile(user:web_module/2).
 
-:- dynamic(lwm:current_host/1).
-:- multifile(lwm:current_host/1).
-
 user:web_module('LWM Progress', lwm_progress).
-
-lwm_progress(Request):-
-  lwm_progress(Request, plServer_style).
 
 :- initialization(init).
 
@@ -80,9 +78,6 @@ init:-
 
 
 clean_lwm_state:-
-  % Reset the hosts from which data documents are currently being downloaded.
-  retractall(current_host(_)),
-
   %%%%flag(number_of_pending_md5s, _, 0),
   flag(store_new_url, _, 0),
 

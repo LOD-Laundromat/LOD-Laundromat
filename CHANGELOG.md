@@ -1,6 +1,8 @@
 Changelog LOD Laundromat 11 (changes since LOD Laundromat 10)
 =============================================================
 
+This is the version demoed at ISWC and BNAIC (2014/10-2014/11).
+
 Major features
 --------------
 
@@ -31,10 +33,11 @@ Deployment
   - The ability to start multiple cleaning threads that work on
     dirty data documents of varying size.  This allows multi-threading
     without exhausting *memory* resources too quickly.
+    Threads can be created for small, medium, or large cleaning jobs.
   - Restriction of the downloaded+unpacked-but-not-yet-cleaned document pool
     to (currently) 100 instances.  This prevents the *hard disk* from getting
     filled with dirty data in case the cleaning threads lag behind too much.
-  - The LOD Laundromat codebase is split into multiple parts:
+  - The LOD Laundromat codebase is split into modular parts:
     llWashingMachine for collecting+cleaning data,
     llEndpoint for debugging purposes, and a backend repository which
     implements the LOD Laundromat Web services and Web site.
@@ -82,4 +85,19 @@ Bugfixes
       false negative parsing errors for RDFa.
     - Handle HTML documents with multiple root elements
       (grammatically incorrect, but appears in the wild).
+    - The parser would illegitimately break on Processing Instructions (PIs)
+      appearing in an XML document.
 
+Known limitations
+=================
+
+    - Blank nodes that occur in the metadata describing the scraping process
+      are formatted `_:x<NUMBER>` i.o. `_:<NUMBER>` to be Virtuoso-compliant.
+    - The messages for warnings and exceptions are truncated at 1000 characters
+      and only the first 100 warnings are stored because of the bytesize bounds
+      that Virtuoso enforces on SPARQL Updates.
+    - Virtuoso cannot handle very many near-simultaneaus SPARQL Update
+      requests (HTTP 413).
+      New seed URIs from VoID descriptions can therefore not
+      be added to the datastore directly but are written to a text file
+      which has to be manually imported.

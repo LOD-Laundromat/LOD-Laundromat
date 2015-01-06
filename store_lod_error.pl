@@ -31,6 +31,8 @@ Stores error term denoting exceptions in a LOD format.
 
 
 
+
+
 % Archive error
 store_lod_error(Datadoc, Kind, error(archive_error(Code,_),_)):- !,
   (   Code == 2
