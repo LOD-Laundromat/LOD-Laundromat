@@ -46,7 +46,6 @@ Unpacks files for the LOD Washing Machine to clean.
 
 
 lwm_unpack_loop:-
-gtrace,
   % Pick a new source to process.
   % If some exception is thrown here, the catch/3 makes it
   % silently fail. This way, the unpacking thread is able
@@ -203,10 +202,10 @@ unpack_file(Md5, Datadoc, ArchiveFile):-
   ->  % Construct the data file name.
       file_directory_name(ArchiveFile, ArchiveDir),
       directory_file_path(ArchiveDir, data, DataFile),
-      
+
       % Construct the dirty file name.
       directory_file_path(Md5Dir, dirty, DirtyFile),
-      
+
       % Move the data file outside of the its entry path,
       % and put it directly inside its MD5 directory.
       mv2(DataFile, DirtyFile),
@@ -219,7 +218,7 @@ unpack_file(Md5, Datadoc, ArchiveFile):-
       % The file is now ready for cleaning!
   ;   % Store the archive entries for future processing.
       pairs_keys_values(EntryPairs, EntryPaths, EntryProperties1),
-      
+
       % Store the archive format.
       filter_archive_formats(
         EntryProperties1,
@@ -232,11 +231,11 @@ unpack_file(Md5, Datadoc, ArchiveFile):-
         llo-archiveFormat,
         literal(type(xsd-string,ArchiveFormat))
       ),
-      
+
       maplist(store_archive_entry(Md5, Datadoc), EntryPaths, EntryProperties2),
       store_skip_clean(Md5, Datadoc)
   ),
-  
+
   % Remove the archive file.
   delete_file(ArchiveFile).
 

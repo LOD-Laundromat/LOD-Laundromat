@@ -29,7 +29,7 @@ sudo service SERVICE ACTION
 Machines
 --------
 
-  - **D2S**: `d2s.labs.vu.nl`
+  - **D2S**: `ssh -X d2s.labs.vu.nl` and `ssh -X lodlaundromat.lxc`
   - `lodlaundromat.d2s.labs.vu.nl`: ???
   - **LOD Laundromat LXC**: virtual machine on `lodlaundromat.d2s.labs.vu.nl`
   - **Production server**: Hosts Web Services.
