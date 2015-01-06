@@ -1,92 +1,72 @@
+[submodule "ModelTheory"]
+	path = ModelTheory
+	url = https://github.com/wouterbeek/ModelTheory.git
 [submodule "Prolog-Library-Collection"]
 	path = Prolog-Library-Collection
 	url = https://github.com/wouterbeek/Prolog-Library-Collection.git
 	branch = master
-[submodule "plRdf"]
-	path = plRdf
-	url = https://github.com/wouterbeek/plRdf.git
-	branch = master
-[submodule "plSparql"]
-	path = plSparql
-	url = https://github.com/wouterbeek/plSparql.git
-[submodule "plXsd"]
-	path = plXsd
-	url = https://github.com/wouterbeek/plXsd.git
 [submodule "plDcg"]
 	path = plDcg
 	url = https://github.com/wouterbeek/plDcg.git
-[submodule "plHtml"]
-	path = plHtml
-	url = https://github.com/wouterbeek/plHtml.git
-[submodule "plTabular"]
-	path = plTabular
-	url = https://github.com/wouterbeek/plTabular.git
-[submodule "plServer"]
-	path = plServer
-	url = https://github.com/wouterbeek/plServer.git
-<<<<<<< HEAD
-[submodule "plUri"]
-	path = plUri
-	url = https://github.com/wouterbeek/plUri.git
-=======
 [submodule "plGraph"]
 	path = plGraph
 	url = https://github.com/wouterbeek/plGraph.git
->>>>>>> b91c9ee5bfbe5d76d1209f9a6ab4dace1638e2a7
-[submodule "plHttp"]
-	path = plHttp
-	url = https://github.com/wouterbeek/plHttp.git
-[submodule "plLangTag"]
-	path = plLangTag
-	url = https://github.com/wouterbeek/plLangTag.git
-<<<<<<< HEAD
-[submodule "plXml"]
-	path = plXml
-	url = https://github.com/wouterbeek/plXml.git
-=======
-[submodule "plSet"]
-	path = plSet
-	url = https://github.com/wouterbeek/plSet.git
->>>>>>> b91c9ee5bfbe5d76d1209f9a6ab4dace1638e2a7
-[submodule "plTms"]
-	path = plTms
-	url = https://github.com/wouterbeek/plTms.git
-[submodule "plTree"]
-	path = plTree
-	url = https://github.com/wouterbeek/plTree.git
-<<<<<<< HEAD
-[submodule "plSet"]
-	path = plSet
-	url = https://github.com/wouterbeek/plSet.git
-[submodule "plGraph"]
-	path = plGraph
-	url = https://github.com/wouterbeek/plGraph.git
-=======
-[submodule "plUri"]
-	path = plUri
-	url = https://github.com/wouterbeek/plUri.git
-[submodule "plXml"]
-	path = plXml
-	url = https://github.com/wouterbeek/plXml.git
-[submodule "ModelTheory"]
-	path = ModelTheory
-	url = https://github.com/wouterbeek/ModelTheory.git
 [submodule "plGraphDraw"]
 	path = plGraphDraw
 	url = https://github.com/wouterbeek/plGraphDraw.git
 [submodule "plGraphViz"]
 	path = plGraphViz
 	url = https://github.com/wouterbeek/plGraphViz.git
+[submodule "plHtml"]
+	path = plHtml
+	url = https://github.com/wouterbeek/plHtml.git
+[submodule "plHttp"]
+	path = plHttp
+	url = https://github.com/wouterbeek/plHttp.git
+[submodule "plLangTag"]
+	path = plLangTag
+	url = https://github.com/wouterbeek/plLangTag.git
 [submodule "plLattice"]
 	path = plLattice
 	url = https://github.com/wouterbeek/plLattice.git
 [submodule "plLatticeDraw"]
 	path = plLatticeDraw
 	url = https://github.com/wouterbeek/plLatticeDraw.git
-[submodule "plTreeDraw"]
-	path = plTreeDraw
-	url = https://github.com/wouterbeek/plTreeDraw.git
+[submodule "plRdf"]
+	path = plRdf
+	url = https://github.com/wouterbeek/plRdf.git
+	branch = master
+[submodule "plServer"]
+	path = plServer
+	url = https://github.com/wouterbeek/plServer.git
+[submodule "plSet"]
+	path = plSet
+	url = https://github.com/wouterbeek/plSet.git
+[submodule "plSparql"]
+	path = plSparql
+	url = https://github.com/wouterbeek/plSparql.git
 [submodule "plSvg"]
 	path = plSvg
 	url = https://github.com/wouterbeek/plSvg.git
->>>>>>> b91c9ee5bfbe5d76d1209f9a6ab4dace1638e2a7
+[submodule "plTabular"]
+	path = plTabular
+	url = https://github.com/wouterbeek/plTabular.git
+[submodule "plTms"]
+	path = plTms
+	url = https://github.com/wouterbeek/plTms.git
+[submodule "plTree"]
+	path = plTree
+	url = https://github.com/wouterbeek/plTree.git
+[submodule "plTreeDraw"]
+	path = plTreeDraw
+	url = https://github.com/wouterbeek/plTreeDraw.git
+[submodule "plUri"]
+	path = plUri
+	url = https://github.com/wouterbeek/plUri.git
+[submodule "plXml"]
+	path = plXml
+	url = https://github.com/wouterbeek/plXml.git
+[submodule "plXsd"]
+	path = plXsd
+	url = https://github.com/wouterbeek/plXsd.git
+

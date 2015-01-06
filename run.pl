@@ -37,6 +37,8 @@ for storing the metadata. See module [lwm_settings] for this.
 :- dynamic(user:web_module/2).
 :- multifile(user:web_module/2).
 
+user:current_html_style(menu_page).
+
 user:web_module('LWM Progress', lwm_progress).
 
 :- initialization(init).
