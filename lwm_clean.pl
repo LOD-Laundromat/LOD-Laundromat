@@ -12,22 +12,26 @@
 The cleaning process performed by the LOD Washing Machine.
 
 @author Wouter Beek
-@version 2014/03-2014/06, 2014/08-2014/09
+@version 2014/03-2014/06, 2014/08-2014/09, 2015/01
 */
 
 :- use_module(library(aggregate)).
 :- use_module(library(apply)).
 :- use_module(library(option)).
-:- use_module(library(semweb/rdf_db)).
+:- use_module(library(semweb/rdf_db), except([rdf_node/1])).
+:- use_module(library(semweb/turtle)).
 :- use_module(library(zlib)).
 
 :- use_module(generics(list_ext)).
+:- use_module(generics(print_ext)).
 :- use_module(os(io_ext)).
 :- use_module(pl(pl_log)).
 
-:- use_module(plRdf_ser(ctriples_write_graph)).
-:- use_module(plRdf_ser(rdf_file_db)).
-:- use_module(plRdf_ser(rdf_guess_format)).
+:- use_module(plRdf(management/rdf_file_db)).
+:- use_module(plRdf(management/rdf_guess_format)).
+:- use_module(plRdf(syntax/ctriples/ctriples_write_generics)).
+:- use_module(plRdf(syntax/ctriples/ctriples_write_graph)).
+:- use_module(plRdf(syntax/ctriples/ctriples_write_triples)).
 
 :- use_module(lwm(lwm_debug_message)).
 :- use_module(lwm(lwm_sparql_query)).
@@ -37,6 +41,10 @@ The cleaning process performed by the LOD Washing Machine.
 
 :- dynamic(debug:debug_md5/2).
 :- multifile(debug:debug_md5/2).
+
+:- thread_local(datadump/1).
+
+
 
 
 
@@ -108,7 +116,7 @@ lwm_clean_loop(Category, Min, Max):-
   lwm_clean_loop(Category, Min, Max).
 
 
-%! clean_md5(+Category:atom, +Md5:atom, +Datadoc:url) is det.
+%! clean_md5(+Category:atom, +Md5:atom, +Datadoc:uri) is det.
 
 clean_md5(Category, Md5, Datadoc):-
   % Construct the file name belonging to the given MD5.
@@ -120,7 +128,7 @@ clean_md5(Category, Md5, Datadoc):-
 
   % Clean the data document in an RDF transaction.
   setup_call_cleanup(
-    open(DirtyFile, read, Read),
+    open(DirtyFile, read, In),
     (
       rdf_transaction(
         clean_datastream(
@@ -128,16 +136,16 @@ clean_md5(Category, Md5, Datadoc):-
           Md5,
           Datadoc,
           DirtyFile,
-          Read,
+          In,
           ContentType,
           VoidUrls
         ),
         _,
         [snapshot(true)]
       ),
-      store_stream(Datadoc, Read)
+      store_stream(Datadoc, In)
     ),
-    close(Read)
+    close(In)
   ),
 
   % Keep the old/dirty file around in compressed form,
@@ -149,9 +157,9 @@ clean_md5(Category, Md5, Datadoc):-
   with_mutex(store_new_url, (
     absolute_file_name(data('url.txt'), File, [access(append)]),
     setup_call_cleanup(
-      open(File, append, Write),
-      maplist(writeln(Write), VoidUrls),
-      close(Write)
+      open(File, append, Out),
+      maplist(writeln(Out), VoidUrls),
+      close(Out)
     )
   )).
 
@@ -159,11 +167,11 @@ clean_md5(Category, Md5, Datadoc):-
 %! clean_datastream(
 %!   +Category:atom,
 %!   +Md5:atom,
-%!   +Datadoc:url,
+%!   +Datadoc:uri,
 %!   +File:atom,
-%!   +Read:blob,
+%!   +In:stream,
 %!   +ContentType:atom,
-%!   -VoidUrls:ordset(url)
+%!   -VoidUrls:ordset(uri)
 %! ) is det.
 
 clean_datastream(
@@ -171,17 +179,18 @@ clean_datastream(
   Md5,
   Datadoc,
   File,
-  Read,
+  In,
   ContentType,
   VoidUrls
 ):-
   % Guess the RDF serialization format,
   % using the content type and the file extension as suggestions.
   ignore(datadoc_file_extension(Datadoc, FileExtension)),
-  rdf_guess_format(Datadoc, Read, FileExtension, ContentType, Format),
+  rdf_guess_format(Datadoc, In, FileExtension, ContentType, Format),
+  
   rdf_serialization(_, Format, _, Uri),
   store_triple(Datadoc, llo-serializationFormat, Uri),
-
+  
   % Load all triples by parsing the data document
   % according to the guessed RDF serialization format.
   md5_base_url(Md5, Base),
@@ -192,35 +201,81 @@ clean_datastream(
       register_namespaces(false),
       silent(true)
   ],
-
+  
   % Add options that are specific to the RDFa serialization format.
   (   Format == rdfa
   ->  merge_options([max_errors(-1),syntax(style)], Options1, Options2)
   ;   Options2 = Options1
   ),
-
-  rdf_load(stream(Read), Options2),
-
-  % In between loading and saving the data,
-  % we count the number of triples, including the number of duplicates.
-  aggregate_all(
-    count,
-    rdf(_, _, _, _),
-    TIn
+  
+  % Prepare the file name.
+  file_directory_name(File, Dir),
+  directory_file_path(Dir, 'clean.nt.gz', CleanFile),
+  
+  md5_bnode_base(Md5, BaseComponents),
+  Options3 = [
+    bnode_base(BaseComponents),
+    format(Format),
+    number_of_triples(TOut)
+  ],
+  
+  retractall(datadump/1),
+  (   memberchk(Format, [rdfa,xml])
+  ->  rdf_load(stream(In), Options2),
+      
+      % In between loading and saving the data,
+      % we count the number of triples, including the number of duplicates.
+      aggregate_all(
+        count,
+        rdf(_, _, _, _),
+        TIn
+      ),
+      
+      % Save the data in a cleaned format.
+      setup_call_cleanup(
+        gzopen(CleanFile, write, Out),
+        ctriples_write_graph(Out, _NoGraph, Options3),
+        close(Out)
+      ),
+      
+      % Make sure any VoID datadumps are added to the LOD Basket.
+      forall(
+        rdf_has(_, void:dataDump, VoidUrl),
+        assert(datadump(VoidUrl))
+      )
+  ;   setup_call_cleanup(
+        ctriples_write_begin(State, BNodePrefix, Options3),
+        setup_call_cleanup(
+          gzopen(CleanFile, write, Out),
+          rdf_process_turtle(
+            In,
+            clean_turtle_triples(Out, State, BNodePrefix),
+            Options2
+          ),
+          close(Out)
+        ),
+        ctriples_write_end(State, Options3)
+      )
   ),
-
-  % Save the data in a cleaned format.
-  save_data_to_file(Md5, File, TOut),
-
+  
+  % Collect datadump locations.
+  findall(
+    VoidUrl,
+    datadump(VoidUrl),
+    VoidUrls
+  ),
+  
+  % Fix the file name, if needed.
+  clean_file_name(CleanFile, Format),
+  
   % Store statistics about the number of (duplicate) triples.
-  store_number_of_triples(Category, Datadoc, TIn, TOut),
-
-  % Make sure any VoID datadumps are added to the LOD Basket.
-  find_void_datasets(Category, VoidUrls).
+  store_number_of_triples(Category, Datadoc, TIn, TOut).
 
 
 
-% Helpers
+
+
+% HELPERS %
 
 %! clean_file_name(+File:atom, +Format:oneof([quads,triples])) is det.
 
@@ -231,52 +286,31 @@ clean_file_name(File1, quads):-
   rename_file(File1, File2).
 
 
-%! find_void_datasets(+Category:atom, -VoidUrls:ordset(url)) is det.
 
-find_void_datasets(Category, Urls):-
-  aggregate_all(
-    set(Url),
-    rdf(_, void:dataDump, Url),
-    Urls
-  ),
+%! clean_turtle_triples(
+%!   +Out:stream,
+%!   +State:compound,
+%!   +BNodePrefix:atom,
+%!   +Triples:compound,
+%!   +LinePosition:compound
+%! ) is det.
 
-  % DEB
-  lwm_debug_message(lwm_process(Category), void_found(Urls)).
+clean_turtle_triples(Out, State, BNodePrefix, Triples, _):-
+  maplist(ctriples_write_triple(Out, State, BNodePrefix), Triples).
+
 
 
 %! rdf_guess_format(
-%!   +Datadoc:url,
-%!   +Read:blob,
+%!   +Datadoc:uri,
+%!   +In:stream,
 %!   +FileExtension:atom,
 %!   +ContentType:atom,
 %!   -Format:atom
 %! ) is semidet.
 
-rdf_guess_format(_, Read, FileExtension, ContentType, Format):-
-  rdf_guess_format(Read, FileExtension, ContentType, Format), !.
+rdf_guess_format(_, In, FileExtension, ContentType, Format):-
+  rdf_guess_format(In, FileExtension, ContentType, Format), !.
 rdf_guess_format(Datadoc, _, _, _, _):-
   datadoc_source(Datadoc, Source),
   throw(error(no_rdf(Source))).
 
-
-%! save_data_to_file(+Md5:atom, +File:atom, -NumberOfTriples:nonneg) is det.
-
-save_data_to_file(Md5, File, NumberOfTriples):-
-  file_directory_name(File, Dir),
-  directory_file_path(Dir, 'clean.nt.gz', CleanFile),
-  md5_bnode_base(Md5, BaseComponents),
-  setup_call_cleanup(
-    gzopen(CleanFile, write, Write),
-    ctriples_write_graph(
-      Write,
-      _NoGraph,
-      [
-        bnode_base(BaseComponents),
-        format(Format),
-        number_of_triples(NumberOfTriples)
-      ]
-    ),
-    close(Write)
-  ),
-  % Fix the file name, if needed.
-  clean_file_name(CleanFile, Format).

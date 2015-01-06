@@ -10,22 +10,25 @@
 Unpacks files for the LOD Washing Machine to clean.
 
 @author Wouter Beek
-@version 2014/06, 2014/08-2014/09
+@version 2014/06, 2014/08-2014/09, 2014/11, 2015/01
 */
 
 :- use_module(library(apply)).
-:- use_module(library(lists)).
+:- use_module(library(lists), except([delete/3,subset/2])).
 :- use_module(library(ordsets)).
 :- use_module(library(pairs)).
 
 :- use_module(generics(atom_ext)).
-:- use_module(generics(uri_ext)).
-:- use_module(http(http_download)).
 :- use_module(os(archive_ext)).
 :- use_module(os(file_ext)).
+:- use_module(os(file_gnu)).
 :- use_module(pl(pl_log)).
 
-:- use_module(plRdf_ser(rdf_file_db)).
+:- use_module(plUri(uri_ext)).
+
+:- use_module(plHttp(download_to_file)).
+
+:- use_module(plRdf(management/rdf_file_db)).
 
 :- use_module(lwm(md5)).
 :- use_module(lwm(lwm_debug_message)).
@@ -36,8 +39,9 @@ Unpacks files for the LOD Washing Machine to clean.
 :- dynamic(debug:debug_md5/2).
 :- multifile(debug:debug_md5/2).
 
-:- dynamic(lwm:current_host/1).
-:- multifile(lwm:current_host/1).
+
+
+
 
 
 
@@ -92,10 +96,6 @@ lwm_unpack_loop:-
   maplist(store_warning(Datadoc), Warnings),
   store_end_unpack(Md5, Datadoc, Status),
 
-  %%%%% @tbd Remove the lock from this host: additional data documents
-  %%%%%      can now be downloaded from the same host.
-  %%%%retractall(lwm:current_host(Host)),
-
   % Intermittent loop.
   lwm_unpack_loop.
 % Done for now. Check whether there are new jobs in one seconds.
@@ -134,7 +134,7 @@ unpack_datadoc(Md5, Datadoc, DirtyUrl):-
   md5_directory(Md5, Md5Dir),
 
   % Extracting and store the file extensions from the download URL, if any.
-  (   url_file_extension(DirtyUrl, FileExtension)
+  (   uri_file_extension(DirtyUrl, FileExtension)
   ->  true
   ;   FileExtension = ''
   ),
@@ -202,10 +202,10 @@ unpack_file(Md5, Datadoc, ArchiveFile):-
   ->  % Construct the data file name.
       file_directory_name(ArchiveFile, ArchiveDir),
       directory_file_path(ArchiveDir, data, DataFile),
-      
+
       % Construct the dirty file name.
       directory_file_path(Md5Dir, dirty, DirtyFile),
-      
+
       % Move the data file outside of the its entry path,
       % and put it directly inside its MD5 directory.
       mv2(DataFile, DirtyFile),
@@ -218,7 +218,7 @@ unpack_file(Md5, Datadoc, ArchiveFile):-
       % The file is now ready for cleaning!
   ;   % Store the archive entries for future processing.
       pairs_keys_values(EntryPairs, EntryPaths, EntryProperties1),
-      
+
       % Store the archive format.
       filter_archive_formats(
         EntryProperties1,
@@ -231,11 +231,11 @@ unpack_file(Md5, Datadoc, ArchiveFile):-
         llo-archiveFormat,
         literal(type(xsd-string,ArchiveFormat))
       ),
-      
+
       maplist(store_archive_entry(Md5, Datadoc), EntryPaths, EntryProperties2),
       store_skip_clean(Md5, Datadoc)
   ),
-  
+
   % Remove the archive file.
   delete_file(ArchiveFile).
 

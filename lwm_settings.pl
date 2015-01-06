@@ -15,15 +15,14 @@
 Generic predicates for the LOD Washing Machine.
 
 @author Wouter Beek
-@version 2014/06, 2014/08-2014/09
+@version 2014/06, 2014/08-2014/09, 2015/01
 */
 
 :- use_module(library(filesex)).
-:- use_module(library(semweb/rdf_db)).
+:- use_module(library(semweb/rdf_db), except([rdf_node/1])).
 :- use_module(library(uri)).
 
 :- use_module(generics(service_db)).
-:- use_module(void(void_db)). % Namespace.
 
 :- use_module(plSparql(sparql_db)).
 
@@ -42,6 +41,8 @@ Generic predicates for the LOD Washing Machine.
 lwm:lwm_server(virtuoso).
 
 :- initialization(init_lwm_sparql_endpoints).
+
+
 
 
 

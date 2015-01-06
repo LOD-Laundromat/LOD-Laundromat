@@ -44,22 +44,23 @@ the stored triples are sent in a SPARQL Update request
 (see module [noRdf_store].
 
 @author Wouter Beek
-@version 2014/04-2014/06, 2014/08-2014/09
+@version 2014/04-2014/06, 2014/08-2014/09, 2015/01
 */
 
 :- use_module(library(apply)).
-:- use_module(library(lists)).
-:- use_module(library(semweb/rdf_db)).
+:- use_module(library(lists), except([delete/3,subset/2])).
+:- use_module(library(semweb/rdf_db), except([rdf_node/1])).
 :- use_module(library(uri)).
-:- use_module(library(semweb/rdf_db)).
 
 :- use_module(pl(pl_control)).
 
-:- use_module(plXsd_datetime(xsd_dateTime_ext)).
+:- use_module(plXsd(dateTime/xsd_dateTime_functions)).
 
 :- use_module(lwm(lwm_debug_message)).
 :- use_module(lwm(noRdf_store)).
 :- use_module(lwm(store_lod_error)).
+
+
 
 
 
