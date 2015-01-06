@@ -82,7 +82,7 @@ lwm_progress(_):-
     html([
       \pending_table,
       \unpacking_table,
-      %\unpacked_table_small,
+      \unpacked_table_small,
       \unpacked_table_medium,
       \unpacked_table_large,
       \cleaning_table
