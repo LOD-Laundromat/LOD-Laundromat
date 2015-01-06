@@ -51,8 +51,8 @@ init:-
 
   clean_lwm_state,
   process_command_line_arguments,
-  NumberOfUnpackThreads = 10,
-  NumberOfSmallCleanThreads = 12,
+  NumberOfUnpackThreads = 1,
+  NumberOfSmallCleanThreads = 1,
   NumberOfMediumCleanThreads = 1,
   NumberOfLargeCleanThreads = 1,
 
@@ -131,9 +131,9 @@ process_command_line_arguments:-
 
 start_large_thread(Id):-
   format(atom(Alias), 'clean_large_~d', [Id]),
-  GlobalStack is 100 * (1024 ** 3), % 100 GB
+  GlobalStack is 125 * (1024 ** 3), % 125 GB
   Min is 2.5 * (1024 ** 3), % 2.5 GB
-  Max is 20 * (1024 ** 3), % 20 GB
+  Max is 9 * (1024 ** 3), % 9 GB
   thread_create(
     lwm_clean_loop(clean_large, Min, Max),
     _,
@@ -143,7 +143,7 @@ start_large_thread(Id):-
 
 start_medium_thread(Id):-
   format(atom(Alias), 'clean_medium_~d', [Id]),
-  GlobalStack is 12 * (1024 ** 3), % 12 GB
+  GlobalStack is 10 * (1024 ** 3), % 10 GB
   Min is 0.5 * (1024 ** 3), % 0.5 GB
   Max is 2.5 * (1024 ** 3), % 2.5 GB
   thread_create(
@@ -155,7 +155,7 @@ start_medium_thread(Id):-
 
 start_small_thread(Id):-
   format(atom(Alias), 'clean_small_~d', [Id]),
-  GlobalStack is 2 * (1024 ** 3), % 2 GB
+  GlobalStack is 1.5 * (1024 ** 3), % 1.5 GB
   Max is 0.5 * (1024 ** 3), % 0.5 GB
   thread_create(
     lwm_clean_loop(clean_small, _, Max),
