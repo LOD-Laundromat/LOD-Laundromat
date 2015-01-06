@@ -24,3 +24,27 @@
 [submodule "plServer"]
 	path = plServer
 	url = https://github.com/wouterbeek/plServer.git
+[submodule "plUri"]
+	path = plUri
+	url = https://github.com/wouterbeek/plUri.git
+[submodule "plHttp"]
+	path = plHttp
+	url = https://github.com/wouterbeek/plHttp.git
+[submodule "plLangTag"]
+	path = plLangTag
+	url = https://github.com/wouterbeek/plLangTag.git
+[submodule "plXml"]
+	path = plXml
+	url = https://github.com/wouterbeek/plXml.git
+[submodule "plTms"]
+	path = plTms
+	url = https://github.com/wouterbeek/plTms.git
+[submodule "plTree"]
+	path = plTree
+	url = https://github.com/wouterbeek/plTree.git
+[submodule "plSet"]
+	path = plSet
+	url = https://github.com/wouterbeek/plSet.git
+[submodule "plGraph"]
+	path = plGraph
+	url = https://github.com/wouterbeek/plGraph.git

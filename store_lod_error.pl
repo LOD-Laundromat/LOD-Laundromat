@@ -1,7 +1,7 @@
 :- module(
   store_lod_error,
   [
-    store_lod_error/3 % +Datadoc:url
+    store_lod_error/3 % +Datadoc:uri
                       % +Kind:oneof([exception,warning])
                       % +ErrorTerm:compound
   ]
@@ -12,14 +12,15 @@
 Stores error term denoting exceptions in a LOD format.
 
 @author Wouter Beek
-@version 2014/09
+@version 2014/09, 2015/01
 */
 
-:- use_module(library(semweb/rdf_db)).
+:- use_module(library(semweb/rdf_db), except([rdf_node/1])).
 :- use_module(library(uri)).
 
 :- use_module(generics(atom_ext)).
-:- use_module(xml(xml_dom)).
+
+:- use_module(plXml(xml_dom)).
 
 :- use_module(lwm(noRdf_store)).
 

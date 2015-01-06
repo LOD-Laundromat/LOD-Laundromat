@@ -12,22 +12,23 @@
 The cleaning process performed by the LOD Washing Machine.
 
 @author Wouter Beek
-@version 2014/03-2014/06, 2014/08-2014/09
+@version 2014/03-2014/06, 2014/08-2014/09, 2015/01
 */
 
 :- use_module(library(aggregate)).
 :- use_module(library(apply)).
 :- use_module(library(option)).
-:- use_module(library(semweb/rdf_db)).
+:- use_module(library(semweb/rdf_db), except([rdf_node/1])).
 :- use_module(library(zlib)).
 
 :- use_module(generics(list_ext)).
+:- use_module(generics(print_ext)).
 :- use_module(os(io_ext)).
 :- use_module(pl(pl_log)).
 
-:- use_module(plRdf_ser(ctriples_write_graph)).
-:- use_module(plRdf_ser(rdf_file_db)).
-:- use_module(plRdf_ser(rdf_guess_format)).
+:- use_module(plRdf(management/rdf_file_db)).
+:- use_module(plRdf(management/rdf_guess_format)).
+:- use_module(plRdf(syntax/ctriples/ctriples_write_graph)).
 
 :- use_module(lwm(lwm_debug_message)).
 :- use_module(lwm(lwm_sparql_query)).
@@ -37,6 +38,8 @@ The cleaning process performed by the LOD Washing Machine.
 
 :- dynamic(debug:debug_md5/2).
 :- multifile(debug:debug_md5/2).
+
+
 
 
 
@@ -179,8 +182,8 @@ clean_datastream(
   % using the content type and the file extension as suggestions.
   ignore(datadoc_file_extension(Datadoc, FileExtension)),
   rdf_guess_format(Datadoc, Read, FileExtension, ContentType, Format),
-  rdf_serialization(_, _, Format, _, Uri),
-  store_triple(Datadoc, llo-serializationFormat, Uri),
+  rdf_serialization(_, Format, _, Url),
+  store_triple(Datadoc, llo-serializationFormat, Url),
 
   % Load all triples by parsing the data document
   % according to the guessed RDF serialization format.

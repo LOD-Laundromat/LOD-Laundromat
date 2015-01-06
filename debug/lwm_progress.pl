@@ -11,21 +11,21 @@
 A Web-based debug tool for tracking the progress of the LOD Washing Machine.
 
 @author Wouter Beek
-@version 2014/09
+@version 2014/09, 2015/01
 */
 
 :- use_module(library(http/html_write)).
 
-:- use_module(generics(request_ext)).
-
 :- use_module(plDcg(dcg_generics)).
+
+:- use_module(plHttp(request_ext)).
 
 :- use_module(plHtml(html_pl_term)).
 
 :- use_module(plRdf(rdf_name)).
-:- use_module(plRdf(rdf_parse)).
+:- use_module(plRdf(term/rdf_term)).
 
-:- use_module(plSparql_query(sparql_query_api)).
+:- use_module(plSparql(query/sparql_query_api)).
 
 :- use_module(plTabular(rdf_html_table)).
 :- use_module(plTabular(rdf_term_html)).
@@ -34,15 +34,15 @@ A Web-based debug tool for tracking the progress of the LOD Washing Machine.
 
 
 
+
+
 %! lwm_progress(+Request:list(nvpair), +HtmlStyle)// is det.
 
 % SPARQL DESCRIBE the given (subject) term.
 lwm_progress(Request, HtmlStyle):-
   request_query_nvpair(Request, term, T0), !,
-
-  % Parse the term atom to extract the corresponding RDF term.
-  once(dcg_phrase(rdf_parse_term(T1), T0)),
-  rdf_global_id(T1, T2),
+  rdf_global_id(T0, T),
+  rdf_is_term(T),
 
   sparql_select(
     virtuoso_query,

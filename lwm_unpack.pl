@@ -10,20 +10,23 @@
 Unpacks files for the LOD Washing Machine to clean.
 
 @author Wouter Beek
-@version 2014/06, 2014/08-2014/09
+@version 2014/06, 2014/08-2014/09, 2015/01
 */
 
 :- use_module(library(apply)).
-:- use_module(library(lists)).
+:- use_module(library(lists), except([delete/3,subset/2])).
 :- use_module(library(ordsets)).
 :- use_module(library(pairs)).
 
 :- use_module(generics(atom_ext)).
-:- use_module(generics(uri_ext)).
-:- use_module(http(http_download)).
 :- use_module(os(archive_ext)).
 :- use_module(os(file_ext)).
+:- use_module(os(file_gnu)).
 :- use_module(pl(pl_log)).
+
+:- use_module(plUri(uri_ext)).
+
+:- use_module(plHttp(download_to_file)).
 
 :- use_module(lwm(md5)).
 :- use_module(lwm(lwm_debug_message)).
@@ -36,6 +39,8 @@ Unpacks files for the LOD Washing Machine to clean.
 
 :- dynamic(lwm:current_host/1).
 :- multifile(lwm:current_host/1).
+
+
 
 
 
@@ -132,7 +137,7 @@ unpack_datadoc(Md5, Datadoc, DirtyUrl):-
   md5_directory(Md5, Md5Dir),
 
   % Extracting and store the file extensions from the download URL, if any.
-  (   url_file_extension(DirtyUrl, FileExtension)
+  (   uri_file_extension(DirtyUrl, FileExtension)
   ->  true
   ;   FileExtension = ''
   ),

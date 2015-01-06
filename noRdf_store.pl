@@ -16,13 +16,13 @@ This means that we can use RDF transactions + snapshots
 and at the same time send small RDF messages using SPARQL Update requests.
 
 @author Wouter Beek
-@version 2014/05-2014/06, 2014/08-2014/09
+@version 2014/05-2014/06, 2014/08-2014/09, 2015/01
 */
 
-:- use_module(library(semweb/rdf_db)).
+:- use_module(library(semweb/rdf_db), except([rdf_node/1])).
 
-:- use_module(plSparql_http(sparql_graph_store)).
-:- use_module(plSparql_update(sparql_update_api)).
+:- use_module(plSparql(http/sparql_graph_store)).
+:- use_module(plSparql(update/sparql_update_api)).
 
 :- use_module(lwm(lwm_settings)).
 
@@ -38,6 +38,8 @@ and at the same time send small RDF messages using SPARQL Update requests.
 % as thread-specific Prolog assertions.
 
 :- thread_local(rdf_triple/3).
+
+
 
 
 
