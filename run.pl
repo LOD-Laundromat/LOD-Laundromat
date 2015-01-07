@@ -20,6 +20,7 @@ for storing the metadata. See module [lwm_settings] for this.
 :- endif.
 
 
+:- use_module(library(option)).
 :- use_module(library(optparse)).
 :- use_module(library(semweb/rdf_db), except([rdf_node/1])).
 
@@ -46,14 +47,17 @@ user:web_module('LWM Progress', lwm_progress).
 
 
 init:-
-  start_app_server([workers(2)]),
+  process_command_line_arguments(Port, Init_0),
+  start_app_server([port(Port),workers(2)]),
 
   clean_lwm_state,
-  process_command_line_arguments,
+  call(Init_0),
+
+  % @tbd Turn these into settings.
   NumberOfUnpackThreads = 1,
   NumberOfSmallCleanThreads = 1,
-  NumberOfMediumCleanThreads = 0,
-  NumberOfLargeCleanThreads = 0,
+  NumberOfMediumCleanThreads = 1,
+  NumberOfLargeCleanThreads = 1,
 
   % Start the downloading+unpacking threads.
   forall(
@@ -93,37 +97,45 @@ clean_lwm_state:-
   rdf_retractall(_, _, _, _).
 
 
-process_command_line_arguments:-
+%! process_command_line_arguments(-Port:integer, -Init_0:atom) is det.
+
+process_command_line_arguments(Port, Init_0):-
   % Read the command-line arguments.
   absolute_file_name(data(.), DefaultDir, [file_type(directory)]),
   opt_arguments(
     [
       [default(false),opt(debug),longflags([debug]),type(boolean)],
       [default(DefaultDir),opt(directory),longflags([dir]),type(atom)],
+      [default(3020),opt(port),longflags([port]),type(integer)],
       [default(false),opt(restart),longflags([restart]),type(boolean)],
       [default(false),opt(continue),longflags([continue]),type(boolean)]
     ],
-    Opts,
+    Options,
     _
   ),
 
+  % Process the port option.
+  option(port(Port), Options),
+
   % Process the directory option.
-  memberchk(directory(Dir), Opts),
+  option(directory(Dir), Options),
   make_directory_path(Dir),
   retractall(user:file_search_path(data, _)),
   assert(user:file_search_path(data, Dir)),
 
   % Process the restart or continue option.
-  (   memberchk(restart(true), Opts)
-  ->  lwm_restart
-  ;   memberchk(continue(true), Opts)
-  ->  lwm_continue
-  ;   true
+  (   option(restart(true), Options)
+  ->  Init_0 = lwm_restart
+  ;   option(continue(true), Options)
+  ->  Init_0 = lwm_continue
+  ;   Init_0 = true
   ).
 
 
 
-% Helpers
+
+
+% HELPERS %
 
 start_large_thread(Id):-
   format(atom(Alias), 'clean_large_~d', [Id]),
