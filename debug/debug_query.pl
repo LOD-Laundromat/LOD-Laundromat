@@ -15,6 +15,7 @@
 */
 
 :- use_module(library(apply)).
+:- use_module(library(lists), except([delete/3,subset/2])).
 
 :- use_module(lwm(lwm_sparql_query)).
 
@@ -27,7 +28,8 @@ debug_cleaning:-
   datadoc_queries(Datadoc).
 
 debug_pending:-
-  datadoc_pending(Datadoc),
+  datadoc_pending(Datadoc, Dirty),
+  format('Dirty:\t~a\n', [Dirty]),
   datadoc_queries(Datadoc).
 
 debug_unpacked:-
@@ -44,16 +46,28 @@ debug_unpacking:-
 %! datadoc_queries(+Datadoc:uri) is det.
 
 datadoc_queries(Datadoc):-
-  datadoc_archive_entry(Datadoc, ParentMd5, EntryPath),
-  format('Parent MD5:\t~a\n', [ParentMd5]),
-  format('Entry path:\t~a\n', [EntryPath]),
+  forall(
+    datadoc_archive_entry(Datadoc, ParentMd5, EntryPath),
+    (
+      format('Parent MD5:\t~a\n', [ParentMd5]),
+      format('Entry path:\t~a\n', [EntryPath])
+    )
+  ),
   
-  datadoc_content_type(Datadoc, ContentType),
-  format('Content-Type:\t~a\n', [ContentType]),
+  (   datadoc_content_type(Datadoc, ContentType)
+  ->  format('Content-Type:\t~a\n', [ContentType])
+  ;   true
+  ),
   
   datadoc_describe(Datadoc, Triples),
-  format('Triples:\n', []),
-  maplist(writeln, Triples),
+  (   Triples \== []
+  ->  format('Triples:\n', []),
+      forall(
+        member(Triple, Triples),
+        format('\t~w\n', Triple)
+      )
+  ;   true
+  ),
   
   datadoc_file_extension(Datadoc, FileExtension),
   format('File extension:\t~a\n', [FileExtension]),

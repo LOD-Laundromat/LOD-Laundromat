@@ -124,7 +124,8 @@ clean_md5(Category, Md5, Datadoc):-
   absolute_file_name(dirty, DirtyFile, [access(read),relative_to(Md5Dir)]),
 
   % Retrieve the content type, if it was previously determined.
-  datadoc_content_type(Datadoc, ContentType),
+  % Stays uninstantiated in case no content type is set.
+  ignore(datadoc_content_type(Datadoc, ContentType)),
 
   % Clean the data document in an RDF transaction.
   setup_call_cleanup(

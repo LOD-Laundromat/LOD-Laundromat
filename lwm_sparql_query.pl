@@ -9,6 +9,11 @@
                          % +Bgps:list(compound)
                          % -Result:list(list)
                          % +Options:list(nvpair)
+    lwm_sparql_select_iteratively/5, % +Prefixes:list(atom)
+                                     % +Variables:list(atom)
+                                     % +Bgps:list(compound)
+                                     % -Result:list(list)
+                                     % +Options:list(nvpair)
     datadoc_archive_entry/3, % +Datadoc:uri
                              % -ParentMd5:atom
                              % -EntryPath:atom
@@ -55,7 +60,7 @@ SPARQL queries for the LOD Washing Machine.
 
 
 
-% GENERICS
+% GENERICS %
 
 lwm_sparql_ask(Prefixes, Bgps, Options1):-
   lwm_version_graph(Graph),
@@ -71,26 +76,32 @@ lwm_sparql_ask(Prefixes, Bgps, Options1):-
 
 
 lwm_sparql_select(Prefixes, Variables, Bgps, Result, Options1):-
-  % Set the RDF Dataset over which SPARQL Queries are executed.
-  lod_basket_graph(BasketGraph),
-  lwm_version_graph(LwmGraph),
-  merge_options(
-    [default_graph(BasketGraph),default_graph(LwmGraph),sparql_errors(fail)],
-    Options1,
-    Options2
-  ),
-  (   lwm:lwm_server(virtuoso)
-  ->  Endpoint = virtuoso_query
-  ;   lwm:lwm_server(cliopatria)
-  ->  Endpoint = cliopatria_localhost
-  ),
+  get_endpoint(Endpoint),
+  sparql_select_options(Options1, Options2),
   loop_until_true(
     sparql_select(Endpoint, Prefixes, Variables, Bgps, Result, Options2)
   ).
 
 
+lwm_sparql_select_iteratively(Prefixes, Variables, Bgps, Result, Options1):-
+  get_endpoint(Endpoint),
+  sparql_select_options(Options1, Options2),
+  loop_until_true(
+    sparql_select_iteratively(
+      Endpoint,
+      Prefixes,
+      Variables,
+      Bgps,
+      Result,
+      Options2
+    )
+  ).
 
-% QUERIES
+
+
+
+
+% QUERIES %
 
 %! datadoc_archive_entry(+Datadoc:uri, -ParentMd5:atom, -EntryPath:atom) is det.
 
@@ -127,7 +138,7 @@ datadoc_cleaning(Datadoc):-
   member([Datadoc], Rows).
 
 
-%! datadoc_content_type(+Datadoc:uri, -ContentType:atom) is det.
+%! datadoc_content_type(+Datadoc:uri, -ContentType:atom) is semidet.
 % Returns a variable if the content type is not known.
 
 datadoc_content_type(Datadoc, ContentType):-
@@ -139,7 +150,6 @@ datadoc_content_type(Datadoc, ContentType):-
     [limit(1)]
   ),
   rdf_literal_data(value, ContentTypeLiteral, ContentType).
-datadoc_content_type(_, _VAR).
 
 
 %! datadoc_describe(+Datadoc:uri, -Triples:list(compound)) is det.
@@ -194,7 +204,7 @@ datadoc_pending(Datadoc, Dirty):-
         rdf(var(datadoc), llo:startUnpack, var(startUnpack))
       ]),
       optional([
-        rdf(var(datadoc), llo:uri, var(dirty))
+        rdf(var(datadoc), llo:url, var(dirty))
       ])
     ],
     [[Datadoc,Dirty]],
@@ -213,7 +223,7 @@ datadoc_source(Datadoc, Url):-
   lwm_sparql_select(
     [llo],
     [url],
-    [rdf(Datadoc, llo:uri, var(url))],
+    [rdf(Datadoc, llo:url, var(url))],
     [[Url]],
     [limit(1)]
   ), !.
@@ -276,7 +286,9 @@ datadoc_unpacking(Datadoc):-
 
 
 
-% Helpers.
+
+
+% HELPERS %
 
 %! build_unpacked_query(?Min:nonneg, ?Max:nonneg, -Query:atom) is det.
 
@@ -305,5 +317,30 @@ build_unpacked_query(Min, Max, Query2):-
   ).
 
 
+%! get_endpoint(-Endpoint:atom) is det.
+
+get_endpoint(Endpoint):-
+  lwm:lwm_server(virtuoso), !,
+  Endpoint = virtuoso_query.
+get_endpoint(Endpoint):-
+  lwm:lwm_server(cliopatria), !,
+  Endpoint = cliopatria_localhost.
+
+
 pair_to_triple(S, [P,O], rdf(S,P,O)).
 
+
+%! sparql_select_options(
+%!   +Options1:list(nvpair),
+%!   -Options2:list(nvpair)
+%! ) is det.
+
+sparql_select_options(Options1, Options2):-
+  % Set the RDF Dataset over which SPARQL Queries are executed.
+  lod_basket_graph(BasketGraph),
+  lwm_version_graph(LwmGraph),
+  merge_options(
+    [default_graph(BasketGraph),default_graph(LwmGraph),sparql_errors(fail)],
+    Options1,
+    Options2
+  ).

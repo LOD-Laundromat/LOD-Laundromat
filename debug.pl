@@ -1,15 +1,33 @@
-% Debug tools for the llWashingMachine project.
+% Debug file for the llWashingMachine project.
 
 
+:- use_module(library(debug)).
 
-% Avoid errors when tracing in threads.
-:- initialization(guitracer).
+:- debug(ac).
+:- debug(lwm_restart).
+%:- debug(sparql_graph_store).
+%:- debug(sparql_update).
+:- debug(store_new_url).
+
+% Show idle looping on threads.
+%:- debug(lwm_idle_loop(clean_large)).
+%:- debug(lwm_idle_loop(clean_medium)).
+%:- debug(lwm_idle_loop(clean_small)).
+%:- debug(lwm_idle_loop(unpack)).
+
+% Show progress.
+:- debug(lwm_progress(clean_large)).
+:- debug(lwm_progress(clean_medium)).
+:- debug(lwm_progress(clean_small)).
+:- debug(lwm_progress(unpack)).
 
 
+:- [load].
 
-% Customize the way in which terminal and GUI tracer appear.
 
-:- use_module(library(ansi_term)).
+:- use_module(debug_project).
+%:- debug_all_files.
+
 
 :- set_prolog_flag(
      answer_write_options,
@@ -21,44 +39,12 @@
    ).
 
 
-
-% Show/hide debug messages per category.
-
-:- use_module(library(debug)).
-
-% ClioPatria debug tools.
-
-%%%%:- debug(sparql_graph_store).
-%%%%:- debug(sparql_update).
-
-% Currently used for adding (new) links to datadumps coming from
-% VoID descriptions.
-:- debug(store_new_url).
-
-% Clear the graph that stores the LOD Washing Machine's clawling metadata.
-%%%%:- debug(lwm_restart).
-
-% Show idle looping on threads.
-%%%%:- debug(lwm_idle_loop(clean_large)).
-%%%%:- debug(lwm_idle_loop(clean_medium)).
-%%%%:- debug(lwm_idle_loop(clean_small)).
-%%%%:- debug(lwm_idle_loop(unpack)).
-
-% Show progress.
-:- debug(lwm_progress(clean_large)).
-:- debug(lwm_progress(clean_medium)).
-:- debug(lwm_progress(clean_small)).
-:- debug(lwm_progress(unpack)).
-
-
-
 % Debugging specific data documents, based on their MD5.
 
 :- dynamic(debug:debug_md5/2).
 :- multifile(debug:debug_md5/2).
 
 debug:debug_md5(c4052f658d9c32b7bd91c171411ef7c9, clean).
-
 
 
 show_idle:-
