@@ -9,25 +9,25 @@
                          % +Bgps:list(compound)
                          % -Result:list(list)
                          % +Options:list(nvpair)
-    datadoc_archive_entry/3, % +Datadoc:url
+    datadoc_archive_entry/3, % +Datadoc:uri
                              % -ParentMd5:atom
                              % -EntryPath:atom
-    datadoc_cleaning/1, % -Datadoc:url
-    datadoc_content_type/2, % +Datadoc:url
+    datadoc_cleaning/1, % -Datadoc:uri
+    datadoc_content_type/2, % +Datadoc:uri
                             % -ContentType:atom
     datadoc_describe/2, % +Md5:atom
-                    % -Triples:list(compound)
-    datadoc_file_extension/2, % +Datadoc:url
+                        % -Triples:list(compound)
+    datadoc_file_extension/2, % +Datadoc:uri
                               % -FileExtension:atom
-    datadoc_pending/2, % -Datadoc:url
-                       % -Dirty:url
-    datadoc_source/2, % +Datadoc:url
+    datadoc_pending/2, % -Datadoc:uri
+                       % -Dirty:uri
+    datadoc_source/2, % +Datadoc:uri
                       % -Source:atom
     datadoc_unpacked/4, % ?Min:nonneg
                         % ?Max:nonneg
-                        % -Datadoc:url
+                        % -Datadoc:uri
                         % -Size:nonneg
-    datadoc_unpacking/1 % -Datadoc:url
+    datadoc_unpacking/1 % -Datadoc:uri
   ]
 ).
 
@@ -92,7 +92,7 @@ lwm_sparql_select(Prefixes, Variables, Bgps, Result, Options1):-
 
 % QUERIES
 
-%! datadoc_archive_entry(+Datadoc:url, -ParentMd5:atom, -EntryPath:atom) is det.
+%! datadoc_archive_entry(+Datadoc:uri, -ParentMd5:atom, -EntryPath:atom) is det.
 
 datadoc_archive_entry(Datadoc, ParentMd5, EntryPath):-
   lwm_sparql_select(
@@ -109,7 +109,7 @@ datadoc_archive_entry(Datadoc, ParentMd5, EntryPath):-
   maplist(rdf_literal_data(value), Row, [ParentMd5,EntryPath]).
 
 
-%! datadoc_cleaning(-Datadoc:url) is nondet.
+%! datadoc_cleaning(-Datadoc:uri) is nondet.
 
 datadoc_cleaning(Datadoc):-
   lwm_sparql_select(
@@ -127,7 +127,7 @@ datadoc_cleaning(Datadoc):-
   member([Datadoc], Rows).
 
 
-%! datadoc_content_type(+Datadoc:url, -ContentType:atom) is det.
+%! datadoc_content_type(+Datadoc:uri, -ContentType:atom) is det.
 % Returns a variable if the content type is not known.
 
 datadoc_content_type(Datadoc, ContentType):-
@@ -142,7 +142,7 @@ datadoc_content_type(Datadoc, ContentType):-
 datadoc_content_type(_, _VAR).
 
 
-%! datadoc_describe(+Datadoc:url, -Triples:list(compound)) is det.
+%! datadoc_describe(+Datadoc:uri, -Triples:list(compound)) is det.
 
 datadoc_describe(Datadoc, Triples):-
   lwm_sparql_select(
@@ -155,7 +155,7 @@ datadoc_describe(Datadoc, Triples):-
   maplist(pair_to_triple(Datadoc), Rows, Triples).
 
 
-%! datadoc_file_extension(+Datadoc:url, -FileExtension:atom) is det.
+%! datadoc_file_extension(+Datadoc:uri, -FileExtension:atom) is det.
 
 datadoc_file_extension(Datadoc, FileExtension):-
   lwm_sparql_select(
@@ -168,7 +168,7 @@ datadoc_file_extension(Datadoc, FileExtension):-
   rdf_literal_data(value, FileExtensionLiteral, FileExtension).
 
 
-%! datadoc_pending(-Datadoc:url, -Dirty:url) is nondet.
+%! datadoc_pending(-Datadoc:uri, -Dirty:uri) is nondet.
 % @tbd Make sure that at no time two data documents are
 %      being downloaded from the same host.
 %      This avoids being blocked by servers that do not allow
@@ -194,7 +194,7 @@ datadoc_pending(Datadoc, Dirty):-
         rdf(var(datadoc), llo:startUnpack, var(startUnpack))
       ]),
       optional([
-        rdf(var(datadoc), llo:url, var(dirty))
+        rdf(var(datadoc), llo:uri, var(dirty))
       ])
     ],
     [[Datadoc,Dirty]],
@@ -202,7 +202,7 @@ datadoc_pending(Datadoc, Dirty):-
   ).
 
 
-%! datadoc_source(+Datadoc:url, -Source:atom) is det.
+%! datadoc_source(+Datadoc:uri, -Source:atom) is det.
 % Returns the original source of the given datadocument.
 %
 % This is either a URL simpliciter,
@@ -213,7 +213,7 @@ datadoc_source(Datadoc, Url):-
   lwm_sparql_select(
     [llo],
     [url],
-    [rdf(Datadoc, llo:url, var(url))],
+    [rdf(Datadoc, llo:uri, var(url))],
     [[Url]],
     [limit(1)]
   ), !.
@@ -237,7 +237,7 @@ datadoc_source(Datadoc, Source):-
 %! datadoc_unpacked(
 %!   ?Min:nonneg,
 %!   ?Max:nonneg,
-%!   -Datadoc:url,
+%!   -Datadoc:uri,
 %!   -UnpackedSize:nonneg
 %! ) is semidet.
 % UnpackedSize is expressed as the number of bytes.
@@ -257,7 +257,7 @@ conjunctive_filter([H|T1], and(H,T2)):-
   conjunctive_filter(T1, T2).
 
 
-%! datadoc_unpacking(-Datadoc:url) is nondet.
+%! datadoc_unpacking(-Datadoc:uri) is nondet.
 
 datadoc_unpacking(Datadoc):-
   lwm_sparql_select(

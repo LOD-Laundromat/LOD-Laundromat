@@ -70,3 +70,6 @@ show_idle:-
     'Idle loops:\n  - Small: ~D\n  - Medium: ~D\n  - Large: ~D\n',
     [Small,Medium,Large]
   ).
+
+
+:- use_module(lwm(debug/debug_query)).

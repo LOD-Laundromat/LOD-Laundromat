@@ -1,6 +1,10 @@
 TODO
 ====
 
+  [ ] Bugs:
+    [x] Archives are not closed by `ll_triple/1`.
+  [ ] Debug:
+    [o] Script that checks the validity of SPARQL queries in llWM.
   [ ] Swipl:
     [ ] `opt_arguments/3` is not steadfast.
         The following throws an exception:
@@ -25,6 +29,5 @@ TODO
     [o] Run llWM.
     [ ] Extend seed list.
   [ ] llPack:
-    [o] BUG: Archives are not closed by `ll_triple/1`.
     [ ] Create a Prolog Pack for LOD Laundromat.
     [ ] Demo the llPack at WAI 2015/01/12.
