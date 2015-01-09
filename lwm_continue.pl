@@ -33,9 +33,9 @@ lwm_continue:-
   aggregate_all(
     set(Datadoc),
     (
-      datadoc_unpacking(Datadoc)
+      datadoc_enum_unpacking(Datadoc)
     ;
-      datadoc_cleaning(Datadoc)
+      datadoc_enum_cleaning(Datadoc)
     ),
     Datadocs
   ),

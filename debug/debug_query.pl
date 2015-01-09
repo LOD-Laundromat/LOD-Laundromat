@@ -17,28 +17,28 @@
 :- use_module(library(apply)).
 :- use_module(library(lists), except([delete/3,subset/2])).
 
-:- use_module(lwm(lwm_sparql_query)).
+:- use_module(lwm(query/lwm_sparql_query)).
 
 
 
 
 
 debug_cleaning:-
-  datadoc_cleaning(Datadoc),
+  datadoc_enum_cleaning(Datadoc),
   datadoc_queries(Datadoc).
 
 debug_pending:-
-  datadoc_pending(Datadoc, Dirty),
+  datadoc_enum_pending(Datadoc, Dirty),
   format('Dirty:\t~a\n', [Dirty]),
   datadoc_queries(Datadoc).
 
 debug_unpacked:-
-  datadoc_unpacked(_, _, Datadoc, Size),
+  datadoc_enum_unpacked(_, _, Datadoc, Size),
   format('Size:\t~D\n', [Size]),
   datadoc_queries(Datadoc).
 
 debug_unpacking:-
-  datadoc_unpacking(Datadoc),
+  datadoc_enum_unpacking(Datadoc),
   datadoc_queries(Datadoc).
 
 

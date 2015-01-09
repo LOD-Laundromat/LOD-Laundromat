@@ -34,10 +34,10 @@ The cleaning process performed by the LOD Washing Machine.
 :- use_module(plRdf(syntax/ctriples/ctriples_write_triples)).
 
 :- use_module(lwm(lwm_debug_message)).
-:- use_module(lwm(lwm_sparql_query)).
 :- use_module(lwm(lwm_store_triple)).
 :- use_module(lwm(md5)).
 :- use_module(lwm(noRdf_store)).
+:- use_module(lwm(query/lwm_sparql_query)).
 
 :- dynamic(debug:debug_md5/2).
 :- multifile(debug:debug_md5/2).
@@ -57,7 +57,7 @@ lwm_clean_loop(Category, Min, Max):-
     with_mutex(lod_washing_machine, (
       % Do not process dirty data documents that do not conform
       % to the given minimum and/or maximum file size constraints.
-      datadoc_unpacked(Min, Max, Datadoc, Size),
+      datadoc_enum_unpacked(Min, Max, Datadoc, Size),
 
       % Tell the triple store we are now going to clean this MD5.
       store_start_clean(Datadoc)

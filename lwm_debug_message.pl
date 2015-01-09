@@ -12,13 +12,13 @@
 Prints debug messages for the LOD Washing Machine.
 
 @author Wouter Beek
-@version 2014/06, 2014/08-2014/09
+@version 2014/06, 2014/08-2014/09, 2015/01
 */
 
 :- use_module(library(apply)).
 :- use_module(library(debug)).
 
-:- use_module(lwm(lwm_sparql_query)).
+:- use_module(lwm(query/lwm_sparql_query)).
 
 :- discontiguous(lwm_debug_message/2).
 

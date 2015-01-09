@@ -32,9 +32,9 @@ Unpacks files for the LOD Washing Machine to clean.
 
 :- use_module(lwm(md5)).
 :- use_module(lwm(lwm_debug_message)).
-:- use_module(lwm(lwm_sparql_query)).
 :- use_module(lwm(lwm_store_triple)).
 :- use_module(lwm(noRdf_store)).
+:- use_module(lwm(query/lwm_sparql_query)).
 
 :- dynamic(debug:debug_md5/2).
 :- multifile(debug:debug_md5/2).
@@ -54,7 +54,7 @@ lwm_unpack_loop:-
     with_mutex(lod_washing_machine, (
       % `DirtyUrl` is only instantiated if `Datadoc`
       % is not an archive entry.
-      datadoc_pending(Datadoc, DirtyUrl),
+      datadoc_enum_pending(Datadoc, DirtyUrl),
 
       % Update the database, saying we are ready
       % to begin downloading+unpacking this data document.
@@ -241,7 +241,9 @@ unpack_file(Md5, Datadoc, ArchiveFile):-
 
 
 
-% Helpers
+
+
+% Helpers %
 
 %! distill_archive_format(+Formats:ordset(atom), -Format:atom) is det.
 
@@ -263,7 +265,3 @@ filter_archive_formats([L1|Ls1], Fs1, [L2|Ls2]):-
   selectchk(format(F), L1, L2),
   filter_archive_formats(Ls1, Fs2, Ls2),
   ord_add_element(Fs2, F, Fs1).
-
-
-pair_to_triple(S, [P,O], rdf(S,P,O)).
-
