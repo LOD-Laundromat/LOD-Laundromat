@@ -34,7 +34,7 @@ A Web-based debug tool for tracking the progress of the LOD Washing Machine.
 :- use_module(lwm(query/lwm_sparql_generics)).
 :- use_module(lwm(query/lwm_sparql_query)).
 
-:- http_handler(root(progress), lwm_progress, [id(lwm_progress)]).
+:- http_handler(/, lwm_progress, [id(lwm_progress)]).
 
 
 
@@ -47,7 +47,7 @@ lwm_progress(Request):-
   request_query_nvpair(Request, term, T0), !,
   rdf_global_id(T0, T),
   rdf_is_term(T),
-  
+
   sparql_select(
     virtuoso_query,
     [llo],
@@ -56,10 +56,9 @@ lwm_progress(Request):-
     Rows,
     []
   ),
-  
-  user:current_html_style(HtmlStyle),
+
   reply_html_page(
-    HtmlStyle,
+    menu_page,
     title(['LOD Washing Machine - DESCRIBE ',\rdf_term_name(T)]),
     html(
       \rdf_html_table(
@@ -76,9 +75,8 @@ lwm_progress(Request):-
   ).
 % Overview of LOD Washing Machine progress.
 lwm_progress(_):-
-  user:current_html_style(HtmlStyle),
   reply_html_page(
-    HtmlStyle,
+    menu_page,
     title('LOD Washing Machine - Progress'),
     html([
       \pending_table,
@@ -87,7 +85,7 @@ lwm_progress(_):-
       \unpacked_table_medium,
       \unpacked_table_large,
       \cleaning_table
-      %\cleaned_table
+      %%%%\cleaned_table
     ])
   ).
 

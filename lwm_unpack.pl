@@ -211,6 +211,7 @@ unpack_file(Md5, Datadoc, ArchiveFile):-
       % and put it directly inside its MD5 directory.
       mv2(DataFile, DirtyFile),
       size_file(DirtyFile, UnpackedSize),
+      store_triple(Datadoc, llo-md5, literal(type(xsd-string,Md5))),
       store_triple(
         Datadoc,
         llo-unpackedSize,
@@ -233,7 +234,11 @@ unpack_file(Md5, Datadoc, ArchiveFile):-
         literal(type(xsd-string,ArchiveFormat))
       ),
 
-      maplist(store_archive_entry(Md5, Datadoc), EntryPaths, EntryProperties2),
+      maplist(
+        store_archive_entry(Md5, Datadoc),
+        EntryPaths,
+        EntryProperties2
+      ),
       store_skip_clean(Md5, Datadoc)
   ),
 

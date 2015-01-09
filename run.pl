@@ -33,8 +33,6 @@ for storing the metadata. See module [lwm_settings] for this.
 :- use_module(lwm(lwm_unpack)).
 :- use_module(lwm(debug/lwm_progress)).
 
-:- http_handler(root(progress), lwm_progress, [id(lwm_progress)]).
-
 :- dynamic(user:web_module/2).
 :- multifile(user:web_module/2).
 
@@ -62,7 +60,8 @@ init:-
   % Process help.
   (   option(help(true), Options)
   ->  opt_help(OptSpec, Help),
-      format(user_output, '~a\n', [Help])
+      format(user_output, '~a\n', [Help]),
+      halt
   ;   init(Options)
   ).
 
