@@ -29,7 +29,11 @@ Restart the LOD Washing Machine during debugging.
 
 lwm_restart:-
   % Delete the URL seed list.
-  (   absolute_file_name(data('url.txt'), File, [access(read),file_errors(fail)])
+  (   absolute_file_name(
+        data('url.txt'),
+        File,
+        [access(read),file_errors(fail)]
+      )
   ->  delete_file(File)
   ;   true
   ),

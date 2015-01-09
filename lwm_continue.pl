@@ -57,7 +57,8 @@ reset_datadoc(Datadoc):-
         [NG],
         [],
         []
-      )
+      ),
+      print_message(informational, lwm_reset(Datadoc,NG))
   ;   lwm:lwm_server(cliopatria)
   ->  sparql_delete_where(
         cliopatria_localhost,
@@ -68,4 +69,15 @@ reset_datadoc(Datadoc):-
         []
       )
   ).
+
+
+
+
+
+% MESSAGES %
+
+:- multifile(prolog:message//1).
+
+prolog:message(lwm_reset(Datadoc,NG)) -->
+  ['Successfully reset ',Datadoc,' in graph ',NG,'.'].
 
