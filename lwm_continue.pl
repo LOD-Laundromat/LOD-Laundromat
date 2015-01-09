@@ -43,8 +43,7 @@ lwm_continue:-
     Datadocs
   ),
 
-  maplist(reset_datadoc, Datadocs),
-  reset_datadoc(ll:'425a29576b0fb45899fd0999ca650ca5').
+  maplist(reset_datadoc, Datadocs).
 
 
 %! reset_datadoc(+Datadoc:uri) is det.
