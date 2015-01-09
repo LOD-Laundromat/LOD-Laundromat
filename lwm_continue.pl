@@ -25,6 +25,8 @@ Continues an interrupted LOD Washing Machine crawl.
 :- use_module(lwm(query/lwm_sparql_enum)).
 :- use_module(lwm(query/lwm_sparql_query)).
 
+:- rdf_meta(reset_datadoc(r)).
+
 
 
 
@@ -41,10 +43,11 @@ lwm_continue:-
     Datadocs
   ),
 
-  maplist(reset_datadoc, Datadocs).
+  maplist(reset_datadoc, Datadocs),
+  reset_datadoc(ll:'425a29576b0fb45899fd0999ca650ca5').
 
 
-%! reset_datadoc(+Datadoc:url) is det.
+%! reset_datadoc(+Datadoc:uri) is det.
 
 reset_datadoc(Datadoc):-
   % Remove the metadata triples that were stored for the given data document.

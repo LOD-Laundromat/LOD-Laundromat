@@ -187,6 +187,7 @@ clean_datastream(
   % Guess the RDF serialization format,
   % using the content type and the file extension as suggestions.
   ignore(datadoc_file_extension(Datadoc, FileExtension)),
+gtrace,
   rdf_guess_format(Datadoc, In, FileExtension, ContentType, Format),
 
   rdf_serialization(_, Format, _, Uri),
