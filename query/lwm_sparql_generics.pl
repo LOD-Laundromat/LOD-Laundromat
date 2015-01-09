@@ -1,6 +1,9 @@
 :- module(
   lwm_sparql_generics,
   [
+    build_unpacked_query/3, % ?Min:nonneg
+                            % ?Max:nonneg
+                            % -Query:atom
     lwm_sparql_ask/3, % +Prefixes:list(atom)
                       % +Bgps:list(compound)
                       % +Options:list(nvpair)
@@ -28,6 +31,7 @@ the LOD Laundromat's washing machine.
 
 :- use_module(library(option)).
 
+:- use_module(generics(list_ext)).
 :- use_module(generics(meta_ext)).
 
 :- use_module(plSparql(query/sparql_query_api)).
@@ -48,11 +52,42 @@ the LOD Laundromat's washing machine.
 
 
 
+%! build_unpacked_query(?Min:nonneg, ?Max:nonneg, -Query:atom) is det.
+% Returns a query in which the given Min and Max integers denote
+% the range restriction on the unpacked file size
+% in terms of a SPARQL filter.
+
+build_unpacked_query(Min, Max, Query2):-
+  Query1 = [
+    rdf(var(datadoc), llo:endUnpack, var(endUnpack)),
+    not([
+      rdf(var(datadoc), llo:startClean, var(startClean))
+    ]),
+    rdf(var(datadoc), llo:unpackedSize, var(unpackedSize))
+  ],
+
+  % Insert the range restriction on the unpacked file size as a filter.
+  (   nonvar(Min)
+  ->  MinFilter = >(var(unpackedSize),Min)
+  ;   true
+  ),
+  (   nonvar(Max)
+  ->  MaxFilter = <(var(unpackedSize),Max)
+  ;   true
+  ),
+  exclude(var, [MinFilter,MaxFilter], FilterComponents),
+  (   list_binary_term(FilterComponents, and, FilterContent)
+  ->  append(Query1, [filter(FilterContent)], Query2)
+  ;   Query2 = Query1
+  ).
+
+
+
 %! lwm_sparql_ask(
 %!   +Prefixes:list(atom),
 %!   +Bgps:list(compound),
 %!   +Options:list(nvpair)
-%! ) semidet.
+%! ) is semidet.
 
 lwm_sparql_ask(Prefixes, Bgps, Options1):-
   lwm_version_graph(Graph),

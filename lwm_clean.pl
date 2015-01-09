@@ -24,7 +24,6 @@ The cleaning process performed by the LOD Washing Machine.
 
 :- use_module(generics(list_ext)).
 :- use_module(generics(print_ext)).
-:- use_module(os(io_ext)).
 :- use_module(pl(pl_log)).
 
 :- use_module(plRdf(management/rdf_file_db)).
@@ -37,6 +36,7 @@ The cleaning process performed by the LOD Washing Machine.
 :- use_module(lwm(lwm_store_triple)).
 :- use_module(lwm(md5)).
 :- use_module(lwm(noRdf_store)).
+:- use_module(lwm(query/lwm_sparql_enum)).
 :- use_module(lwm(query/lwm_sparql_query)).
 
 :- dynamic(debug:debug_md5/2).
@@ -188,10 +188,10 @@ clean_datastream(
   % using the content type and the file extension as suggestions.
   ignore(datadoc_file_extension(Datadoc, FileExtension)),
   rdf_guess_format(Datadoc, In, FileExtension, ContentType, Format),
-  
+
   rdf_serialization(_, Format, _, Uri),
   store_triple(Datadoc, llo-serializationFormat, Uri),
-  
+
   % Load all triples by parsing the data document
   % according to the guessed RDF serialization format.
   md5_base_url(Md5, Base),
@@ -202,28 +202,28 @@ clean_datastream(
       register_namespaces(false),
       silent(true)
   ],
-  
+
   % Add options that are specific to the RDFa serialization format.
   (   Format == rdfa
   ->  merge_options([max_errors(-1),syntax(style)], Options1, Options2)
   ;   Options2 = Options1
   ),
-  
+
   % Prepare the file name.
   file_directory_name(File, Dir),
   directory_file_path(Dir, 'clean.nt.gz', CleanFile),
-  
+
   md5_bnode_base(Md5, BaseComponents),
   Options3 = [
     bnode_base(BaseComponents),
     format(Format),
     number_of_triples(TOut)
   ],
-  
+
   retractall(datadump/1),
   (   memberchk(Format, [rdfa,xml])
   ->  rdf_load(stream(In), Options2),
-      
+
       % In between loading and saving the data,
       % we count the number of triples, including the number of duplicates.
       aggregate_all(
@@ -231,14 +231,14 @@ clean_datastream(
         rdf(_, _, _, _),
         TIn
       ),
-      
+
       % Save the data in a cleaned format.
       setup_call_cleanup(
         gzopen(CleanFile, write, Out),
         ctriples_write_graph(Out, _NoGraph, Options3),
         close(Out)
       ),
-      
+
       % Make sure any VoID datadumps are added to the LOD Basket.
       forall(
         rdf_has(_, void:dataDump, VoidUrl),
@@ -258,17 +258,17 @@ clean_datastream(
         ctriples_write_end(State, Options3)
       )
   ),
-  
+
   % Collect datadump locations.
   findall(
     VoidUrl,
     datadump(VoidUrl),
     VoidUrls
   ),
-  
+
   % Fix the file name, if needed.
   clean_file_name(CleanFile, Format),
-  
+
   % Store statistics about the number of (duplicate) triples.
   store_number_of_triples(Category, Datadoc, TIn, TOut).
 

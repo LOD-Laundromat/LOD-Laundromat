@@ -31,7 +31,8 @@ A Web-based debug tool for tracking the progress of the LOD Washing Machine.
 :- use_module(plTabular(rdf_html_table)).
 :- use_module(plTabular(rdf_term_html)).
 
-:- use_module(lwm(lwm_sparql_query)).
+:- use_module(lwm(query/lwm_sparql_generics)).
+:- use_module(lwm(query/lwm_sparql_query)).
 
 :- http_handler(root(progress), lwm_progress, [id(lwm_progress)]).
 

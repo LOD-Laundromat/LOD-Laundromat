@@ -14,9 +14,9 @@
 @version 2015/01
 */
 
-:- use_module(library(apply)).
 :- use_module(library(lists), except([delete/3,subset/2])).
 
+:- use_module(lwm(query/lwm_sparql_enum)).
 :- use_module(lwm(query/lwm_sparql_query)).
 
 
@@ -53,12 +53,12 @@ datadoc_queries(Datadoc):-
       format('Entry path:\t~a\n', [EntryPath])
     )
   ),
-  
+
   (   datadoc_content_type(Datadoc, ContentType)
   ->  format('Content-Type:\t~a\n', [ContentType])
   ;   true
   ),
-  
+
   datadoc_describe(Datadoc, Triples),
   (   Triples \== []
   ->  format('Triples:\n', []),
@@ -68,9 +68,12 @@ datadoc_queries(Datadoc):-
       )
   ;   true
   ),
-  
-  datadoc_file_extension(Datadoc, FileExtension),
-  format('File extension:\t~a\n', [FileExtension]),
-  
+
+  (   datadoc_file_extension(Datadoc, FileExtension)
+  ->  format('File extension:\t~a\n', [FileExtension])
+  ;   true
+  ),
+
   datadoc_source(Datadoc, Source),
   format('Source:\t~a\n', [Source]).
+

@@ -34,6 +34,7 @@ Unpacks files for the LOD Washing Machine to clean.
 :- use_module(lwm(lwm_debug_message)).
 :- use_module(lwm(lwm_store_triple)).
 :- use_module(lwm(noRdf_store)).
+:- use_module(lwm(query/lwm_sparql_enum)).
 :- use_module(lwm(query/lwm_sparql_query)).
 
 :- dynamic(debug:debug_md5/2).

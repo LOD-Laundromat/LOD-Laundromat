@@ -25,8 +25,6 @@ for the LOD Washing Machine.
 :- use_module(library(lists), except([delete/3,subset/2])).
 :- use_module(library(option)).
 
-:- use_module(generics(list_ext)).
-
 :- use_module(plRdf(term/rdf_literal)).
 
 :- use_module(lwm(query/lwm_sparql_generics)).
@@ -38,7 +36,7 @@ for the LOD Washing Machine.
 %! datadoc_enum_cleaning(-Datadoc:uri) is nondet.
 
 datadoc_enum_cleaning(Datadoc):-
-  lwm_sparql_select_iterative(
+  lwm_sparql_select_iteratively(
     [llo],
     [datadoc],
     [
@@ -71,7 +69,7 @@ datadoc_enum_cleaning(Datadoc):-
 %      Add argument `Host` for releasing the lock in [lwm_unpack].
 
 datadoc_enum_pending(Datadoc, Dirty):-
-  lwm_sparql_select_iterative(
+  lwm_sparql_select_iteratively(
     [llo],
     [datadoc,dirty],
     [
@@ -99,7 +97,7 @@ datadoc_enum_pending(Datadoc, Dirty):-
 
 datadoc_enum_unpacked(Min, Max, Datadoc, UnpackedSize):-
   build_unpacked_query(Min, Max, Query),
-  lwm_sparql_select(
+  lwm_sparql_select_iteratively(
     [llo],
     [datadoc,unpackedSize],
     Query,
@@ -113,7 +111,7 @@ datadoc_enum_unpacked(Min, Max, Datadoc, UnpackedSize):-
 %! datadoc_enum_unpacking(-Datadoc:uri) is nondet.
 
 datadoc_enum_unpacking(Datadoc):-
-  lwm_sparql_select(
+  lwm_sparql_select_iteratively(
     [llo],
     [datadoc],
     [
@@ -122,39 +120,7 @@ datadoc_enum_unpacking(Datadoc):-
         rdf(var(datadoc), llo:endUnpack, var(endUnpack))
       ])
     ],
-    Rows,
-    []
-  ),
-  member([Datadoc], Rows).
-
-
-
-
-
-% HELPERS %
-
-%! build_unpacked_query(?Min:nonneg, ?Max:nonneg, -Query:atom) is det.
-
-build_unpacked_query(Min, Max, Query2):-
-  Query1 = [
-    rdf(var(datadoc), llo:endUnpack, var(endUnpack)),
-    not([
-      rdf(var(datadoc), llo:startClean, var(startClean))
-    ]),
-    rdf(var(datadoc), llo:unpackedSize, var(unpackedSize))
-  ],
-
-  % Insert the range restriction on the unpacked file size as a filter.
-  (   nonvar(Min)
-  ->  MinFilter = >(var(unpackedSize),Min)
-  ;   true
-  ),
-  (   nonvar(Max)
-  ->  MaxFilter = <(var(unpackedSize),Max)
-  ;   true
-  ),
-  exclude(var, [MinFilter,MaxFilter], FilterComponents),
-  (   list_binary_term(FilterComponents, and, FilterContent)
-  ->  append(Query1, [filter(FilterContent)], Query2)
-  ;   Query2 = Query1
+    [[Datadoc]],
+    [limit(1)]
   ).
+

@@ -21,8 +21,11 @@ Continues an interrupted LOD Washing Machine crawl.
 :- use_module(plSparql(update/sparql_update_api)).
 
 :- use_module(lwm(lwm_settings)).
-:- use_module(lwm(lwm_sparql_query)).
 :- use_module(lwm(md5)).
+:- use_module(lwm(query/lwm_sparql_enum)).
+:- use_module(lwm(query/lwm_sparql_query)).
+
+
 
 
 
@@ -32,10 +35,8 @@ lwm_continue:-
   % Collect zombie data documents.
   aggregate_all(
     set(Datadoc),
-    (
-      datadoc_enum_unpacking(Datadoc)
-    ;
-      datadoc_enum_cleaning(Datadoc)
+    (   datadoc_enum_unpacking(Datadoc)
+    ;   datadoc_enum_cleaning(Datadoc)
     ),
     Datadocs
   ),
