@@ -23,6 +23,8 @@ A Web-based debug tool for tracking the progress of the LOD Washing Machine.
 
 :- use_module(plHtml(html_pl_term)).
 
+:- use_module(plServer(templates/menu_page)).
+
 :- use_module(plRdf(rdf_name)).
 :- use_module(plRdf(term/rdf_term)).
 
