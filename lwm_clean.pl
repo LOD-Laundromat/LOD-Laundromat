@@ -244,7 +244,8 @@ clean_datastream(
         rdf_has(_, void:dataDump, VoidUrl),
         assert(datadump(VoidUrl))
       )
-  ;   setup_call_cleanup(
+  ;   gtrace,
+      setup_call_cleanup(
         ctriples_write_begin(State, BNodePrefix, Options3),
         setup_call_cleanup(
           gzopen(CleanFile, write, Out),
