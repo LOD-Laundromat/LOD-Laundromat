@@ -13,7 +13,7 @@ for storing the metadata. See module [lwm_settings] for this.
 :- set_prolog_stack(global, limit(125*10**9)).
 
 
-:- if(current_prolog_flag(argv, ['--debug'])).
+:- if(current_prolog_flag(argv, ['--debug'|_])).
   :- ensure_loaded(debug).
 :- else.
   :- ensure_loaded(load).
@@ -47,9 +47,45 @@ user:web_module('LWM Progress', lwm_progress).
 
 
 init:-
-  process_command_line_arguments(Port, Init_0),
-  start_app_server([port(Port),workers(2)]),
+  % Read the command-line arguments.
+  absolute_file_name(data(.), DefaultDir, [file_type(directory)]),
+  OptSpec= [
+    [default(false),opt(debug),longflags([debug]),type(boolean)],
+    [default(DefaultDir),opt(directory),longflags([dir]),type(atom)],
+    [default(false),opt(help),longflags([help]),shortflags([h]),type(boolean)],
+    [default(3020),opt(port),longflags([port]),type(integer)],
+    [default(false),opt(restart),longflags([restart]),type(boolean)],
+    [default(false),opt(continue),longflags([continue]),type(boolean)]
+  ],
+  opt_arguments(OptSpec, Options, _),
+  
+  % Process help.
+  (   option(help(true), Options)
+  ->  opt_help(OptSpec, Help),
+      format(user_output, '~a\n', [Help])
+  ;   init(Options)
+  ).
 
+init(Options):-
+  % Process the port option.
+  option(port(Port), Options),
+  
+  % Process the directory option.
+  option(directory(Dir), Options),
+  make_directory_path(Dir),
+  retractall(user:file_search_path(data, _)),
+  assert(user:file_search_path(data, Dir)),
+  
+  % Process the restart or continue option.
+  (   option(restart(true), Options)
+  ->  Init_0 = lwm_restart
+  ;   option(continue(true), Options)
+  ->  Init_0 = lwm_continue
+  ;   Init_0 = true
+  ),
+  
+  start_app_server([port(Port),workers(2)]),
+  
   clean_lwm_state,
   call(Init_0),
 
@@ -95,41 +131,6 @@ clean_lwm_state:-
     rdf_unload_graph(G)
   ),
   rdf_retractall(_, _, _, _).
-
-
-%! process_command_line_arguments(-Port:integer, -Init_0:atom) is det.
-
-process_command_line_arguments(Port, Init_0):-
-  % Read the command-line arguments.
-  absolute_file_name(data(.), DefaultDir, [file_type(directory)]),
-  opt_arguments(
-    [
-      [default(false),opt(debug),longflags([debug]),type(boolean)],
-      [default(DefaultDir),opt(directory),longflags([dir]),type(atom)],
-      [default(3020),opt(port),longflags([port]),type(integer)],
-      [default(false),opt(restart),longflags([restart]),type(boolean)],
-      [default(false),opt(continue),longflags([continue]),type(boolean)]
-    ],
-    Options,
-    _
-  ),
-
-  % Process the port option.
-  option(port(Port), Options),
-
-  % Process the directory option.
-  option(directory(Dir), Options),
-  make_directory_path(Dir),
-  retractall(user:file_search_path(data, _)),
-  assert(user:file_search_path(data, Dir)),
-
-  % Process the restart or continue option.
-  (   option(restart(true), Options)
-  ->  Init_0 = lwm_restart
-  ;   option(continue(true), Options)
-  ->  Init_0 = lwm_continue
-  ;   Init_0 = true
-  ).
 
 
 
