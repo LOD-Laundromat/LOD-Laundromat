@@ -19,6 +19,7 @@ The cleaning process performed by the LOD Washing Machine.
 :- use_module(library(apply)).
 :- use_module(library(option)).
 :- use_module(library(semweb/rdf_db), except([rdf_node/1])).
+:- use_module(library(semweb/rdf_ntriples)).
 :- use_module(library(semweb/turtle)).
 :- use_module(library(zlib)).
 
@@ -187,7 +188,6 @@ clean_datastream(
   % Guess the RDF serialization format,
   % using the content type and the file extension as suggestions.
   ignore(datadoc_file_extension(Datadoc, FileExtension)),
-gtrace,
   rdf_guess_format(Datadoc, In, FileExtension, ContentType, Format),
 
   rdf_serialization(_, Format, _, Uri),
@@ -245,16 +245,11 @@ gtrace,
         rdf_has(_, void:dataDump, VoidUrl),
         assert(datadump(VoidUrl))
       )
-  ;   gtrace,
-      setup_call_cleanup(
+  ;   setup_call_cleanup(
         ctriples_write_begin(State, BNodePrefix, Options3),
         setup_call_cleanup(
           gzopen(CleanFile, write, Out),
-          rdf_process_turtle(
-            In,
-            clean_turtle_triples(Out, State, BNodePrefix),
-            Options2
-          ),
+          clean_triples(Format, In, Out, State, BNodePrefix, Options2),
           close(Out)
         ),
         ctriples_write_end(State, Options3)
@@ -274,6 +269,26 @@ gtrace,
   % Store statistics about the number of (duplicate) triples.
   store_number_of_triples(Category, Datadoc, TIn, TOut).
 
+clean_triples(Format, In, Out, State, BNodePrefix, Options):-
+  memberchk(Format, [nquads,ntriples]), !,
+gtrace,
+  rdf_process_ntriples(
+    In,
+    clean_turtle_family_triples(Out, State, BNodePrefix),
+    Options
+  ).
+clean_triples(Format, In, Out, State, BNodePrefix, Options):-
+  memberchk(Format, [trig,turtle]), !,
+gtrace,
+  rdf_process_turtle(
+    In,
+    clean_turtle_family_triples(Out, State, BNodePrefix),
+    Options
+  ).
+clean_triples(Format, In, Out, State, BNodePrefix, Options):-
+  gtrace, %DEB
+  clean_triples(Format, In, Out, State, BNodePrefix, Options).
+
 
 
 
@@ -290,7 +305,7 @@ clean_file_name(File1, quads):-
 
 
 
-%! clean_turtle_triples(
+%! clean_turtle_family_triples(
 %!   +Out:stream,
 %!   +State:compound,
 %!   +BNodePrefix:atom,
@@ -298,7 +313,7 @@ clean_file_name(File1, quads):-
 %!   +LinePosition:compound
 %! ) is det.
 
-clean_turtle_triples(Out, State, BNodePrefix, Triples, _):-
+clean_turtle_family_triples(Out, State, BNodePrefix, Triples, _):-
   maplist(ctriples_write_triple(Out, State, BNodePrefix), Triples).
 
 
