@@ -31,6 +31,7 @@ Generic predicates for the LOD Washing Machine.
 
 :- dynamic(lwm_sparql_endpoint/1).
 
+:- rdf_register_prefix(error, 'http://lodlaundromat.org/error/ontology/').
 :- rdf_register_prefix(ll, 'http://lodlaundromat.org/resource/').
 :- rdf_register_prefix(llo, 'http://lodlaundromat.org/ontology/').
 

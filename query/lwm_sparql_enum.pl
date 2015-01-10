@@ -82,7 +82,7 @@ datadoc_enum_pending(Datadoc, Dirty):-
       ])
     ],
     [[Datadoc,Dirty]],
-    [limit(1)]
+    []
   ).
 
 
@@ -102,7 +102,7 @@ datadoc_enum_unpacked(Min, Max, Datadoc, UnpackedSize):-
     [datadoc,unpackedSize],
     Query,
     [[Datadoc,UnpackedSizeLiteral]],
-    [limit(1)]
+    []
   ),
   rdf_literal_data(value, UnpackedSizeLiteral, UnpackedSize).
 
@@ -121,6 +121,5 @@ datadoc_enum_unpacking(Datadoc):-
       ])
     ],
     [[Datadoc]],
-    [limit(1)]
+    []
   ).
-

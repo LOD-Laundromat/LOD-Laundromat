@@ -90,8 +90,8 @@ init(Options):-
 
   % @tbd Turn these into settings.
   NumberOfUnpackThreads = 10,
-  NumberOfSmallCleanThreads = 1,
-  NumberOfMediumCleanThreads = 1,
+  NumberOfSmallCleanThreads = 5,
+  NumberOfMediumCleanThreads = 2,
   NumberOfLargeCleanThreads = 1,
 
   % Start the downloading+unpacking threads.
@@ -141,7 +141,7 @@ start_large_thread(Id):-
   format(atom(Alias), 'clean_large_~d', [Id]),
   GlobalStack is 125 * (1024 ** 3), % 125 GB
   Min is 2.5 * (1024 ** 3), % 2.5 GB
-  Max is 9 * (1024 ** 3), % 9 GB
+  Max is 4.5 * (1024 ** 3), % 4.5 GB
   thread_create(
     lwm_clean_loop(clean_large, Min, Max),
     _,
