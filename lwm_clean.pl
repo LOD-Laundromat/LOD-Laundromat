@@ -312,9 +312,11 @@ clean_file_name(File1, quads):-
 %!   +LinePosition:compound
 %! ) is det.
 
-clean_turtle_family_triples(Out, State, BNodePrefix, Triples, _):-
+clean_turtle_family_triples(Out, State, BNodePrefix, Triples, Graph:_):-
+  maplist(write_triple(Graph), Triples), %DEB
   maplist(ctriples_write_triple(Out, State, BNodePrefix), Triples).
-
+write_triple(Graph, Triple):-
+  format(user_output, '~w\t\w\n', [Graph,Triple]).
 
 
 %! rdf_guess_format(
