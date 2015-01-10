@@ -245,7 +245,8 @@ clean_datastream(
         rdf_has(_, void:dataDump, VoidUrl),
         assert(datadump(VoidUrl))
       )
-  ;   setup_call_cleanup(
+  ;   gtrace,
+      setup_call_cleanup(
         ctriples_write_begin(State, BNodePrefix, Options3),
         setup_call_cleanup(
           gzopen(CleanFile, write, Out),
@@ -271,7 +272,6 @@ clean_datastream(
 
 clean_triples(Format, In, Out, State, BNodePrefix, Options):-
   memberchk(Format, [nquads,ntriples]), !,
-gtrace,
   rdf_process_ntriples(
     In,
     clean_turtle_family_triples(Out, State, BNodePrefix),
@@ -279,7 +279,6 @@ gtrace,
   ).
 clean_triples(Format, In, Out, State, BNodePrefix, Options):-
   memberchk(Format, [trig,turtle]), !,
-gtrace,
   rdf_process_turtle(
     In,
     clean_turtle_family_triples(Out, State, BNodePrefix),
