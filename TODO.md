@@ -4,12 +4,11 @@ TODO
   [ ] Bugs:
     [x] Archives are not closed by `ll_triple/1`.
     [ ] Max limit (50 errors) for XML/RDF file parsing.
-    [ ] RDF documents from the Turtle family that only contain comments would not be guessed as such. Example: data.dws.informatik.uni-mannheim.de/dbpedia/3.8/sl/geo_coordinates_sl.nt.bz2 ; http://lodlaundromat.org/resource/9e8fc4e5a8df6e3e3be5ebf8078f20cf.
-  [ ] Cannot download over FTP. Example:  	
-
-    ftp://ftp.uniprot.org/pub/databases/uniprot/current_release/rdf/uniprot.rdf.gz ; http://lodlaundromat.org/resource/c5e884598311fff3d52018a12133de0c.
+    [x] Turtle family files only containing comments are guessed incorrectly.
+    [o] Cannot download over FTP. @swipl-mailinglist
+    [o] Cannot retrieve name of archive entry in single-entry archives.
   [ ] Debug:
-    [o] Script that checks the validity of SPARQL queries in llWM.
+    [x] Script that checks the validity of SPARQL queries in llWM.
   [ ] Swipl:
     [ ] `opt_arguments/3` is not steadfast.
         The following throws an exception:
