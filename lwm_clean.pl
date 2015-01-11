@@ -312,7 +312,8 @@ clean_file_name(File1, quads):-
 %!   +LinePosition:compound
 %! ) is det.
 
-clean_turtle_family_triples(Out, State, BNodePrefix, Triples0, Graph:_):-
+clean_turtle_family_triples(Out, State, BNodePrefix, Triples0, Graph0):-
+  graph_without_line(Graph0, Graph),
   maplist(fix_triple(Graph), Triples0, Triples),
   maplist(ctriples_write_triple(Out, State, BNodePrefix), Triples).
 fix_triple(Graph, rdf(S,P,O), Triple):-
@@ -320,22 +321,23 @@ fix_triple(Graph, rdf(S,P,O), Triple):-
   ->  Triple = rdf(S,P,O,Graph)
   ;   Triple = rdf(S,P,O)
   ).
-fix_triple(Graph0, rdf(S,P,O,G0), Triple):-
-  (   fix_graph(G0, G)
+fix_triple(Graph, rdf(S,P,O,G0), Triple):-
+  (   graph_without_line(G0, G),
+      is_named_graph(G)
   ->  Triple = rdf(S,P,O,G)
-  ;   fix_graph(Graph0, Graph)
+  ;   is_named_graph(Graph)
   ->  Triple = rdf(S,P,O,Graph)
   ;   Triple = rdf(S,P,O)
   ).
 
-is_graph(Graph):-
+is_named_graph(Graph):-
   ground(Graph),
   Graph \== user.
 
-fix_graph(Graph:_, Graph):- !,
-  is_graph(Graph).
-fix_graph(Graph, Graph):-
-  is_graph(Graph).
+graph_without_line(Graph:_, Graph):- !.
+graph_without_line(Graph, Graph).
+
+
 
 %! rdf_guess_format(
 %!   +Datadoc:uri,

@@ -44,15 +44,8 @@
 :- dynamic(debug:debug_md5/2).
 :- multifile(debug:debug_md5/2).
 
-debug:debug_md5('3022a019c87979c18ce75cf950fcf678', clean).
-debug:debug_md5('3e04988fd36a2d96aa67690034b6d397', clean).
-debug:debug_md5('45e0c8bb39ec87fb351241a750ae306e', clean).
-debug:debug_md5('8fae0111994668e2c060a13e6ace0d91', clean).
-debug:debug_md5('9a37588bcfafa3100dc31211f9725266', clean).
-debug:debug_md5('9e8fc4e5a8df6e3e3be5ebf8078f20cf', clean).
-debug:debug_md5('b7d40ead79bb991f86a6e61309e78656', clean).
+debug:debug_md5('63c2f001e5cf428e8a98db4aac718db4', clean).
 debug:debug_md5('c4052f658d9c32b7bd91c171411ef7c9', clean).
-
 
 show_idle:-
   flag(number_of_idle_loops_clean_small, Small, Small),
