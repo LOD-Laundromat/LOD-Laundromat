@@ -89,8 +89,8 @@ init(Options):-
   call(Init_0),
 
   % @tbd Turn these into settings.
-  NumberOfUnpackThreads = 0,
-  NumberOfSmallCleanThreads = 0,
+  NumberOfUnpackThreads = 10,
+  NumberOfSmallCleanThreads = 1,
   NumberOfMediumCleanThreads = 0,
   NumberOfLargeCleanThreads = 0,
 

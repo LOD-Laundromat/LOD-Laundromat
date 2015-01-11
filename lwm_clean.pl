@@ -268,7 +268,7 @@ clean_datastream(
   clean_file_name(CleanFile, CFormat),
 
   % Store statistics about the number of (duplicate) triples.
-  store_number_of_triples(Category, Datadoc, _, NumberOfTriples).
+  store_number_of_triples(Category, Datadoc, NumberOfTriples).
 
 clean_triples(Format, In, Out, State, BNodePrefix, Options):-
   memberchk(Format, [nquads,ntriples]), !,
