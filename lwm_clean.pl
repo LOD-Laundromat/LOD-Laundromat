@@ -15,7 +15,6 @@ The cleaning process performed by the LOD Washing Machine.
 @version 2014/03-2014/06, 2014/08-2014/09, 2015/01
 */
 
-:- use_module(library(aggregate)).
 :- use_module(library(apply)).
 :- use_module(library(option)).
 :- use_module(library(semweb/rdf_db), except([rdf_node/1])).
@@ -87,7 +86,7 @@ lwm_clean_loop(Category, Min, Max):-
     Status,
     Warnings1
   ),
-gtrace,
+%%%%gtrace,
   % @tbd Virtuoso gives 413 HTTP status codes.
   list_truncate(Warnings1, 100, Warnings2),
 
