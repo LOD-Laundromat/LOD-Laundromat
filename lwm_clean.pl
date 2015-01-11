@@ -87,6 +87,7 @@ lwm_clean_loop(Category, Min, Max):-
     Status,
     Warnings1
   ),
+gtrace,
   % @tbd Virtuoso gives 413 HTTP status codes.
   list_truncate(Warnings1, 100, Warnings2),
 
@@ -217,8 +218,8 @@ clean_datastream(
   md5_bnode_base(Md5, BaseComponents),
   Options3 = [
     bnode_base(BaseComponents),
-    format(Format),
-    number_of_triples(TOut)
+    format(CFormat),
+    number_of_triples(NumberOfTriples)
   ],
 
   retractall(datadump/1),
@@ -227,11 +228,11 @@ clean_datastream(
 
       % In between loading and saving the data,
       % we count the number of triples, including the number of duplicates.
-      aggregate_all(
-        count,
-        rdf(_, _, _, _),
-        TIn
-      ),
+      %%%%aggregate_all(
+      %%%%  count,
+      %%%%  rdf(_, _, _, _),
+      %%%%  TIn
+      %%%%),
 
       % Save the data in a cleaned format.
       setup_call_cleanup(
@@ -245,8 +246,7 @@ clean_datastream(
         rdf_has(_, void:dataDump, VoidUrl),
         assert(datadump(VoidUrl))
       )
-  ;   gtrace,
-      setup_call_cleanup(
+  ;   setup_call_cleanup(
         ctriples_write_begin(State, BNodePrefix, Options3),
         setup_call_cleanup(
           gzopen(CleanFile, write, Out),
@@ -265,10 +265,10 @@ clean_datastream(
   ),
 
   % Fix the file name, if needed.
-  clean_file_name(CleanFile, Format),
+  clean_file_name(CleanFile, CFormat),
 
   % Store statistics about the number of (duplicate) triples.
-  store_number_of_triples(Category, Datadoc, TIn, TOut).
+  store_number_of_triples(Category, Datadoc, _, NumberOfTriples).
 
 clean_triples(Format, In, Out, State, BNodePrefix, Options):-
   memberchk(Format, [nquads,ntriples]), !,
@@ -312,12 +312,30 @@ clean_file_name(File1, quads):-
 %!   +LinePosition:compound
 %! ) is det.
 
-clean_turtle_family_triples(Out, State, BNodePrefix, Triples, Graph:_):-
-  maplist(write_triple(Graph), Triples), %DEB
+clean_turtle_family_triples(Out, State, BNodePrefix, Triples0, Graph:_):-
+  maplist(fix_triple(Graph), Triples0, Triples),
   maplist(ctriples_write_triple(Out, State, BNodePrefix), Triples).
-write_triple(Graph, Triple):-
-  format(user_output, '~w\t\w\n', [Graph,Triple]).
+fix_triple(Graph, rdf(S,P,O), Triple):-
+  (   is_graph(Graph)
+  ->  Triple = rdf(S,P,O,Graph)
+  ;   Triple = rdf(S,P,O)
+  ).
+fix_triple(Graph0, rdf(S,P,O,G0), Triple):-
+  (   fix_graph(G0, G)
+  ->  Triple = rdf(S,P,O,G)
+  ;   fix_graph(Graph0, Graph)
+  ->  Triple = rdf(S,P,O,Graph)
+  ;   Triple = rdf(S,P,O)
+  ).
 
+is_graph(Graph):-
+  ground(Graph),
+  Graph \== user.
+
+fix_graph(Graph:_, Graph):- !,
+  is_graph(Graph).
+fix_graph(Graph, Graph):-
+  is_graph(Graph).
 
 %! rdf_guess_format(
 %!   +Datadoc:uri,
