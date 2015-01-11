@@ -21,10 +21,9 @@
                   % ?ContentLength:nonneg
                   % ?ContentType:atom
                   % ?LastModified:nonneg
-    store_number_of_triples/4, % +Category:atom
+    store_number_of_triples/3, % +Category:atom
                                % +Datadoc:url
-                               % +ReadTriples:nonneg
-                               % +WrittenTriples:nonneg
+                               % +NumberOfTriples:nonneg
     store_skip_clean/2, % +Md5:atom
                         % +Datadoc:url
     store_warning/2, % +Datadoc:url
@@ -233,27 +232,20 @@ store_http(Datadoc, ContentLength, ContentType, LastModified):-
 %! store_number_of_triples(
 %!   +Category:atom,
 %!   +Datadoc:url,
-%!   +ReadTriples:nonneg,
-%!   +WrittenTriples:nonneg
+%!   +NumberOfTriples:nonneg
 %! ) is det.
 
-store_number_of_triples(Category, Datadoc, TIn, TOut):-
+store_number_of_triples(Category, Datadoc, NumberOfTriples):-
   store_triple(
     Datadoc,
     llo-triples,
-    literal(type(xsd-nonNegativeInteger,TOut))
-  ),
-  TDup is TIn - TOut,
-  store_triple(
-    Datadoc,
-    llo-duplicates,
-    literal(type(xsd-nonNegativeInteger,TDup))
+    literal(type(xsd-nonNegativeInteger,NumberOfTriples))
   ),
 
   % DEB
   lwm_debug_message(
     lwm_progress(Category),
-    ctriples_written(Category,TOut,TDup)
+    ctriples_written(Category,NumberOfTriples)
   ).
 
 

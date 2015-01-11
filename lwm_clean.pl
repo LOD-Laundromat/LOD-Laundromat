@@ -218,8 +218,8 @@ clean_datastream(
   md5_bnode_base(Md5, BaseComponents),
   Options3 = [
     bnode_base(BaseComponents),
-    format(Format),
-    number_of_triples(TOut)
+    format(CFormat),
+    number_of_triples(NumberOfTriples)
   ],
 
   retractall(datadump/1),
@@ -228,11 +228,11 @@ clean_datastream(
 
       % In between loading and saving the data,
       % we count the number of triples, including the number of duplicates.
-      aggregate_all(
-        count,
-        rdf(_, _, _, _),
-        TIn
-      ),
+      %%%%aggregate_all(
+      %%%%  count,
+      %%%%  rdf(_, _, _, _),
+      %%%%  TIn
+      %%%%),
 
       % Save the data in a cleaned format.
       setup_call_cleanup(
@@ -265,10 +265,10 @@ clean_datastream(
   ),
 
   % Fix the file name, if needed.
-  clean_file_name(CleanFile, Format),
+  clean_file_name(CleanFile, CFormat),
 
   % Store statistics about the number of (duplicate) triples.
-  store_number_of_triples(Category, Datadoc, TIn, TOut).
+  store_number_of_triples(Category, Datadoc, _, NumberOfTriples).
 
 clean_triples(Format, In, Out, State, BNodePrefix, Options):-
   memberchk(Format, [nquads,ntriples]), !,
