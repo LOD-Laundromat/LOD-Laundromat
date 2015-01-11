@@ -6,7 +6,7 @@ TODO
     [ ] Max limit (50 errors) for XML/RDF file parsing.
     [x] Turtle family files only containing comments are guessed incorrectly.
     [o] Cannot download over FTP. @swipl-mailinglist
-    [o] Cannot retrieve name of archive entry in single-entry archives.
+    [o] Backslashed in IRI are not recognized as RDF (correctly). Is this too strict? Examples: b36dde5e58e161c09b41a295b7a5599f, 63c2f001e5cf428e8a98db4aac718db4, 0d9a179fb9b080dbecd19553a48f163c.
   [ ] Debug:
     [x] Script that checks the validity of SPARQL queries in llWM.
   [ ] Swipl:
@@ -21,7 +21,7 @@ TODO
        ```
   [ ] Lib:
     [ ] Implement HTTP headers:
-      [ ] ...
+      [ ] Indicating Content-Type of archived entry.
       [ ] ...
       [ ] ...
   [ ] llWM:
