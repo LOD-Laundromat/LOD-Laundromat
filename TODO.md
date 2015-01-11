@@ -3,6 +3,7 @@ TODO
 
   [ ] Bugs:
     [x] Archives are not closed by `ll_triple/1`.
+    [ ] Max limit (50 errors) for XML/RDF file parsing.
   [ ] Debug:
     [o] Script that checks the validity of SPARQL queries in llWM.
   [ ] Swipl:
@@ -21,7 +22,7 @@ TODO
       [ ] ...
       [ ] ...
   [ ] llWM:
-    [o] Clean on a per-triple basis.
+    [x] Clean on a per-triple basis.
     [o] Disk-based sorting and deduplication.
     [ ] Store more HTTP headers per dirty document.
     [ ] Keep track of non-canonical lexical forms.

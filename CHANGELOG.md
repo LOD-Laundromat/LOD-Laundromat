@@ -1,7 +1,7 @@
 Changelog LOD Laundromat 11 (changes since LOD Laundromat 10)
 =============================================================
 
-This is the version demoed at ISWC and BNAIC (2014/10-2014/11).
+This is the version on (2015/01/11).
 
 Major features
 --------------
@@ -62,18 +62,16 @@ Bugfixes
       would not be processed correctly.
     - Archives with multiple enties would receive two `end_unpack` timestamps.
     - Archives with no contents at all would not enter the cleaning phase.
-      (The correct behavior is to trivially pass through the cleaning phase.
+      (The correct behavior is to trivially pass through the cleaning phase.)
   - HTTP:
     - The HTTP Content-Type property was not used for guessing
       the RDF serialization format of downloaded documents.
     - HTTP redirects that require the setting of cookies were not followed.
-    - Some servers would block multiple nearly-simultaneous requests
-      for downloading different documents.  The unpacking threads now only
-      pick documents whose authority is not currently being downloaded from
-      by another thread.
     - Unpacking would stop whenever the triple store/backend went offline.
       (The correct behavior is to wait for the backend to auto-restart
       and come back online again.)
+  - N-Quads:
+    - N-Quads were not recognized by the RDF serialization guesser.
   - N-Triples:
     - Inclusion of data documents that are serialized in
       the N-triples format (not included in the previous scrape).
@@ -101,3 +99,7 @@ Known limitations
       New seed URIs from VoID descriptions can therefore not
       be added to the datastore directly but are written to a text file
       which has to be manually imported.
+    - Some servers would block multiple nearly-simultaneous requests
+      for downloading different documents.  The unpacking threads now only
+      pick documents whose authority is not currently being downloaded from
+      by another thread.
