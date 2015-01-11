@@ -42,11 +42,16 @@ lwm_continue:-
     set(Datadoc),
     (   datadoc_enum_unpacking(Datadoc)
     ;   datadoc_enum_cleaning(Datadoc)
+    ;   debug_datadoc(Datadoc)
     ),
     Datadocs
   ),
 
   maplist(reset_datadoc, Datadocs).
+
+debug_datadoc(Datadoc):-
+  debug:debug_md5(Md5, _),
+  rdf_global_id(ll:Md5, Datadoc).
 
 
 
