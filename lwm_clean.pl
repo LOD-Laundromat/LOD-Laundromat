@@ -316,8 +316,8 @@ clean_turtle_family_triples(Out, State, BNodePrefix, Triples0, Graph0):-
   graph_without_line(Graph0, Graph),
   maplist(fix_triple(Graph), Triples0, Triples),
   maplist(ctriples_write_triple(Out, State, BNodePrefix), Triples).
-fix_triple(Graph, rdf(S,P,O), Triple):-
-  (   is_graph(Graph)
+fix_triple(Graph, rdf(S,P,O), Triple):- !,
+  (   is_named_graph(Graph)
   ->  Triple = rdf(S,P,O,Graph)
   ;   Triple = rdf(S,P,O)
   ).
