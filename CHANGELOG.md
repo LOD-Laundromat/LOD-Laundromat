@@ -70,21 +70,20 @@ Bugfixes
     - Unpacking would stop whenever the triple store/backend went offline.
       (The correct behavior is to wait for the backend to auto-restart
       and come back online again.)
-  - N-Quads:
-    - N-Quads were not recognized by the RDF serialization guesser.
-  - N-Triples:
-    - Inclusion of data documents that are serialized in
-      the N-triples format (not included in the previous scrape).
-  - POSIX/Linux/Bash:
-    - Files with braces in their file name would be subject to
-      Bash brace expansion and would not be found on the disk.
-  - RDFa:
+  - Serialization format guessing:
+    - N-Quads files with graph terms were guessed incorrectly.
+    - Turtle-family files with a blank node terms were guessed incorrectly.
     - Improved recognition of HTML document versions, resulting in fewer
       false negative parsing errors for RDFa.
+  - Serialization format processing:
+    - N-Triples files were never cleaned.
     - Handle HTML documents with multiple root elements
       (grammatically incorrect, but appears in the wild).
     - The parser would illegitimately break on Processing Instructions (PIs)
       appearing in an XML document.
+  - POSIX/Linux/Bash:
+    - Files with braces in their file name would be subject to
+      Bash brace expansion and would not be found on the disk.
 
 Known limitations
 =================
@@ -103,3 +102,4 @@ Known limitations
       for downloading different documents.  The unpacking threads now only
       pick documents whose authority is not currently being downloaded from
       by another thread.
+    - Files are not downloaded over (S)FTP.
