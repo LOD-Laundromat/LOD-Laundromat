@@ -224,22 +224,14 @@ clean_datastream(
   retractall(datadump/1),
   (   memberchk(Format, [rdfa,xml])
   ->  rdf_load(stream(In), Options2),
-
-      % In between loading and saving the data,
-      % we count the number of triples, including the number of duplicates.
-      %%%%aggregate_all(
-      %%%%  count,
-      %%%%  rdf(_, _, _, _),
-      %%%%  TIn
-      %%%%),
-
+      
       % Save the data in a cleaned format.
       setup_call_cleanup(
         gzopen(CleanFile, write, Out),
         ctriples_write_graph(Out, _NoGraph, Options3),
         close(Out)
       ),
-
+      
       % Make sure any VoID datadumps are added to the LOD Basket.
       forall(
         rdf_has(_, void:dataDump, VoidUrl),
@@ -255,7 +247,6 @@ clean_datastream(
         ctriples_write_end(State, Options3)
       )
   ),
-
   % Collect datadump locations.
   findall(
     VoidUrl,
