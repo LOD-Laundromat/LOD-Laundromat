@@ -126,4 +126,4 @@ datadoc_source(Datadoc, Source):-
   ),
   rdf_literal_data(value, PathLiteral, Path),
   datadoc_source(Parent, ParentSource),
-  atomic_concat(ParentSource, Path, Source).
+  atomic_list_concat([ParentSource,Path], ' ', Source).
