@@ -86,7 +86,7 @@ lwm_clean_loop(Category, Min, Max):-
     Status,
     Warnings1
   ),
-%%%%gtrace,
+  (Status == false -> gtrace ; true), %DEB
   % @tbd Virtuoso gives 413 HTTP status codes.
   list_truncate(Warnings1, 100, Warnings2),
 
@@ -204,11 +204,8 @@ clean_datastream(
       silent(true)
   ],
 
-  % Add options that are specific to the RDFa serialization format.
-  (   Format == rdfa
-  ->  merge_options([max_errors(-1),syntax(style)], Options1, Options2)
-  ;   Options2 = Options1
-  ),
+  % Add options that are specific to XML/RDF and RDFa.
+  merge_options([max_errors(-1),syntax(style)], Options1, Options2),
 
   % Prepare the file name.
   file_directory_name(File, Dir),
@@ -224,14 +221,14 @@ clean_datastream(
   retractall(datadump/1),
   (   Format == rdfa
   ->  rdf_load(stream(In), Options2),
-      
+
       % Save the data in a cleaned format.
       setup_call_cleanup(
         gzopen(CleanFile, write, Out),
         ctriples_write_graph(Out, _NoGraph, Options3),
         close(Out)
       ),
-      
+
       % Make sure any VoID datadumps are added to the LOD Basket.
       forall(
         rdf_has(_, void:dataDump, VoidUrl),
