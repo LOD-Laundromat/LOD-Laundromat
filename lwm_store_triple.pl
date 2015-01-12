@@ -142,14 +142,16 @@ store_end_clean0(Md5, Datadoc):-
   get_dateTime(Now),
   store_triple(Datadoc, llo-endClean, literal(type(xsd-dateTime,Now))),
 
-  % Construct the download URL.
-  atom_concat('/', Md5, Path),
-  uri_components(
-    Datadump,
-    uri_components(http,'download.lodlaundromat.org',Path,_,_)
-  ),
-
-  store_triple(Datadoc, void-dataDump, Datadump).
+  % Construct the download URL for non-archive files.
+  (   rdf_triple(Datadoc, rdf-type, llo-Archive)
+  ->  true
+  ;   atom_concat('/', Md5, Path),
+      uri_components(
+        Datadump,
+        uri_components(http,'download.lodlaundromat.org',Path,_,_)
+      ),
+      store_triple(Datadoc, void-dataDump, Datadump)
+  ).
 
 
 %! store_end_unpack(

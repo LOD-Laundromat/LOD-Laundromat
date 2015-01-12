@@ -2,6 +2,9 @@
   noRdf_store,
   [
     post_rdf_triples/0,
+    rdf_triple/3, % +Subject
+                  % +Predicate
+                  % +Object
     store_triple/3 % +Subject
                    % +Predicate
                    % +Object
