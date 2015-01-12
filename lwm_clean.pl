@@ -219,7 +219,7 @@ clean_datastream(
   ],
 
   retractall(datadump/1),
-  (   memberchk(Format, [rdfa,xml])
+  (   Format == rdfa
   ->  rdf_load(stream(In), Options2),
 
       % Save the data in a cleaned format.
@@ -257,18 +257,24 @@ clean_datastream(
   % Store statistics about the number of (duplicate) triples.
   store_number_of_triples(Category, Datadoc, NumberOfTriples).
 
+clean_triples(xml, In, Out, State, BNodePrefix, Options):- !,
+  process_rdf(
+    In,
+    clean_streamed_triples(Out, State, BNodePrefix),
+    Options
+  ).
 clean_triples(Format, In, Out, State, BNodePrefix, Options):-
   memberchk(Format, [nquads,ntriples]), !,
   rdf_process_ntriples(
     In,
-    clean_turtle_family_triples(Out, State, BNodePrefix),
+    clean_streamed_triples(Out, State, BNodePrefix),
     Options
   ).
 clean_triples(Format, In, Out, State, BNodePrefix, Options):-
   memberchk(Format, [trig,turtle]), !,
   rdf_process_turtle(
     In,
-    clean_turtle_family_triples(Out, State, BNodePrefix),
+    clean_streamed_triples(Out, State, BNodePrefix),
     Options
   ).
 clean_triples(Format, In, Out, State, BNodePrefix, Options):-
@@ -291,7 +297,7 @@ clean_file_name(File1, quads):-
 
 
 
-%! clean_turtle_family_triples(
+%! clean_streamed_triples(
 %!   +Out:stream,
 %!   +State:compound,
 %!   +BNodePrefix:atom,
@@ -299,7 +305,7 @@ clean_file_name(File1, quads):-
 %!   +LinePosition:compound
 %! ) is det.
 
-clean_turtle_family_triples(Out, State, BNodePrefix, Triples0, Graph0):-
+clean_streamed_triples(Out, State, BNodePrefix, Triples0, Graph0):-
   graph_without_line(Graph0, Graph),
   maplist(fix_triple(Graph), Triples0, Triples),
   maplist(ctriples_write_triple(Out, State, BNodePrefix), Triples).
