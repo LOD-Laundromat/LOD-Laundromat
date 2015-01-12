@@ -91,8 +91,8 @@ init(Options):-
   % @tbd Turn these into settings.
   NumberOfUnpackThreads = 10,
   NumberOfSmallCleanThreads = 1,
-  NumberOfMediumCleanThreads = 0,
-  NumberOfLargeCleanThreads = 0,
+  NumberOfMediumCleanThreads = 1,
+  NumberOfLargeCleanThreads = 1,
 
   % Start the downloading+unpacking threads.
   forall(
