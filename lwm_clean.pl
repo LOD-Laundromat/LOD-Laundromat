@@ -211,7 +211,6 @@ clean_datastream(
 
   % Prepare the file name.
   file_directory_name(File, Dir),
-  directory_file_path(Dir, 'clean.nt.gz', CleanFile0),
 
   md5_bnode_base(Md5, BaseComponents),
   Options3 = [
@@ -221,12 +220,13 @@ clean_datastream(
   ],
 
   retractall(datadump/1),
+  directory_file_path(Dir, unsorted, UnsortedFile),
   (   Format == rdfa
   ->  rdf_load(stream(In), Options2),
 
       % Save the data in a cleaned format.
       setup_call_cleanup(
-        gzopen(CleanFile0, write, Out),
+        open(UnsortedFile, write, Out),
         ctriples_write_graph(Out, _NoGraph, Options3),
         close(Out)
       ),
@@ -239,7 +239,7 @@ clean_datastream(
   ;   setup_call_cleanup(
         ctriples_write_begin(State, BNodePrefix, Options3),
         setup_call_cleanup(
-          gzopen(CleanFile0, write, Out),
+          open(UnsortedFile, write, Out),
           clean_triples(Format, In, Out, State, BNodePrefix, Options2),
           close(Out)
         ),
@@ -253,16 +253,39 @@ clean_datastream(
     VoidUrls
   ),
 
-  % Fix the file name, if needed.
-  clean_file_name(CleanFile0, CFormat, CleanFile),
+  % Establish the file name extension.
+  (   CFormat == triples
+  ->  Ext = nt
+  ;   CFormat == quads
+  ->  Ext = nq
+  ),
   
   % Sort file.
-  gnu_sort(CleanFile, [unique(true)]),
-  file_lines(CleanFile, NumberOfUniqueTriples),
-  writeln(NumberOfUniqueTriples),
+  directory_file_path(Dir, sorted, SortedFile),
+  gnu_sort(UnsortedFile, [duplicates(false),output(SortedFile)]),
+  file_lines(SortedFile, NumberOfUniqueTriples),
+  writeln(NumberOfUniqueTriples), %@tbd
+  
+  % Compress file.
+  atomic_list_concat([clean,Ext,gz], LocalName),
+  directory_file_path(Dir, LocalName, CleanFile),
+  setup_call_cleanup(
+    gzopen(CleanFile, write, Out),
+    setup_call_cleanup(
+      open(SortedFile, read, In),
+      copy_stream_data(In, Out),
+      close(In)
+    ),
+    close(Out)
+  ),
   
   % Store statistics about the number of (duplicate) triples.
-  store_number_of_triples(Category, Datadoc, NumberOfTriples).
+  store_number_of_triples(
+    Category,
+    Datadoc,
+    NumberOfTriples,
+    NumberOfUniqueTriples
+  ).
 
 clean_triples(xml, In, Out, State, BNodePrefix, Options):- !,
   process_rdf(
@@ -293,20 +316,6 @@ clean_triples(Format, In, Out, State, BNodePrefix, Options):-
 
 
 % HELPERS %
-
-%! clean_file_name(
-%!   +Suggestion:atom,
-%!   +Format:oneof([quads,triples]),
-%!   -File:atom
-%! ) is det.
-
-clean_file_name(File, triples, File):- !.
-clean_file_name(File1, quads, File2):-
-  file_directory_name(File1, Dir),
-  directory_file_path(Dir, 'clean.nq.gz', File2),
-  rename_file(File1, File2).
-
-
 
 %! clean_streamed_triples(
 %!   +Out:stream,

@@ -21,9 +21,10 @@
                   % ?ContentLength:nonneg
                   % ?ContentType:atom
                   % ?LastModified:nonneg
-    store_number_of_triples/3, % +Category:atom
+    store_number_of_triples/4, % +Category:atom
                                % +Datadoc:url
                                % +NumberOfTriples:nonneg
+                               % +NumberOfUniqueTriples:nonneg
     store_skip_clean/2, % +Md5:atom
                         % +Datadoc:url
     store_warning/2, % +Datadoc:url
@@ -234,20 +235,35 @@ store_http(Datadoc, ContentLength, ContentType, LastModified):-
 %! store_number_of_triples(
 %!   +Category:atom,
 %!   +Datadoc:url,
-%!   +NumberOfTriples:nonneg
+%!   +NumberOfTriples:nonneg,
+%!   +NumberOfUniqueTriples:nonneg
 %! ) is det.
 
-store_number_of_triples(Category, Datadoc, NumberOfTriples):-
+store_number_of_triples(
+  Category,
+  Datadoc,
+  NumberOfTriples,
+  NumberOfUniqueTriples
+):-
+  % Store the number of unique triples.
   store_triple(
     Datadoc,
     llo-triples,
-    literal(type(xsd-nonNegativeInteger,NumberOfTriples))
+    literal(type(xsd-nonNegativeInteger,NumberOfUniqueTriples))
   ),
-
+  
+  % Store the number of duplicate triples.
+  NumberOfDuplicateTriples is NumberOfTriples - NumberOfUniqueTriples,
+  store_triple(
+    Datadoc,
+    llo-duplicates,
+    literal(type(xsd-nonNegativeInteger,NumberOfDuplicateTriples))
+  ),
+  
   % DEB
   lwm_debug_message(
     lwm_progress(Category),
-    ctriples_written(Category,NumberOfTriples)
+    ctriples_written(Category,NumberOfUniqueTriples,NumberOfDuplicateTriples)
   ).
 
 
