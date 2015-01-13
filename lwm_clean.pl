@@ -24,6 +24,8 @@ The cleaning process performed by the LOD Washing Machine.
 
 :- use_module(generics(list_ext)).
 :- use_module(generics(print_ext)).
+:- use_module(generics(sort_ext)).
+:- use_module(os(file_gnu)).
 :- use_module(pl(pl_log)).
 
 :- use_module(plRdf(management/rdf_file_db)).
@@ -209,7 +211,7 @@ clean_datastream(
 
   % Prepare the file name.
   file_directory_name(File, Dir),
-  directory_file_path(Dir, 'clean.nt.gz', CleanFile),
+  directory_file_path(Dir, 'clean.nt.gz', CleanFile0),
 
   md5_bnode_base(Md5, BaseComponents),
   Options3 = [
@@ -224,7 +226,7 @@ clean_datastream(
 
       % Save the data in a cleaned format.
       setup_call_cleanup(
-        gzopen(CleanFile, write, Out),
+        gzopen(CleanFile0, write, Out),
         ctriples_write_graph(Out, _NoGraph, Options3),
         close(Out)
       ),
@@ -237,7 +239,7 @@ clean_datastream(
   ;   setup_call_cleanup(
         ctriples_write_begin(State, BNodePrefix, Options3),
         setup_call_cleanup(
-          gzopen(CleanFile, write, Out),
+          gzopen(CleanFile0, write, Out),
           clean_triples(Format, In, Out, State, BNodePrefix, Options2),
           close(Out)
         ),
@@ -252,8 +254,14 @@ clean_datastream(
   ),
 
   % Fix the file name, if needed.
-  clean_file_name(CleanFile, CFormat),
-
+  clean_file_name(CleanFile0, CFormat, CleanFile),
+  
+  % Sort file.
+gtrace,
+  gnu_sort(CleanFile, [unique(true)]),
+  file_lines(CleanFile, NumberOfUniqueTriples),
+  writeln(NumberOfUniqueTriples),
+  
   % Store statistics about the number of (duplicate) triples.
   store_number_of_triples(Category, Datadoc, NumberOfTriples).
 
@@ -287,10 +295,14 @@ clean_triples(Format, In, Out, State, BNodePrefix, Options):-
 
 % HELPERS %
 
-%! clean_file_name(+File:atom, +Format:oneof([quads,triples])) is det.
+%! clean_file_name(
+%!   +Suggestion:atom,
+%!   +Format:oneof([quads,triples]),
+%!   -File:atom
+%! ) is det.
 
-clean_file_name(_, triples):- !.
-clean_file_name(File1, quads):-
+clean_file_name(File, triples, File):- !.
+clean_file_name(File1, quads, File2):-
   file_directory_name(File1, Dir),
   directory_file_path(Dir, 'clean.nq.gz', File2),
   rename_file(File1, File2).
