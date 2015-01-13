@@ -257,7 +257,6 @@ clean_datastream(
   clean_file_name(CleanFile0, CFormat, CleanFile),
   
   % Sort file.
-gtrace,
   gnu_sort(CleanFile, [unique(true)]),
   file_lines(CleanFile, NumberOfUniqueTriples),
   writeln(NumberOfUniqueTriples),
