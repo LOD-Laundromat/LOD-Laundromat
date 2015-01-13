@@ -50,9 +50,22 @@ lwm_debug_message(Topic, _):-
 
 
 % C-Triples written.
-lwm_debug_message(_, ctriples_written(_,0)):- !.
-lwm_debug_message(Topic, ctriples_written(_,NumberOfTriples)):-
-  debug(Topic, '[+~D]', [NumberOfTriples]).
+lwm_debug_message(_, ctriples_written(_,0,_)):- !.
+lwm_debug_message(
+  Topic,
+  ctriples_written(_,NumberOfUniqueTriples,NumberOfDuplicateTriples)
+):-
+  % Duplicates
+  (   NumberOfDuplicateTriples =:= 0
+  ->  DuplicatesString = ''
+  ;   format(
+        string(DuplicatesString),
+        ' (~D duplicates)',
+        [NumberOfDuplicateTriples]
+      )
+  ),
+  debug(Topic, '[+~D~s]', [NumberOfUniqueTriples,DuplicatesString]).
+
 
 
 % End a process.
