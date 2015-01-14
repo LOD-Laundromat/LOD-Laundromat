@@ -272,7 +272,7 @@ clean_datastream(
 
   % Sort file.
   directory_file_path(Dir, sorted, SortedFile),
-  gnu_sort(UnsortedFile, [duplicates(false),output(SortedFile),parallel(8)]),
+  gnu_sort(UnsortedFile, [duplicates(false),output(SortedFile),parallel(2),utf8(true)]),
   file_lines(SortedFile, NumberOfUniqueTriples),
   delete_file(UnsortedFile),
 
