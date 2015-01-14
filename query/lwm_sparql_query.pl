@@ -44,7 +44,11 @@ in the LOD Washing Machine.
 
 
 
-%! datadoc_archive_entry(+Datadoc:uri, -ParentMd5:atom, -EntryPath:atom) is det.
+%! datadoc_archive_entry(
+%!   +Datadoc:uri,
+%!   -ParentMd5:atom,
+%!   -EntryPath:atom
+%! ) is det.
 
 datadoc_archive_entry(Datadoc, ParentMd5, EntryPath):-
   lwm_sparql_select(
