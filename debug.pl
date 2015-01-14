@@ -5,8 +5,8 @@
 
 :- debug(ac).
 :- debug(lwm_restart).
-%:- debug(sparql_graph_store).
-%:- debug(sparql_update).
+:- debug(sparql_graph_store).
+:- debug(sparql_update).
 :- debug(store_new_url).
 
 % Show idle looping on threads.
