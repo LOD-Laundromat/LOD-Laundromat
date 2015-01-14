@@ -54,6 +54,7 @@ The cleaning process performed by the LOD Washing Machine.
 %! lwm_clean_loop(+Category:atom, ?Min:nonneg, ?Max:nonneg) is det.
 
 lwm_clean_loop(Category, Min, Max):-
+gtrace,
   % Pick a new source to process.
   % If some exception is thrown here, the catch/3 makes it
   % silently fail. This way, the unpacking thread is able
