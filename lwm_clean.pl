@@ -54,7 +54,6 @@ The cleaning process performed by the LOD Washing Machine.
 %! lwm_clean_loop(+Category:atom, ?Min:nonneg, ?Max:nonneg) is det.
 
 lwm_clean_loop(Category, Min, Max):-
-gtrace,
   % Pick a new source to process.
   % If some exception is thrown here, the catch/3 makes it
   % silently fail. This way, the unpacking thread is able
@@ -90,7 +89,7 @@ lwm_clean(Datadoc):-
 lwm_clean(Category, Datadoc, UnpackedSize):-
   % Tell the triple store we are now going to clean this MD5.
   store_start_clean(Datadoc),
-  
+
   % We sometimes need the MD5 of the data document.
   rdf_global_id(ll:Md5, Datadoc),
 
@@ -129,7 +128,7 @@ lwm_clean(Category, Datadoc, UnpackedSize):-
   %%%%% Make sure the unpacking threads do not create a pending pool
   %%%%% that is (much) too big.
   %%%%flag(number_of_pending_md5s, Id, Id - 1),
-  
+
   true.
 
 
@@ -275,6 +274,7 @@ gtrace,
   ;   CFormat == quads
   ->  Ext = nq
   ),
+  writeln(Options3),
 
   % Sort file.
   directory_file_path(Dir, sorted, SortedFile),
