@@ -7,7 +7,7 @@ that serves the cleaned files and an accessible SPARQL endpoint
 for storing the metadata. See module [lwm_settings] for this.
 
 @author Wouter Beek
-@version 2014/06, 2014/08-2014/09, 2014/11
+@version 2014/06, 2014/08-2014/09, 2014/11, 2015/01
 */
 
 :- set_prolog_stack(global, limit(125*10**9)).
@@ -31,6 +31,7 @@ for storing the metadata. See module [lwm_settings] for this.
 :- use_module(lwm(lwm_continue)).
 :- use_module(lwm(lwm_restart)).
 :- use_module(lwm(lwm_unpack)).
+:- use_module(lwm(debug/debug_datadoc)).
 :- use_module(lwm(debug/lwm_progress)).
 
 :- dynamic(user:web_module/2).
@@ -48,6 +49,7 @@ init:-
   % Read the command-line arguments.
   absolute_file_name(data(.), DefaultDir, [file_type(directory)]),
   OptSpec= [
+    [opt(datadoc),longflags([datadoc]),type(atom)],
     [default(false),opt(debug),longflags([debug]),type(boolean)],
     [default(DefaultDir),opt(directory),longflags([dir]),type(atom)],
     [default(false),opt(help),longflags([help]),shortflags([h]),type(boolean)],
@@ -56,7 +58,7 @@ init:-
     [default(false),opt(continue),longflags([continue]),type(boolean)]
   ],
   opt_arguments(OptSpec, Options, _),
-  
+
   % Process help.
   (   option(help(true), Options)
   ->  opt_help(OptSpec, Help),
@@ -68,13 +70,13 @@ init:-
 init(Options):-
   % Process the port option.
   option(port(Port), Options),
-  
+
   % Process the directory option.
   option(directory(Dir), Options),
   make_directory_path(Dir),
   retractall(user:file_search_path(data, _)),
   assert(user:file_search_path(data, Dir)),
-  
+
   % Process the restart or continue option.
   (   option(restart(true), Options)
   ->  Init_0 = lwm_restart
@@ -82,18 +84,36 @@ init(Options):-
   ->  Init_0 = lwm_continue
   ;   Init_0 = true
   ),
-  
+
+  % Start the debug tools server.
   start_app_server([port(Port),workers(2)]),
-  
+
+  % Initialization phase.
   clean_lwm_state,
   call(Init_0),
 
-  % @tbd Turn these into settings.
-  NumberOfUnpackThreads = 1,
-  NumberOfSmallCleanThreads = 1,
-  NumberOfMediumCleanThreads = 1,
-  NumberOfLargeCleanThreads = 1,
+  % Either process a specific data documents in a single thread (debug)
+  % or start a couple of continuous threads (production).
+  (   option(debug(true), Options),
+      option(datadoc(Datadoc), Options),
+      ground(Datadoc)
+  ->  debug_datadoc(Datadoc)
+  ;   init_production(1, 1, 1, 1)
+  ).
 
+%! init_production(
+%!   +NumberOfUnpackThreads:nonneg,
+%!   +NumberOfSmallCleanThreads:nonneg,
+%!   +NumberOfMediumCleanThreads:nonneg,
+%!   +NumberOfLargeCleanThreads:nonneg
+%! ) is det.
+
+init_production(
+  NumberOfUnpackThreads,
+  NumberOfSmallCleanThreads,
+  NumberOfMediumCleanThreads,
+  NumberOfLargeCleanThreads
+):-
   % Start the downloading+unpacking threads.
   forall(
     between(1, NumberOfUnpackThreads, UnpackId),

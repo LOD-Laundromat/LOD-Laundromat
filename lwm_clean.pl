@@ -46,6 +46,7 @@ The cleaning process performed by the LOD Washing Machine.
 :- multifile(debug:debug_md5/2).
 
 :- thread_local(datadump/1).
+:- thread_local(has_quadruples/1).
 
 
 
@@ -227,11 +228,7 @@ clean_datastream(
   file_directory_name(File, Dir),
 
   md5_bnode_base(Md5, BaseComponents),
-  Options3 = [
-    bnode_base(BaseComponents),
-    format(CFormat),
-    number_of_triples(NumberOfTriples)
-  ],
+  Options3 = [bnode_base(BaseComponents),number_of_triples(NumberOfTriples)],
 
   retractall(datadump/1),
   directory_file_path(Dir, unsorted, UnsortedFile),
@@ -267,15 +264,14 @@ clean_datastream(
     VoidUrls
   ),
 gtrace,
-
+  
   % Establish the file name extension.
-  (   CFormat == triples
-  ->  Ext = nt
-  ;   CFormat == quads
+  retract(has_quadruples(HasQuadruples)),
+  (   HasQuadruples == true
   ->  Ext = nq
+  ;   Ext = nt
   ),
-  writeln(Options3),
-
+  
   % Sort file.
   directory_file_path(Dir, sorted, SortedFile),
   gnu_sort(UnsortedFile, [duplicates(false),output(SortedFile),parallel(8)]),
@@ -351,6 +347,7 @@ fix_triple(Graph, rdf(S,P,O), Triple):- !,
   ;   Triple = rdf(S,P,O)
   ).
 fix_triple(Graph, rdf(S,P,O,G0), Triple):-
+  set_has_quadruples,
   (   graph_without_line(G0, G),
       is_named_graph(G)
   ->  Triple = rdf(S,P,O,G)
@@ -358,6 +355,11 @@ fix_triple(Graph, rdf(S,P,O,G0), Triple):-
   ->  Triple = rdf(S,P,O,Graph)
   ;   Triple = rdf(S,P,O)
   ).
+
+set_has_quadruples:-
+  has_quadruples(true), !.
+set_has_quadruples:-
+  assert(has_quadruples(true)).
 
 is_named_graph(Graph):-
   ground(Graph),
