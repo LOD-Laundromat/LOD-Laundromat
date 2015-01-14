@@ -14,8 +14,11 @@
                       % -Source:atom
     datadoc_location/2, % +Datadoc:iri
                         % -Location:uri
-    datadoc_unpacked_size/2 % +Datadoc:iri
-                            % -UnpackedSize:nonneg
+    datadoc_unpacked_size/2, % +Datadoc:iri
+                             % -UnpackedSize:nonneg
+    datadoc_p_os/3 % +Datadoc:iri
+                   % +Property:iri
+                   % -Objects:list(rdf_term)
   ]
 ).
 
@@ -29,10 +32,13 @@ in the LOD Washing Machine.
 */
 
 :- use_module(library(apply)).
+:- use_module(library(lists), except([delete/3,subset/2])).
 
 :- use_module(plRdf(term/rdf_literal)).
 
 :- use_module(lwm(query/lwm_sparql_generics)).
+
+:- rdf_meta(datadoc_p_os(r,r,-)).
 
 
 
@@ -152,4 +158,18 @@ datadoc_unpacked_size(Datadoc, UnpackedSize):-
     [limit(1)]
   ),
   rdf_literal_data(value, UnpackedSizeLiteral, UnpackedSize).
+
+
+
+%! datadoc_p_os(+Datadoc:iri, +Property:iri, -Objects:list(rdf_term)) is det.
+
+datadoc_p_os(Datadoc, P, Os):-
+  lwm_sparql_select(
+    [llo],
+    [o],
+    [rdf(Datadoc,P,var(o))],
+    Os0,
+    []
+  ),
+  flatten(Os0, Os).
 

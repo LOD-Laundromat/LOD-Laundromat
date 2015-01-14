@@ -123,3 +123,4 @@ datadoc_enum_unpacking(Datadoc):-
     [[Datadoc]],
     []
   ).
+
