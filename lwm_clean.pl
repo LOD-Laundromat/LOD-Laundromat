@@ -266,6 +266,7 @@ clean_datastream(
     datadump(VoidUrl),
     VoidUrls
   ),
+gtrace,
 
   % Establish the file name extension.
   (   CFormat == triples
@@ -273,13 +274,13 @@ clean_datastream(
   ;   CFormat == quads
   ->  Ext = nq
   ),
-  
+
   % Sort file.
   directory_file_path(Dir, sorted, SortedFile),
   gnu_sort(UnsortedFile, [duplicates(false),output(SortedFile)]),
   file_lines(SortedFile, NumberOfUniqueTriples),
   writeln(NumberOfUniqueTriples), %@tbd
-  
+
   % Compress file.
   atomic_list_concat([clean,Ext,gz], LocalName),
   directory_file_path(Dir, LocalName, CleanFile),
@@ -292,7 +293,7 @@ clean_datastream(
     ),
     close(Out)
   ),
-  
+
   % Store statistics about the number of (duplicate) triples.
   store_number_of_triples(
     Category,
