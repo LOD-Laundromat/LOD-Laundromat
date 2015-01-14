@@ -67,7 +67,7 @@ lwm_clean_loop(Category, Min, Max):-
     Exception,
     var(Exception)
   ),
-  lwm_clean_loop(Category, Datadoc, UnpackedSize),
+  lwm_clean(Category, Datadoc, UnpackedSize),
   % Intermittent loop.
   lwm_clean_loop(Category, Min, Max).
 % Done for now. Check whether there are new jobs in one seconds.
