@@ -7,6 +7,9 @@
     lwm_sparql_ask/3, % +Prefixes:list(atom)
                       % +Bgps:list(compound)
                       % +Options:list(nvpair)
+    lwm_sparql_select/3, % +Query:atom
+                         % -Result:list(list)
+                         % +Options:list(nvpair)
     lwm_sparql_select/5, % +Prefixes:list(atom)
                          % +Variables:list(atom)
                          % +Bgps:list(compound)
@@ -40,6 +43,9 @@ the LOD Laundromat's washing machine.
 
 :- predicate_options(lwm_sparql_ask/3, 3, [
      pass_to(sparql_ask/4, 4)
+   ]).
+:- predicate_options(lwm_sparql_select/3, 3, [
+     pass_to(sparql_select/4, 4)
    ]).
 :- predicate_options(lwm_sparql_select/5, 5, [
      pass_to(sparql_select/6, 6)
@@ -99,6 +105,21 @@ lwm_sparql_ask(Prefixes, Bgps, Options1):-
   ),
   loop_until_true(
     sparql_ask(Endpoint, Prefixes, Bgps, Options2)
+  ).
+
+
+
+%! lwm_sparql_select(
+%!   +Query:atom,
+%!   -Result:list(list),
+%!   +Options:list(nvpair)
+%! ) is det.
+
+lwm_sparql_select(Query, Result, Options1):-
+  current_endpoint(Endpoint),
+  sparql_select_options(Options1, Options2),
+  loop_until_true(
+    sparql_select(Endpoint, Query, Result, Options2)
   ).
 
 
