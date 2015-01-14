@@ -112,19 +112,27 @@ lwm_clean(Category, Datadoc, UnpackedSize):-
     Warnings1
   ),
   (Status == false -> gtrace ; true), %DEB
+
+  % Store the number of warnings.
+  length(Warnings1, NumberOfWarnings),
+  store_triple(
+    Datadoc,
+    llo-number_of_warnings,
+    literal(type(xsd-nonNegativeInteger,NumberOfWarnings))
+  ),
+  
+  % Store warnings and status as metadata.
+  store_exception(Datadoc, Status),
   % @tbd Virtuoso gives 413 HTTP status code when sending too many warnings.
   list_truncate(Warnings1, 100, Warnings2),
+  maplist(store_warning(Datadoc), Warnings2),
+  store_end_clean(Md5, Datadoc),
 
   % DEB: *end* cleaning a specific data document.
   lwm_debug_message(
     lwm_progress(Category),
     lwm_end(Category,Md5,Source,Status,Warnings2)
   ),
-
-  % Store warnings and status as metadata.
-  store_exception(Datadoc, Status),
-  maplist(store_warning(Datadoc), Warnings2),
-  store_end_clean(Md5, Datadoc),
 
   %%%%% Make sure the unpacking threads do not create a pending pool
   %%%%% that is (much) too big.
@@ -272,7 +280,10 @@ clean_datastream(
 
   % Sort file.
   directory_file_path(Dir, sorted, SortedFile),
-  gnu_sort(UnsortedFile, [duplicates(false),output(SortedFile),parallel(2),utf8(true)]),
+  gnu_sort(
+    UnsortedFile,
+    [duplicates(false),output(SortedFile),parallel(2),utf8(true)]
+  ),
   file_lines(SortedFile, NumberOfUniqueTriples),
   delete_file(UnsortedFile),
 
