@@ -264,14 +264,13 @@ clean_datastream(
     VoidUrls
   ),
 gtrace,
-  
+
   % Establish the file name extension.
-  retract(has_quadruples(HasQuadruples)),
-  (   HasQuadruples == true
+  (   retract(has_quadruples(true))
   ->  Ext = nq
   ;   Ext = nt
   ),
-  
+
   % Sort file.
   directory_file_path(Dir, sorted, SortedFile),
   gnu_sort(UnsortedFile, [duplicates(false),output(SortedFile),parallel(8)]),
