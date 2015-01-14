@@ -44,6 +44,7 @@
 :- dynamic(debug:debug_md5/2).
 :- multifile(debug:debug_md5/2).
 
+debug:debug_md5('11c0aa7e1b556c453ecd8c5f3e8a3c95', clean).
 debug:debug_md5('2cd84c4388b007e8480667f8d7ebddb8', clean).
 debug:debug_md5('671fa8c5194f6b13863802621d950c48', clean).
 debug:debug_md5('8e2700fa4caab554992d87a717a4f0ff', clean).
