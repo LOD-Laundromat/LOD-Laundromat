@@ -278,7 +278,7 @@ gtrace,
 
   % Sort file.
   directory_file_path(Dir, sorted, SortedFile),
-  gnu_sort(UnsortedFile, [duplicates(false),output(SortedFile)]),
+  gnu_sort(UnsortedFile, [duplicates(false),output(SortedFile),parallel(8)]),
   file_lines(SortedFile, NumberOfUniqueTriples),
   writeln(NumberOfUniqueTriples), %@tbd
 
