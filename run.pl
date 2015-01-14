@@ -24,6 +24,8 @@ for storing the metadata. See module [lwm_settings] for this.
 :- use_module(library(optparse)).
 :- use_module(library(semweb/rdf_db), except([rdf_node/1])).
 
+:- use_module(generics(typecheck)).
+
 :- use_module(plServer(app_server)).
 :- use_module(plServer(web_modules)). % Web module registration.
 
@@ -95,11 +97,18 @@ init(Options):-
   % Either process a specific data documents in a single thread (debug)
   % or start a couple of continuous threads (production).
   (   option(debug(true), Options),
-      option(datadoc(Datadoc), Options),
-      ground(Datadoc)
-  ->  debug_datadoc(Datadoc)
+      option(datadoc(Datadoc0), Options),
+      ground(Datadoc0)
+  ->  ensure_datadoc(Datadoc0, Datadoc),
+      gtrace,
+      debug_datadoc(Datadoc)
   ;   init_production(15, 1, 1, 1)
   ).
+
+ensure_datadoc(Datadoc, Datadoc):-
+  is_uri(Datadoc), !.
+ensure_datadoc(Md5, Datadoc):-
+  rdf_global_id(ll:Md5, Datadoc).
 
 %! init_production(
 %!   +NumberOfUnpackThreads:nonneg,

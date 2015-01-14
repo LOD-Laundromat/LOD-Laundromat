@@ -62,6 +62,7 @@ lwm_unpack_loop:-
     var(Exception)
   ),
   lwm_unpack(Datadoc, DirtyUrl),
+  % Intermittent loop.
   lwm_unpack_loop.
 % Done for now. Check whether there are new jobs in one seconds.
 lwm_unpack_loop:-
@@ -83,7 +84,7 @@ lwm_unpack(Datadoc, DirtyUrl):-
   % Update the database, saying we are ready
   % to begin downloading+unpacking this data document.
   store_start_unpack(Datadoc),
-  
+
   % We sometimes need the MD5 atom.
   rdf_global_id(ll:Md5, Datadoc),
 
@@ -114,10 +115,7 @@ lwm_unpack(Datadoc, DirtyUrl):-
 
   % Store the warnings and status as metadata.
   maplist(store_warning(Datadoc), Warnings),
-  store_end_unpack(Md5, Datadoc, Status),
-
-  % Intermittent loop.
-  lwm_unpack_loop.
+  store_end_unpack(Md5, Datadoc, Status).
 
 
 %! unpack_datadoc(+Md5:atom, +Datadoc:iri, ?DirtyUrl:uri) is det.
