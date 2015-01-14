@@ -304,19 +304,21 @@ clean_triples(xml, In, Out, State, BNodePrefix, Options):- !,
     clean_streamed_triples(Out, State, BNodePrefix),
     Options
   ).
-clean_triples(Format, In, Out, State, BNodePrefix, Options):-
+clean_triples(Format, In, Out, State, BNodePrefix, Options1):-
   memberchk(Format, [nquads,ntriples]), !,
+  merge_options([anon_prefix(BNodePrefix)], Options1, Options2),
   rdf_process_ntriples(
     In,
     clean_streamed_triples(Out, State, BNodePrefix),
-    Options
+    Options2
   ).
-clean_triples(Format, In, Out, State, BNodePrefix, Options):-
+clean_triples(Format, In, Out, State, BNodePrefix, Options1):-
   memberchk(Format, [trig,turtle]), !,
+  merge_options([anon_prefix(BNodePrefix)], Options1, Options2),
   rdf_process_turtle(
     In,
     clean_streamed_triples(Out, State, BNodePrefix),
-    Options
+    Options2
   ).
 clean_triples(Format, In, Out, State, BNodePrefix, Options):-
   gtrace, %DEB
