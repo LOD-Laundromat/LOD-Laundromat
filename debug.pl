@@ -44,13 +44,10 @@
 :- dynamic(debug:debug_md5/2).
 :- multifile(debug:debug_md5/2).
 
-debug:debug_md5('11c0aa7e1b556c453ecd8c5f3e8a3c95', clean).
-debug:debug_md5('2cd84c4388b007e8480667f8d7ebddb8', clean).
-debug:debug_md5('671fa8c5194f6b13863802621d950c48', clean).
-debug:debug_md5('8e2700fa4caab554992d87a717a4f0ff', clean).
-debug:debug_md5('9052d7d9801269faa3d1a999bb207cfc', clean).
-debug:debug_md5('d9effa3f1e3b993e07fbb987b75d9321', clean).
-
+debug:debug_md5('1ac678dd4d9143778e727fcf090c7d99', clean). % wc
+debug:debug_md5('4e596546b6859fae01c97623ce0a72c5', clean). % wc
+debug:debug_md5('67707615be61bfc4cbceb857a17caf1b', clean). % wc
+    
 show_idle:-
   flag(number_of_idle_loops_clean_small, Small, Small),
   flag(number_of_idle_loops_clean_medium, Medium, Medium),
