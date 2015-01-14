@@ -10,8 +10,12 @@
                         % -Triples:list(compound)
     datadoc_file_extension/2, % +Datadoc:uri
                               % -FileExtension:atom
-    datadoc_source/2 % +Datadoc:uri
-                     % -Source:atom
+    datadoc_source/2, % +Datadoc:uri
+                      % -Source:atom
+    datadoc_location/2, % +Datadoc:iri
+                        % -Location:uri
+    datadoc_unpacked_size/2 % +Datadoc:iri
+                            % -UnpackedSize:nonneg
   ]
 ).
 
@@ -105,13 +109,7 @@ datadoc_file_extension(Datadoc, FileExtension):-
 
 % The data document derives from a URL.
 datadoc_source(Datadoc, Url):-
-  lwm_sparql_select(
-    [llo],
-    [url],
-    [rdf(Datadoc, llo:url, var(url))],
-    [[Url]],
-    [limit(1)]
-  ), !.
+  datadoc_location(Datadoc, Url), !.
 % The data document derives from an archive entry.
 datadoc_source(Datadoc, Source):-
   lwm_sparql_select(
@@ -127,3 +125,31 @@ datadoc_source(Datadoc, Source):-
   rdf_literal_data(value, PathLiteral, Path),
   datadoc_source(Parent, ParentSource),
   atomic_list_concat([ParentSource,Path], ' ', Source).
+
+
+
+%! datadoc_location(+Datadoc:iri, -Location:uri) is det.
+
+datadoc_location(Datadoc, Url):-
+  lwm_sparql_select(
+    [llo],
+    [url],
+    [rdf(Datadoc, llo:url, var(url))],
+    [[Url]],
+    [limit(1)]
+  ).
+
+
+
+%! datadoc_unpacked_size(+Datadoc:iri, -UnpackedSize:nonneg) is det.
+
+datadoc_unpacked_size(Datadoc, UnpackedSize):-
+  lwm_sparql_select(
+    [llo],
+    [unpackedSize],
+    [rdf(Datadoc, llo:unpackedSize, var(unpackedSize))],
+    [[UnpackedSizeLiteral]],
+    [limit(1)]
+  ),
+  rdf_literal_data(value, UnpackedSizeLiteral, UnpackedSize).
+

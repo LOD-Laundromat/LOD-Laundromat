@@ -1,14 +1,14 @@
 :- module(
   lwm_sparql_enum,
   [
-    datadoc_enum_cleaning/1, % -Datadoc:uri
-    datadoc_enum_pending/2, % -Datadoc:uri
-                            % -Dirty:uri
+    datadoc_enum_cleaning/1, % -Datadoc:iri
+    datadoc_enum_pending/2, % -Datadoc:iri
+                            % -DirtyUrl:uri
     datadoc_enum_unpacked/4, % ?Min:nonneg
                              % ?Max:nonneg
-                             % -Datadoc:uri
-                             % -Size:nonneg
-    datadoc_enum_unpacking/1 % -Datadoc:uri
+                             % -Datadoc:iri
+                             % -UnpackedSize:nonneg
+    datadoc_enum_unpacking/1 % -Datadoc:iri
   ]
 ).
 
@@ -33,7 +33,7 @@ for the LOD Washing Machine.
 
 
 
-%! datadoc_enum_cleaning(-Datadoc:uri) is nondet.
+%! datadoc_enum_cleaning(-Datadoc:iri) is nondet.
 
 datadoc_enum_cleaning(Datadoc):-
   lwm_sparql_select_iteratively(
@@ -52,7 +52,7 @@ datadoc_enum_cleaning(Datadoc):-
 
 
 
-%! datadoc_enum_pending(-Datadoc:uri, -Dirty:uri) is nondet.
+%! datadoc_enum_pending(-Datadoc:iri, -DirtyUrl:uri) is nondet.
 % @tbd Make sure that at no time two data documents are
 %      being downloaded from the same host.
 %      This avoids being blocked by servers that do not allow
@@ -68,7 +68,7 @@ datadoc_enum_cleaning(Datadoc):-
 %      ~~~
 %      Add argument `Host` for releasing the lock in [lwm_unpack].
 
-datadoc_enum_pending(Datadoc, Dirty):-
+datadoc_enum_pending(Datadoc, DirtyUrl):-
   lwm_sparql_select_iteratively(
     [llo],
     [datadoc,dirty],
@@ -81,7 +81,7 @@ datadoc_enum_pending(Datadoc, Dirty):-
         rdf(var(datadoc), llo:url, var(dirty))
       ])
     ],
-    [[Datadoc,Dirty]],
+    [[Datadoc,DirtyUrl]],
     []
   ).
 
@@ -90,7 +90,7 @@ datadoc_enum_pending(Datadoc, Dirty):-
 %! datadoc_enum_unpacked(
 %!   ?Min:nonneg,
 %!   ?Max:nonneg,
-%!   -Datadoc:uri,
+%!   -Datadoc:iri,
 %!   -UnpackedSize:nonneg
 %! ) is semidet.
 % UnpackedSize is expressed as the number of bytes.
@@ -108,7 +108,7 @@ datadoc_enum_unpacked(Min, Max, Datadoc, UnpackedSize):-
 
 
 
-%! datadoc_enum_unpacking(-Datadoc:uri) is nondet.
+%! datadoc_enum_unpacking(-Datadoc:iri) is nondet.
 
 datadoc_enum_unpacking(Datadoc):-
   lwm_sparql_select_iteratively(

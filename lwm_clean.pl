@@ -1,6 +1,7 @@
 :- module(
   lwm_clean,
   [
+    lwm_clean/1, % +Datadoc:iri
     lwm_clean_loop/3 % +Category:atom
                      % ?Min:nonneg
                      % ?Max:nonneg
@@ -50,6 +51,8 @@ The cleaning process performed by the LOD Washing Machine.
 
 
 
+%! lwm_clean_loop(+Category:atom, ?Min:nonneg, ?Max:nonneg) is det.
+
 lwm_clean_loop(Category, Min, Max):-
   % Pick a new source to process.
   % If some exception is thrown here, the catch/3 makes it
@@ -59,15 +62,34 @@ lwm_clean_loop(Category, Min, Max):-
     with_mutex(lod_washing_machine, (
       % Do not process dirty data documents that do not conform
       % to the given minimum and/or maximum file size constraints.
-      datadoc_enum_unpacked(Min, Max, Datadoc, Size),
-
-      % Tell the triple store we are now going to clean this MD5.
-      store_start_clean(Datadoc)
+      datadoc_enum_unpacked(Min, Max, Datadoc, UnpackedSize)
     )),
     Exception,
     var(Exception)
   ),
+  lwm_clean_loop(Category, Datadoc, UnpackedSize),
+  % Intermittent loop.
+  lwm_clean_loop(Category, Min, Max).
+% Done for now. Check whether there are new jobs in one seconds.
+lwm_clean_loop(Category, Min, Max):-
+  sleep(1),
+  lwm_debug_message(lwm_idle_loop(Category)), % DEB
+  lwm_clean_loop(Category, Min, Max).
 
+
+
+%! lwm_clean(+Datadoc:iri) is det.
+
+lwm_clean(Datadoc):-
+  datadoc_unpacked_size(Datadoc, UnpackedSize),
+  lwm_clean(clean_any, Datadoc, UnpackedSize).
+
+%! lwm_clean(+Category:atom, +Datadoc:iri, +UnpackedSize:nonneg) is det.
+
+lwm_clean(Category, Datadoc, UnpackedSize):-
+  % Tell the triple store we are now going to clean this MD5.
+  store_start_clean(Datadoc),
+  
   % We sometimes need the MD5 of the data document.
   rdf_global_id(ll:Md5, Datadoc),
 
@@ -80,7 +102,7 @@ lwm_clean_loop(Category, Min, Max):-
   % DEB: *start* cleaning a specific data document.
   lwm_debug_message(
     lwm_progress(Category),
-    lwm_start(Category,Md5,Datadoc,Source,Size)
+    lwm_start(Category,Md5,Datadoc,Source,UnpackedSize)
   ),
 
   run_collect_messages(
@@ -89,7 +111,7 @@ lwm_clean_loop(Category, Min, Max):-
     Warnings1
   ),
   (Status == false -> gtrace ; true), %DEB
-  % @tbd Virtuoso gives 413 HTTP status codes.
+  % @tbd Virtuoso gives 413 HTTP status code when sending too many warnings.
   list_truncate(Warnings1, 100, Warnings2),
 
   % DEB: *end* cleaning a specific data document.
@@ -106,20 +128,12 @@ lwm_clean_loop(Category, Min, Max):-
   %%%%% Make sure the unpacking threads do not create a pending pool
   %%%%% that is (much) too big.
   %%%%flag(number_of_pending_md5s, Id, Id - 1),
-
-  % Intermittent loop.
-  lwm_clean_loop(Category, Min, Max).
-% Done for now. Check whether there are new jobs in one seconds.
-lwm_clean_loop(Category, Min, Max):-
-  sleep(1),
-
-  % DEB
-  lwm_debug_message(lwm_idle_loop(Category)),
-
-  lwm_clean_loop(Category, Min, Max).
+  
+  true.
 
 
-%! clean_md5(+Category:atom, +Md5:atom, +Datadoc:uri) is det.
+
+%! clean_md5(+Category:atom, +Md5:atom, +Datadoc:iri) is det.
 
 clean_md5(Category, Md5, Datadoc):-
   % Construct the file name belonging to the given MD5.
@@ -171,7 +185,7 @@ clean_md5(Category, Md5, Datadoc):-
 %! clean_datastream(
 %!   +Category:atom,
 %!   +Md5:atom,
-%!   +Datadoc:uri,
+%!   +Datadoc:iri,
 %!   +File:atom,
 %!   +In:stream,
 %!   +ContentType:atom,

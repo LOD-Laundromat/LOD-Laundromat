@@ -61,4 +61,6 @@ show_idle:-
   ).
 
 
+:- use_module(lwm(debug/debug_datadoc)).
 :- use_module(lwm(debug/debug_query)).
+

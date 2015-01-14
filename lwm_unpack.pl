@@ -1,6 +1,7 @@
 :- module(
   lwm_unpack,
   [
+    lwm_unpack/1, % +Datadoc:iri
     lwm_unpack_loop/0
   ]
 ).
@@ -44,7 +45,7 @@ Unpacks files for the LOD Washing Machine to clean.
 
 
 
-
+%! lwm_unpack_loop is det.
 
 lwm_unpack_loop:-
   % Pick a new source to process.
@@ -55,16 +56,34 @@ lwm_unpack_loop:-
     with_mutex(lod_washing_machine, (
       % `DirtyUrl` is only instantiated if `Datadoc`
       % is not an archive entry.
-      datadoc_enum_pending(Datadoc, DirtyUrl),
-
-      % Update the database, saying we are ready
-      % to begin downloading+unpacking this data document.
-      store_start_unpack(Datadoc)
+      datadoc_enum_pending(Datadoc, DirtyUrl)
     )),
     Exception,
     var(Exception)
   ),
+  lwm_unpack(Datadoc, DirtyUrl),
+  lwm_unpack_loop.
+% Done for now. Check whether there are new jobs in one seconds.
+lwm_unpack_loop:-
+  sleep(360),
+  lwm_debug_message(lwm_idle_loop(unpack)), % DEB
+  lwm_unpack_loop.
 
+
+
+%! lwm_unpack(+Datadoc:iri) is det.
+
+lwm_unpack(Datadoc):-
+  datadoc_location(Datadoc, DirtyUrl),
+  lwm_unpack(Datadoc, DirtyUrl).
+
+%! lwm_unpack(+Datadoc:iri, +DirtyUrl:uri) is det.
+
+lwm_unpack(Datadoc, DirtyUrl):-
+  % Update the database, saying we are ready
+  % to begin downloading+unpacking this data document.
+  store_start_unpack(Datadoc),
+  
   % We sometimes need the MD5 atom.
   rdf_global_id(ll:Md5, Datadoc),
 
@@ -99,17 +118,9 @@ lwm_unpack_loop:-
 
   % Intermittent loop.
   lwm_unpack_loop.
-% Done for now. Check whether there are new jobs in one seconds.
-lwm_unpack_loop:-
-  sleep(360),
-
-  % DEB
-  lwm_debug_message(lwm_idle_loop(unpack)),
-
-  lwm_unpack_loop.
 
 
-%! unpack_datadoc(+Md5:atom, +Datadoc:url, ?DirtyUrl:url) is det.
+%! unpack_datadoc(+Md5:atom, +Datadoc:iri, ?DirtyUrl:uri) is det.
 
 % The given MD5 denotes an archive entry.
 unpack_datadoc(Md5, Datadoc, DirtyUrl):-
@@ -174,7 +185,7 @@ unpack_datadoc(Md5, Datadoc, DirtyUrl):-
   unpack_file(Md5, Datadoc, DownloadFile).
 
 
-%! unpack_file(+Md5:atom, +Datadoc:url, +ArchiveFile:atom) is det.
+%! unpack_file(+Md5:atom, +Datadoc:iri, +ArchiveFile:atom) is det.
 
 unpack_file(Md5, Datadoc, ArchiveFile):-
   % Store the file extension, if any.
@@ -249,7 +260,7 @@ unpack_file(Md5, Datadoc, ArchiveFile):-
 
 
 
-% Helpers %
+% HELPERS %
 
 %! distill_archive_format(+Formats:ordset(atom), -Format:atom) is det.
 
@@ -258,6 +269,7 @@ distill_archive_format([H0], H):- !,
 distill_archive_format([H1,H2|T], Format):-
   common_atom_prefix(H1, H2, Prefix),
   distill_archive_format([Prefix|T], Format).
+
 
 
 %! filter_archive_formats(
@@ -271,3 +283,4 @@ filter_archive_formats([L1|Ls1], Fs1, [L2|Ls2]):-
   selectchk(format(F), L1, L2),
   filter_archive_formats(Ls1, Fs2, Ls2),
   ord_add_element(Fs2, F, Fs1).
+
