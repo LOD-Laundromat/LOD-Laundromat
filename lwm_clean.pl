@@ -147,7 +147,7 @@ clean_md5(Category, Md5, Datadoc):-
 
   % Clean the data document in an RDF transaction.
   setup_call_cleanup(
-    open(DirtyFile, read, In),
+    open(DirtyFile, read, DirtyIn),
     (
       rdf_transaction(
         clean_datastream(
@@ -155,16 +155,16 @@ clean_md5(Category, Md5, Datadoc):-
           Md5,
           Datadoc,
           DirtyFile,
-          In,
+          DirtyIn,
           ContentType,
           VoidUrls
         ),
         _,
         [snapshot(true)]
       ),
-      store_stream(Datadoc, In)
+      store_stream(Datadoc, DirtyIn)
     ),
-    close(In)
+    close(DirtyIn)
   ),
 
   % Keep the old/dirty file around in compressed form,
@@ -174,11 +174,11 @@ clean_md5(Category, Md5, Datadoc):-
 
   % Add the new VoID URLs to the LOD Basket.
   with_mutex(store_new_url, (
-    absolute_file_name(data('url.txt'), File, [access(append)]),
+    absolute_file_name(data('url.txt'), UrlFile, [access(append)]),
     setup_call_cleanup(
-      open(File, append, Out),
-      maplist(writeln(Out), VoidUrls),
-      close(Out)
+      open(UrlFile, append, UrlOut),
+      maplist(writeln(UrlOut), VoidUrls),
+      close(UrlOut)
     )
   )).
 
@@ -198,14 +198,14 @@ clean_datastream(
   Md5,
   Datadoc,
   File,
-  In,
+  DirtyIn,
   ContentType,
   VoidUrls
 ):-
   % Guess the RDF serialization format,
   % using the content type and the file extension as suggestions.
   ignore(datadoc_file_extension(Datadoc, FileExtension)),
-  rdf_guess_format(Datadoc, In, FileExtension, ContentType, Format),
+  rdf_guess_format(Datadoc, DirtyIn, FileExtension, ContentType, Format),
 
   rdf_serialization(_, Format, _, Uri),
   store_triple(Datadoc, llo-serializationFormat, Uri),
@@ -233,13 +233,13 @@ clean_datastream(
   retractall(datadump/1),
   directory_file_path(Dir, unsorted, UnsortedFile),
   (   Format == rdfa
-  ->  rdf_load(stream(In), Options2),
+  ->  rdf_load(stream(DirtyIn), Options2),
 
       % Save the data in a cleaned format.
       setup_call_cleanup(
-        open(UnsortedFile, write, Out),
-        ctriples_write_graph(Out, _NoGraph, Options3),
-        close(Out)
+        open(UnsortedFile, write, UnsortedOut),
+        ctriples_write_graph(UnsortedOut, _NoGraph, Options3),
+        close(UnsortedOut)
       ),
 
       % Make sure any VoID datadumps are added to the LOD Basket.
@@ -250,9 +250,9 @@ clean_datastream(
   ;   setup_call_cleanup(
         ctriples_write_begin(State, BNodePrefix, Options3),
         setup_call_cleanup(
-          open(UnsortedFile, write, Out),
-          clean_triples(Format, In, Out, State, BNodePrefix, Options2),
-          close(Out)
+          open(UnsortedFile, write, UnsortedOut),
+          clean_triples(Format, DirtyIn, UnsortedOut, State, BNodePrefix, Options2),
+          close(UnsortedOut)
         ),
         ctriples_write_end(State, Options3)
       )
@@ -263,7 +263,6 @@ clean_datastream(
     datadump(VoidUrl),
     VoidUrls
   ),
-gtrace,
 
   % Establish the file name extension.
   (   retract(has_quadruples(true))
@@ -275,20 +274,21 @@ gtrace,
   directory_file_path(Dir, sorted, SortedFile),
   gnu_sort(UnsortedFile, [duplicates(false),output(SortedFile),parallel(8)]),
   file_lines(SortedFile, NumberOfUniqueTriples),
-  writeln(NumberOfUniqueTriples), %@tbd
+  delete_file(UnsortedFile),
 
   % Compress file.
-  atomic_list_concat([clean,Ext,gz], LocalName),
+  atomic_list_concat([clean,Ext,gz], '.', LocalName),
   directory_file_path(Dir, LocalName, CleanFile),
   setup_call_cleanup(
-    gzopen(CleanFile, write, Out),
+    gzopen(CleanFile, write, CleanOut),
     setup_call_cleanup(
-      open(SortedFile, read, In),
-      copy_stream_data(In, Out),
-      close(In)
+      open(SortedFile, read, SortedIn),
+      copy_stream_data(SortedIn, CleanOut),
+      close(SortedIn)
     ),
-    close(Out)
+    close(CleanOut)
   ),
+  delete_file(SortedFile),
 
   % Store statistics about the number of (duplicate) triples.
   store_number_of_triples(
