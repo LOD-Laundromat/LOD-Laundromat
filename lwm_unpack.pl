@@ -56,7 +56,10 @@ lwm_unpack_loop:-
     with_mutex(lod_washing_machine, (
       % `DirtyUrl` is only instantiated if `Datadoc`
       % is not an archive entry.
-      datadoc_enum_pending(Datadoc, DirtyUrl)
+      datadoc_enum_pending(Datadoc, DirtyUrl),
+      % Update the database, saying we are ready
+      % to begin downloading+unpacking this data document.
+      store_start_unpack(Datadoc)
     )),
     Exception,
     var(Exception)
@@ -75,16 +78,16 @@ lwm_unpack_loop:-
 %! lwm_unpack(+Datadoc:iri) is det.
 
 lwm_unpack(Datadoc):-
+  % Update the database, saying we are ready
+  % to begin downloading+unpacking this data document.
+  store_start_unpack(Datadoc),
+  
   datadoc_location(Datadoc, DirtyUrl),
   lwm_unpack(Datadoc, DirtyUrl).
 
 %! lwm_unpack(+Datadoc:iri, +DirtyUrl:uri) is det.
 
 lwm_unpack(Datadoc, DirtyUrl):-
-  % Update the database, saying we are ready
-  % to begin downloading+unpacking this data document.
-  store_start_unpack(Datadoc),
-
   % We sometimes need the MD5 atom.
   rdf_global_id(ll:Md5, Datadoc),
 

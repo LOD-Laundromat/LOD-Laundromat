@@ -63,7 +63,9 @@ lwm_clean_loop(Category, Min, Max):-
     with_mutex(lod_washing_machine, (
       % Do not process dirty data documents that do not conform
       % to the given minimum and/or maximum file size constraints.
-      datadoc_enum_unpacked(Min, Max, Datadoc, UnpackedSize)
+      datadoc_enum_unpacked(Min, Max, Datadoc, UnpackedSize),
+      % Tell the triple store we are now going to clean this MD5.
+      store_start_clean(Datadoc)
     )),
     Exception,
     var(Exception)
@@ -82,15 +84,15 @@ lwm_clean_loop(Category, Min, Max):-
 %! lwm_clean(+Datadoc:iri) is det.
 
 lwm_clean(Datadoc):-
+  % Tell the triple store we are now going to clean this MD5.
+  store_start_clean(Datadoc),
+  
   datadoc_unpacked_size(Datadoc, UnpackedSize),
   lwm_clean(clean_any, Datadoc, UnpackedSize).
 
 %! lwm_clean(+Category:atom, +Datadoc:iri, +UnpackedSize:nonneg) is det.
 
 lwm_clean(Category, Datadoc, UnpackedSize):-
-  % Tell the triple store we are now going to clean this MD5.
-  store_start_clean(Datadoc),
-
   % We sometimes need the MD5 of the data document.
   rdf_global_id(ll:Md5, Datadoc),
 
