@@ -45,7 +45,7 @@
 :- dynamic(debug:debug_md5/2).
 :- multifile(debug:debug_md5/2).
 
-%%%%debug:debug_md5('1670a2b91fc4855ea718807b10ef28b0', clean). % wc
+debug:debug_md5('63ba1b1ca31624e4790450411fb36791', reset).
 
 show_idle:-
   flag(number_of_idle_loops_clean_small, Small, Small),
@@ -58,6 +58,7 @@ show_idle:-
   ).
 
 
+:- use_module(lwm(lwm_reset)).
 :- use_module(lwm(debug/debug_datadoc)).
 :- use_module(lwm(debug/debug_query)).
 
