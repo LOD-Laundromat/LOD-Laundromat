@@ -5,6 +5,7 @@
 
 %:- debug(ac).
 :- debug(lwm_restart).
+:- debug(lwm_unpack).
 %:- debug(sparql_graph_store).
 %:- debug(sparql_update).
 %:- debug(store_new_url).

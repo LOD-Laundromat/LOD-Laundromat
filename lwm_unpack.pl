@@ -233,6 +233,13 @@ unpack_file(Md5, Datadoc, ArchiveFile):-
   ;   gtrace,
       % Store the archive entries for future processing.
       pairs_keys_values(EntryPairs, EntryPaths, EntryProperties1),
+      
+      % DEB
+      (   debugging(lwm_unpack)
+      ->  length(EntryPairs, NumberOfEntryPairs),
+          debug(lwm_unpack, '[~a], ~D entries', [Md5,NumberOfEntryPairs])
+      ;   true
+      ),
 
       % Store the archive format.
       filter_archive_formats(
