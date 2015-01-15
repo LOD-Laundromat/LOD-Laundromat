@@ -40,7 +40,7 @@ lwm_continue:-
     (   datadoc_enum_unpacking(Datadoc)
     ;   datadoc_enum_cleaning(Datadoc)
     ;   debug_datadoc(Datadoc)
-    ;   erroneous_datadoc(Datadoc)
+    %;   erroneous_datadoc(Datadoc)
     ),
     Datadocs
   ),
