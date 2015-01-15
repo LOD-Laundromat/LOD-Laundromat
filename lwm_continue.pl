@@ -40,6 +40,7 @@ lwm_continue:-
     (   datadoc_enum_unpacking(Datadoc)
     ;   datadoc_enum_cleaning(Datadoc)
     ;   debug_datadoc(Datadoc)
+    ;   erroneous_datadoc(Datadoc)
     ),
     Datadocs
   ),
@@ -49,6 +50,20 @@ lwm_continue:-
 debug_datadoc(Datadoc):-
   debug:debug_md5(Md5, _),
   rdf_global_id(ll:Md5, Datadoc).
+
+erroneous_datadoc(Datadoc):-
+  lwm_sparql_select(
+    [llo,rdf],
+    [datadoc],
+    [
+      rdf(var(datadoc), rdf:type, llo:'ArchiveEntry'),
+      not([rdf(var(datadoc))])
+    ],
+    Datadocs0,
+    []
+  ),
+  flatten(Datadocs0, Datadocs),
+  member(Datadoc, Datadocs).
 
 
 

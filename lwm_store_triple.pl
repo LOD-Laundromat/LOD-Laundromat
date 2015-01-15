@@ -81,6 +81,7 @@ store_added(Datadoc):-
 %! ) is det.
 
 store_archive_entry(ParentMd5, Parent, EntryPath, EntryProperties1):-
+gtrace,
   atomic_list_concat([ParentMd5,EntryPath], ' ', Temp),
   rdf_atom_md5(Temp, 1, EntryMd5),
   rdf_global_id(ll:EntryMd5, Entry),
