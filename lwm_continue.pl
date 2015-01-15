@@ -57,7 +57,7 @@ erroneous_datadoc(Datadoc):-
     [datadoc],
     [
       rdf(var(datadoc), rdf:type, llo:'ArchiveEntry'),
-      not([rdf(var(datadoc))])
+      not([rdf(var(parent), llo:containsEntry, var(datadoc))])
     ],
     Datadocs0,
     []

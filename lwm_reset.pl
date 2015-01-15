@@ -15,10 +15,12 @@ Reset data documents in the triple store.
 
 :- use_module(library(apply)).
 :- use_module(library(lists), except([delete/3,subset/2])).
+:- use_module(library(filesex)).
 
 :- use_module(plSparql(update/sparql_update_api)).
 
 :- use_module(lwm(lwm_settings)).
+:- use_module(lwm(md5)).
 :- use_module(lwm(query/lwm_sparql_query)).
 
 :- rdf_meta(reset_datadoc(r)).
@@ -45,6 +47,8 @@ reset_datadoc(Datadoc):-
   ),
   maplist(delete_resource(NG), Warnings),
   delete_resource(NG, Datadoc),
+  datadoc_directory(Datadoc, DatadocDir),
+  delete_directory_and_contents(DatadocDir),
   print_message(informational, lwm_reset(Datadoc,NG)).
 
 
@@ -52,6 +56,12 @@ reset_datadoc(Datadoc):-
 
 
 % HELPERS %
+
+datadoc_directory(Datadoc, Dir):-
+  rdf_global_id(ll:Md5, Datadoc),
+  md5_directory(Md5, Dir).
+
+
 
 %! delete_resource(+Graph:atom, +Resource:rdf_term) is det.
 
