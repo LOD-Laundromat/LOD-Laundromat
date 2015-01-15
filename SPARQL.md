@@ -35,3 +35,33 @@ WHERE {
   ?dataset llo:url ?url .
 }
 ORDER BY DESC(?dups)
+
+
+
+PREFIX error: <http://lodlaundromat.org/error/ontology/>
+PREFIX llo: <http://lodlaundromat.org/ontology/>
+PREFIX ll: <http://lodlaundromat/org/resource/>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+SELECT distinct (COUNT(?datadoc) AS ?count) {
+  ?datadoc rdf:type llo:ArchiveEntry .
+  FILTER NOT EXISTS {
+    ?parent llo:containsEntry ?datadoc .
+  }
+}
+
+
+
+PREFIX error: <http://lodlaundromat.org/error/ontology/>
+PREFIX llo: <http://lodlaundromat.org/ontology/>
+PREFIX ll: <http://lodlaundromat/org/resource/>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+SELECT distinct ?datadoc {
+  ?datadoc rdf:type llo:ArchiveEntry .
+  FILTER NOT EXISTS {
+    ?parent llo:containsEntry ?datadoc .
+  }
+}
+LIMIT 25
+
