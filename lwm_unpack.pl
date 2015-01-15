@@ -81,7 +81,7 @@ lwm_unpack(Datadoc):-
   % Update the database, saying we are ready
   % to begin downloading+unpacking this data document.
   store_start_unpack(Datadoc),
-  
+
   datadoc_location(Datadoc, DirtyUrl),
   lwm_unpack(Datadoc, DirtyUrl).
 
@@ -171,7 +171,6 @@ unpack_datadoc(Md5, Datadoc, DirtyUrl):-
       request_header('Accept'=AcceptValue)
     ]
   ),
-gtrace,
 
   % Store the file size of the dirty file.
   size_file(DownloadFile, DownloadSize),
