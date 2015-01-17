@@ -102,7 +102,7 @@ init(Options):-
   ->  ensure_datadoc(Datadoc0, Datadoc),
       gtrace,
       debug_datadoc(Datadoc)
-  ;   init_production(1, 0, 0, 0)
+  ;   init_production(15, 5, 2, 1)
   ).
 
 ensure_datadoc(Datadoc, Datadoc):-

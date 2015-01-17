@@ -283,7 +283,7 @@ store_lod_error(Datadoc, Kind, rdf(unparsed(DOM))):- !,
   rdf_bnode(BNode),
   store_triple(Datadoc, llo-Kind, BNode),
   store_triple(BNode, rdf-type, error-'RdfXmlParserError'),
-  xml_dom_to_atom([], DOM, Atom1),
+  xml_dom_to_atom(DOM, Atom1, []),
   atom_truncate(Atom1, 500, Atom2),
   store_triple(BNode, error-dom, literal(type(xsd-string,Atom2))).
 

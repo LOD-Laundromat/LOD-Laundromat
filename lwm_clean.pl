@@ -284,7 +284,7 @@ clean_datastream(
   directory_file_path(Dir, sorted, SortedFile),
   gnu_sort(
     UnsortedFile,
-    [duplicates(false),output(SortedFile),parallel(2),utf8(true)]
+    [duplicates(false),output(SortedFile),parallel(4),utf8(true)]
   ),
   file_lines(SortedFile, NumberOfUniqueTriples),
   delete_file(UnsortedFile),

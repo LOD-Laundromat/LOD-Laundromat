@@ -230,10 +230,9 @@ unpack_file(Md5, Datadoc, ArchiveFile):-
         literal(type(xsd-nonNegativeInteger,UnpackedSize))
       )
       % The file is now ready for cleaning!
-  ;   gtrace,
-      % Store the archive entries for future processing.
+  ;   % Store the archive entries for future processing.
       pairs_keys_values(EntryPairs, EntryPaths, EntryProperties1),
-      
+
       % DEB
       (   debugging(lwm_unpack)
       ->  length(EntryPairs, NumberOfEntryPairs),
