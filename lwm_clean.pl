@@ -113,7 +113,7 @@ lwm_clean(Category, Datadoc, UnpackedSize):-
     Status,
     Warnings1
   ),
-  (Status == false -> gtrace ; true), %DEB
+  %%%%(Status == false -> gtrace ; true), %DEB
 
   % Store the number of warnings.
   length(Warnings1, NumberOfWarnings),
@@ -340,9 +340,10 @@ clean_triples(Format, In, Out, State, BNodePrefix, Options1):-
     clean_streamed_triples(Out, State, BNodePrefix),
     Options2
   ).
-clean_triples(Format, In, Out, State, BNodePrefix, Options):-
-  gtrace, %DEB
-  clean_triples(Format, In, Out, State, BNodePrefix, Options).
+clean_triples(_, _, _, _, _, _).
+%%%%clean_triples(Format, In, Out, State, BNodePrefix, Options):-
+%%%%  gtrace, %DEB
+%%%%  clean_triples(Format, In, Out, State, BNodePrefix, Options).
 
 
 

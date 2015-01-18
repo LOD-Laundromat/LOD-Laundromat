@@ -87,7 +87,8 @@ post_rdf_triples:-
       ))
   ),
   % DEB
-  (   between(200, 299, Code)
+  %%%%(   between(200, 299, Code)
+  (   between(100, 599, Code)
   ->  true
   ;   writeln(Code),
       maplist(writeln, Triples),
