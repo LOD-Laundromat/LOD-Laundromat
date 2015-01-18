@@ -197,7 +197,7 @@ clean_md5(Category, Md5, Datadoc):-
 %!   +Category:atom,
 %!   +Md5:atom,
 %!   +Datadoc:iri,
-%!   +File:atom,
+%!   +DirtyFile:atom,
 %!   +In:stream,
 %!   +ContentType:atom,
 %!   -VoidUrls:ordset(uri)
@@ -207,7 +207,7 @@ clean_datastream(
   Category,
   Md5,
   Datadoc,
-  File,
+  DirtyFile,
   DirtyIn,
   ContentType,
   VoidUrls
@@ -235,7 +235,7 @@ clean_datastream(
   merge_options([max_errors(-1),syntax(style)], Options1, Options2),
 
   % Prepare the file name.
-  file_directory_name(File, Dir),
+  file_directory_name(DirtyFile, Dir),
 
   md5_bnode_base(Md5, BaseComponents),
   Options3 = [bnode_base(BaseComponents),number_of_triples(NumberOfTriples)],
@@ -282,9 +282,16 @@ clean_datastream(
 
   % Sort file.
   directory_file_path(Dir, sorted, SortedFile),
+  size_file(UnsortedFile, BufferSize),
   gnu_sort(
     UnsortedFile,
-    [duplicates(false),output(SortedFile),parallel(4),utf8(true)]
+    [
+      buffer_size(BufferSize),
+      duplicates(false),
+      output(SortedFile),
+      parallel(4),
+      utf8(true)
+    ]
   ),
   file_lines(SortedFile, NumberOfUniqueTriples),
   delete_file(UnsortedFile),
