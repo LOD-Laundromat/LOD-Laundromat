@@ -87,7 +87,7 @@ lwm_clean_loop(Category, Min, Max):-
 lwm_clean(Datadoc):-
   % Tell the triple store we are now going to clean this MD5.
   store_start_clean(Datadoc),
-  
+
   datadoc_unpacked_size(Datadoc, UnpackedSize),
   lwm_clean(clean_any, Datadoc, UnpackedSize).
 
@@ -123,7 +123,7 @@ lwm_clean(Category, Datadoc, UnpackedSize):-
     llo-number_of_warnings,
     literal(type(xsd-nonNegativeInteger,NumberOfWarnings))
   ),
-  
+
   % Store warnings and status as metadata.
   store_exception(Datadoc, Status),
   % @tbd Virtuoso gives 413 HTTP status code when sending too many warnings.
@@ -284,13 +284,19 @@ clean_datastream(
   % Sort file.
   directory_file_path(Dir, sorted, SortedFile),
   buffer_size_file(UnsortedFile, BufferSize),
+  (   BufferSize > 4.5 * (1024 ** 3)
+  ->  Threads = 4
+  ;   BufferSize > 2.5 * (1024 ** 3)
+  ->  Threads = 2
+  ;   Threads = 1
+  ),
   gnu_sort(
     UnsortedFile,
     [
       buffer_size(BufferSize),
       duplicates(false),
       output(SortedFile),
-      parallel(4),
+      parallel(Threads),
       temporary_directory('/ssd/lodlaundromat/tmp'),
       utf8(true)
     ]
