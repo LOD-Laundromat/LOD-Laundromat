@@ -26,6 +26,7 @@ The cleaning process performed by the LOD Washing Machine.
 :- use_module(generics(list_ext)).
 :- use_module(generics(print_ext)).
 :- use_module(generics(sort_ext)).
+:- use_module(os(file_ext)).
 :- use_module(os(file_gnu)).
 :- use_module(pl(pl_log)).
 
@@ -282,7 +283,7 @@ clean_datastream(
 
   % Sort file.
   directory_file_path(Dir, sorted, SortedFile),
-  size_file(UnsortedFile, BufferSize),
+  buffer_size_file(UnsortedFile, BufferSize),
   gnu_sort(
     UnsortedFile,
     [
@@ -290,6 +291,7 @@ clean_datastream(
       duplicates(false),
       output(SortedFile),
       parallel(4),
+      temporary_directory('/ssd/lodlaundromat/tmp'),
       utf8(true)
     ]
   ),
