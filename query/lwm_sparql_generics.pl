@@ -23,7 +23,7 @@
   ]
 ).
 
-/** <module> llWashingMachine: SPARQL generics
+/** <module> LOD Washing Machine: SPARQL generics
 
 Generic support predicates for SPARQL queries conducted by
 the LOD Laundromat's washing machine.
@@ -95,16 +95,9 @@ build_unpacked_query(Min, Max, Query2):-
 %!   +Options:list(nvpair)
 %! ) is semidet.
 
-lwm_sparql_ask(Prefixes, Bgps, Options1):-
-  lwm_version_graph(Graph),
-  merge_options([named_graph(Graph),sparql_errors(fail)], Options1, Options2),
-  (   lwm:lwm_server(virtuoso)
-  ->  Endpoint = virtuoso_query
-  ;   lwm:lwm_server(cliopatria)
-  ->  Endpoint = cliopatria_localhost
-  ),
+lwm_sparql_ask(Prefixes, Bgps, Options):-
   loop_until_true(
-    sparql_ask(Endpoint, Prefixes, Bgps, Options2)
+    sparql_ask(cliopatria, Prefixes, Bgps, Options)
   ).
 
 
@@ -115,11 +108,9 @@ lwm_sparql_ask(Prefixes, Bgps, Options1):-
 %!   +Options:list(nvpair)
 %! ) is det.
 
-lwm_sparql_select(Query, Result, Options1):-
-  current_endpoint(Endpoint),
-  sparql_select_options(Options1, Options2),
+lwm_sparql_select(Query, Result, Options):-
   loop_until_true(
-    sparql_select(Endpoint, Query, Result, Options2)
+    sparql_select(cliopatria, Query, Result, Options)
   ).
 
 
@@ -132,11 +123,9 @@ lwm_sparql_select(Query, Result, Options1):-
 %!   +Options:list(nvpair)
 %! ) is det.
 
-lwm_sparql_select(Prefixes, Variables, Bgps, Result, Options1):-
-  current_endpoint(Endpoint),
-  sparql_select_options(Options1, Options2),
+lwm_sparql_select(Prefixes, Variables, Bgps, Result, Options):-
   loop_until_true(
-    sparql_select(Endpoint, Prefixes, Variables, Bgps, Result, Options2)
+    sparql_select(cliopatria, Prefixes, Variables, Bgps, Result, Options)
   ).
 
 
@@ -149,48 +138,14 @@ lwm_sparql_select(Prefixes, Variables, Bgps, Result, Options1):-
 %!   +Options:list(nvpair)
 %! ) is nondet.
 
-lwm_sparql_select_iteratively(Prefixes, Variables, Bgps, Result, Options1):-
-  current_endpoint(Endpoint),
-  sparql_select_options(Options1, Options2),
+lwm_sparql_select_iteratively(Prefixes, Variables, Bgps, Result, Options):-
   loop_until_true(
     sparql_select_iteratively(
-      Endpoint,
+      cliopatria,
       Prefixes,
       Variables,
       Bgps,
       Result,
-      Options2
+      Options
     )
-  ).
-
-
-
-
-
-% HELPERS %
-
-%! current_endpoint(-Endpoint:atom) is det.
-
-current_endpoint(Endpoint):-
-  lwm:lwm_server(virtuoso), !,
-  Endpoint = virtuoso_query.
-current_endpoint(Endpoint):-
-  lwm:lwm_server(cliopatria), !,
-  Endpoint = cliopatria_localhost.
-
-
-
-%! sparql_select_options(
-%!   +Options1:list(nvpair),
-%!   -Options2:list(nvpair)
-%! ) is det.
-
-sparql_select_options(Options1, Options2):-
-  % Set the RDF Dataset over which SPARQL Queries are executed.
-  lod_basket_graph(BasketGraph),
-  lwm_version_graph(LwmGraph),
-  merge_options(
-    [default_graph(BasketGraph),default_graph(LwmGraph),sparql_errors(fail)],
-    Options1,
-    Options2
   ).

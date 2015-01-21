@@ -26,6 +26,7 @@ The cleaning process performed by the LOD Washing Machine.
 :- use_module(generics(list_ext)).
 :- use_module(generics(print_ext)).
 :- use_module(generics(sort_ext)).
+:- use_module(os(archive_ext)).
 :- use_module(os(file_ext)).
 :- use_module(os(file_gnu)).
 :- use_module(pl(pl_log)).
@@ -56,6 +57,7 @@ The cleaning process performed by the LOD Washing Machine.
 %! lwm_clean_loop(+Category:atom, ?Min:nonneg, ?Max:nonneg) is det.
 
 lwm_clean_loop(Category, Min, Max):-
+gtrace,
   % Pick a new source to process.
   % If some exception is thrown here, the catch/3 makes it
   % silently fail. This way, the unpacking thread is able
@@ -114,7 +116,7 @@ lwm_clean(Category, Datadoc, UnpackedSize):-
     Status,
     Warnings1
   ),
-  %%%%(Status == false -> gtrace ; true), %DEB
+  (Status == false -> gtrace ; true), %DEB
 
   % Store the number of warnings.
   length(Warnings1, NumberOfWarnings),
@@ -126,22 +128,14 @@ lwm_clean(Category, Datadoc, UnpackedSize):-
 
   % Store warnings and status as metadata.
   store_exception(Datadoc, Status),
-  % @tbd Virtuoso gives 413 HTTP status code when sending too many warnings.
-  list_truncate(Warnings1, 100, Warnings2),
-  maplist(store_warning(Datadoc), Warnings2),
+  maplist(store_warning(Datadoc), Warnings),
   store_end_clean(Md5, Datadoc),
 
   % DEB: *end* cleaning a specific data document.
   lwm_debug_message(
     lwm_progress(Category),
-    lwm_end(Category,Md5,Source,Status,Warnings2)
-  ),
-
-  %%%%% Make sure the unpacking threads do not create a pending pool
-  %%%%% that is (much) too big.
-  %%%%flag(number_of_pending_md5s, Id, Id - 1),
-
-  true.
+    lwm_end(Category,Md5,Source,Status,Warnings)
+  ).
 
 
 
@@ -180,19 +174,15 @@ clean_md5(Category, Md5, Datadoc):-
 
   % Keep the old/dirty file around in compressed form,
   % or throw it away.
-  %%%%archive_create(DirtyFile, _),
-  delete_file(DirtyFile),
+  (   lwm_setting:setting(keep_old_datadoc, true)
+  ->  archive_create(DirtyFile, _)
+  ;   delete_file(DirtyFile)
+  ),
 
   % Add the new VoID URLs to the LOD Basket.
-  with_mutex(store_new_url, (
-    absolute_file_name(data('url.txt'), UrlFile, [access(append)]),
-    setup_call_cleanup(
-      open(UrlFile, append, UrlOut),
-      maplist(writeln(UrlOut), VoidUrls),
-      close(UrlOut)
-    )
-  )).
-
+  with_mutex(store_new_url,
+    maplist(store_seed, VoidUrls)
+  ).
 
 %! clean_datastream(
 %!   +Category:atom,
@@ -348,10 +338,9 @@ clean_triples(Format, In, Out, State, BNodePrefix, Options1):-
     clean_streamed_triples(Out, State, BNodePrefix),
     Options2
   ).
-clean_triples(_, _, _, _, _, _).
-%%%%clean_triples(Format, In, Out, State, BNodePrefix, Options):-
-%%%%  gtrace, %DEB
-%%%%  clean_triples(Format, In, Out, State, BNodePrefix, Options).
+clean_triples(Format, In, Out, State, BNodePrefix, Options):-
+  gtrace, %DEB
+  clean_triples(Format, In, Out, State, BNodePrefix, Options).
 
 
 

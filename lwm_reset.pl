@@ -30,26 +30,22 @@ Reset data documents in the triple store.
 
 
 %! reset_datadoc(+Datadoc:iri) is det.
-% @tbd The ClioPatria implementation would be even easier
-%      (using the Semweb API).
 
 reset_datadoc(Datadoc):-
-  lwm:lwm_server(virtuoso),
-  % Remove the metadata triples that were stored for the given data document.
-  lwm_version_graph(NG),
   datadoc_p_os(Datadoc, llo:warning, Warnings),
   forall(
     member(Warning, Warnings),
     (
       datadoc_p_os(Warning, error:streamPosition, StreamPositions),
-      maplist(delete_resource(NG), StreamPositions)
+      maplist(delete_resource, StreamPositions)
     )
   ),
-  maplist(delete_resource(NG), Warnings),
-  delete_resource(NG, Datadoc),
+  maplist(delete_resource, Warnings),
+  delete_resource(Datadoc),
+  
   datadoc_directory(Datadoc, DatadocDir),
   delete_directory_and_contents(DatadocDir),
-  print_message(informational, lwm_reset(Datadoc,NG)).
+  print_message(informational, lwm_reset(Datadoc)).
 
 
 
@@ -63,14 +59,14 @@ datadoc_directory(Datadoc, Dir):-
 
 
 
-%! delete_resource(+Graph:atom, +Resource:rdf_term) is det.
+%! delete_resource(+Resource:rdf_term) is det.
 
-delete_resource(Graph, Resource):-
+delete_resource(Resource):-
   sparql_delete_where(
-    virtuoso_update,
-    [ll],
+    cliopatria,
+    [],
     [rdf(Resource,var(p),var(o))],
-    [Graph],
+    [],
     [],
     []
   ).
@@ -83,6 +79,6 @@ delete_resource(Graph, Resource):-
 
 :- multifile(prolog:message//1).
 
-prolog:message(lwm_reset(Datadoc,NG)) -->
-  ['Successfully reset ',Datadoc,' in graph ',NG,'.'].
+prolog:message(lwm_reset(Datadoc)) -->
+  ['Successfully reset ',Datadoc,'.'].
 

@@ -32,6 +32,7 @@ for storing the metadata. See module [lwm_settings] for this.
 :- use_module(lwm(lwm_clean)).
 :- use_module(lwm(lwm_continue)).
 :- use_module(lwm(lwm_restart)).
+:- use_module(lwm(lwm_settings)).
 :- use_module(lwm(lwm_unpack)).
 :- use_module(lwm(debug/debug_datadoc)).
 :- use_module(lwm(debug/lwm_progress)).
@@ -102,7 +103,7 @@ init(Options):-
   ->  ensure_datadoc(Datadoc0, Datadoc),
       gtrace,
       debug_datadoc(Datadoc)
-  ;   init_production(15, 5, 2, 1)
+  ;   init_production
   ).
 
 ensure_datadoc(Datadoc, Datadoc):-
@@ -110,39 +111,63 @@ ensure_datadoc(Datadoc, Datadoc):-
 ensure_datadoc(Md5, Datadoc):-
   rdf_global_id(ll:Md5, Datadoc).
 
+init_production:-
+  lwm_settings:setting(
+    number_of_small_cleaning_threads,
+    NumberOfSmallCleaningThreads
+  ),
+  lwm_settings:setting(
+    number_of_medium_cleaning_threads,
+    NumberOfMediumCleaningThreads
+  ),
+  lwm_settings:setting(
+    number_of_large_cleaning_threads,
+    NumberOfLargeCleaningThreads
+  ),
+  lwm_settings:setting(
+    number_of_unpacking_threads,
+    NumberOfUnpackingThreads
+  ),
+  init_production(
+    NumberOfUnpackingThreads,
+    NumberOfSmallCleaningThreads,
+    NumberOfMediumCleaningThreads,
+    NumberOfLargeCleaningThreads
+  ).
+
 %! init_production(
-%!   +NumberOfUnpackThreads:nonneg,
-%!   +NumberOfSmallCleanThreads:nonneg,
-%!   +NumberOfMediumCleanThreads:nonneg,
-%!   +NumberOfLargeCleanThreads:nonneg
+%!   +NumberOfUnpackingThreads:nonneg,
+%!   +NumberOfSmallCleaningThreads:nonneg,
+%!   +NumberOfMediumCleaningThreads:nonneg,
+%!   +NumberOfLargeCleaningThreads:nonneg
 %! ) is det.
 
 init_production(
-  NumberOfUnpackThreads,
-  NumberOfSmallCleanThreads,
-  NumberOfMediumCleanThreads,
-  NumberOfLargeCleanThreads
+  NumberOfUnpackingThreads,
+  NumberOfSmallCleaningThreads,
+  NumberOfMediumCleaningThreads,
+  NumberOfLargeCleaningThreads
 ):-
   % Start the downloading+unpacking threads.
   forall(
-    between(1, NumberOfUnpackThreads, UnpackId),
+    between(1, NumberOfUnpackingThreads, UnpackId),
     start_unpack_thread(UnpackId)
   ),
 
   % Start the cleaning threads:
   %   1. Clean small files.
   forall(
-    between(1, NumberOfSmallCleanThreads, SmallCleanId),
+    between(1, NumberOfSmallCleaningThreads, SmallCleanId),
     start_small_thread(SmallCleanId)
   ),
   %   2. Clean medium files.
   forall(
-    between(1, NumberOfMediumCleanThreads, MediumCleanId),
+    between(1, NumberOfMediumCleaningThreads, MediumCleanId),
     start_medium_thread(MediumCleanId)
   ),
   %   3. Clean large files.
   forall(
-    between(1, NumberOfLargeCleanThreads, LargeCleanId),
+    between(1, NumberOfLargeCleaningThreads, LargeCleanId),
     start_large_thread(LargeCleanId)
   ).
 

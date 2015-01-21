@@ -8,6 +8,7 @@
                             % -ContentType:atom
     datadoc_describe/2, % +Md5:atom
                         % -Triples:list(compound)
+    datadoc_exists/1, % +Datadoc:uri
     datadoc_file_extension/2, % +Datadoc:uri
                               % -FileExtension:atom
     datadoc_source/2, % +Datadoc:uri
@@ -94,6 +95,13 @@ datadoc_describe(Datadoc, Triples):-
   maplist(pair_to_triple(Datadoc), Rows, Triples).
 
 pair_to_triple(S, [P,O], rdf(S,P,O)).
+
+
+
+%! datadoc_exists(+Datadoc:uri) is semidet.
+
+datadoc_exists(Datadoc):-
+  lwm_sparql_ask([llo], [rdf(Datadoc, llo:md5, var(md5))], []).
 
 
 

@@ -24,10 +24,7 @@ and at the same time send small RDF messages using SPARQL Update requests.
 
 :- use_module(library(semweb/rdf_db), except([rdf_node/1])).
 
-:- use_module(plSparql(http/sparql_graph_store)).
 :- use_module(plSparql(update/sparql_update_api)).
-
-:- use_module(lwm(lwm_settings)).
 
 %! rdf_triple(
 %!   ?Subject:or([bnode,iri]),
@@ -54,9 +51,6 @@ and at the same time send small RDF messages using SPARQL Update requests.
 % of the update request.
 
 post_rdf_triples:-
-  % Named graph argument.
-  lwm_version_graph(NG),
-
   % Collect contents.
   aggregate_all(
     set(rdf(S,P,O)),
@@ -64,30 +58,18 @@ post_rdf_triples:-
     Triples
   ),
 
-  % Use HTTP Graph Store on Virtuoso.
   % Use SPARQL Update on ClioPatria.
-  (   lwm:lwm_server(virtuoso)
-  ->  with_mutex(lod_washing_machine, (
-        sparql_post_named_graph(
-          virtuoso_http,
-          NG,
-          Triples,
-          [status_code(Code)]
-        )
-      ))
-  ;   lwm:lwm_server(cliopatria)
-  ->  with_mutex(lod_washing_machine, (
-        sparql_insert_data(
-          cliopatria_localhost,
-          Triples,
-          [],
-          [NG],
-          [status_code(Code)]
-        )
-      ))
-  ),
-  % DEB
-  %%%%(   between(200, 299, Code)
+  with_mutex(lod_washing_machine, (
+    sparql_insert_data(
+      cliopatria,
+      Triples,
+      [],
+      [],
+      [status_code(Code)]
+    )
+  )),
+
+  % Debug
   (   between(100, 599, Code)
   ->  true
   ;   writeln(Code),
@@ -100,12 +82,12 @@ post_rdf_triples:-
   retractall(rdf_triple(_,_,_)).
 
 
+
 %! store_triple(+Subject, +Predicate, +Object) is det.
 
 store_triple(S1, P1, O1):-
   maplist(rdf_term_map, [S1,P1,O1], [S2,P2,O2]),
   assert(rdf_triple(S2, P2, O2)).
-
 
 rdf_term_map(X-Y0, Z):- !,
   (   number(Y0)

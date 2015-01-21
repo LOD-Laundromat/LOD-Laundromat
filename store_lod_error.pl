@@ -294,7 +294,9 @@ store_lod_error(Datadoc, Kind, Error):-
 
 
 
-% Helpers
+
+
+% HELPERS %
 
 %! store_position(
 %!   +Resource:or([bnode,iri]),

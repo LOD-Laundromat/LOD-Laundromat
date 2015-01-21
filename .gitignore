@@ -5,3 +5,4 @@
 data/
 *.log
 daemon.pl
+settings.conf
