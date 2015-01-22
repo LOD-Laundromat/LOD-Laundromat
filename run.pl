@@ -19,7 +19,6 @@ for storing the metadata. See module [lwm_settings] for this.
   :- ensure_loaded(load).
 :- endif.
 
-
 :- use_module(library(option)).
 :- use_module(library(optparse)).
 :- use_module(library(semweb/rdf_db), except([rdf_node/1])).
@@ -44,7 +43,7 @@ user:current_html_style(menu_page).
 
 user:web_module('LWM Progress', lwm_progress).
 
-:- initialization(init).
+%:- initialization(init).
 
 
 
