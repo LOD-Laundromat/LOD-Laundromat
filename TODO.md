@@ -3,10 +3,11 @@ TODO
 
   [ ] Bugs:
     [x] Archives are not closed by `ll_triple/1`.
-    [ ] Max limit (50 errors) for XML/RDF file parsing.
+    [x] Max limit (50 errors) for XML/RDF file parsing.
+    [o] Max limit (50 errors) for XML/RDF file parsing. Reset datadocs that have this.
     [x] Turtle family files only containing comments are guessed incorrectly.
-    [o] Cannot download over FTP. @swipl-mailinglist
-    [o] Backslashed in IRI are not recognized as RDF (correctly). Is this too strict? Examples: b36dde5e58e161c09b41a295b7a5599f, 63c2f001e5cf428e8a98db4aac718db4, 0d9a179fb9b080dbecd19553a48f163c.
+    [ ] Cannot download over FTP. @swipl-mailinglist
+    [x] Vastly simplified RDF guessing: we want the parser to enumerate the syntax errors.
   [ ] Debug:
     [x] Script that checks the validity of SPARQL queries in llWM.
   [ ] Swipl:
@@ -25,12 +26,13 @@ TODO
       [ ] ...
       [ ] ...
   [ ] llWM:
-    [x] Clean on a per-triple basis.
+    [x] Clean on a per-triple basis: Turtle-family.
+    [o] Clean on a per-triple basis: XML-family.
     [o] Disk-based sorting and deduplication.
     [ ] Store more HTTP headers per dirty document.
     [ ] Keep track of non-canonical lexical forms.
   [ ] ll:
-    [o] Run llWM.
+    [x] Run llWM.
     [ ] Extend seed list.
   [ ] llPack:
     [ ] Create a Prolog Pack for LOD Laundromat.
