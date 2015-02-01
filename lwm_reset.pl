@@ -42,7 +42,7 @@ reset_datadoc(Datadoc):-
   ),
   maplist(delete_resource, Warnings),
   delete_resource(Datadoc),
-  
+
   datadoc_directory(Datadoc, DatadocDir),
   delete_directory_and_contents(DatadocDir),
   print_message(informational, lwm_reset(Datadoc)).

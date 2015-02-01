@@ -57,7 +57,6 @@ The cleaning process performed by the LOD Washing Machine.
 %! lwm_clean_loop(+Category:atom, ?Min:nonneg, ?Max:nonneg) is det.
 
 lwm_clean_loop(Category, Min, Max):-
-gtrace,
   % Pick a new source to process.
   % If some exception is thrown here, the catch/3 makes it
   % silently fail. This way, the unpacking thread is able
@@ -174,7 +173,7 @@ clean_md5(Category, Md5, Datadoc):-
 
   % Keep the old/dirty file around in compressed form,
   % or throw it away.
-  (   lwm_setting:setting(keep_old_datadoc, true)
+  (   lwm_settings:setting(keep_old_datadoc, true)
   ->  archive_create(DirtyFile, _)
   ;   delete_file(DirtyFile)
   ),
@@ -360,32 +359,52 @@ clean_streamed_triples(Out, State, BNodePrefix, Triples0, Graph0):-
   graph_without_line(Graph0, Graph),
   maplist(fix_triple(Graph), Triples0, Triples),
   maplist(ctriples_write_triple(Out, State, BNodePrefix), Triples).
+
+%! graph_without_line(+WonkyGraph:compound, -Graph:atom) is det.
+% Remove file line numbers from the graph name.
+
+graph_without_line(Graph:_, Graph):- !.
+graph_without_line(Graph, Graph).
+
+%! fix_triple(
+%!   +Graph:atom,
+%!   +WonkyStatement:compound,
+%!   -Statement:compound
+%! ) is det.
+% 
+
 fix_triple(Graph, rdf(S,P,O), Triple):- !,
   (   is_named_graph(Graph)
-  ->  Triple = rdf(S,P,O,Graph)
+  ->  set_has_quadruples,
+      Triple = rdf(S,P,O,Graph)
   ;   Triple = rdf(S,P,O)
   ).
 fix_triple(Graph, rdf(S,P,O,G0), Triple):-
-  set_has_quadruples,
   (   graph_without_line(G0, G),
       is_named_graph(G)
-  ->  Triple = rdf(S,P,O,G)
+  ->  set_has_quadruples,
+      Triple = rdf(S,P,O,G)
   ;   is_named_graph(Graph)
-  ->  Triple = rdf(S,P,O,Graph)
+  ->  set_has_quadruples,
+      Triple = rdf(S,P,O,Graph)
   ;   Triple = rdf(S,P,O)
   ).
 
-set_has_quadruples:-
-  has_quadruples(true), !.
-set_has_quadruples:-
-  assert(has_quadruples(true)).
+%! is_named_graph(+Graph:atom) is semidet.
+% Succeeds for all and only named graphs.
 
 is_named_graph(Graph):-
   ground(Graph),
   Graph \== user.
 
-graph_without_line(Graph:_, Graph):- !.
-graph_without_line(Graph, Graph).
+%! set_has_quadruples is det.
+% Store the fact that a quadruple occurred in the parser stream
+% as a thread-local global Prolog fact.
+
+set_has_quadruples:-
+  has_quadruples(true), !.
+set_has_quadruples:-
+  assert(has_quadruples(true)).
 
 
 

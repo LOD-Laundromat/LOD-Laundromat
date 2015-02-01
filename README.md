@@ -86,3 +86,20 @@ File path: `~/.ssh/config`
 Host *
   ServerAliveInterval 60
 ~~~
+
+
+
+Subdomains
+----------
+
+| *Port* | *Subdomain* |
+|:------:|:------------|
+| 4001   | cliopatria  |
+| 4002   | bertrand    |
+| 4003   | webqr       |
+| 4004   | datahives   |
+| 4005   | iotw        |
+| 4006   | su          |
+| 4007   | lodobs      |
+| 4008   | tools       |
+| 4009   | dans        |

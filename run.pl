@@ -43,7 +43,7 @@ user:current_html_style(menu_page).
 
 user:web_module('LWM Progress', lwm_progress).
 
-%:- initialization(init).
+:- initialization(init).
 
 
 
