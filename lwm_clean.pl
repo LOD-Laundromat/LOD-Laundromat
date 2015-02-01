@@ -13,14 +13,15 @@
 The cleaning process performed by the LOD Washing Machine.
 
 @author Wouter Beek
-@version 2014/03-2014/06, 2014/08-2014/09, 2015/01
+@version 2014/03-2014/06, 2014/08-2014/09, 2015/01-2015/02
 */
 
 :- use_module(library(apply)).
 :- use_module(library(option)).
-:- use_module(library(semweb/rdf_db), except([rdf_node/1])).
-:- use_module(library(semweb/rdf_ntriples)).
-:- use_module(library(semweb/turtle)).
+:- use_module(library(semweb/rdf_db), except([rdf_node/1])). % Format `xml`.
+:- use_module(library(semweb/rdf_ntriples)). % Formats `ntriples` and `nquads`.
+:- use_module(library(semweb/rdfa)). % Format `rdfa`
+:- use_module(library(semweb/turtle)). % Formats `turtle` and `trig`.
 :- use_module(library(zlib)).
 
 :- use_module(generics(list_ext)).
