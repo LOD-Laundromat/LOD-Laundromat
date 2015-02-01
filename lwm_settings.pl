@@ -1,6 +1,7 @@
 :- module(
   lwm_settings,
   [
+    init_lwm_settings/1, % +Port:nonneg
     ll_authority/1, % ?Authority:atom
     ll_scheme/1 % ?Scheme:atom
   ]
@@ -72,8 +73,6 @@ user:prolog_file_type(conf, configuration).
      'The number of threads for downloading and unpacking data documents.'
    ).
 
-:- initialization(init_lwm_settings).
-
 
 
 
@@ -95,15 +94,15 @@ ll_scheme(http).
 
 % INITIALIZATION %
 
-init_lwm_settings:-
+init_lwm_settings(Port):-
   absolute_file_name(
     lwm(settings),
     File,
     [access(read),file_type(configuration)]
   ),
   load_settings(File),
-  
-  % SPARQL endpoint.
-  assert(lwm_sparql_endpoint(cliopatria)),
-  sparql_register_endpoint(cliopatria, ['http://localhost:3020'], cliopatria),
+  uri_authority_components(Authority, uri_authority(_,_,localhost,Port)),
+  uri_components(Uri, uri_components(http,Authority,'/',_,_)),
+  % Register the ClioPatria SPARQL endpoint.
+  sparql_register_endpoint(cliopatria, [Uri], cliopatria),
   register_service(cliopatria, lwm, lwmlwm).

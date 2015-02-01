@@ -44,8 +44,8 @@ init:-
     [default(false),opt(debug),longflags([debug]),type(boolean)],
     [default(DefaultDir),opt(directory),longflags([dir]),type(atom)],
     [default(false),opt(help),longflags([help]),shortflags([h]),type(boolean)],
-    [default(false),opt(restart),longflags([restart]),type(boolean)],
-    [default(false),opt(continue),longflags([continue]),type(boolean)]
+    [default(4001),opt(port),longflags([port]),shortflags([]),type(integer)],
+    [default(false),opt(restart),longflags([restart]),type(boolean)]
   ],
   opt_arguments(OptSpec, Options, _),
 
@@ -67,9 +67,7 @@ init(Options):-
   % Process the restart or continue option.
   (   option(restart(true), Options)
   ->  Init_0 = lwm_restart
-  ;   option(continue(true), Options)
-  ->  Init_0 = lwm_continue
-  ;   Init_0 = true
+  ;   Init_0 = lwm_continue
   ),
 
   % Initialization phase.
@@ -85,7 +83,11 @@ init(Options):-
       gtrace,
       debug_datadoc(Datadoc)
   ;   init_production
-  ).
+  ),
+  
+  % Set the port of the LOD Laundromat Endpoint.
+  option(port(Port), Options),
+  init_lwm_settings(Port).
 
 ensure_datadoc(Datadoc, Datadoc):-
   is_uri(Datadoc), !.
