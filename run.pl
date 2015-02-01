@@ -25,23 +25,12 @@ for storing the metadata. See module [lwm_settings] for this.
 
 :- use_module(generics(typecheck)).
 
-:- use_module(plServer(app_server)).
-:- use_module(plServer(web_modules)). % Web module registration.
-
 :- use_module(lwm(lwm_clean)).
 :- use_module(lwm(lwm_continue)).
 :- use_module(lwm(lwm_restart)).
 :- use_module(lwm(lwm_settings)).
 :- use_module(lwm(lwm_unpack)).
 :- use_module(lwm(debug/debug_datadoc)).
-:- use_module(lwm(debug/lwm_progress)).
-
-:- dynamic(user:web_module/2).
-:- multifile(user:web_module/2).
-
-user:current_html_style(menu_page).
-
-user:web_module('LWM Progress', lwm_progress).
 
 :- initialization(init).
 
@@ -55,7 +44,6 @@ init:-
     [default(false),opt(debug),longflags([debug]),type(boolean)],
     [default(DefaultDir),opt(directory),longflags([dir]),type(atom)],
     [default(false),opt(help),longflags([help]),shortflags([h]),type(boolean)],
-    [default(3020),opt(port),longflags([port]),type(integer)],
     [default(false),opt(restart),longflags([restart]),type(boolean)],
     [default(false),opt(continue),longflags([continue]),type(boolean)]
   ],
@@ -70,9 +58,6 @@ init:-
   ).
 
 init(Options):-
-  % Process the port option.
-  option(port(Port), Options),
-
   % Process the directory option.
   option(directory(Dir), Options),
   make_directory_path(Dir),
@@ -86,9 +71,6 @@ init(Options):-
   ->  Init_0 = lwm_continue
   ;   Init_0 = true
   ),
-
-  % Start the debug tools server.
-  start_app_server([port(Port),workers(2)]),
 
   % Initialization phase.
   clean_lwm_state,

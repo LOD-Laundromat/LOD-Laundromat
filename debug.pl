@@ -30,16 +30,6 @@
 %:- debug_all_files.
 
 
-:- set_prolog_flag(
-     answer_write_options,
-     [max_depth(10),portrayed(true),spacing(next_argument)]
-   ).
-:- set_prolog_flag(
-     debugger_write_options,
-     [max_depth(10),portrayed(true),spacing(next_argument)]
-   ).
-
-
 % Debugging specific data documents, based on their MD5.
 
 :- dynamic(debug:debug_md5/2).
