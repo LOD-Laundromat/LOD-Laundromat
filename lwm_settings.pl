@@ -12,7 +12,7 @@
 Generic predicates for the LOD Washing Machine.
 
 @author Wouter Beek
-@version 2014/06, 2014/08-2014/09, 2015/01
+@version 2014/06, 2014/08-2014/09, 2015/01-2015/02
 */
 
 :- use_module(library(filesex)).
@@ -104,5 +104,5 @@ init_lwm_settings(Port):-
   uri_authority_components(Authority, uri_authority(_,_,localhost,Port)),
   uri_components(Uri, uri_components(http,Authority,'/',_,_)),
   % Register the ClioPatria SPARQL endpoint.
-  sparql_register_endpoint(cliopatria, [Uri], cliopatria),
-  register_service(cliopatria, lwm, lwmlwm).
+  sparql_register_endpoint(cliopatria, [Uri], cliopatria).
+
