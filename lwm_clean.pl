@@ -78,7 +78,7 @@ lwm_clean_loop(Category, Min, Max):-
   lwm_clean_loop(Category, Min, Max).
 % Done for now. Check whether there are new jobs in one seconds.
 lwm_clean_loop(Category, Min, Max):-
-  sleep(1),
+  sleep(5),
   lwm_debug_message(lwm_idle_loop(Category)), % DEB
   lwm_clean_loop(Category, Min, Max).
 
@@ -176,8 +176,9 @@ clean_md5(Category, Md5, Datadoc):-
   % or throw it away.
   (   lwm_settings:setting(keep_old_datadoc, true)
   ->  archive_create(DirtyFile, _)
-  ;   delete_file(DirtyFile)
+  ;   true
   ),
+  delete_file(DirtyFile),
 
   % Add the new VoID URLs to the LOD Basket.
   with_mutex(store_new_url,
