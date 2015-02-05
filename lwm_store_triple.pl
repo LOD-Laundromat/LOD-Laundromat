@@ -44,7 +44,7 @@ the stored triples are sent in a SPARQL Update request
 (see module [noRdf_store].
 
 @author Wouter Beek
-@version 2014/04-2014/06, 2014/08-2014/09, 2015/01
+@version 2014/04-2014/06, 2014/08-2014/09, 2015/01-2015/02
 */
 
 :- use_module(library(lists), except([delete/3,subset/2])).
@@ -53,6 +53,7 @@ the stored triples are sent in a SPARQL Update request
 
 :- use_module(pl(pl_control)).
 
+:- use_module(plXsd(xsd)).
 :- use_module(plXsd(dateTime/xsd_dateTime_functions)).
 
 :- use_module(lwm(lwm_debug_message)).
@@ -68,7 +69,7 @@ the stored triples are sent in a SPARQL Update request
 % Datetime at which the URL was added to the LOD Basket.
 
 store_added(Datadoc, Md5):-
-  get_dateTime(Added),
+  get_dateTime_lexical(Added),
   store_triple(Datadoc, llo-added, literal(type(xsd-dateTime,Added))),
   store_triple(Datadoc, llo-md5, literal(type(xsd-string,Md5))),
   post_rdf_triples.
@@ -144,7 +145,7 @@ store_end_clean(Md5, Datadoc):-
   post_rdf_triples.
 
 store_end_clean0(Md5, Datadoc):-
-  get_dateTime(Now),
+  get_dateTime_lexical(Now),
   store_triple(Datadoc, llo-endClean, literal(type(xsd-dateTime,Now))),
 
   % Construct the download URL for non-archive files.
@@ -179,7 +180,7 @@ store_end_unpack(Md5, Datadoc, Status):-
   post_rdf_triples.
 
 store_end_unpack0(Datadoc):-
-  get_dateTime(Now),
+  get_dateTime_lexical(Now),
   store_triple(Datadoc, llo-endUnpack, literal(type(xsd-dateTime,Now))).
 
 
@@ -307,7 +308,7 @@ store_start_clean(Datadoc):-
   post_rdf_triples.
 
 store_start_clean0(Datadoc):-
-  get_dateTime(Now),
+  get_dateTime_lexical(Now),
   store_triple(Datadoc, llo-startClean, literal(type(xsd-dateTime,Now))).
 
 
@@ -315,7 +316,7 @@ store_start_clean0(Datadoc):-
 %! store_start_unpack(+Datadoc:url) is det.
 
 store_start_unpack(Datadoc):-
-  get_dateTime(Now),
+  get_dateTime_lexical(Now),
   store_triple(Datadoc, llo-startUnpack, literal(type(xsd-dateTime,Now))),
   post_rdf_triples.
 
@@ -355,4 +356,14 @@ store_stream(Datadoc, Stream):-
 
 store_warning(Datadoc, message(Term,Kind,_)):-
   store_lod_error(Datadoc, Kind, Term).
+
+
+
+
+
+% HELPERS %
+
+get_dateTime_lexical(Added0):-
+  get_dateTime(Added),
+  xsd_canonical_map(xsd:dateTime, Added, Added0).
 
