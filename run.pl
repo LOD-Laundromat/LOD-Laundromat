@@ -40,12 +40,53 @@ init:-
   % Read the command-line arguments.
   absolute_file_name(data(.), DefaultDir, [file_type(directory)]),
   OptSpec= [
-    [opt(datadoc),longflags([datadoc]),type(atom)],
-    [default(false),opt(debug),longflags([debug]),type(boolean)],
-    [default(DefaultDir),opt(directory),longflags([dir]),type(atom)],
-    [default(false),opt(help),longflags([help]),shortflags([h]),type(boolean)],
-    [default(4001),opt(port),longflags([port]),shortflags([]),type(integer)],
-    [default(false),opt(restart),longflags([restart]),type(boolean)]
+    [
+      help('Debug a specific data document based on its MD5.'),
+      longflags([datadoc]),
+      opt(datadoc),
+      type(atom)
+    ],
+    [
+      default(false),
+      help('Whether debug messages are displayed or not.'),
+      longflags([debug]),
+      opt(debug),
+      type(boolean)
+    ],
+    [
+      default(DefaultDir),
+      help('The directory where the cleaned data is stored.'),
+      longflags([dir,directory]),
+      opt(directory),
+      type(atom)
+    ],
+    [
+      default(false),
+      help('Enumerate the supported command-line options.'),
+      longflags([help]),
+      opt(help),
+      shortflags([h]),
+      type(boolean)
+    ],
+    [
+      default(4001),
+      help('The port at which the triple store for the scrape metadata \c
+            can be reached.'),
+      longflags([port]),
+      opt(port),
+      shortflags([p]),
+      type(integer)
+    ],
+    [
+      default(default),
+      help('The mode in which the LOD Washing Machine runs.\c
+            Possible values are `default` (which is the default),\c
+            `continue`, and `restart`.'),
+      longflags([mode]),
+      opt(mode),
+      shortflags([m]),
+      type(atom)
+    ]
   ],
   opt_arguments(OptSpec, Options, _),
 
@@ -64,15 +105,17 @@ init(Options):-
   retractall(user:file_search_path(data, _)),
   assert(user:file_search_path(data, Dir)),
 
-  % Process the restart or continue option.
-  (   option(restart(true), Options)
-  ->  Init_0 = lwm_restart
-  ;   Init_0 = lwm_continue
-  ),
-
   % Initialization phase.
   clean_lwm_state,
-  call(Init_0),
+  
+  % Process the restart or continue option.
+  option(mode(Mode), Options),
+  (   Mode == restart
+  ->  lwm_restart
+  ;   Mode == continue
+  ->  lwm_continue
+  ;   true
+  ),
 
   % Either process a specific data documents in a single thread (debug)
   % or start a couple of continuous threads (production).
