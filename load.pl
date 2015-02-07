@@ -5,8 +5,11 @@
 
 :- dynamic(user:project/3).
 :- multifile(user:project/3).
-   user:project(llWashingMachine,
-       'Where we clean other people\'s dirty data', lwm).
+   user:project(
+     llWashingMachine,
+     'Where we clean other people\'s dirty data',
+     lwm
+   ).
 
 :- use_module(load_project).
 :- load_project([
