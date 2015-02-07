@@ -10,7 +10,7 @@
 Reset data documents in the triple store.
 
 @author Wouter Beek
-@version 2015/01
+@version 2015/01-2015/02
 */
 
 :- use_module(library(apply)).
@@ -19,7 +19,6 @@ Reset data documents in the triple store.
 
 :- use_module(plSparql(update/sparql_update_api)).
 
-:- use_module(lwm(lwm_settings)).
 :- use_module(lwm(md5)).
 :- use_module(lwm(query/lwm_sparql_query)).
 

@@ -41,6 +41,14 @@ Machines
 Endpoints
 ---------
 
+Ednpoints should be registered in a file called `data/service.db`.
+For each endpoint a compound service term should be asserted.
+For example:
+
+```prolog
+assert(service(serivce,user,password,_)).
+```
+
 | **Location** | **HTTP Method** | **Arguments** | ** Standards-compliance** | **What it does** |
 |:-------------|:----------------|:--------------|:--------------------------|:-----------------|
 | http://cliopatria.lodlaundromat.d2s.labs.vu.nl | `GET` | HTTP authentication | Does not support RDF Datasets. | This is used to debug the LOD Washing Machine during development. |

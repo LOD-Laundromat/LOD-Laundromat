@@ -11,21 +11,17 @@
 Continues an interrupted LOD Washing Machine crawl.
 
 @author Wouter Beek
-@version 2014/09, 2015/01
+@version 2014/09, 2015/01-2015/02
 */
 
 :- use_module(library(aggregate)).
 :- use_module(library(apply)).
-:- use_module(library(filesex)).
 :- use_module(library(lists), except([delete/3,subset/2])).
 :- use_module(library(semweb/rdf_db), except([rdf_node/1])).
 
 :- use_module(lwm(lwm_reset)).
-:- use_module(lwm(lwm_settings)).
-:- use_module(lwm(md5)).
 :- use_module(lwm(query/lwm_sparql_enum)).
 :- use_module(lwm(query/lwm_sparql_generics)).
-:- use_module(lwm(query/lwm_sparql_query)).
 
 
 
