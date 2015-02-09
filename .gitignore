@@ -1,5 +1,6 @@
 *~
 *#
+*.conf
 *.db
 *.out
 data/
