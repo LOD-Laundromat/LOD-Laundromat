@@ -47,13 +47,13 @@ the stored triples are sent in a SPARQL Update request
 @version 2014/04-2014/06, 2014/08-2014/09, 2015/01
 */
 
-:- use_module(library(apply)).
 :- use_module(library(lists), except([delete/3,subset/2])).
 :- use_module(library(semweb/rdf_db), except([rdf_node/1])).
 :- use_module(library(uri)).
 
 :- use_module(pl(pl_control)).
 
+:- use_module(plXsd(xsd)).
 :- use_module(plXsd(dateTime/xsd_dateTime_functions)).
 
 :- use_module(lwm(lwm_debug_message)).
@@ -251,7 +251,7 @@ store_number_of_triples(
     llo-triples,
     literal(type(xsd-nonNegativeInteger,NumberOfUniqueTriples))
   ),
-  
+
   % Store the number of duplicate triples.
   NumberOfDuplicateTriples is NumberOfTriples - NumberOfUniqueTriples,
   store_triple(
@@ -259,7 +259,7 @@ store_number_of_triples(
     llo-duplicates,
     literal(type(xsd-nonNegativeInteger,NumberOfDuplicateTriples))
   ),
-  
+
   % DEB
   lwm_debug_message(
     lwm_progress(Category),
