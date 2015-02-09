@@ -68,7 +68,7 @@ the stored triples are sent in a SPARQL Update request
 % Datetime at which the URL was added to the LOD Basket.
 
 store_added(Datadoc):-
-  get_dateTime(Added),
+  get_dateTime_lexical(Added),
   store_triple(Datadoc, llo-added, literal(type(xsd-dateTime,Added))),
   post_rdf_triples.
 
@@ -140,7 +140,7 @@ store_end_clean(Md5, Datadoc):-
   post_rdf_triples.
 
 store_end_clean0(Md5, Datadoc):-
-  get_dateTime(Now),
+  get_dateTime_lexical(Now),
   store_triple(Datadoc, llo-endClean, literal(type(xsd-dateTime,Now))),
 
   % Construct the download URL for non-archive files.
@@ -174,7 +174,7 @@ store_end_unpack(Md5, Datadoc, Status):-
   post_rdf_triples.
 
 store_end_unpack0(Datadoc):-
-  get_dateTime(Now),
+  get_dateTime_lexical(Now),
   store_triple(Datadoc, llo-endUnpack, literal(type(xsd-dateTime,Now))).
 
 
@@ -282,14 +282,14 @@ store_start_clean(Datadoc):-
   post_rdf_triples.
 
 store_start_clean0(Datadoc):-
-  get_dateTime(Now),
+  get_dateTime_lexical(Now),
   store_triple(Datadoc, llo-startClean, literal(type(xsd-dateTime,Now))).
 
 
 %! store_start_unpack(+Datadoc:url) is det.
 
 store_start_unpack(Datadoc):-
-  get_dateTime(Now),
+  get_dateTime_lexical(Now),
   store_triple(Datadoc, llo-startUnpack, literal(type(xsd-dateTime,Now))),
   post_rdf_triples.
 
@@ -327,4 +327,14 @@ store_stream(Datadoc, Stream):-
 
 store_warning(Datadoc, message(Term,Kind,_)):-
   store_lod_error(Datadoc, Kind, Term).
+
+
+
+
+
+% HELPERS %
+
+get_dateTime_lexical(Added0):-
+  get_dateTime(Added),
+  xsd_canonical_map(xsd:dateTime, Added, Added0).
 
