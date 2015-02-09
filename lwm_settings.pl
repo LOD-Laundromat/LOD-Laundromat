@@ -37,10 +37,22 @@ user:prolog_file_type(conf, configuration).
 :- rdf_register_prefix(llo, 'http://lodlaundromat.org/ontology/').
 
 :- setting(
+     endpoint,
+     oneof([both,cliopatria,virtuoso]),
+     both,
+     'The endpoint that is used to store the crawling metadata in.'
+   ).
+:- setting(
      keep_old_datadoc,
      boolean,
      true,
      'Whether the original data document is stored or not.'
+   ).
+:- setting(
+     max_number_of_warnings,
+     nonneg,
+     100,
+     'The maximum number of warnings that is stored per data document.'
    ).
 :- setting(
      number_of_large_cleaning_threads,

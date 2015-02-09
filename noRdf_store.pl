@@ -59,7 +59,7 @@ post_rdf_triples:-
   ),
 
   % Use SPARQL Update on ClioPatria.
-  with_mutex(lod_washing_machine, (
+  with_mutex(lwm_endpoint_access, (
     sparql_insert_data(
       cliopatria,
       Triples,

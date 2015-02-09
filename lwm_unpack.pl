@@ -53,7 +53,7 @@ lwm_unpack_loop:-
   % silently fail. This way, the unpacking thread is able
   % to wait in case a SPARQL endpoint is temporarily down.
   catch(
-    with_mutex(lod_washing_machine, (
+    with_mutex(lwm_endpoint_access, (
       % `DirtyUrl` is only instantiated if `Datadoc`
       % is not an archive entry.
       datadoc_enum_pending(Datadoc, DirtyUrl),

@@ -26,7 +26,7 @@
                                % +NumberOfUniqueTriples:nonneg
     store_skip_clean/2, % +Md5:atom
                         % +Datadoc:url
-    store_seed/1, % +Uri:atom
+    store_seedpoint/1, % +Uri:atom
     store_start_clean/1, % +Datadoc:url
     store_start_unpack/1, % +Datadoc:url
     store_stream/2, % +Datadoc:url
@@ -278,9 +278,9 @@ store_number_of_triples(
 
 
 
-%! store_seed(+Uri:atom) is det.
+%! store_seedpoint(+Uri:atom) is det.
 
-store_seed(Uri):-
+store_seedpoint(Uri):-
   rdf_atom_md5(Uri, 1, Md5),
   rdf_global_id(ll:Md5, Datadoc),
   (   datadoc_exists(Datadoc)

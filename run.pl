@@ -199,9 +199,6 @@ init_production(
 
 
 clean_lwm_state:-
-  %%%%flag(number_of_pending_md5s, _, 0),
-  flag(store_new_url, _, 0),
-
   % Each file is loaded in an RDF serialization + snapshot.
   % These inherit the triples that are not in an RDF serialization.
   % We therefore have to clear all such triples before we begin.

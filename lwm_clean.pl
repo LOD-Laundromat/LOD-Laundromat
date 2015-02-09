@@ -63,7 +63,7 @@ lwm_clean_loop(Category, Min, Max):-
   % silently fail. This way, the unpacking thread is able
   % to wait in case a SPARQL endpoint is temporarily down.
   catch(
-    with_mutex(lod_washing_machine, (
+    with_mutex(lwm_endpoint_access, (
       % Do not process dirty data documents that do not conform
       % to the given minimum and/or maximum file size constraints.
       datadoc_enum_unpacked(Min, Max, Datadoc, UnpackedSize),
@@ -128,6 +128,8 @@ lwm_clean(Category, Datadoc, UnpackedSize):-
 
   % Store warnings and status as metadata.
   store_exception(Datadoc, Status),
+  lwm_setting:setting(max_number_of_warnings, MaxWarnings),
+  list_truncate(Warnings1, MaxWarnings, Warnings2),
   maplist(store_warning(Datadoc), Warnings),
   store_end_clean(Md5, Datadoc),
 
@@ -162,7 +164,7 @@ clean_md5(Category, Md5, Datadoc):-
           DirtyFile,
           DirtyIn,
           ContentType,
-          VoidUrls
+          VoidUris
         ),
         _,
         [snapshot(true)]
@@ -181,9 +183,7 @@ clean_md5(Category, Md5, Datadoc):-
   delete_file(DirtyFile),
 
   % Add the new VoID URLs to the LOD Basket.
-  with_mutex(store_new_url,
-    maplist(store_seed, VoidUrls)
-  ).
+  maplist(store_seedpoint, VoidUris).
 
 %! clean_datastream(
 %!   +Category:atom,
@@ -192,7 +192,7 @@ clean_md5(Category, Md5, Datadoc):-
 %!   +DirtyFile:atom,
 %!   +In:stream,
 %!   +ContentType:atom,
-%!   -VoidUrls:ordset(uri)
+%!   -VoidUris:ordset(uri)
 %! ) is det.
 
 clean_datastream(
@@ -202,7 +202,7 @@ clean_datastream(
   DirtyFile,
   DirtyIn,
   ContentType,
-  VoidUrls
+  VoidUris
 ):-
   % Guess the RDF serialization format,
   % using the content type and the file extension as suggestions.
@@ -263,7 +263,7 @@ clean_datastream(
   findall(
     VoidUrl,
     datadump(VoidUrl),
-    VoidUrls
+    VoidUris
   ),
 
   % Establish the file name extension.

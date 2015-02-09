@@ -8,7 +8,6 @@
 :- debug(lwm_unpack).
 %:- debug(sparql_graph_store).
 %:- debug(sparql_update).
-%:- debug(store_new_url).
 
 % Show idle looping on threads.
 %:- debug(lwm_idle_loop(clean_large)).
