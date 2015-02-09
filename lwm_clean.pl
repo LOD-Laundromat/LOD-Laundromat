@@ -130,7 +130,7 @@ lwm_clean(Category, Datadoc, UnpackedSize):-
   store_exception(Datadoc, Status),
   lwm_setting:setting(max_number_of_warnings, MaxWarnings),
   list_truncate(Warnings1, MaxWarnings, Warnings2),
-  maplist(store_warning(Datadoc), Warnings),
+  maplist(store_warning(Datadoc), Warnings2),
   store_end_clean(Md5, Datadoc),
 
   % DEB: *end* cleaning a specific data document.
