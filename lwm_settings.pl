@@ -128,7 +128,7 @@ init_lwm_sparql_endpoints:-
     ['http://localhost:3020'],
     cliopatria
   ),
-  register_service(cliopatria_localhost, lwm, lwmlwm),
+  register_service(cliopatria_localhost, lwm, lwmlwm, _),
 
   % Update (reset, continue)
   assert(lwm_sparql_endpoint(virtuoso_update)),
