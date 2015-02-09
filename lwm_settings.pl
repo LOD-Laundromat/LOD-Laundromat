@@ -107,12 +107,14 @@ ll_scheme(http).
 % INITIALIZATION %
 
 init_lwm_settings(Port):-
-  absolute_file_name(
-    lwm(settings),
-    File,
-    [access(read),file_type(configuration)]
+  (   absolute_file_name(
+        lwm(settings),
+        File,
+        [access(read),file_errors(fail),file_type(configuration)]
+      )
+  ->  load_settings(File)
+  ;   true
   ),
-  load_settings(File),
   uri_authority_components(Authority, uri_authority(_,_,localhost,Port)),
   uri_components(Uri, uri_components(http,Authority,'/',_,_)),
   % Register the ClioPatria SPARQL endpoint.
