@@ -116,7 +116,11 @@ init(Options):-
   ->  lwm_continue
   ;   true
   ),
-
+  
+  % Set the port of the LOD Laundromat Endpoint.
+  option(port(Port), Options),
+  init_lwm_settings(Port),
+  
   % Either process a specific data documents in a single thread (debug)
   % or start a couple of continuous threads (production).
   (   option(debug(true), Options),
@@ -126,11 +130,7 @@ init(Options):-
       gtrace,
       debug_datadoc(Datadoc)
   ;   init_production
-  ),
-  
-  % Set the port of the LOD Laundromat Endpoint.
-  option(port(Port), Options),
-  init_lwm_settings(Port).
+  ).
 
 ensure_datadoc(Datadoc, Datadoc):-
   is_uri(Datadoc), !.
