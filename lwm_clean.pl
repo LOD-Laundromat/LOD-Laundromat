@@ -136,7 +136,7 @@ lwm_clean(Category, Datadoc, UnpackedSize):-
   % DEB: *end* cleaning a specific data document.
   lwm_debug_message(
     lwm_progress(Category),
-    lwm_end(Category,Md5,Source,Status,Warnings)
+    lwm_end(Category,Md5,Source,Status,Warnings2)
   ).
 
 
