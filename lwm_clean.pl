@@ -128,7 +128,7 @@ lwm_clean(Category, Datadoc, UnpackedSize):-
 
   % Store warnings and status as metadata.
   store_exception(Datadoc, Status),
-  lwm_setting:setting(max_number_of_warnings, MaxWarnings),
+  lwm_settings:setting(max_number_of_warnings, MaxWarnings),
   list_truncate(Warnings1, MaxWarnings, Warnings2),
   maplist(store_warning(Datadoc), Warnings2),
   store_end_clean(Md5, Datadoc),
