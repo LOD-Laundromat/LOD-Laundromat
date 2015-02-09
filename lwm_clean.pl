@@ -284,11 +284,11 @@ clean_datastream(
   % Sort file.
   directory_file_path(Dir, sorted, SortedFile),
   buffer_size_file(UnsortedFile, BufferSize),
-  (   BufferSize > 4.5 * (1024 ** 3)
-  ->  Threads = 4
-  ;   BufferSize > 2.5 * (1024 ** 3)
+  (   BufferSize > 6 * (1024 ** 3) % >6GB
+  ->  Threads = 3
+  ;   BufferSize > 3 * (1024 ** 3) % >3GB
   ->  Threads = 2
-  ;   Threads = 1
+  ;   Threads = 1 % =<3GB
   ),
   gnu_sort(
     UnsortedFile,
