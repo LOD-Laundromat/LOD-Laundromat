@@ -41,12 +41,13 @@ Machines
 Endpoints
 ---------
 
-Ednpoints should be registered in a file called `data/service.db`.
-For each endpoint a compound service term should be asserted.
+Ednpoints that require authentication and/or API keys
+should be registered as Web services.
+This is done by include a line in a file called `service.db`.
 For example:
 
 ```prolog
-assert(service(serivce,user,password,_)).
+assert(service(service,user,password,_)).
 ```
 
 | **Location** | **HTTP Method** | **Arguments** | ** Standards-compliance** | **What it does** |

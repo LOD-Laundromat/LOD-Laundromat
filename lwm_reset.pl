@@ -14,11 +14,21 @@ Reset data documents in the triple store.
 */
 
 :- use_module(library(apply)).
-:- use_module(library(lists), except([delete/3,subset/2])).
 :- use_module(library(filesex)).
+:- use_module(library(lists), except([delete/3,subset/2])).
+:- use_module(library(settings)).
+:- use_module(library(thread)).
 
+:- use_module(generics(meta_ext)).
+
+:- use_module(plUri(uri_query)).
+
+:- use_module(plHttp(http_goal)).
+
+:- use_module(plSparql(sparql_db)).
 :- use_module(plSparql(update/sparql_update_api)).
 
+:- use_module(lwm(lwm_settings)).
 :- use_module(lwm(md5)).
 :- use_module(lwm(query/lwm_sparql_query)).
 
@@ -31,20 +41,54 @@ Reset data documents in the triple store.
 %! reset_datadoc(+Datadoc:iri) is det.
 
 reset_datadoc(Datadoc):-
+  lwm_settings:setting(endpoint, both), !,
+  concurrent(
+    2,
+    [
+      reset_datadoc(cliopatria, Datadoc),
+      reset_datadoc(virtuoso, Datadoc)
+    ],
+    []
+  ).
+reset_datadoc(Datadoc):-
+  lwm_settings:setting(endpoint, Endpoint),
+  reset_datadoc(Endpoint, Datadoc).
+
+
+%! reset_datadoc(
+%!   +Endpoint:oneof([cliopatria,virtuoso]),
+%!   +Datadoc:atom
+%! ) is det.
+
+reset_datadoc(cliopatria, Datadoc):- !,
+  sparql_endpoint_location(cliopatria, Uri0),
+  uri_query_add_nvpair(Uri0, datadoc, Datadoc, Uri),
+  http_goal(
+    Uri,
+    true,
+    [fail_on_status([404]),status_code(Status)]
+  ), !,
+  (   between(200, 299, Status)
+  ->  true
+  ;   gtrace %DEB
+  ),
+  print_message(informational, lwm_reset(Datadoc)).
+reset_datadoc(virtuoso, Datadoc):-
+  lwm_version_graph(NG),
   datadoc_p_os(Datadoc, llo:warning, Warnings),
   forall(
     member(Warning, Warnings),
     (
       datadoc_p_os(Warning, error:streamPosition, StreamPositions),
-      maplist(delete_resource, StreamPositions)
+      maplist(delete_resource(NG), StreamPositions)
     )
   ),
-  maplist(delete_resource, Warnings),
-  delete_resource(Datadoc),
+  maplist(delete_resource(NG), Warnings),
+  delete_resource(NG, Datadoc),
 
   datadoc_directory(Datadoc, DatadocDir),
   delete_directory_and_contents(DatadocDir),
-  print_message(informational, lwm_reset(Datadoc)).
+  print_message(informational, lwm_reset(NG,Datadoc)).
 
 
 
@@ -58,14 +102,14 @@ datadoc_directory(Datadoc, Dir):-
 
 
 
-%! delete_resource(+Resource:rdf_term) is det.
+%! delete_resource(+Graph:atom, +Resource:rdf_term) is det.
 
-delete_resource(Resource):-
+delete_resource(Graph, Resource):-
   sparql_delete_where(
-    cliopatria,
+    virtuoso_update,
     [],
     [rdf(Resource,var(p),var(o))],
-    [],
+    [Graph],
     [],
     []
   ).
@@ -80,4 +124,6 @@ delete_resource(Resource):-
 
 prolog:message(lwm_reset(Datadoc)) -->
   ['Successfully reset ',Datadoc,'.'].
+prolog:message(lwm_reset(NG,Datadoc)) -->
+  ['Successfully reset ',Datadoc,' in graph ',NG,'.'].
 

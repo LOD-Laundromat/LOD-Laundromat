@@ -3,7 +3,9 @@
   [
     init_lwm_settings/1, % +Port:nonneg
     ll_authority/1, % ?Authority:atom
-    ll_scheme/1 % ?Scheme:atom
+    ll_scheme/1, % ?Scheme:atom
+    lod_basket_graph/1, % -Graph:atom
+    lwm_version_graph/1 % -Graph:atom
   ]
 ).
 
@@ -89,6 +91,31 @@ user:prolog_file_type(conf, configuration).
 
 
 
+%! lod_basket_graph(-Graph:atom) is det.
+
+lod_basket_graph(Graph):-
+  ll_scheme(Scheme),
+  ll_authority(Authority),
+  uri_components(Graph, uri_components(Scheme,Authority,'',_,seedlist)).
+
+
+
+%! lwm_version_graph(-Graph:atom) is det.
+
+lwm_version_graph(Graph):-
+  ll_scheme(Scheme),
+  ll_authority(Authority),
+  uri_components(
+    Graph,
+    uri_components(Scheme,Authority,'/',_,['11'])
+  ).
+
+
+
+
+
+% HELPERS %
+
 %! ll_authority(+Authortity:atom) is semidet.
 %! ll_authority(-Authortity:atom) is det.
 
@@ -115,8 +142,39 @@ init_lwm_settings(Port):-
   ->  load_settings(File)
   ;   true
   ),
+  
+  % Register the ClioPatria SPARQL endpoint.
   uri_authority_components(Authority, uri_authority(_,_,localhost,Port)),
   uri_components(Uri, uri_components(http,Authority,'/',_,_)),
-  % Register the ClioPatria SPARQL endpoint.
-  sparql_register_endpoint(cliopatria, [Uri], cliopatria).
+  sparql_register_endpoint(cliopatria, [Uri], cliopatria),
+  
+  % Vrtuoso (1/3): Update (reset, continue).
+  sparql_register_endpoint(
+    virtuoso_update,
+    ['http://localhost:8890/sparql-auth'],
+    virtuoso
+  ),
+  sparql_db:assert(
+    sparql_endpoint_option0(virtuoso_update, path_suffix(update), '')
+  ),
+
+  % Virtuoso (2/3): Query.
+  sparql_register_endpoint(
+    virtuoso_query,
+    ['http://sparql.backend.lodlaundromat.org'],
+    virtuoso
+  ),
+  sparql_db:assert(
+    sparql_endpoint_option0(virtuoso_query, path_suffix(query), '')
+  ),
+ 
+  % Virtuoso (3/3): HTTP.
+  sparql_register_endpoint(
+    virtuoso_http,
+    ['http://localhost/sparql/graph'],
+    virtuoso
+   ),
+  sparql_db:assert(
+    sparql_endpoint_option0(virtuoso_http, path_suffix(http), '')
+  ).
 

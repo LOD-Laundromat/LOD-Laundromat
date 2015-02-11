@@ -101,7 +101,7 @@ pair_to_triple(S, [P,O], rdf(S,P,O)).
 %! datadoc_exists(+Datadoc:uri) is semidet.
 
 datadoc_exists(Datadoc):-
-  lwm_sparql_ask([llo], [rdf(Datadoc, llo:md5, var(md5))], []).
+  lwm_sparql_ask([llo], [rdf(Datadoc,llo:md5,var(md5))], []).
 
 
 

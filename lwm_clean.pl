@@ -19,9 +19,9 @@ The cleaning process performed by the LOD Washing Machine.
 :- use_module(library(apply)).
 :- use_module(library(option)).
 :- use_module(library(semweb/rdf_db), except([rdf_node/1])). % Format `xml`.
-:- use_module(library(semweb/rdf_ntriples)). % Formats `ntriples` and `nquads`.
+:- use_module(library(semweb/rdf_ntriples)). % Formats `ntriples`, `nquads`.
 :- use_module(library(semweb/rdfa)). % Format `rdfa`
-:- use_module(library(semweb/turtle)). % Formats `turtle` and `trig`.
+:- use_module(library(semweb/turtle)). % Formats `turtle`, `trig`.
 :- use_module(library(zlib)).
 
 :- use_module(generics(list_ext)).
