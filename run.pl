@@ -107,7 +107,11 @@ init(Options):-
 
   % Initialization phase.
   clean_lwm_state,
-  
+
+  % Set the port of the LOD Laundromat Endpoint.
+  option(port(Port), Options),
+  init_lwm_settings(Port),
+
   % Process the restart or continue option.
   option(mode(Mode), Options),
   (   Mode == restart
@@ -116,11 +120,7 @@ init(Options):-
   ->  lwm_continue
   ;   true
   ),
-  
-  % Set the port of the LOD Laundromat Endpoint.
-  option(port(Port), Options),
-  init_lwm_settings(Port),
-  
+
   % Either process a specific data documents in a single thread (debug)
   % or start a couple of continuous threads (production).
   (   option(debug(true), Options),
