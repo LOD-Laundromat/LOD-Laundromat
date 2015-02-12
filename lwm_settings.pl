@@ -107,7 +107,7 @@ lwm_version_graph(Graph):-
   ll_authority(Authority),
   uri_components(
     Graph,
-    uri_components(Scheme,Authority,'/',_,['11'])
+    uri_components(Scheme,Authority,'/',_,'11')
   ).
 
 
@@ -142,12 +142,12 @@ init_lwm_settings(Port):-
   ->  load_settings(File)
   ;   true
   ),
-  
+
   % Register the ClioPatria SPARQL endpoint.
   uri_authority_components(Authority, uri_authority(_,_,localhost,Port)),
   uri_components(Uri, uri_components(http,Authority,'/',_,_)),
   sparql_register_endpoint(cliopatria, [Uri], cliopatria),
-  
+
   % Vrtuoso (1/3): Update (reset, continue).
   sparql_register_endpoint(
     virtuoso_update,
@@ -167,7 +167,7 @@ init_lwm_settings(Port):-
   sparql_db:assert(
     sparql_endpoint_option0(virtuoso_query, path_suffix(query), '')
   ),
- 
+
   % Virtuoso (3/3): HTTP.
   sparql_register_endpoint(
     virtuoso_http,
