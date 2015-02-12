@@ -107,7 +107,7 @@ lwm_version_graph(Graph):-
   ll_authority(Authority),
   uri_components(
     Graph,
-    uri_components(Scheme,Authority,'',_,'11')
+    uri_components(Scheme,Authority,'',_,'12')
   ).
 
 
