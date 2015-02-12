@@ -52,7 +52,9 @@ erroneous_datadoc(Datadoc):-
   flatten(Datadocs0, Datadocs),
   member(Datadoc, Datadocs).
 
+/*
 % Archive entries with no parent.
+% RESET ALL ARCHIVES AND ARCHIVE ENTRIES.
 erroneous_datadoc0(L):-
   lwm_sparql_select(
     [llo],
@@ -64,6 +66,7 @@ erroneous_datadoc0(L):-
     L,
     []
   ).
+*/
 % Crawled more than once.
 erroneous_datadoc0(L):-
   lwm_sparql_select(
