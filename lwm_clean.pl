@@ -255,7 +255,14 @@ clean_datastream(
         ctriples_write_begin(State, BNodePrefix, Options3),
         setup_call_cleanup(
           open(UnsortedFile, write, UnsortedOut),
-          clean_triples(Format, DirtyIn, UnsortedOut, State, BNodePrefix, Options2),
+          clean_triples(
+            Format,
+            DirtyIn,
+            UnsortedOut,
+            State,
+            BNodePrefix,
+            Options2
+          ),
           close(UnsortedOut)
         ),
         ctriples_write_end(State, Options3)
@@ -320,6 +327,7 @@ clean_datastream(
   ).
 
 clean_triples(xml, In, Out, State, BNodePrefix, Options):- !,
+gtrace,
   process_rdf(
     In,
     clean_streamed_triples(Out, State, BNodePrefix),
