@@ -36,7 +36,7 @@ lwm_continue:-
     (   datadoc_enum_unpacking(Datadoc)
     ;   datadoc_enum_cleaning(Datadoc)
     ;   debug_datadoc(Datadoc)
-    %;   erroneous_datadoc(Datadoc)
+    ;   erroneous_datadoc(Datadoc)
     ),
     Datadocs
   ),
@@ -49,11 +49,12 @@ debug_datadoc(Datadoc):-
 
 erroneous_datadoc(Datadoc):-
   lwm_sparql_select(
-    [llo,rdf],
+    [llo],
     [datadoc],
     [
-      rdf(var(datadoc), rdf:type, llo:'ArchiveEntry'),
-      not([rdf(var(parent), llo:containsEntry, var(datadoc))])
+      rdf(var(datadoc), llo:startUnpack, var(startUnpack1)),
+      rdf(var(datadoc), llo:startUnpack, var(startUnpack2)),
+      filter(str(var(startUnpack1)) < str(var(startUnpack2)))
     ],
     Datadocs0,
     []
