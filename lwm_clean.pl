@@ -327,7 +327,6 @@ clean_datastream(
   ).
 
 clean_triples(xml, In, Out, State, BNodePrefix, Options):- !,
-gtrace,
   process_rdf(
     In,
     clean_streamed_triples(Out, State, BNodePrefix),
@@ -383,7 +382,7 @@ graph_without_line(Graph, Graph).
 %!   +WonkyStatement:compound,
 %!   -Statement:compound
 %! ) is det.
-% 
+%
 
 fix_triple(Graph, rdf(S,P,O), Triple):- !,
   (   is_named_graph(Graph)
