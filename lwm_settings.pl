@@ -171,7 +171,7 @@ init_lwm_settings(Port):-
   % Virtuoso (3/3): HTTP.
   sparql_register_endpoint(
     virtuoso_http,
-    ['http://localhost/sparql/graph'],
+    ['http://localhost:8890/sparql-graph-crud'],
     virtuoso
    ),
   sparql_db:assert(
