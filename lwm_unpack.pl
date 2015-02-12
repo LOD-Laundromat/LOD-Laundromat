@@ -53,7 +53,7 @@ lwm_unpack_loop:-
   % silently fail. This way, the unpacking thread is able
   % to wait in case a SPARQL endpoint is temporarily down.
   catch(
-    with_mutex(lod_washing_machine, (
+    with_mutex(lwm_endpoint_access, (
       % `DirtyUrl` is only instantiated if `Datadoc`
       % is not an archive entry.
       datadoc_enum_pending(Datadoc, DirtyUrl),
@@ -69,7 +69,7 @@ lwm_unpack_loop:-
   lwm_unpack_loop.
 % Done for now. Check whether there are new jobs in one seconds.
 lwm_unpack_loop:-
-  sleep(360),
+  sleep(5),
   lwm_debug_message(lwm_idle_loop(unpack)), % DEB
   lwm_unpack_loop.
 
@@ -223,7 +223,6 @@ unpack_file(Md5, Datadoc, ArchiveFile):-
       % and put it directly inside its MD5 directory.
       mv2(DataFile, DirtyFile),
       size_file(DirtyFile, UnpackedSize),
-      store_triple(Datadoc, llo-md5, literal(type(xsd-string,Md5))),
       store_triple(
         Datadoc,
         llo-unpackedSize,

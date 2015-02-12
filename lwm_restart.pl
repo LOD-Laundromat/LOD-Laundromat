@@ -10,13 +10,16 @@
 Restart the LOD Washing Machine during debugging.
 
 @author Wouter Beek
-@version 2014/08-2014/09, 2015/01
+@version 2014/08-2014/09, 2015/01-2015/02
 */
 
-:- use_module(library(debug)).
-:- use_module(library(http/http_client)).
+:- use_module(library(thread)).
+
+:- use_module(generics(meta_ext)).
 
 :- use_module(plUri(uri_query)).
+
+:- use_module(plHttp(http_goal)).
 
 :- use_module(plSparql(sparql_db)).
 :- use_module(plSparql(update/sparql_update_api)).
@@ -25,33 +28,40 @@ Restart the LOD Washing Machine during debugging.
 
 
 
+
+
 %! lwm_restart is det.
 
 lwm_restart:-
-  % Delete the URL seed list.
-  (   absolute_file_name(
-        data('url.txt'),
-        File,
-        [access(read),file_errors(fail)]
-      )
-  ->  delete_file(File)
-  ;   true
-  ),
+  lwm_settings:setting(endpoint, both), !,
+  concurrent(
+    2,
+    [
+      restart_store(cliopatria, Endpoint),
+      restart_store(virtuoso, Endpoint)
+    ],
+    []
+  ).
+lwm_restart:-
+  lwm_settings:setting(endpoint, Endpoint),
+  restart_store(Endpoint).
 
+restart_store(cliopatria):- !,
+  sparql_drop_graph(cliopatria, user, []).
+restart_store(virtuoso):-
   lwm_version_graph(Graph),
-
+  
   % Virtuoso implements SPARQL Updates so irregularly,
   % that we cannot even use options for it:
   % (1) No support for direct POST bodies (only URL encoded).
   % (2) GET method for DROP GRAPH.
   % (3) Required SILENT keyword.
-  (   lwm:lwm_server(virtuoso)
-  ->  sparql_endpoint_location(virtuoso_update, update, Url1),
-      format(atom(Query), 'DROP SILENT GRAPH <~a>', [Graph]),
-      uri_query_add_nvpair(Url1, query, Query, Url2),
-      http_get(Url2, Reply, []), !,
-      debug(lwm_restart, '~a', [Reply])
-  ;   lwm:lwm_server(cliopatria)
-  ->  sparql_drop_graph(cliopatria_localhost, Graph, [])
+  sparql_endpoint_location(virtuoso_update, update, Uri0),
+  format(atom(Query), 'DROP SILENT GRAPH <~a>', [Graph]),
+  uri_query_add_nvpair(Uri0, query, Query, Uri),
+  http_goal(Uri, true, [fail_on_status([404]),status(Status)]), !,
+  (   between(200, 299, Status)
+  ->  true
+  ;   gtrace %DEB
   ).
 

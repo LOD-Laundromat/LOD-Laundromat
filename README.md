@@ -41,6 +41,15 @@ Machines
 Endpoints
 ---------
 
+Ednpoints that require authentication and/or API keys
+should be registered as Web services.
+This is done by include a line in a file called `service.db`.
+For example:
+
+```prolog
+assert(service(service,user,password,_)).
+```
+
 | **Location** | **HTTP Method** | **Arguments** | ** Standards-compliance** | **What it does** |
 |:-------------|:----------------|:--------------|:--------------------------|:-----------------|
 | http://cliopatria.lodlaundromat.d2s.labs.vu.nl | `GET` | HTTP authentication | Does not support RDF Datasets. | This is used to debug the LOD Washing Machine during development. |
@@ -86,3 +95,20 @@ File path: `~/.ssh/config`
 Host *
   ServerAliveInterval 60
 ~~~
+
+
+
+Subdomains
+----------
+
+| *Port* | *Subdomain* |
+|:------:|:------------|
+| 4001   | cliopatria  |
+| 4002   | bertrand    |
+| 4003   | webqr       |
+| 4004   | datahives   |
+| 4005   | iotw        |
+| 4006   | su          |
+| 4007   | lodobs      |
+| 4008   | tools       |
+| 4009   | dans        |

@@ -8,7 +8,6 @@
 :- debug(lwm_unpack).
 %:- debug(sparql_graph_store).
 %:- debug(sparql_update).
-%:- debug(store_new_url).
 
 % Show idle looping on threads.
 %:- debug(lwm_idle_loop(clean_large)).
@@ -30,22 +29,13 @@
 %:- debug_all_files.
 
 
-:- set_prolog_flag(
-     answer_write_options,
-     [max_depth(10),portrayed(true),spacing(next_argument)]
-   ).
-:- set_prolog_flag(
-     debugger_write_options,
-     [max_depth(10),portrayed(true),spacing(next_argument)]
-   ).
-
-
 % Debugging specific data documents, based on their MD5.
 
 :- dynamic(debug:debug_md5/2).
 :- multifile(debug:debug_md5/2).
 
-%debug:debug_md5('2b7ceb8e6063aca636aa8d7119c4c743', clean).
+debug:debug_md5('10ce865e8ea5357c3805182103bccc17', clean).
+debug:debug_md5('414795d06e36d31c22c3f050c99bd09c', clean).
 
 show_idle:-
   flag(number_of_idle_loops_clean_small, Small, Small),

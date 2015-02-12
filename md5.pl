@@ -39,6 +39,7 @@ md5_base_url(Md5, Base):-
   uri_components(Base, uri_components(Scheme,Authority,Path2,_,_)).
 
 
+
 %! md5_bnode_base(+Md5:atom, -BaseComponents:compound) is det.
 
 md5_bnode_base(Md5, Scheme-Authority-Md5):-
@@ -46,15 +47,12 @@ md5_bnode_base(Md5, Scheme-Authority-Md5):-
   ll_authority(Authority).
 
 
+
 %! md5_directory(+Md5:atom, -Directory:atom) is det.
 % Returns the absolute directory of a specific MD5.
 
 md5_directory(Md5, Dir):-
-  % Retrieve the enclosing directory
-  % for the current LOD Washing Machine version.
-  lwm_version_directory(VersionDir),
-  
-  % Add the MD5 hash to the directory path.
-  directory_file_path(VersionDir, Md5, Dir),
+  absolute_file_name(data(.), Dir0, [access(write),file_type(directory)]),
+  directory_file_path(Dir0, Md5, Dir),
   make_directory_path(Dir).
 

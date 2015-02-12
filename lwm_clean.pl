@@ -13,19 +13,21 @@
 The cleaning process performed by the LOD Washing Machine.
 
 @author Wouter Beek
-@version 2014/03-2014/06, 2014/08-2014/09, 2015/01
+@version 2014/03-2014/06, 2014/08-2014/09, 2015/01-2015/02
 */
 
 :- use_module(library(apply)).
 :- use_module(library(option)).
-:- use_module(library(semweb/rdf_db), except([rdf_node/1])).
-:- use_module(library(semweb/rdf_ntriples)).
-:- use_module(library(semweb/turtle)).
+:- use_module(library(semweb/rdf_db), except([rdf_node/1])). % Format `xml`.
+:- use_module(library(semweb/rdf_ntriples)). % Formats `ntriples`, `nquads`.
+:- use_module(library(semweb/rdfa)). % Format `rdfa`
+:- use_module(library(semweb/turtle)). % Formats `turtle`, `trig`.
 :- use_module(library(zlib)).
 
 :- use_module(generics(list_ext)).
 :- use_module(generics(print_ext)).
 :- use_module(generics(sort_ext)).
+:- use_module(os(archive_ext)).
 :- use_module(os(file_ext)).
 :- use_module(os(file_gnu)).
 :- use_module(pl(pl_log)).
@@ -61,7 +63,7 @@ lwm_clean_loop(Category, Min, Max):-
   % silently fail. This way, the unpacking thread is able
   % to wait in case a SPARQL endpoint is temporarily down.
   catch(
-    with_mutex(lod_washing_machine, (
+    with_mutex(lwm_endpoint_access, (
       % Do not process dirty data documents that do not conform
       % to the given minimum and/or maximum file size constraints.
       datadoc_enum_unpacked(Min, Max, Datadoc, UnpackedSize),
@@ -76,7 +78,7 @@ lwm_clean_loop(Category, Min, Max):-
   lwm_clean_loop(Category, Min, Max).
 % Done for now. Check whether there are new jobs in one seconds.
 lwm_clean_loop(Category, Min, Max):-
-  sleep(1),
+  sleep(5),
   lwm_debug_message(lwm_idle_loop(Category)), % DEB
   lwm_clean_loop(Category, Min, Max).
 
@@ -114,7 +116,7 @@ lwm_clean(Category, Datadoc, UnpackedSize):-
     Status,
     Warnings1
   ),
-  %%%%(Status == false -> gtrace ; true), %DEB
+  (Status == false -> gtrace ; true), %DEB
 
   % Store the number of warnings.
   length(Warnings1, NumberOfWarnings),
@@ -126,8 +128,8 @@ lwm_clean(Category, Datadoc, UnpackedSize):-
 
   % Store warnings and status as metadata.
   store_exception(Datadoc, Status),
-  % @tbd Virtuoso gives 413 HTTP status code when sending too many warnings.
-  list_truncate(Warnings1, 100, Warnings2),
+  lwm_settings:setting(max_number_of_warnings, MaxWarnings),
+  list_truncate(Warnings1, MaxWarnings, Warnings2),
   maplist(store_warning(Datadoc), Warnings2),
   store_end_clean(Md5, Datadoc),
 
@@ -135,13 +137,7 @@ lwm_clean(Category, Datadoc, UnpackedSize):-
   lwm_debug_message(
     lwm_progress(Category),
     lwm_end(Category,Md5,Source,Status,Warnings2)
-  ),
-
-  %%%%% Make sure the unpacking threads do not create a pending pool
-  %%%%% that is (much) too big.
-  %%%%flag(number_of_pending_md5s, Id, Id - 1),
-
-  true.
+  ).
 
 
 
@@ -168,7 +164,7 @@ clean_md5(Category, Md5, Datadoc):-
           DirtyFile,
           DirtyIn,
           ContentType,
-          VoidUrls
+          VoidUris
         ),
         _,
         [snapshot(true)]
@@ -180,19 +176,16 @@ clean_md5(Category, Md5, Datadoc):-
 
   % Keep the old/dirty file around in compressed form,
   % or throw it away.
-  %%%%archive_create(DirtyFile, _),
+  (   lwm_settings:setting(keep_old_datadoc, true)
+  ->  archive_create(DirtyFile, _)
+  ;   true
+  ),
   delete_file(DirtyFile),
 
   % Add the new VoID URLs to the LOD Basket.
-  with_mutex(store_new_url, (
-    absolute_file_name(data('url.txt'), UrlFile, [access(append)]),
-    setup_call_cleanup(
-      open(UrlFile, append, UrlOut),
-      maplist(writeln(UrlOut), VoidUrls),
-      close(UrlOut)
-    )
-  )).
-
+  with_mutex(lwm_endpoint_access,
+    maplist(store_seedpoint, VoidUris)
+  ).
 
 %! clean_datastream(
 %!   +Category:atom,
@@ -201,7 +194,7 @@ clean_md5(Category, Md5, Datadoc):-
 %!   +DirtyFile:atom,
 %!   +In:stream,
 %!   +ContentType:atom,
-%!   -VoidUrls:ordset(uri)
+%!   -VoidUris:ordset(uri)
 %! ) is det.
 
 clean_datastream(
@@ -211,7 +204,7 @@ clean_datastream(
   DirtyFile,
   DirtyIn,
   ContentType,
-  VoidUrls
+  VoidUris
 ):-
   % Guess the RDF serialization format,
   % using the content type and the file extension as suggestions.
@@ -272,7 +265,7 @@ clean_datastream(
   findall(
     VoidUrl,
     datadump(VoidUrl),
-    VoidUrls
+    VoidUris
   ),
 
   % Establish the file name extension.
@@ -348,10 +341,9 @@ clean_triples(Format, In, Out, State, BNodePrefix, Options1):-
     clean_streamed_triples(Out, State, BNodePrefix),
     Options2
   ).
-clean_triples(_, _, _, _, _, _).
-%%%%clean_triples(Format, In, Out, State, BNodePrefix, Options):-
-%%%%  gtrace, %DEB
-%%%%  clean_triples(Format, In, Out, State, BNodePrefix, Options).
+clean_triples(Format, In, Out, State, BNodePrefix, Options):-
+  gtrace, %DEB
+  clean_triples(Format, In, Out, State, BNodePrefix, Options).
 
 
 
@@ -371,32 +363,52 @@ clean_streamed_triples(Out, State, BNodePrefix, Triples0, Graph0):-
   graph_without_line(Graph0, Graph),
   maplist(fix_triple(Graph), Triples0, Triples),
   maplist(ctriples_write_triple(Out, State, BNodePrefix), Triples).
+
+%! graph_without_line(+WonkyGraph:compound, -Graph:atom) is det.
+% Remove file line numbers from the graph name.
+
+graph_without_line(Graph:_, Graph):- !.
+graph_without_line(Graph, Graph).
+
+%! fix_triple(
+%!   +Graph:atom,
+%!   +WonkyStatement:compound,
+%!   -Statement:compound
+%! ) is det.
+% 
+
 fix_triple(Graph, rdf(S,P,O), Triple):- !,
   (   is_named_graph(Graph)
-  ->  Triple = rdf(S,P,O,Graph)
+  ->  set_has_quadruples,
+      Triple = rdf(S,P,O,Graph)
   ;   Triple = rdf(S,P,O)
   ).
 fix_triple(Graph, rdf(S,P,O,G0), Triple):-
-  set_has_quadruples,
   (   graph_without_line(G0, G),
       is_named_graph(G)
-  ->  Triple = rdf(S,P,O,G)
+  ->  set_has_quadruples,
+      Triple = rdf(S,P,O,G)
   ;   is_named_graph(Graph)
-  ->  Triple = rdf(S,P,O,Graph)
+  ->  set_has_quadruples,
+      Triple = rdf(S,P,O,Graph)
   ;   Triple = rdf(S,P,O)
   ).
 
-set_has_quadruples:-
-  has_quadruples(true), !.
-set_has_quadruples:-
-  assert(has_quadruples(true)).
+%! is_named_graph(+Graph:atom) is semidet.
+% Succeeds for all and only named graphs.
 
 is_named_graph(Graph):-
   ground(Graph),
   Graph \== user.
 
-graph_without_line(Graph:_, Graph):- !.
-graph_without_line(Graph, Graph).
+%! set_has_quadruples is det.
+% Store the fact that a quadruple occurred in the parser stream
+% as a thread-local global Prolog fact.
+
+set_has_quadruples:-
+  has_quadruples(true), !.
+set_has_quadruples:-
+  assert(has_quadruples(true)).
 
 
 

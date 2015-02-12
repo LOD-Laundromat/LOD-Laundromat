@@ -19,29 +19,18 @@ for storing the metadata. See module [lwm_settings] for this.
   :- ensure_loaded(load).
 :- endif.
 
-
 :- use_module(library(option)).
 :- use_module(library(optparse)).
 :- use_module(library(semweb/rdf_db), except([rdf_node/1])).
 
 :- use_module(generics(typecheck)).
 
-:- use_module(plServer(app_server)).
-:- use_module(plServer(web_modules)). % Web module registration.
-
 :- use_module(lwm(lwm_clean)).
 :- use_module(lwm(lwm_continue)).
 :- use_module(lwm(lwm_restart)).
+:- use_module(lwm(lwm_settings)).
 :- use_module(lwm(lwm_unpack)).
 :- use_module(lwm(debug/debug_datadoc)).
-:- use_module(lwm(debug/lwm_progress)).
-
-:- dynamic(user:web_module/2).
-:- multifile(user:web_module/2).
-
-user:current_html_style(menu_page).
-
-user:web_module('LWM Progress', lwm_progress).
 
 :- initialization(init).
 
@@ -51,13 +40,53 @@ init:-
   % Read the command-line arguments.
   absolute_file_name(data(.), DefaultDir, [file_type(directory)]),
   OptSpec= [
-    [opt(datadoc),longflags([datadoc]),type(atom)],
-    [default(false),opt(debug),longflags([debug]),type(boolean)],
-    [default(DefaultDir),opt(directory),longflags([dir]),type(atom)],
-    [default(false),opt(help),longflags([help]),shortflags([h]),type(boolean)],
-    [default(3020),opt(port),longflags([port]),type(integer)],
-    [default(false),opt(restart),longflags([restart]),type(boolean)],
-    [default(false),opt(continue),longflags([continue]),type(boolean)]
+    [
+      help('Debug a specific data document based on its MD5.'),
+      longflags([datadoc]),
+      opt(datadoc),
+      type(atom)
+    ],
+    [
+      default(false),
+      help('Whether debug messages are displayed or not.'),
+      longflags([debug]),
+      opt(debug),
+      type(boolean)
+    ],
+    [
+      default(DefaultDir),
+      help('The directory where the cleaned data is stored.'),
+      longflags([dir,directory]),
+      opt(directory),
+      type(atom)
+    ],
+    [
+      default(false),
+      help('Enumerate the supported command-line options.'),
+      longflags([help]),
+      opt(help),
+      shortflags([h]),
+      type(boolean)
+    ],
+    [
+      default(4001),
+      help('The port at which the triple store for the scrape metadata \c
+            can be reached.'),
+      longflags([port]),
+      opt(port),
+      shortflags([p]),
+      type(integer)
+    ],
+    [
+      default(default),
+      help('The mode in which the LOD Washing Machine runs.\c
+            Possible values are `default` (which is the default),\c
+            `continue`, and `restart`.'),
+      longflags([mode]),
+      opt(mode),
+      shortflags([m]),
+      type(atom)
+    ]
   ],
   opt_arguments(OptSpec, Options, _),
 
@@ -70,29 +99,27 @@ init:-
   ).
 
 init(Options):-
-  % Process the port option.
-  option(port(Port), Options),
-
   % Process the directory option.
   option(directory(Dir), Options),
   make_directory_path(Dir),
   retractall(user:file_search_path(data, _)),
   assert(user:file_search_path(data, Dir)),
 
-  % Process the restart or continue option.
-  (   option(restart(true), Options)
-  ->  Init_0 = lwm_restart
-  ;   option(continue(true), Options)
-  ->  Init_0 = lwm_continue
-  ;   Init_0 = true
-  ),
-
-  % Start the debug tools server.
-  start_app_server([port(Port),workers(2)]),
-
   % Initialization phase.
   clean_lwm_state,
-  call(Init_0),
+
+  % Set the port of the LOD Laundromat Endpoint.
+  option(port(Port), Options),
+  init_lwm_settings(Port),
+
+  % Process the restart or continue option.
+  option(mode(Mode), Options),
+  (   Mode == restart
+  ->  lwm_restart
+  ;   Mode == continue
+  ->  lwm_continue
+  ;   true
+  ),
 
   % Either process a specific data documents in a single thread (debug)
   % or start a couple of continuous threads (production).
@@ -102,7 +129,7 @@ init(Options):-
   ->  ensure_datadoc(Datadoc0, Datadoc),
       gtrace,
       debug_datadoc(Datadoc)
-  ;   init_production(15, 5, 5, 3)
+  ;   init_production
   ).
 
 ensure_datadoc(Datadoc, Datadoc):-
@@ -110,47 +137,68 @@ ensure_datadoc(Datadoc, Datadoc):-
 ensure_datadoc(Md5, Datadoc):-
   rdf_global_id(ll:Md5, Datadoc).
 
+init_production:-
+  lwm_settings:setting(
+    number_of_small_cleaning_threads,
+    NumberOfSmallCleaningThreads
+  ),
+  lwm_settings:setting(
+    number_of_medium_cleaning_threads,
+    NumberOfMediumCleaningThreads
+  ),
+  lwm_settings:setting(
+    number_of_large_cleaning_threads,
+    NumberOfLargeCleaningThreads
+  ),
+  lwm_settings:setting(
+    number_of_unpacking_threads,
+    NumberOfUnpackingThreads
+  ),
+  init_production(
+    NumberOfUnpackingThreads,
+    NumberOfSmallCleaningThreads,
+    NumberOfMediumCleaningThreads,
+    NumberOfLargeCleaningThreads
+  ).
+
 %! init_production(
-%!   +NumberOfUnpackThreads:nonneg,
-%!   +NumberOfSmallCleanThreads:nonneg,
-%!   +NumberOfMediumCleanThreads:nonneg,
-%!   +NumberOfLargeCleanThreads:nonneg
+%!   +NumberOfUnpackingThreads:nonneg,
+%!   +NumberOfSmallCleaningThreads:nonneg,
+%!   +NumberOfMediumCleaningThreads:nonneg,
+%!   +NumberOfLargeCleaningThreads:nonneg
 %! ) is det.
 
 init_production(
-  NumberOfUnpackThreads,
-  NumberOfSmallCleanThreads,
-  NumberOfMediumCleanThreads,
-  NumberOfLargeCleanThreads
+  NumberOfUnpackingThreads,
+  NumberOfSmallCleaningThreads,
+  NumberOfMediumCleaningThreads,
+  NumberOfLargeCleaningThreads
 ):-
   % Start the downloading+unpacking threads.
   forall(
-    between(1, NumberOfUnpackThreads, UnpackId),
+    between(1, NumberOfUnpackingThreads, UnpackId),
     start_unpack_thread(UnpackId)
   ),
 
   % Start the cleaning threads:
   %   1. Clean small files.
   forall(
-    between(1, NumberOfSmallCleanThreads, SmallCleanId),
+    between(1, NumberOfSmallCleaningThreads, SmallCleanId),
     start_small_thread(SmallCleanId)
   ),
   %   2. Clean medium files.
   forall(
-    between(1, NumberOfMediumCleanThreads, MediumCleanId),
+    between(1, NumberOfMediumCleaningThreads, MediumCleanId),
     start_medium_thread(MediumCleanId)
   ),
   %   3. Clean large files.
   forall(
-    between(1, NumberOfLargeCleanThreads, LargeCleanId),
+    between(1, NumberOfLargeCleaningThreads, LargeCleanId),
     start_large_thread(LargeCleanId)
   ).
 
 
 clean_lwm_state:-
-  %%%%flag(number_of_pending_md5s, _, 0),
-  flag(store_new_url, _, 0),
-
   % Each file is loaded in an RDF serialization + snapshot.
   % These inherit the triples that are not in an RDF serialization.
   % We therefore have to clear all such triples before we begin.
