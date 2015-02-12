@@ -149,7 +149,12 @@ store_end_clean0(Md5, Datadoc):-
   store_triple(Datadoc, llo-endClean, literal(type(xsd-dateTime,Now))),
 
   % Construct the download URL for non-archive files.
-  (   rdf_triple(Datadoc, rdf-type, llo-'Archive'), gtrace, writeln(app)
+gtrace,
+forall(
+  rdf_triple(SS,PP,OO),
+  format('<~w, ~w, ~w>\n', [SS,PP,OO])
+),
+  (   rdf_triple(Datadoc, rdf-type, llo-'Archive')
   ->  true
   ;   atom_concat('/', Md5, Path),
       uri_components(
