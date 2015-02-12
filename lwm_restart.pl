@@ -50,7 +50,7 @@ restart_store(cliopatria):- !,
   sparql_drop_graph(cliopatria, user, []).
 restart_store(virtuoso):-
   lwm_version_graph(Graph),
-  
+
   % Virtuoso implements SPARQL Updates so irregularly,
   % that we cannot even use options for it:
   % (1) No support for direct POST bodies (only URL encoded).
