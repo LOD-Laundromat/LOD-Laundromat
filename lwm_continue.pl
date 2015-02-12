@@ -48,6 +48,24 @@ debug_datadoc(Datadoc):-
   rdf_global_id(ll:Md5, Datadoc).
 
 erroneous_datadoc(Datadoc):-
+  erroneous_datadoc0(Datadocs0),
+  flatten(Datadocs0, Datadocs),
+  member(Datadoc, Datadocs).
+
+% Archive entries with no parent.
+erroneous_datadoc0(L):-
+  lwm_sparql_select(
+    [llo],
+    [datadoc],
+    [
+      rdf(var(datadoc), rdf:type, llo:'ArchiveEntry'),
+      not([rdf(var(parent), llo:containsEntry, var(datadoc))])
+    ],
+    L,
+    []
+  ).
+% Crawled more than once.
+erroneous_datadoc0(L):-
   lwm_sparql_select(
     [llo],
     [datadoc],
@@ -56,12 +74,21 @@ erroneous_datadoc(Datadoc):-
       rdf(var(datadoc), llo:startUnpack, var(startUnpack2)),
       filter(str(var(startUnpack1)) < str(var(startUnpack2)))
     ],
-    Datadocs0,
+    L,
     []
-  ),
-  flatten(Datadocs0, Datadocs),
-  member(Datadoc, Datadocs).
-
+  ).
+% Archives with a datadump location.
+erroneous_datadoc0(L):-
+  lwm_sparql_select(
+    [llo,rdf],
+    [datadoc],
+    [
+      rdf(var(datadoc), rdf:type, llo:'Archive'),
+      rdf(var(datadoc), void:dataDump, var(dataDump))
+    ],
+    L,
+    []
+  ).
 
 
 %! lwm_retry_unrecognized_format is det.
