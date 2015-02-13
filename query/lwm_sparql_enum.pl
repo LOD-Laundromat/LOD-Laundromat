@@ -102,7 +102,7 @@ datadoc_enum_unpacked(Min, Max, Datadoc, UnpackedSize):-
     [datadoc,unpackedSize],
     Query,
     [[Datadoc,UnpackedSizeLiteral]],
-    []
+    [order(ascending-unpackedSize)]
   ),
   rdf_literal_data(value, UnpackedSizeLiteral, UnpackedSize).
 
