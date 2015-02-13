@@ -36,15 +36,24 @@ lwm_continue:-
     (   datadoc_enum_unpacking(Datadoc)
     ;   datadoc_enum_cleaning(Datadoc)
     ;   debug_datadoc(Datadoc)
-    ;   erroneous_datadoc(Datadoc)
     ),
-    Datadocs
+    L0
   ),
-  length(Datadocs, N),
-  reset_datadocs(0, N, Datadocs).
+gtrace,
+  findall(
+    L2,
+    (
+      erroneous_datadocs0(L1),
+      flatten(L1, L2)
+    ),
+    Ls
+  ),
+  append([L0|Ls], L),
+  length(L, N),
+  reset_datadocs(0, N, L).
 
 reset_datadocs(_, _, []).
-reset_datadocs(M, N, [H|T]).
+reset_datadocs(M, N, [H|T]):-
   reset_datadoc(H),
   format(user_output, '[RESET] ~D/~D', [M,N]),
   NextM is M + 1,
@@ -54,13 +63,9 @@ debug_datadoc(Datadoc):-
   debug:debug_md5(Md5, _),
   rdf_global_id(ll:Md5, Datadoc).
 
-erroneous_datadoc(Datadoc):-
-  erroneous_datadoc0(Datadocs0),
-  flatten(Datadocs0, Datadocs),
-  member(Datadoc, Datadocs).
 
 % Unpacked documents that are not clean yet.
-erroneous_datadoc0(L):-
+erroneous_datadocs0(L):-
   lwm_sparql_select(
     [llo],
     [datadoc],
@@ -72,7 +77,7 @@ erroneous_datadoc0(L):-
     []
   ).
 % Crawled more than once.
-erroneous_datadoc0(L):-
+erroneous_datadocs0(L):-
   lwm_sparql_select(
     [llo],
     [datadoc],
@@ -85,7 +90,7 @@ erroneous_datadoc0(L):-
     []
   ).
 % Archives with a datadump location.
-erroneous_datadoc0(L):-
+erroneous_datadocs0(L):-
   lwm_sparql_select(
     [llo,rdf],
     [datadoc],
