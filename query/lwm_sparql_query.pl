@@ -12,6 +12,7 @@
     datadoc_exists/1, % +Datadoc:uri
     datadoc_file_extension/2, % +Datadoc:uri
                               % -FileExtension:atom
+    datadoc_is_archive/1, % +Datadoc:uri
     datadoc_source/2, % +Datadoc:uri
                       % -Source:atom
     datadoc_location/2, % +Datadoc:iri
@@ -135,6 +136,13 @@ datadoc_file_extension(Datadoc, FileExtension):-
     [limit(1)]
   ),
   rdf_literal_data(value, FileExtensionLiteral, FileExtension).
+
+
+
+%! datadoc_is_archive(+Datadoc:uri) is semidet.
+
+datadoc_is_archive(Datadoc):-
+  lwm_sparql_ask([llo,rdf], [rdf(Datadoc,rdf:type,llo:'Archive')], []).
 
 
 

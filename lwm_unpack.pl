@@ -251,7 +251,7 @@ unpack_file(Md5, Datadoc, ArchiveFile):-
         llo-archiveFormat,
         literal(type(xsd-string,ArchiveFormat))
       ),
-gtrace,
+      
       maplist(
         store_archive_entry(Md5, Datadoc),
         EntryPaths,
