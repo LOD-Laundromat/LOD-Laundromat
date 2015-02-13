@@ -18,7 +18,7 @@ Continues an interrupted LOD Washing Machine crawl.
 :- use_module(library(apply)).
 :- use_module(library(lists), except([delete/3,subset/2])).
 :- use_module(library(semweb/rdf_db), except([rdf_node/1])).
-:- use_module(library(ordset)).
+:- use_module(library(ordsets)).
 
 :- use_module(lwm(lwm_reset)).
 :- use_module(lwm(query/lwm_sparql_generics)).
@@ -31,7 +31,6 @@ Continues an interrupted LOD Washing Machine crawl.
 %! lwm_continue is det.
 
 lwm_continue:-
-  % Collect zombie data documents.
   datadoc_unpacking(L1),
   datadoc_cleaning(L2),
   debug_datadocs(L3),
@@ -73,12 +72,55 @@ erroneous_datadocs0(L):-
     [llo],
     [datadoc],
     [
+      rdf(var(datadoc), llo:added, var(added)),
+      not([rdf(var(datadoc), llo:endClean, var(endClean))]),
+      not([rdf(var(datadoc), llo:url, var(url))])
+    ],
+    L,
+    []
+  ).
+erroneous_datadocs0(L):-
+  lwm_sparql_select(
+    [llo],
+    [datadoc],
+    [rdf(var(datadoc), rdf:type, llo:'Archive')],
+    L,
+    []
+  ). 
+erroneous_datadocs0(L):-
+  lwm_sparql_select(
+    [llo],
+    [datadoc],
+    [
+      rdf(var(datadoc), llo:endUnpack, var(endUnpack)),
+      not([rdf(var(datadoc), llo:md5, var(md5))])
+    ],
+    L,
+    []
+  ). 
+erroneous_datadocs0(L):-
+  lwm_sparql_select(
+    [llo],
+    [datadoc],
+    [
       rdf(var(datadoc), llo:md5, var(md5)),
       not([rdf(var(datadoc), llo:endClean, var(endClean))])
     ],
     L,
     []
   ).
+erroneous_datadocs0(L):-
+  lwm_sparql_select(
+    [llo],
+    [datadoc],
+    [
+      rdf(var(datadoc), llo:endUnpack, var(endUnpack)),
+      not([rdf(var(datadoc), llo:endClean, var(endClean))])
+    ],
+    L,
+    []
+  ).
+/*
 % Crawled more than once.
 erroneous_datadocs0(L):-
   lwm_sparql_select(
@@ -104,6 +146,7 @@ erroneous_datadocs0(L):-
     L,
     []
   ).
+*/
 
 
 %! lwm_retry_unrecognized_format is det.
