@@ -40,8 +40,15 @@ lwm_continue:-
     ),
     Datadocs
   ),
+  length(Datadocs, N),
+  reset_datadocs(0, N, Datadocs).
 
-  maplist(reset_datadoc, Datadocs).
+reset_datadocs(_, _, []).
+reset_datadocs(M, N, [H|T]).
+  reset_datadoc(H),
+  format(user_output, '[RESET] ~D/~D', [M,N]),
+  NextM is M + 1,
+  reset_datadocs(NextM, N, T).
 
 debug_datadoc(Datadoc):-
   debug:debug_md5(Md5, _),
@@ -52,6 +59,18 @@ erroneous_datadoc(Datadoc):-
   flatten(Datadocs0, Datadocs),
   member(Datadoc, Datadocs).
 
+% Unpacked documents that are not clean yet.
+erroneous_datadoc0(L):-
+  lwm_sparql_select(
+    [llo],
+    [datadoc],
+    [
+      rdf(var(datadoc), llo:md5, var(md5)),
+      not([rdf(var(datadoc), llo:endClean, var(endClean))])
+    ],
+    L,
+    []
+  ).
 % Crawled more than once.
 erroneous_datadoc0(L):-
   lwm_sparql_select(
