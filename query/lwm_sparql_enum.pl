@@ -18,12 +18,10 @@ SPARQL queries that enumerate various kinds of data documents
 for the LOD Washing Machine.
 
 @author Wouter Beek
-@version 2014/06, 2014/08-2014/09, 2014/11, 2015/01
+@version 2014/06, 2014/08-2014/09, 2014/11, 2015/01-2015/02
 */
 
-:- use_module(library(apply)).
 :- use_module(library(lists), except([delete/3,subset/2])).
-:- use_module(library(option)).
 
 :- use_module(plRdf(term/rdf_literal)).
 
@@ -102,7 +100,7 @@ datadoc_enum_unpacked(Min, Max, Datadoc, UnpackedSize):-
     [datadoc,unpackedSize],
     Query,
     [[Datadoc,UnpackedSizeLiteral]],
-    [order(ascending-unpackedSize)]
+    []
   ),
   rdf_literal_data(value, UnpackedSizeLiteral, UnpackedSize).
 
