@@ -83,9 +83,7 @@ post_rdf_triples:-
 
 rdf_triple(S, P, O):-
   rdf_triple0(S0, P0, O0),
-  maplist(rdf_term_map, [S0,P0,O0], [S,P,O]),
-  gtrace,
-  writeln(rdf(S,P,O)).
+  maplist(rdf_term_map, [S0,P0,O0], [S,P,O]).
 
 
 
