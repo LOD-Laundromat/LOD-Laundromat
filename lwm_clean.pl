@@ -30,6 +30,7 @@ The cleaning process performed by the LOD Washing Machine.
 :- use_module(os(archive_ext)).
 :- use_module(os(file_ext)).
 :- use_module(os(file_gnu)).
+:- use_module(os(run_ext)).
 :- use_module(pl(pl_log)).
 
 :- use_module(plRdf(management/rdf_file_db)).
@@ -324,6 +325,13 @@ clean_datastream(
     Datadoc,
     NumberOfTriples,
     NumberOfUniqueTriples
+  ),
+  
+  % Run the callback function.
+  handle_process(
+    '~/bin/wm-callback.sh',
+    [file(Dir)],
+    [program('LOD Washing Machine callback')]
   ).
 
 clean_triples(xml, In, Out, State, BNodePrefix, Options):- !,
