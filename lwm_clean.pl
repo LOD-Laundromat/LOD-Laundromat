@@ -73,6 +73,7 @@ lwm_clean_loop(Category, Min, Max):-
     Exception,
     var(Exception)
   ),
+gtrace,
   lwm_clean(Category, Datadoc, UnpackedSize),
   % Intermittent loop.
   lwm_clean_loop(Category, Min, Max).
