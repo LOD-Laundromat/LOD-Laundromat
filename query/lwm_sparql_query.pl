@@ -4,6 +4,7 @@
     datadoc_archive_entry/3, % +Datadoc:uri
                              % -ParentMd5:atom
                              % -EntryPath:atom
+    datadoc_cleaning/1, % -Datadocs:list(iri))
     datadoc_content_type/2, % +Datadoc:uri
                             % -ContentType:atom
     datadoc_describe/2, % +Md5:atom
@@ -17,6 +18,7 @@
                         % -Location:uri
     datadoc_unpacked_size/2, % +Datadoc:iri
                              % -UnpackedSize:nonneg
+    datadoc_unpacking/1, % -Datadocs:list(iri))
     datadoc_p_os/3 % +Datadoc:iri
                    % +Property:iri
                    % -Objects:list(rdf_term)
@@ -29,7 +31,7 @@ SPARQL queries for retrieving specific properties of a data document
 in the LOD Washing Machine.
 
 @author Wouter Beek
-@version 2014/06, 2014/08-2014/09, 2014/11, 2015/01
+@version 2014/06, 2014/08-2014/09, 2014/11, 2015/01-2015/02
 */
 
 :- use_module(library(apply)).
@@ -64,6 +66,23 @@ datadoc_archive_entry(Datadoc, ParentMd5, EntryPath):-
     [limit(1)]
   ),
   maplist(rdf_literal_data(value), Row, [ParentMd5,EntryPath]).
+
+
+
+datadoc_cleaning(L):-
+  lwm_sparql_select(
+    [llo],
+    [datadoc],
+    [
+      rdf(var(datadoc), llo:startClean, var(startClean)),
+      not([
+        rdf(var(datadoc), llo:endClean, var(endClean))
+      ])
+    ],
+    L0,
+    []
+  ),
+  flatten(L0, L).
 
 
 
@@ -170,6 +189,25 @@ datadoc_unpacked_size(Datadoc, UnpackedSize):-
     [limit(1)]
   ),
   rdf_literal_data(value, UnpackedSizeLiteral, UnpackedSize).
+
+
+
+%! datadoc_unpacking(-Datadocs:list(iri)) is nondet.
+
+datadoc_unpacking(L):-
+  lwm_sparql_select(
+    [llo],
+    [datadoc],
+    [
+      rdf(var(datadoc), llo:startUnpack, var(startUnpack)),
+      not([
+        rdf(var(datadoc), llo:endUnpack, var(endUnpack))
+      ])
+    ],
+    L0,
+    []
+  ),
+  flatten(L0, L).
 
 
 

@@ -18,10 +18,11 @@ Continues an interrupted LOD Washing Machine crawl.
 :- use_module(library(apply)).
 :- use_module(library(lists), except([delete/3,subset/2])).
 :- use_module(library(semweb/rdf_db), except([rdf_node/1])).
+:- use_module(library(ordset)).
 
 :- use_module(lwm(lwm_reset)).
-:- use_module(lwm(query/lwm_sparql_enum)).
 :- use_module(lwm(query/lwm_sparql_generics)).
+:- use_module(lwm(query/lwm_sparql_query)).
 
 
 
@@ -31,26 +32,21 @@ Continues an interrupted LOD Washing Machine crawl.
 
 lwm_continue:-
   % Collect zombie data documents.
-  aggregate_all(
-    set(Datadoc),
-    (   datadoc_enum_unpacking(Datadoc)
-    ;   datadoc_enum_cleaning(Datadoc)
-    ;   debug_datadoc(Datadoc)
-    ),
-    L0
-  ),
-gtrace,
+  datadoc_unpacking(L1),
+  datadoc_cleaning(L2),
+  debug_datadocs(L3),
   findall(
-    L2,
+    X2,
     (
-      erroneous_datadocs0(L1),
-      flatten(L1, L2)
+      erroneous_datadocs0(X1),
+      flatten(X1, X2)
     ),
     Ls
   ),
-  append([L0|Ls], L),
-  length(L, N),
-  reset_datadocs(0, N, L).
+  maplist(list_to_ord_set, [L1,L2,L3|Ls], Sets),
+  ord_union(Sets, Set),
+  length(Set, N),
+  reset_datadocs(0, N, Set).
 
 reset_datadocs(_, _, []).
 reset_datadocs(M, N, [H|T]):-
@@ -59,9 +55,16 @@ reset_datadocs(M, N, [H|T]):-
   NextM is M + 1,
   reset_datadocs(NextM, N, T).
 
-debug_datadoc(Datadoc):-
-  debug:debug_md5(Md5, _),
-  rdf_global_id(ll:Md5, Datadoc).
+
+debug_datadocs(L):-
+  findall(
+    Datadoc,
+    (
+      debug:debug_md5(Md5, _),
+      rdf_global_id(ll:Md5, Datadoc)
+    ),
+    L
+  ).
 
 
 % Unpacked documents that are not clean yet.
