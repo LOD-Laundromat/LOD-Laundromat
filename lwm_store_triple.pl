@@ -149,7 +149,7 @@ store_end_clean0(Md5, Datadoc):-
   store_triple(Datadoc, llo-endClean, literal(type(xsd-dateTime,Now))),
 
   % Construct the download URL for non-archive files.
-  (   datadoc_is_archive
+  (   datadoc_is_archive(Datadoc)
   ->  true
   ;   atom_concat('/', Md5, Path),
       uri_components(

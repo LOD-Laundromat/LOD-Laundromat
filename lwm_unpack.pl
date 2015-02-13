@@ -109,7 +109,7 @@ lwm_unpack(Datadoc, DirtyUrl):-
     Status,
     Warnings
   ),
-gtrace,
+
   % DEB: *end* of downloading+unpacking.
   lwm_debug_message(
     lwm_progress(unpack),
@@ -251,7 +251,7 @@ unpack_file(Md5, Datadoc, ArchiveFile):-
         llo-archiveFormat,
         literal(type(xsd-string,ArchiveFormat))
       ),
-      
+
       maplist(
         store_archive_entry(Md5, Datadoc),
         EntryPaths,
