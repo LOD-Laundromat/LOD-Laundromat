@@ -18,6 +18,7 @@ The cleaning process performed by the LOD Washing Machine.
 
 :- use_module(library(apply)).
 :- use_module(library(option)).
+:- use_module(library(process)).
 :- use_module(library(semweb/rdf_db), except([rdf_node/1])). % Format `xml`.
 :- use_module(library(semweb/rdf_ntriples)). % Formats `ntriples`, `nquads`.
 :- use_module(library(semweb/rdfa)). % Format `rdfa`
@@ -25,12 +26,10 @@ The cleaning process performed by the LOD Washing Machine.
 :- use_module(library(zlib)).
 
 :- use_module(generics(list_ext)).
-:- use_module(generics(print_ext)).
 :- use_module(generics(sort_ext)).
 :- use_module(os(archive_ext)).
 :- use_module(os(file_ext)).
 :- use_module(os(file_gnu)).
-:- use_module(os(run_ext)).
 :- use_module(pl(pl_log)).
 
 :- use_module(plRdf(management/rdf_file_db)).
@@ -326,12 +325,12 @@ clean_datastream(
     NumberOfTriples,
     NumberOfUniqueTriples
   ),
-  
+
   % Run the callback function.
-  handle_process(
-    '~/bin/wm-callback.sh',
+  process_create(
+    '/home/lodlaundromat/bin/wm-callback.sh',
     [file(Dir)],
-    [program('LOD Washing Machine callback')]
+    []
   ).
 
 clean_triples(xml, In, Out, State, BNodePrefix, Options):- !,
