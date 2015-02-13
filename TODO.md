@@ -19,7 +19,7 @@ TODO
     [x] Disk-based sorting and deduplication.
     [ ] Store more HTTP headers per cleaned document.
     [ ] Keep track of non-canonical lexical forms.
-    [ ] Integrate simplified ClioPatria with traditional Virtuoso version.
+    [x] Integrate simplified ClioPatria with traditional Virtuoso version.
     [ ] Use authorization for resetting data documents on a ClioPatria
         backend. Look at SPARQL Update in ClioPatria for inspiration.
   [x] ll:

@@ -148,7 +148,7 @@ init_lwm_settings(Port):-
   uri_components(Uri, uri_components(http,Authority,'/',_,_)),
   sparql_register_endpoint(cliopatria, [Uri], cliopatria),
 
-  % Vrtuoso (1/3): Update (reset, continue).
+  % Virtuoso (1/3): Update (reset, continue).
   sparql_register_endpoint(
     virtuoso_update,
     ['http://localhost:8890/sparql-auth'],
