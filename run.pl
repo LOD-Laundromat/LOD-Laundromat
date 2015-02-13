@@ -218,9 +218,8 @@ start_large_thread(Id):-
   format(atom(Alias), 'clean_large_~d', [Id]),
   GlobalStack is 125 * (1024 ** 3), % 125 GB
   Min is 2.5 * (1024 ** 3), % 2.5 GB
-  Max is 4.5 * (1024 ** 3), % 4.5 GB
   thread_create(
-    lwm_clean_loop(clean_large, Min, Max),
+    lwm_clean_loop(clean_large, Min, _),
     _,
     [alias(Alias),detached(true),global(GlobalStack)]
   ).
