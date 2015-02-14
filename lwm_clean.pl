@@ -137,7 +137,7 @@ lwm_clean(Category, Datadoc, UnpackedSize):-
   % or throw it away.
   (   ground(DirtyFile),
       file_exists(DirtyFile)
-  ->  (   lwm_settings:setting(keep_old_datadoc, true),
+  ->  (   lwm_settings:setting(keep_old_datadoc, true)
       ->  archive_create(DirtyFile, _)
       ;   true
       ),
