@@ -65,7 +65,8 @@ debug_datadocs(L):-
     L
   ).
 
-
+erroneous_datadocs0([]).
+/*
 % Unpacked documents that are not clean yet.
 erroneous_datadocs0(L):-
   lwm_sparql_select(
@@ -79,6 +80,7 @@ erroneous_datadocs0(L):-
     L,
     []
   ).
+% Archives
 erroneous_datadocs0(L):-
   lwm_sparql_select(
     [llo],
@@ -87,6 +89,7 @@ erroneous_datadocs0(L):-
     L,
     []
   ). 
+% Unpacked without an MD5.
 erroneous_datadocs0(L):-
   lwm_sparql_select(
     [llo],
@@ -98,6 +101,7 @@ erroneous_datadocs0(L):-
     L,
     []
   ). 
+% Not cleaned yet.
 erroneous_datadocs0(L):-
   lwm_sparql_select(
     [llo],
@@ -109,6 +113,7 @@ erroneous_datadocs0(L):-
     L,
     []
   ).
+% Not clean yet.
 erroneous_datadocs0(L):-
   lwm_sparql_select(
     [llo],
@@ -120,7 +125,6 @@ erroneous_datadocs0(L):-
     L,
     []
   ).
-/*
 % Crawled more than once.
 erroneous_datadocs0(L):-
   lwm_sparql_select(
