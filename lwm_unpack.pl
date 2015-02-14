@@ -11,7 +11,7 @@
 Unpacks files for the LOD Washing Machine to clean.
 
 @author Wouter Beek
-@version 2014/06, 2014/08-2014/09, 2014/11, 2015/01
+@version 2014/06, 2014/08-2014/09, 2014/11, 2015/01-2015/02
 */
 
 :- use_module(library(apply)).
@@ -138,7 +138,7 @@ unpack_datadoc(Md5, Datadoc, DirtyUrl):-
   md5_directory(Md5, Md5Dir),
   relative_file_path(EntryFile2, Md5Dir, EntryPath),
   create_file_directory(EntryFile2),
-  mv2(EntryFile1, EntryFile2),
+  gnu_mv(EntryFile1, EntryFile2),
 
   unpack_file(Md5, Datadoc, EntryFile2).
 % The given MD5 denotes a URL.
@@ -221,7 +221,7 @@ unpack_file(Md5, Datadoc, ArchiveFile):-
 
       % Move the data file outside of the its entry path,
       % and put it directly inside its MD5 directory.
-      mv2(DataFile, DirtyFile),
+      gnu_mv(DataFile, DirtyFile),
       size_file(DirtyFile, UnpackedSize),
       store_triple(
         Datadoc,

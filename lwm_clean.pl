@@ -235,13 +235,13 @@ clean_datastream(
   Options3 = [bnode_base(BaseComponents),number_of_triples(NumberOfTriples)],
 
   retractall(datadump/1),
-  directory_file_path(Dir, unsorted, UnsortedFile),
+  directory_file_path(Dir, cleaning, CleaningFile),
   (   Format == rdfa
   ->  rdf_load(stream(DirtyIn), Options2),
 
       % Save the data in a cleaned format.
       setup_call_cleanup(
-        open(UnsortedFile, write, UnsortedOut),
+        open(CleaningFile, write, UnsortedOut),
         ctriples_write_graph(UnsortedOut, _NoGraph, Options3),
         close(UnsortedOut)
       ),
@@ -254,7 +254,7 @@ clean_datastream(
   ;   setup_call_cleanup(
         ctriples_write_begin(State, BNodePrefix, Options3),
         setup_call_cleanup(
-          open(UnsortedFile, write, UnsortedOut),
+          open(CleaningFile, write, UnsortedOut),
           clean_triples(
             Format,
             DirtyIn,
@@ -282,8 +282,7 @@ clean_datastream(
   ),
 
   % Sort file.
-  directory_file_path(Dir, sorted, SortedFile),
-  buffer_size_file(UnsortedFile, BufferSize),
+  buffer_size_file(CleaningFile, BufferSize),
   (   BufferSize > 6 * (1024 ** 3) % >6GB
   ->  Threads = 3
   ;   BufferSize > 3 * (1024 ** 3) % >3GB
@@ -291,18 +290,17 @@ clean_datastream(
   ;   Threads = 1 % =<3GB
   ),
   gnu_sort(
-    UnsortedFile,
+    CleaningFile,
     [
       buffer_size(BufferSize),
       duplicates(false),
-      output(SortedFile),
+      output(CleaningFile),
       parallel(Threads),
       temporary_directory('/ssd/lodlaundromat/tmp'),
       utf8(true)
     ]
   ),
-  file_lines(SortedFile, NumberOfUniqueTriples),
-  delete_file(UnsortedFile),
+  file_lines(CleaningFile, NumberOfUniqueTriples),
 
   % Compress file.
   atomic_list_concat([clean,Ext,gz], '.', LocalName),
@@ -310,13 +308,13 @@ clean_datastream(
   setup_call_cleanup(
     gzopen(CleanFile, write, CleanOut),
     setup_call_cleanup(
-      open(SortedFile, read, SortedIn),
+      open(CleaningFile, read, SortedIn),
       copy_stream_data(SortedIn, CleanOut),
       close(SortedIn)
     ),
     close(CleanOut)
   ),
-  delete_file(SortedFile),
+  delete_file(CleaningFile),
 
   % Store statistics about the number of (duplicate) triples.
   store_number_of_triples(
