@@ -1,8 +1,7 @@
 :- module(
   lwm_continue,
   [
-    lwm_continue/0,
-    lwm_retry_unrecognized_format/0
+    lwm_continue/0
   ]
 ).
 
@@ -65,8 +64,7 @@ debug_datadocs(L):-
   ).
 
 erroneous_datadocs0([]).
-/*
-% Unpacked documents that are not clean yet.
+% Archive entries that are not clean yet.
 erroneous_datadocs0(L):-
   lwm_sparql_select(
     [llo],
@@ -79,15 +77,7 @@ erroneous_datadocs0(L):-
     L,
     []
   ).
-% Archives
-erroneous_datadocs0(L):-
-  lwm_sparql_select(
-    [llo],
-    [datadoc],
-    [rdf(var(datadoc), rdf:type, llo:'Archive')],
-    L,
-    []
-  ). 
+/*
 % Unpacked without an MD5.
 erroneous_datadocs0(L):-
   lwm_sparql_select(
@@ -100,7 +90,8 @@ erroneous_datadocs0(L):-
     L,
     []
   ). 
-% Not cleaned yet.
+*/
+% Not clean yet (1/2).
 erroneous_datadocs0(L):-
   lwm_sparql_select(
     [llo],
@@ -112,7 +103,7 @@ erroneous_datadocs0(L):-
     L,
     []
   ).
-% Not clean yet.
+% Not clean yet (2/2).
 erroneous_datadocs0(L):-
   lwm_sparql_select(
     [llo],
@@ -149,22 +140,12 @@ erroneous_datadocs0(L):-
     L,
     []
   ).
-*/
-
-
-%! lwm_retry_unrecognized_format is det.
-% Retrie to download, unpack, and clean all datadocuments that were
-% previously classified as having a unrecognized serialization format.
-% Useful in case RDF guessing was changed/fixed while crawling.
-
-lwm_retry_unrecognized_format:-
+% Unrecognized RDF format.
+erroneous_datadocs0(L):-
   lwm_sparql_select(
     [error,llo],
     [datadoc],
     [rdf(var(datadoc), llo:serializationFormat, error:unrecognizedFormat)],
-    Rows,
-    [distinct(true),order(ascending-[datadoc])]
-  ),
-  flatten(Rows, Datadocs),
-  maplist(reset_datadoc, Datadocs).
-
+    L,
+    []
+  ).
