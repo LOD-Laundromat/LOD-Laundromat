@@ -112,7 +112,7 @@ lwm_clean(Category, Datadoc, UnpackedSize):-
   ),
 
   run_collect_messages(
-    clean_md5(Category, Md5, Datadoc),
+    clean_md5(Category, Md5, Datadoc, DirtyFile),
     Status,
     Warnings1
   ),
@@ -133,6 +133,18 @@ lwm_clean(Category, Datadoc, UnpackedSize):-
   maplist(store_warning(Datadoc), Warnings2),
   store_end_clean(Md5, Datadoc),
 
+  % Keep the old/dirty file around in compressed form,
+  % or throw it away.
+  (   ground(DirtyFile),
+      file_exists(DirtyFile)
+  ->  (   lwm_settings:setting(keep_old_datadoc, true),
+      ->  archive_create(DirtyFile, _)
+      ;   true
+      ),
+      delete_file(DirtyFile)
+  ;   true
+  ),
+  
   % DEB: *end* cleaning a specific data document.
   lwm_debug_message(
     lwm_progress(Category),
@@ -141,9 +153,9 @@ lwm_clean(Category, Datadoc, UnpackedSize):-
 
 
 
-%! clean_md5(+Category:atom, +Md5:atom, +Datadoc:iri) is det.
+%! clean_md5(+Category:atom, +Md5:atom, +Datadoc:iri, -DirtyFile:atom) is det.
 
-clean_md5(Category, Md5, Datadoc):-
+clean_md5(Category, Md5, Datadoc, DirtyFile):-
   % Construct the file name belonging to the given MD5.
   md5_directory(Md5, Md5Dir),
   absolute_file_name(dirty, DirtyFile, [access(read),relative_to(Md5Dir)]),
@@ -173,14 +185,6 @@ clean_md5(Category, Md5, Datadoc):-
     ),
     close(DirtyIn)
   ),
-
-  % Keep the old/dirty file around in compressed form,
-  % or throw it away.
-  (   lwm_settings:setting(keep_old_datadoc, true)
-  ->  archive_create(DirtyFile, _)
-  ;   true
-  ),
-  delete_file(DirtyFile),
 
   % Add the new VoID URLs to the LOD Basket.
   with_mutex(lwm_endpoint_access,
