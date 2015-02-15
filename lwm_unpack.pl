@@ -137,9 +137,6 @@ unpack_datadoc(Md5, Datadoc, DirtyUrl):-
   relative_file_path(EntryFile1, Md5ParentDir, EntryPath),
   md5_directory(Md5, Md5Dir),
   relative_file_path(EntryFile2, Md5Dir, EntryPath),
-  create_file_directory(EntryFile2),
-gtrace,
-  gnu_mv(EntryFile1, EntryFile2),
 
   unpack_file(Md5, Datadoc, EntryFile2).
 % The given MD5 denotes a URL.
@@ -201,6 +198,7 @@ unpack_file(Md5, Datadoc, ArchiveFile):-
   archive_extract(ArchiveFile, _, ArchiveFilters, EntryPairs),
   store_archive_filters(Datadoc, ArchiveFilters),
 
+  % The also creates the directory.
   md5_directory(Md5, Md5Dir),
   (   EntryPairs == []
   ->  % There is no file for cleaning.
@@ -222,7 +220,6 @@ unpack_file(Md5, Datadoc, ArchiveFile):-
 
       % Move the data file outside of the its entry path,
       % and put it directly inside its MD5 directory.
-gtrace,
       gnu_mv(DataFile, DirtyFile),
       size_file(DirtyFile, UnpackedSize),
       store_triple(
