@@ -64,6 +64,7 @@ debug_datadocs(L):-
   ).
 
 erroneous_datadocs0([]).
+/*
 % Archive entries that are not clean yet.
 erroneous_datadocs0(L):-
   lwm_sparql_select(
@@ -77,6 +78,7 @@ erroneous_datadocs0(L):-
     L,
     []
   ).
+*/
 /*
 % Unpacked without an MD5.
 erroneous_datadocs0(L):-
@@ -89,8 +91,7 @@ erroneous_datadocs0(L):-
     ],
     L,
     []
-  ). 
-*/
+  ).
 % Not clean yet (1/2).
 erroneous_datadocs0(L):-
   lwm_sparql_select(
@@ -103,6 +104,7 @@ erroneous_datadocs0(L):-
     L,
     []
   ).
+*/
 % Not clean yet (2/2).
 erroneous_datadocs0(L):-
   lwm_sparql_select(
@@ -115,6 +117,7 @@ erroneous_datadocs0(L):-
     L,
     []
   ).
+/*
 % Crawled more than once.
 erroneous_datadocs0(L):-
   lwm_sparql_select(
@@ -140,6 +143,7 @@ erroneous_datadocs0(L):-
     L,
     []
   ).
+*/
 % Unrecognized RDF format.
 erroneous_datadocs0(L):-
   lwm_sparql_select(
