@@ -136,7 +136,7 @@ lwm_clean(Category, Datadoc, UnpackedSize):-
   % Keep the old/dirty file around in compressed form,
   % or throw it away.
   (   ground(DirtyFile),
-      file_exists(DirtyFile)
+      exists_file(DirtyFile)
   ->  (   lwm_settings:setting(keep_old_datadoc, true)
       ->  archive_create(DirtyFile, _)
       ;   true
@@ -144,7 +144,7 @@ lwm_clean(Category, Datadoc, UnpackedSize):-
       delete_file(DirtyFile)
   ;   true
   ),
-  
+
   % DEB: *end* cleaning a specific data document.
   lwm_debug_message(
     lwm_progress(Category),
