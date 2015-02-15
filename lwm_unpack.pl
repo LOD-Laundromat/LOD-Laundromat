@@ -128,17 +128,12 @@ unpack_datadoc(Md5, Datadoc, DirtyUrl):-
   % Uninstantiated SPARQL variable (using keyword OPTIONAL).
   DirtyUrl == '$null$', !,
 
-  % Retrieve entry path and parent MD5.
+  % Retrieve the path of the archive entry.
   datadoc_archive_entry(Datadoc, ParentMd5, EntryPath),
-
-  % Move the entry file from the parent directory into
-  % an MD5 directory of its own.
-  md5_directory(ParentMd5, Md5ParentDir),
-  relative_file_path(EntryFile1, Md5ParentDir, EntryPath),
   md5_directory(Md5, Md5Dir),
-  relative_file_path(EntryFile2, Md5Dir, EntryPath),
+  relative_file_path(EntryFile, Md5Dir, EntryPath),
 
-  unpack_file(Md5, Datadoc, EntryFile2).
+  unpack_file(Md5, Datadoc, EntryFile).
 % The given MD5 denotes a URL.
 unpack_datadoc(Md5, Datadoc, DirtyUrl):-
   % Create a directory for the dirty version of the given Md5.
