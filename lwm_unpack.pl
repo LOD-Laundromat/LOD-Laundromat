@@ -129,7 +129,7 @@ unpack_datadoc(Md5, Datadoc, DirtyUrl):-
   DirtyUrl == '$null$', !,
 
   % Retrieve the path of the archive entry.
-  datadoc_archive_entry(Datadoc, ParentMd5, EntryPath),
+  datadoc_archive_entry(Datadoc, _, EntryPath),
   md5_directory(Md5, Md5Dir),
   relative_file_path(EntryFile, Md5Dir, EntryPath),
 
