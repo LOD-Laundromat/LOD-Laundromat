@@ -222,7 +222,6 @@ unpack_file(Md5, Datadoc, ArchiveFile):-
 
       % Move the data file outside of the its entry path,
       % and put it directly inside its MD5 directory.
-gtrace,
       gnu_mv(DataFile, DirtyFile),
       size_file(DirtyFile, UnpackedSize),
       store_triple(
