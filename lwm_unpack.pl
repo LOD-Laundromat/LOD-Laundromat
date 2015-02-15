@@ -164,7 +164,7 @@ unpack_datadoc(Md5, Datadoc, DirtyUrl):-
       request_header('Accept'=AcceptValue)
     ]
   ),
-gtrace,
+
   % Store the file size of the dirty file.
   size_file(DownloadFile, DownloadSize),
   store_triple(

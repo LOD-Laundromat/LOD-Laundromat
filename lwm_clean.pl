@@ -18,7 +18,6 @@ The cleaning process performed by the LOD Washing Machine.
 
 :- use_module(library(apply)).
 :- use_module(library(option)).
-:- use_module(library(process)).
 :- use_module(library(semweb/rdf_db), except([rdf_node/1])). % Format `xml`.
 :- use_module(library(semweb/rdf_ntriples)). % Formats `ntriples`, `nquads`.
 :- use_module(library(semweb/rdfa)). % Format `rdfa`
@@ -31,6 +30,10 @@ The cleaning process performed by the LOD Washing Machine.
 :- use_module(os(file_ext)).
 :- use_module(os(file_gnu)).
 :- use_module(pl(pl_log)).
+
+:- use_module(plDcg(dcg_generics)).
+
+:- use_module(plHttp(header/representation/http_content_type)).
 
 :- use_module(plRdf(management/rdf_file_db)).
 :- use_module(plRdf(management/rdf_guess_format)).
@@ -162,7 +165,10 @@ clean_md5(Category, Md5, Datadoc, DirtyFile):-
 
   % Retrieve the content type, if it was previously determined.
   % Stays uninstantiated in case no content type is set.
-  ignore(datadoc_content_type(Datadoc, ContentType)),
+  ignore((
+    datadoc_content_type(Datadoc, ContentType0),
+    dcg_phrase('Content-Type'(ContentType), ContentType0)
+  )),
 
   % Clean the data document in an RDF transaction.
   setup_call_cleanup(
