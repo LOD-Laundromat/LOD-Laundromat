@@ -127,13 +127,20 @@ lwm_unpack(Datadoc, DirtyUrl):-
 unpack_datadoc(Md5, Datadoc, DirtyUrl):-
   % Uninstantiated SPARQL variable (using keyword OPTIONAL).
   DirtyUrl == '$null$', !,
-
-  % Retrieve the path of the archive entry.
-  datadoc_archive_entry(Datadoc, _, EntryPath),
+gtrace,
+  % Create a directory for the entry.
   md5_directory(Md5, Md5Dir),
-  relative_file_path(EntryFile, Md5Dir, EntryPath),
 
-  unpack_file(Md5, Datadoc, EntryFile).
+  % Move the entry file over from the partent Md5 directory
+  % to its own directory.
+  datadoc_archive_entry(Datadoc, ParentMd5, EntryPath),
+  md5_directory(ParentMd5, ParentMd5Dir),
+  relative_file_path(OldEntryFile, ParentMd5Dir, EntryPath),
+  relative_file_path(EntryFile, Md5Dir, EntryPath),
+  create_file_directory(EntryFile),
+  gnu_mv(OldEntryFile, EntryFile),
+
+  unpack_file(Md5, Md5Dir, Datadoc, EntryFile).
 % The given MD5 denotes a URL.
 unpack_datadoc(Md5, Datadoc, DirtyUrl):-
   % Create a directory for the dirty version of the given Md5.
@@ -176,12 +183,17 @@ unpack_datadoc(Md5, Datadoc, DirtyUrl):-
   % Store HTTP statistics.
   store_http(Datadoc, ContentLength, ContentType, LastModified),
 
-  unpack_file(Md5, Datadoc, DownloadFile).
+  unpack_file(Md5, Md5Dir, Datadoc, DownloadFile).
 
 
-%! unpack_file(+Md5:atom, +Datadoc:iri, +ArchiveFile:atom) is det.
+%! unpack_file(
+%!   +Md5:atom,
+%!   +Md5Dir:atom,
+%!   +Datadoc:iri,
+%!   +ArchiveFile:atom
+%! ) is det.
 
-unpack_file(Md5, Datadoc, ArchiveFile):-
+unpack_file(Md5, Md5Dir, Datadoc, ArchiveFile):-
   % Store the file extension, if any.
   file_name_extension(_, FileExtension, ArchiveFile),
   (   FileExtension == ''
@@ -193,43 +205,40 @@ unpack_file(Md5, Datadoc, ArchiveFile):-
   archive_extract(ArchiveFile, _, ArchiveFilters, EntryPairs),
   store_archive_filters(Datadoc, ArchiveFilters),
 
-  % The also creates the directory.
-  md5_directory(Md5, Md5Dir),
-  (   EntryPairs == []
-  ->  % There is no file for cleaning.
-      % To keep the process simple / consistent with other cases,
-      % we create an empty dirty file.
+  (   % Case 1: There is no archive file to unpack.
+      EntryPairs == []
+  ->  % To keep the process simple / consistent with other cases,
+      % we create an empty dirty file
+      % (acting as the 'content' of the absent archive file.
       directory_file_path(Md5Dir, dirty, DirtyFile),
       touch_file(DirtyFile)
-  ;   % Exactly one raw file.
-      % This file is completely unarchived
-      % and should be moved to the cleaning phase.
+  ;   % Case 2: The archive file is present, but it is a raw data file
+      %         (so not an archive proper).
+      % Since the file is completely unpacked it can now go into
+      % the cleaning phase unaltered.
       EntryPairs = [data-EntryProperties],
       memberchk(format(raw), EntryProperties)
-  ->  % Construct the data file name.
-      file_directory_name(ArchiveFile, ArchiveDir),
-      directory_file_path(ArchiveDir, data, DataFile),
-
-      % Construct the dirty file name.
+  ->  % Rename the data file to `dirty`, which indicates
+      % that it can act as input for the cleaning stage.
+      directory_file_path(Md5Dir, data, DataFile),
       directory_file_path(Md5Dir, dirty, DirtyFile),
-
-      % Move the data file outside of the its entry path,
-      % and put it directly inside its MD5 directory.
       gnu_mv(DataFile, DirtyFile),
+
+      % Store the size of the dirty data file after unpacking.
       size_file(DirtyFile, UnpackedSize),
       store_triple(
         Datadoc,
         llo-unpackedSize,
         literal(type(xsd-nonNegativeInteger,UnpackedSize))
       )
-      % The file is now ready for cleaning!
-  ;   % Store the archive entries for future processing.
+  ;   % Case 3: The file is a proper archive
+      %         containing a number of entries.
       pairs_keys_values(EntryPairs, EntryPaths, EntryProperties1),
 
       % DEB
       (   debugging(lwm_unpack)
-      ->  length(EntryPairs, NumberOfEntryPairs),
-          debug(lwm_unpack, '[~a], ~D entries', [Md5,NumberOfEntryPairs])
+      ->  length(EntryPairs, NumberOfEntries),
+          debug(lwm_unpack, '[~a], ~D entries', [Md5,NumberOfEntries])
       ;   true
       ),
 
@@ -246,11 +255,15 @@ unpack_file(Md5, Datadoc, ArchiveFile):-
         literal(type(xsd-string,ArchiveFormat))
       ),
 
+      % Create the archive entries
+      % and copy the entry files to their own MD5 dirs.
       maplist(
         store_archive_entry(Md5, Datadoc),
         EntryPaths,
         EntryProperties2
       ),
+
+      % Archives cannot be cleaned, so
       store_skip_clean(Md5, Datadoc)
   ),
 

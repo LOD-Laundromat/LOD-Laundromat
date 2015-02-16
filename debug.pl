@@ -34,7 +34,9 @@
 :- dynamic(debug:debug_md5/2).
 :- multifile(debug:debug_md5/2).
 
-%debug:debug_md5('9ce5ae79d729dc14904cda8ac4b2b8c9', unpack).
+debug:debug_md5('3f97ebd2d73901615273402c5ac9e639', unpack).
+debug:debug_md5('b8357b16eadfcc792d47d057fc86ce9e', unpack).
+debug:debug_md5('d5e05249adef425a9554cb4b1b5622f2', unpack).
 
 show_idle:-
   flag(number_of_idle_loops_clean_small, Small, Small),

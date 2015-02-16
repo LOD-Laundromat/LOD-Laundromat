@@ -2,36 +2,36 @@
   lwm_store_triple,
   [
     store_archive_entry/4, % +ParentMd5:atom
-                           % +Parent:url
+                           % +Parent:uri
                            % +EntryPath:atom
                            % +EntryProperties:list(nvpair)
-    store_archive_filters/2, % +Datadoc:url
+    store_archive_filters/2, % +Datadoc:uri
                              % +ArchiveFilters:list(atom)
     store_end_clean/2, % +Md5:atom
-                       % +Datadoc:url
+                       % +Datadoc:uri
     store_end_unpack/3, % +Md5:atom
-                        % +Datadoc:url
+                        % +Datadoc:uri
                         % +Status
-    store_exception/2, % +Datadoc:url
+    store_exception/2, % +Datadoc:uri
                        % +Status:or([boolean,compound]))
-    store_file_extension/2, % +Datadoc:url
+    store_file_extension/2, % +Datadoc:uri
                             % +FileExtension:atom
-    store_http/4, % +Datadoc:url
+    store_http/4, % +Datadoc:uri
                   % ?ContentLength:nonneg
                   % ?ContentType:atom
                   % ?LastModified:nonneg
     store_number_of_triples/4, % +Category:atom
-                               % +Datadoc:url
+                               % +Datadoc:uri
                                % +NumberOfTriples:nonneg
                                % +NumberOfUniqueTriples:nonneg
     store_skip_clean/2, % +Md5:atom
-                        % +Datadoc:url
+                        % +Datadoc:uri
     store_seedpoint/1, % +Uri:atom
-    store_start_clean/1, % +Datadoc:url
-    store_start_unpack/1, % +Datadoc:url
-    store_stream/2, % +Datadoc:url
+    store_start_clean/1, % +Datadoc:uri
+    store_start_unpack/1, % +Datadoc:uri
+    store_stream/2, % +Datadoc:uri
                     % +Stream:stream
-    store_warning/2 % +Datadoc:url
+    store_warning/2 % +Datadoc:uri
                     % +Warning:compound
   ]
 ).
@@ -66,7 +66,7 @@ the stored triples are sent in a SPARQL Update request
 
 
 %! store_added(+Datadoc:uri, +Md5:atom) is det.
-% Datetime at which the URL was added to the LOD Basket.
+% Datetime at which the seedpoint URI was added to the LOD Basket.
 
 store_added(Datadoc, Md5):-
   get_dateTime_lexical(Added),
@@ -78,7 +78,7 @@ store_added(Datadoc, Md5):-
 
 %! store_archive_entry(
 %!   +ParentMd5:atom,
-%!   +Parent:url,
+%!   +Parent:uri,
 %!   +EntryPath:atom,
 %!   +EntryProperties:list(nvpair)
 %! ) is det.
@@ -119,7 +119,7 @@ store_archive_entry(ParentMd5, Parent, EntryPath, EntryProperties1):-
 
 
 
-%! store_archive_filters(+Datadoc:url, +ArchiveFilters:list(atom)) is det.
+%! store_archive_filters(+Datadoc:uri, +ArchiveFilters:list(atom)) is det.
 
 store_archive_filters(_, []):- !.
 store_archive_filters(Datadoc, ArchiveFilters):-
@@ -138,7 +138,7 @@ store_archive_filters0(BNode1, [H|T]):-
 
 
 
-%! store_end_clean(+Md5:atom, +Datadoc:url) is det.
+%! store_end_clean(+Md5:atom, +Datadoc:uri) is det.
 
 store_end_clean(Md5, Datadoc):-
   store_end_clean0(Md5, Datadoc),
@@ -163,7 +163,7 @@ store_end_clean0(Md5, Datadoc):-
 
 %! store_end_unpack(
 %!   +Md5:atom,
-%!   +Datadoc:url,
+%!   +Datadoc:uri,
 %!   +Status:or([boolean,compound])
 %! ) is det.
 
@@ -185,7 +185,7 @@ store_end_unpack0(Datadoc):-
 
 
 
-%! store_exception(+Datadoc:url, +Status:or([boolean,compound])) is det.
+%! store_exception(+Datadoc:uri, +Status:or([boolean,compound])) is det.
 
 % Not an exception.
 store_exception(_, true):- !.
@@ -195,7 +195,7 @@ store_exception(Datadoc, exception(Error)):-
 
 
 
-%! store_file_extension(+Datadoc:url, +FileExtension:atom) is det.
+%! store_file_extension(+Datadoc:uri, +FileExtension:atom) is det.
 
 store_file_extension(Datadoc, FileExtension):-
   store_triple(
@@ -207,7 +207,7 @@ store_file_extension(Datadoc, FileExtension):-
 
 
 %! store_http(
-%!   +Datadoc:url,
+%!   +Datadoc:uri,
 %!   ?ContentLength:nonneg,
 %!   ?ContentType:atom,
 %!   ?LastModified:nonneg
@@ -244,7 +244,7 @@ store_http(Datadoc, ContentLength, ContentType, LastModified):-
 
 %! store_number_of_triples(
 %!   +Category:atom,
-%!   +Datadoc:url,
+%!   +Datadoc:uri,
 %!   +NumberOfTriples:nonneg,
 %!   +NumberOfUniqueTriples:nonneg
 %! ) is det.
@@ -292,7 +292,7 @@ store_seedpoint(Uri):-
 
 
 
-%! store_skip_clean(+Md5:atom, +Datadoc:url) is det.
+%! store_skip_clean(+Md5:atom, +Datadoc:uri) is det.
 
 store_skip_clean(Md5, Datadoc):-
   store_start_clean0(Datadoc),
@@ -301,7 +301,7 @@ store_skip_clean(Md5, Datadoc):-
 
 
 
-%! store_start_clean(+Datadoc:url) is det.
+%! store_start_clean(+Datadoc:uri) is det.
 
 store_start_clean(Datadoc):-
   store_start_clean0(Datadoc),
@@ -313,7 +313,7 @@ store_start_clean0(Datadoc):-
 
 
 
-%! store_start_unpack(+Datadoc:url) is det.
+%! store_start_unpack(+Datadoc:uri) is det.
 
 store_start_unpack(Datadoc):-
   get_dateTime_lexical(Now),
@@ -322,7 +322,7 @@ store_start_unpack(Datadoc):-
 
 
 
-%! store_stream(+Datadoc:url, +Stream:stream) is det.
+%! store_stream(+Datadoc:uri, +Stream:stream) is det.
 
 store_stream(Datadoc, Stream):-
   stream_property(Stream, position(Position)),
@@ -350,7 +350,7 @@ store_stream(Datadoc, Stream):-
 
 
 
-%! store_warning(+Datadoc:url, +Warning:compound) is det.
+%! store_warning(+Datadoc:uri, +Warning:compound) is det.
 % @tbd Should we distinguish between `warning` and `error`
 %      in the second argument here?
 
