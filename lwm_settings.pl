@@ -86,6 +86,12 @@ user:prolog_file_type(conf, configuration).
      1,
      'The number of threads for downloading and unpacking data documents.'
    ).
+:- setting(
+     post_processing,
+     boolean,
+     false,
+     'Whether or not a post-processing script is run.'
+   ).
 
 
 

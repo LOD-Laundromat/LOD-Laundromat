@@ -127,10 +127,10 @@ lwm_unpack(Datadoc, DirtyUrl):-
 unpack_datadoc(Md5, Datadoc, DirtyUrl):-
   % Uninstantiated SPARQL variable (using keyword OPTIONAL).
   DirtyUrl == '$null$', !,
-gtrace,
+  
   % Create a directory for the entry.
   md5_directory(Md5, Md5Dir),
-
+  
   % Move the entry file over from the partent Md5 directory
   % to its own directory.
   datadoc_archive_entry(Datadoc, ParentMd5, EntryPath),
@@ -139,7 +139,8 @@ gtrace,
   relative_file_path(EntryFile, Md5Dir, EntryPath),
   create_file_directory(EntryFile),
   gnu_mv(OldEntryFile, EntryFile),
-
+  
+  % Continue with unpacking the entry.
   unpack_file(Md5, Md5Dir, Datadoc, EntryFile).
 % The given MD5 denotes a URL.
 unpack_datadoc(Md5, Datadoc, DirtyUrl):-
