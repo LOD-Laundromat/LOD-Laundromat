@@ -335,11 +335,11 @@ clean_datastream(
   ),
 
   % Run the callback function.
-  %process_create(
-  %  '/home/lodlaundromat/bin/wm-callback.sh',
-  %  [file(Dir)],
-  %  []
-  %),
+  process_create(
+    '/home/lodlaundromat/bin/wm-callback.sh',
+    [file(Dir)],
+    []
+  ),
 
   true.
 
