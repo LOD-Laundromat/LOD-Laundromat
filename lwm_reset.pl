@@ -18,6 +18,7 @@ Reset data documents in the triple store.
 :- use_module(library(lists), except([delete/3,subset/2])).
 :- use_module(library(settings)).
 :- use_module(library(thread)).
+:- use_module(library(uri)).
 
 :- use_module(generics(meta_ext)).
 
@@ -59,15 +60,20 @@ reset_datadoc(Datadoc):-
 %!   +Endpoint:oneof([cliopatria,virtuoso]),
 %!   +Datadoc:atom
 %! ) is det.
+% @tbd Implement this by using the HTTP DELETE method on the datadoc URI.
 
 reset_datadoc(cliopatria, Datadoc):- !,
   sparql_endpoint_location(cliopatria, Uri0),
-  uri_query_add_nvpair(Uri0, datadoc, Datadoc, Uri),
-  http_goal(
-    Uri,
-    true,
-    [fail_on_status([404]),status_code(Status)]
-  ), !,
+  uri_components(Uri0, uri_components(Scheme,Authority,_,_,_)),
+  uri_query_components(Search, [datadoc=Datadoc]),
+  uri_components(Uri,  uri_components(Scheme,Authority,'/reset',Search,_)),
+  sparql_endpoint_option(cliopatria, authentication(update), Authentication),
+  merge_options(
+    [fail_on_status([404]),status_code(Status)],
+    [Authentication],
+    Options
+  ),
+  http_goal(Uri, true, Options),
   (   between(200, 299, Status)
   ->  true
   ;   gtrace %DEB
