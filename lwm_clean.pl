@@ -193,9 +193,18 @@ clean_md5(Category, Md5, Datadoc, DirtyFile):-
   ),
 
   % Add the new VoID URLs to the LOD Basket.
-  with_mutex(lwm_endpoint_access,
-    maplist(store_seedpoint, VoidUris)
-  ).
+  store_seedpoints(VoidUris).
+
+store_seedpoints(L):-
+  length(L, N),
+  store_seedpoints(1, N, L).
+
+store_seedpoints(_, _, []).
+store_seedpoints(M, N, [H|T]):-
+  with_mutex(lwm_endpoint_access, store_seedpoint(H)),
+  debug(lwm_seedpoint, '[SEEDPOINT] ~D/~D ~w', [M,N,H]),
+  NextM is M + 1,
+  store_seedpoints(NextM, N, T).
 
 %! clean_datastream(
 %!   +Category:atom,

@@ -21,6 +21,7 @@
 %:- debug(lwm_progress(clean_small)).
 %:- debug(lwm_progress(unpack)).
 
+:- debug(lwm_seedpoint).
 
 :- [load].
 
