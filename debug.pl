@@ -35,6 +35,7 @@
 :- multifile(debug:debug_md5/2).
 
 debug:debug_md5('bc2901f9ff1756b162e5a17e47b6a26e', unpack).
+debug:debug_md5('bfc9445100fa049569637fe210c1ded6', unpack). % Empty dir.
 debug:debug_md5('b8357b16eadfcc792d47d057fc86ce9e', unpack).
 debug:debug_md5('d5e05249adef425a9554cb4b1b5622f2', unpack).
 debug:debug_md5('f0ef0f94bdb8383b3badb90751b7adaf', unpack).
