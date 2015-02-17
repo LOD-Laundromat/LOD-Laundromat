@@ -1,9 +1,10 @@
 :- module(
   lwm_store_triple,
   [
-    store_archive_entry/3, % +ParentMd5:atom
+    store_archive_entry/4, % +ParentMd5:atom
                            % +Parent:uri
                            % +EntryPair:pair(atom,list(nvpair))
+                           % -EntryMd5:atom
     store_archive_filters/2, % +Datadoc:uri
                              % +ArchiveFilters:list(atom)
     store_end_clean/2, % +Md5:atom
@@ -78,10 +79,11 @@ store_added(Datadoc, Md5):-
 %! store_archive_entry(
 %!   +ParentMd5:atom,
 %!   +Parent:uri,
-%!   +EntryPair:pair(atom,list(nvpair))
+%!   +EntryPair:pair(atom,list(nvpair)),
+%!   -EntryMd5:atom
 %! ) is det.
 
-store_archive_entry(ParentMd5, Parent, EntryPath-EntryProperties0):-
+store_archive_entry(ParentMd5, Parent, EntryPath-EntryProperties0, EntryMd5):-
   atomic_list_concat([ParentMd5,EntryPath], ' ', Temp),
   rdf_atom_md5(Temp, 1, EntryMd5),
   rdf_global_id(ll:EntryMd5, Entry),

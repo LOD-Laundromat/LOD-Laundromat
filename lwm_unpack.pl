@@ -128,20 +128,7 @@ lwm_unpack(Datadoc, DirtyUrl):-
 unpack_datadoc(Md5, Datadoc, DirtyUrl):-
   % Uninstantiated SPARQL variable (using keyword OPTIONAL).
   DirtyUrl == '$null$', !,
-
-  % Create a directory for the entry.
   md5_directory(Md5, Md5Dir),
-
-  % Move the entry file over from the partent Md5 directory
-  % to its own directory.
-  datadoc_archive_entry(Datadoc, ParentMd5, EntryPath),
-  md5_directory(ParentMd5, ParentMd5Dir),
-  relative_file_path(OldEntryFile, ParentMd5Dir, EntryPath),
-  relative_file_path(EntryFile, Md5Dir, EntryPath),
-  create_file_directory(EntryFile),
-  gnu_mv(OldEntryFile, EntryFile),
-
-  % Continue with unpacking the entry.
   unpack_file(Md5, Md5Dir, Datadoc, EntryFile).
 % The given MD5 denotes a URL.
 unpack_datadoc(Md5, Datadoc, DirtyUrl):-
@@ -239,7 +226,7 @@ unpack_file(Md5, Md5Dir, Datadoc, ArchiveFile):-
       % Create the archive entries
       % and copy the entry files to their own MD5 dirs.
       list_script(
-        store_archive_entry(Md5, Datadoc),
+        process_entry_pair(Md5, Md5Dir, Datadoc),
         EntryPairs,
         [message('LWM ArchiveEntry'),overview(true)]
       ),
@@ -251,3 +238,30 @@ unpack_file(Md5, Md5Dir, Datadoc, ArchiveFile):-
 
   % Remove the archive file.
   delete_file(ArchiveFile).
+
+%! process_entry_pair(
+%!   +ParentMd5:atom,
+%!   +ParentMd5Dir:atom,
+%!   +Datadoc:atom,
+%!   EntryPair:pair(atom,list(nvpair))
+%! ) is det.
+
+process_entry_pair(
+  ParentMd5,
+  ParentMd5Dir,
+  Datadoc,
+  EntryPath-EntryProperties
+):-
+  % Store the metadata.
+  store_archive_entry(
+    ParentMd5,
+    Datadoc,
+    EntryPath-EntryProperties,
+    EntryMd5
+  ),
+
+  % Move the file.
+  relative_file_path(ToEntryFile, ParentMd5Dir, EntryPath),
+  md5_directory(EntryMd5, EntryMd5Dir),
+  directory_file_path(EntryMd5Dir, data, FromEntryFile),
+  gnu_mv(FromEntryFile, ToEntryFile).
