@@ -128,9 +128,14 @@ lwm_unpack(Datadoc, DirtyUrl):-
 unpack_datadoc(Md5, Datadoc, DirtyUrl):-
   % Uninstantiated SPARQL variable (using keyword OPTIONAL).
   DirtyUrl == '$null$', !,
+
+  % Entries occur in a path.
+  datadoc_archive_entry(Datadoc, _, EntryPath),
+  relative_file_path(File, Md5Dir, EntryPath),
+
+  % Further unpack the archive entry.
   md5_directory(Md5, Md5Dir),
-  directory_file_path(Md5Dir, data, EntryFile),
-  unpack_file(Md5, Md5Dir, Datadoc, EntryFile).
+  unpack_file(Md5, Md5Dir, Datadoc, File).
 % The given MD5 denotes a URL.
 unpack_datadoc(Md5, Datadoc, DirtyUrl):-
   % Create a directory for the dirty version of the given Md5.
@@ -223,7 +228,7 @@ unpack_file(Md5, Md5Dir, Datadoc, ArchiveFile):-
       )
   ;   % Case 3: The file is a proper archive
       %         containing a number of entries.
-      
+
       % Create the archive entries
       % and copy the entry files to their own MD5 dirs.
       list_script(
@@ -231,7 +236,7 @@ unpack_file(Md5, Md5Dir, Datadoc, ArchiveFile):-
         EntryPairs,
         [message('LWM ArchiveEntry'),overview(true)]
       ),
-      
+
       % Archives cannot be cleaned,
       % so skip the cleaning phase by using metadata.
       store_skip_clean(Md5, Datadoc)
@@ -264,5 +269,5 @@ process_entry_pair(
   % Move the file.
   relative_file_path(ToEntryFile, ParentMd5Dir, EntryPath),
   md5_directory(EntryMd5, EntryMd5Dir),
-  directory_file_path(EntryMd5Dir, data, FromEntryFile),
+  relative_file_path(FromEntryFile, EntryMd5Dir, EntryPath),
   gnu_mv(FromEntryFile, ToEntryFile).
