@@ -3,9 +3,10 @@
 
 :- use_module(library(debug)).
 
-%:- debug(ac).
-:- debug(lwm_restart).
-:- debug(lwm_unpack).
+% PLC
+:- debug(list_script).
+
+% plSparql
 %:- debug(sparql_graph_store).
 %:- debug(sparql_update).
 
@@ -21,7 +22,9 @@
 %:- debug(lwm_progress(clean_small)).
 %:- debug(lwm_progress(unpack)).
 
+:- debug(lwm_restart).
 :- debug(lwm_seedpoint).
+:- debug(lwm_unpack).
 
 :- [load].
 
