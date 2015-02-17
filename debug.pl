@@ -35,10 +35,9 @@
 :- dynamic(debug:debug_md5/2).
 :- multifile(debug:debug_md5/2).
 
-debug:debug_md5('b8357b16eadfcc792d47d057fc86ce9e', unpack).
-debug:debug_md5('bc2901f9ff1756b162e5a17e47b6a26e', unpack).
-debug:debug_md5('bfc9445100fa049569637fe210c1ded6', unpack). % Empty dir.
-debug:debug_md5('d5e05249adef425a9554cb4b1b5622f2', unpack).
+%debug:debug_md5('b8357b16eadfcc792d47d057fc86ce9e', unpack).
+%debug:debug_md5('bfc9445100fa049569637fe210c1ded6', unpack). % Empty dir when processing entries.
+%debug:debug_md5('d5e05249adef425a9554cb4b1b5622f2', unpack).
 
 show_idle:-
   flag(number_of_idle_loops_clean_small, Small, Small),
