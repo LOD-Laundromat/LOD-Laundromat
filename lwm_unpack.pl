@@ -129,6 +129,7 @@ unpack_datadoc(Md5, Datadoc, DirtyUrl):-
   % Uninstantiated SPARQL variable (using keyword OPTIONAL).
   DirtyUrl == '$null$', !,
   md5_directory(Md5, Md5Dir),
+  directory_file_path(Md5Dir, data, EntryFile),
   unpack_file(Md5, Md5Dir, Datadoc, EntryFile).
 % The given MD5 denotes a URL.
 unpack_datadoc(Md5, Datadoc, DirtyUrl):-
