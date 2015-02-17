@@ -198,7 +198,7 @@ clean_md5(Category, Md5, Datadoc, DirtyFile):-
     store_seedpoint,
     VoidUris,
     [
-      message('LOD Washing Machine seedpoint'),
+      message('LWM Seedpoint'),
       overview(true),
       with_mutex(lwm_endpoint_access)
     ]

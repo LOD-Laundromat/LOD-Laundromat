@@ -241,7 +241,7 @@ unpack_file(Md5, Md5Dir, Datadoc, ArchiveFile):-
       list_script(
         store_archive_entry(Md5, Datadoc),
         EntryPairs,
-        [overview(true)]
+        [message('LWM ArchiveEntry'),overview(true)]
       ),
       
       % Archives cannot be cleaned,
