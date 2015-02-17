@@ -25,6 +25,7 @@ The cleaning process performed by the LOD Washing Machine.
 :- use_module(library(zlib)).
 
 :- use_module(generics(list_ext)).
+:- use_module(generics(list_script)).
 :- use_module(generics(sort_ext)).
 :- use_module(os(archive_ext)).
 :- use_module(os(file_ext)).
@@ -193,18 +194,15 @@ clean_md5(Category, Md5, Datadoc, DirtyFile):-
   ),
 
   % Add the new VoID URLs to the LOD Basket.
-  store_seedpoints(VoidUris).
-
-store_seedpoints(L):-
-  length(L, N),
-  store_seedpoints(1, N, L).
-
-store_seedpoints(_, _, []).
-store_seedpoints(M, N, [H|T]):-
-  with_mutex(lwm_endpoint_access, store_seedpoint(H)),
-  debug(lwm_seedpoint, '[SEEDPOINT] ~D/~D ~w', [M,N,H]),
-  NextM is M + 1,
-  store_seedpoints(NextM, N, T).
+  list_script(
+    store_seedpoint,
+    VoidUris,
+    [
+      message('LOD Washing Machine seedpoint'),
+      overview(true),
+      with_mutex(lwm_endpoint_access)
+    ]
+  ).
 
 %! clean_datastream(
 %!   +Category:atom,
