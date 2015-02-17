@@ -20,6 +20,7 @@ Unpacks files for the LOD Washing Machine to clean.
 :- use_module(library(pairs)).
 
 :- use_module(generics(atom_ext)).
+:- use_module(generics(list_script)).
 :- use_module(os(archive_ext)).
 :- use_module(os(file_ext)).
 :- use_module(os(file_gnu)).
@@ -234,68 +235,19 @@ unpack_file(Md5, Md5Dir, Datadoc, ArchiveFile):-
       )
   ;   % Case 3: The file is a proper archive
       %         containing a number of entries.
-      pairs_keys_values(EntryPairs, EntryPaths, EntryProperties1),
-
-      % DEB
-      (   debugging(lwm_unpack)
-      ->  length(EntryPairs, NumberOfEntries),
-          debug(lwm_unpack, '[~a], ~D entries', [Md5,NumberOfEntries])
-      ;   true
-      ),
-
-      % Store the archive format.
-      filter_archive_formats(
-        EntryProperties1,
-        ArchiveFormats,
-        EntryProperties2
-      ),
-      distill_archive_format(ArchiveFormats, ArchiveFormat),
-      store_triple(
-        Datadoc,
-        llo-archiveFormat,
-        literal(type(xsd-string,ArchiveFormat))
-      ),
-
+      
       % Create the archive entries
       % and copy the entry files to their own MD5 dirs.
-      maplist(
+      list_script(
         store_archive_entry(Md5, Datadoc),
-        EntryPaths,
-        EntryProperties2
+        EntryPairs,
+        [overview(true)]
       ),
-
-      % Archives cannot be cleaned, so
+      
+      % Archives cannot be cleaned,
+      % so skip the cleaning phase by using metadata.
       store_skip_clean(Md5, Datadoc)
   ),
 
   % Remove the archive file.
   delete_file(ArchiveFile).
-
-
-
-
-
-% HELPERS %
-
-%! distill_archive_format(+Formats:ordset(atom), -Format:atom) is det.
-
-distill_archive_format([H0], H):- !,
-  strip_atom([' '], H0, H).
-distill_archive_format([H1,H2|T], Format):-
-  common_atom_prefix(H1, H2, Prefix),
-  distill_archive_format([Prefix|T], Format).
-
-
-
-%! filter_archive_formats(
-%!   +Lists1:list(list(nvpair)),
-%!   -Formats:ordset(atom),
-%!   -Lists2:list(list(nvpair))
-%! ) is det.
-
-filter_archive_formats([], [], []).
-filter_archive_formats([L1|Ls1], Fs1, [L2|Ls2]):-
-  selectchk(format(F), L1, L2),
-  filter_archive_formats(Ls1, Fs2, Ls2),
-  ord_add_element(Fs2, F, Fs1).
-

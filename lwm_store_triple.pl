@@ -1,10 +1,9 @@
 :- module(
   lwm_store_triple,
   [
-    store_archive_entry/4, % +ParentMd5:atom
+    store_archive_entry/3, % +ParentMd5:atom
                            % +Parent:uri
-                           % +EntryPath:atom
-                           % +EntryProperties:list(nvpair)
+                           % +EntryPair:pair(atom,list(nvpair))
     store_archive_filters/2, % +Datadoc:uri
                              % +ArchiveFilters:list(atom)
     store_end_clean/2, % +Md5:atom
@@ -79,11 +78,10 @@ store_added(Datadoc, Md5):-
 %! store_archive_entry(
 %!   +ParentMd5:atom,
 %!   +Parent:uri,
-%!   +EntryPath:atom,
-%!   +EntryProperties:list(nvpair)
+%!   +EntryPair:pair(atom,list(nvpair))
 %! ) is det.
 
-store_archive_entry(ParentMd5, Parent, EntryPath, EntryProperties1):-
+store_archive_entry(ParentMd5, Parent, EntryPath-EntryProperties0):-
   atomic_list_concat([ParentMd5,EntryPath], ' ', Temp),
   rdf_atom_md5(Temp, 1, EntryMd5),
   rdf_global_id(ll:EntryMd5, Entry),
@@ -93,6 +91,13 @@ store_archive_entry(ParentMd5, Parent, EntryPath, EntryProperties1):-
   store_triple(Parent, rdf-type, llo-'Archive'),
   store_triple(Parent, llo-containsEntry, Entry),
 
+  selectchk(format(ArchiveFormat), EntryProperties0, EntryProperties1),
+  store_triple(
+    Entry,
+    llo-archiveFormat,
+    literal(type(xsd-string,ArchiveFormat))
+  ),
+  
   selectchk(mtime(LastModified), EntryProperties1, EntryProperties2),
   % @tbd Store as xsd:dateTime.
   store_triple(
