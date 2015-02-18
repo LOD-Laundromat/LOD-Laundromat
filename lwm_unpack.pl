@@ -255,6 +255,8 @@ unpack_file(Md5, Md5Dir, Datadoc, ArchiveFile):-
 %!   EntryPair:pair(atom,list(nvpair))
 %! ) is det.
 
+process_entry_pair(_, _, _, _-EntryProperties):-
+  memberchk(filetype(directory), EntryProperties), !.
 process_entry_pair(
   ParentMd5,
   ParentMd5Dir,
@@ -264,7 +266,7 @@ process_entry_pair(
   % Establish the entry name.
   create_entry_hash(ParentMd5, EntryPath, EntryMd5),
   rdf_global_id(ll:EntryMd5, Entry),
-  
+
   % Move the file before the metadata is send to the server.
   relative_file_path(FromEntryFile, ParentMd5Dir, EntryPath),
   md5_directory(EntryMd5, EntryMd5Dir),
@@ -272,7 +274,7 @@ process_entry_pair(
   directory_file_path(Dir, _, ToEntryFile),
   make_directory_path(Dir),
   gnu_mv(FromEntryFile, ToEntryFile),
-  
+
   % Store the metadata.
   store_archive_entry(Datadoc, EntryMd5, Entry, EntryPath, EntryProperties).
 
