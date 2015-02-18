@@ -193,13 +193,12 @@ clean_md5(Category, Md5, Datadoc, DirtyFile):-
     close(DirtyIn)
   ),
 
-  % Add the new VoID URLs to the LOD Basket.
+  % Add the new VoID URIs to the LOD Basket.
   list_script(
     store_seedpoint,
     VoidUris,
     [
       message('LWM Seedpoint'),
-      overview(true),
       with_mutex(lwm_endpoint_access)
     ]
   ).

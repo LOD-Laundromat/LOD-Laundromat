@@ -110,6 +110,7 @@ lwm_unpack(Datadoc, DirtyUrl):-
     Status,
     Warnings
   ),
+  (Status == false -> gtrace ; true), %DEB
 
   % DEB: *end* of downloading+unpacking.
   lwm_debug_message(
@@ -215,7 +216,9 @@ unpack_file(Md5, Md5Dir, Datadoc, ArchiveFile):-
       memberchk(format(raw), EntryProperties)
   ->  % Rename the data file to `dirty`, which indicates
       % that it can act as input for the cleaning stage.
-      directory_file_path(Md5Dir, data, DataFile),
+      % Notice that the data file may appear in an entry path.
+      directory_file_path(ArchiveDir, _, ArchiveFile),
+      directory_file_path(ArchiveDir, data, DataFile),
       directory_file_path(Md5Dir, dirty, DirtyFile),
       gnu_mv(DataFile, DirtyFile),
 
@@ -234,7 +237,7 @@ unpack_file(Md5, Md5Dir, Datadoc, ArchiveFile):-
       list_script(
         process_entry_pair(Md5, Md5Dir, Datadoc),
         EntryPairs,
-        [message('LWM ArchiveEntry'),overview(true)]
+        [message('LWM ArchiveEntry')]
       ),
 
       % Archives cannot be cleaned,
