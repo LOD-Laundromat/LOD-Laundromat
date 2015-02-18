@@ -267,7 +267,9 @@ process_entry_pair(
   ),
 
   % Move the file.
-  relative_file_path(ToEntryFile, ParentMd5Dir, EntryPath),
+  relative_file_path(FromEntryFile, ParentMd5Dir, EntryPath),
   md5_directory(EntryMd5, EntryMd5Dir),
-  relative_file_path(FromEntryFile, EntryMd5Dir, EntryPath),
+  relative_file_path(ToEntryFile, EntryMd5Dir, EntryPath),
+  directory_file_path(Dir, _, ToEntryFile),
+  make_directory_path(Dir),
   gnu_mv(FromEntryFile, ToEntryFile).
