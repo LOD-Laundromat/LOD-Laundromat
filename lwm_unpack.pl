@@ -16,10 +16,7 @@ Unpacks files for the LOD Washing Machine to clean.
 
 :- use_module(library(apply)).
 :- use_module(library(lists), except([delete/3,subset/2])).
-:- use_module(library(ordsets)).
-:- use_module(library(pairs)).
 
-:- use_module(generics(atom_ext)).
 :- use_module(generics(list_script)).
 :- use_module(os(archive_ext)).
 :- use_module(os(file_ext)).
@@ -70,7 +67,7 @@ lwm_unpack_loop:-
   lwm_unpack_loop.
 % Done for now. Check whether there are new jobs in one seconds.
 lwm_unpack_loop:-
-  sleep(60),
+  sleep(5),
   lwm_debug_message(lwm_idle_loop(unpack)), % DEB
   lwm_unpack_loop.
 
