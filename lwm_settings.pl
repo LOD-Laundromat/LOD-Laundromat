@@ -22,6 +22,7 @@ Generic predicates for the LOD Washing Machine.
 :- use_module(library(settings)).
 :- use_module(library(uri)).
 
+:- use_module(generics(atom_ext)).
 :- use_module(generics(service_db)).
 
 :- use_module(plSparql(sparql_db)).
@@ -92,6 +93,12 @@ user:prolog_file_type(conf, configuration).
      false,
      'Whether or not a post-processing script is run.'
    ).
+:- setting(
+     version,
+     nonneg,
+     12,
+     'The version number of the scrape.'
+   ).
 
 
 
@@ -111,9 +118,11 @@ lod_basket_graph(Graph):-
 lwm_version_graph(Graph):-
   ll_scheme(Scheme),
   ll_authority(Authority),
+  setting(lwm_settings:version, Version0),
+  to_atom(Version0, Version),
   uri_components(
     Graph,
-    uri_components(Scheme,Authority,'',_,'11')
+    uri_components(Scheme,Authority,'',_,Version)
   ).
 
 
