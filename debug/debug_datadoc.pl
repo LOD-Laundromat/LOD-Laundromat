@@ -25,6 +25,6 @@ Debug specific data documents.
 
 debug_datadoc(Datadoc):-
   reset_datadoc(Datadoc),
-  %lwm_unpack(Datadoc),
+  lwm_unpack(Datadoc),
   lwm_clean(Datadoc).
 

@@ -28,3 +28,11 @@ TODO
   [ ] llPack:
     [ ] Create a Prolog Pack for LOD Laundromat.
 
+
+
+Notes
+=====
+
+  - 2570ea2d41d6f3c2ce902ec233e51a68 contains Illegal UTF-8 start (183:0).
+  - swipl run.pl --debug --dir=/scratch/lodlaundromat/crawls/12/ --mode=restart
+
