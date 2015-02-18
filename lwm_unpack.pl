@@ -130,11 +130,11 @@ unpack_datadoc(Md5, Datadoc, DirtyUrl):-
   DirtyUrl == '$null$', !,
 
   % Entries occur in a path.
+  md5_directory(Md5, Md5Dir),
   datadoc_archive_entry(Datadoc, _, EntryPath),
   relative_file_path(File, Md5Dir, EntryPath),
 
   % Further unpack the archive entry.
-  md5_directory(Md5, Md5Dir),
   unpack_file(Md5, Md5Dir, Datadoc, File).
 % The given MD5 denotes a URL.
 unpack_datadoc(Md5, Datadoc, DirtyUrl):-
