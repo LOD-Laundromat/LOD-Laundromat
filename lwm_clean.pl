@@ -351,6 +351,7 @@ clean_datastream(
   ).
 
 clean_triples(xml, In, Out, State, BNodePrefix, Options):- !,
+gtrace,
   process_rdf(
     In,
     clean_streamed_triples(Out, State, BNodePrefix),
