@@ -261,7 +261,11 @@ process_entry_pair(
   Datadoc,
   EntryPath-EntryProperties
 ):-
-  % Move the file.
+  % Establish the entry name.
+  create_entry_hash(ParentMd5, EntryPath, EntryMd5),
+  rdf_global_id(ll:EntryMd5, Entry),
+  
+  % Move the file before the metadata is send to the server.
   relative_file_path(FromEntryFile, ParentMd5Dir, EntryPath),
   md5_directory(EntryMd5, EntryMd5Dir),
   relative_file_path(ToEntryFile, EntryMd5Dir, EntryPath),
@@ -270,10 +274,11 @@ process_entry_pair(
   gnu_mv(FromEntryFile, ToEntryFile),
   
   % Store the metadata.
-  store_archive_entry(
-    ParentMd5,
-    Datadoc,
-    EntryPath-EntryProperties,
-    EntryMd5
-  ).
+  store_archive_entry(Datadoc, EntryMd5, Entry, EntryPath, EntryProperties).
+
+%! create_entry_hash(+ParentMd5:atom, +EntryPath:atom, -EntryMd5:atom) is det.
+
+create_entry_hash(ParentMd5, EntryPath, EntryMd5):-
+  atomic_list_concat([ParentMd5,EntryPath], ' ', Temp),
+  rdf_atom_md5(Temp, 1, EntryMd5).
 
