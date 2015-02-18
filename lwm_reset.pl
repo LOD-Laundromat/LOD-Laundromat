@@ -14,6 +14,7 @@ Reset data documents in the triple store.
 */
 
 :- use_module(library(apply)).
+:- use_module(library(dcg/basics)).
 :- use_module(library(filesex)).
 :- use_module(library(lists), except([delete/3,subset/2])).
 :- use_module(library(settings)).
@@ -21,6 +22,8 @@ Reset data documents in the triple store.
 :- use_module(library(uri)).
 
 :- use_module(generics(meta_ext)).
+
+:- use_module(plDcg(dcg_generics)).
 
 :- use_module(plUri(uri_query)).
 
@@ -93,6 +96,11 @@ reset_datadoc(virtuoso, Datadoc):-
   delete_resource(NG, Datadoc),
 
   datadoc_directory(Datadoc, DatadocDir),
+  (   absolute_file_name(data(.), DataDir, [access(read)]),
+      DatadocDir == DataDir
+  ->  gtrace %DEB
+  ;   true
+  ),
   delete_directory_and_contents(DatadocDir),
   print_message(informational, lwm_reset(NG,Datadoc)).
 
@@ -104,6 +112,7 @@ reset_datadoc(virtuoso, Datadoc):-
 
 datadoc_directory(Datadoc, Dir):-
   rdf_global_id(ll:Md5, Datadoc),
+  \+ dcg_phrase(whites, Md5),
   md5_directory(Md5, Dir).
 
 
