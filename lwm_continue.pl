@@ -32,7 +32,6 @@ lwm_continue:-
   datadoc_unpacking(L1),
   datadoc_cleaning(L2),
   debug_datadocs(L3),
-gtrace,
   findall(
     X2,
     (
