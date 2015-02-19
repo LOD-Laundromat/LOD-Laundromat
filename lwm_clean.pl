@@ -293,8 +293,15 @@ clean_datastream(
 
   % Establish the file name extension.
   (   retract(has_quadruples(true))
-  ->  Ext = nq
-  ;   Ext = nt
+  ->  Ext = nq,
+      StatementsType = quadruples
+  ;   Ext = nt,
+      StatementsType = triples
+  ),
+  store_triple(
+    Datadoc,
+    llo-statementsType,
+    literal(type(xsd-string,StatementsType))
   ),
 
   % Sort file.
