@@ -98,7 +98,7 @@ store_archive_entry(Parent, EntryMd5, Entry, EntryPath, EntryProperties0):-
     llo-archiveFormat,
     literal(type(xsd-string,ArchiveFormat))
   ),
-  
+
   selectchk(mtime(LastModified), EntryProperties1, EntryProperties2),
   % @tbd Store as xsd:dateTime.
   store_triple(
@@ -156,13 +156,13 @@ store_end_clean0(Md5, Datadoc):-
 
   % Construct the download URL for non-archive files.
   (   datadoc_has_triples(Datadoc)
-  ->  true
-  ;   atom_concat('/', Md5, Path),
+  ->  atom_concat('/', Md5, Path),
       uri_components(
         Datadump,
         uri_components(http,'download.lodlaundromat.org',Path,_,_)
       ),
       store_triple(Datadoc, void-dataDump, Datadump)
+  ;   true
   ).
 
 
