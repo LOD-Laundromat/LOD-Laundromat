@@ -24,6 +24,7 @@
 
 :- debug(lwm_restart).
 :- debug(lwm_seedpoint).
+:- debug(lwm_status).
 :- debug(lwm_unpack).
 
 :- [load].
