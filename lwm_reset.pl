@@ -44,6 +44,11 @@ Reset data documents in the triple store.
 
 %! reset_datadoc(+Datadoc:iri) is det.
 
+% Make sure the input is indeed a data document.
+% Otherwise the entire graph may be removed.
+reset_datadoc(Datadoc):-
+  rdf_global_id(ll:Md5, Datadoc),
+  dcg_phrase(whites, Md5), !.
 reset_datadoc(Datadoc):-
   lwm_settings:setting(endpoint, both), !,
   concurrent(
@@ -112,7 +117,6 @@ reset_datadoc(virtuoso, Datadoc):-
 
 datadoc_directory(Datadoc, Dir):-
   rdf_global_id(ll:Md5, Datadoc),
-  \+ dcg_phrase(whites, Md5),
   md5_directory(Md5, Dir).
 
 
