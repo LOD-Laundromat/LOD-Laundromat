@@ -77,8 +77,8 @@ lwm_debug_message(Topic, lwm_end(Category1,Md5,Source,Status,_)):- !,
   (   Status == true
   ->  true
   ;   Status == false
-  ->  debug(Topic, '  [STATUS] FALSE', [])
-  ;   debug(Topic, '  [STATUS] ~w', [Status])
+  ->  debug(lwm_status, '  [STATUS] FALSE', [])
+  ;   debug(lwm_status, '  [STATUS] ~w', [Status])
   ),
 
   debug(Topic, '[END ~a] ~w ~w', [Category2,Md5,Source]).
