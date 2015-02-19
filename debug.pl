@@ -19,10 +19,10 @@
 % Show progress.
 :- debug(lwm_progress(clean_large)).
 :- debug(lwm_progress(clean_medium)).
-:- debug(lwm_progress(clean_small)).
-:- debug(lwm_progress(unpack)).
+%:- debug(lwm_progress(clean_small)).
+%:- debug(lwm_progress(unpack)).
 
-:- debug(lwm_restart).
+%:- debug(lwm_restart).
 :- debug(lwm_seedpoint).
 :- debug(lwm_status).
 :- debug(lwm_unpack).
@@ -39,7 +39,7 @@
 :- dynamic(debug:debug_md5/2).
 :- multifile(debug:debug_md5/2).
 
-debug:debug_md5('', unpack).
+debug:debug_md5('2721b133d3b0ede8950a30971d536481', unpack).
 
 show_idle:-
   flag(number_of_idle_loops_clean_small, Small, Small),

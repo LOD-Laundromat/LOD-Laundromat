@@ -37,7 +37,8 @@ Stores error term denoting exceptions in a LOD format.
 store_lod_error(Datadoc, Kind, error(archive_error(Code,_),_)):- !,
   (   Code == 2
   ->  InstanceName = missingTypeKeywordInMtreeSpec
-  ;   true
+  ;   Code == 25
+  ->  InstanceName = invalidCentralDirectorySignature
   ),
   store_triple(Datadoc, llo-Kind, error-InstanceName).
 
@@ -60,7 +61,6 @@ store_lod_error(
 ):- !,
   (   Message == 'File exists'
   ->  ClassName = 'DirectoryExistenceError'
-  ;   fail
   ),
   rdf_bnode(BNode),
   store_triple(Datadoc, llo-Kind, BNode),
@@ -78,7 +78,6 @@ store_lod_error(
   ->  ClassName = 'DirectoryNotEmpty'
   ;   Message == 'No such file or directory'
   ->  ClassName = 'FileExistenceError'
-  ;   fail
   ),
   rdf_bnode(BNode),
   store_triple(Datadoc, llo-Kind, BNode),
@@ -94,7 +93,6 @@ store_lod_error(
 ):- !,
   (   Message == 'Is a directory'
   ->  ClassName = 'IsADirectoryError'
-  ;   fail
   ), !,
   rdf_bnode(BNode),
   store_triple(Datadoc, llo-Kind, BNode),
@@ -123,7 +121,6 @@ store_lod_error(
   ->  InstanceName = notATypewriter
   ;   Message = 'Is a directory'
   ->  InstanceName = isADirectory
-  ;   fail
   ),
   store_triple(Datadoc, llo-Kind, error-InstanceName).
 
@@ -135,7 +132,6 @@ store_lod_error(
 ):- !,
   (   Message == 'Encoding cannot represent character'
   ->  InstanceName = encodingError
-  ;   fail
   ),
   store_triple(Datadoc, llo-Kind, error-InstanceName).
 
@@ -145,7 +141,6 @@ store_lod_error(Datadoc, Kind, io_warning(_Stream,Message)):- !,
   ->  InstanceName = illegalUtf8Continuation
   ;   Message == 'Illegal UTF-8 start'
   ->  InstanceName = illegalUtf8Start
-  ;   fail
   ),
   store_triple(Datadoc, llo-Kind, error-InstanceName).
 
@@ -175,7 +170,6 @@ store_lod_error(
   % Action
   (   Action0 == redirect
   ->  Action = redirectAction
-  ;   true
   ),
   store_triple(BNode, error-action, error-Action),
 
@@ -185,7 +179,6 @@ store_lod_error(
   % Type
   (   Type0 == http
   ->  ObjectClass = 'HttpUri'
-  ;   true
   ),
   store_triple(Object, error-object, error-ObjectClass).
 
