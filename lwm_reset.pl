@@ -96,7 +96,7 @@ reset_datadoc(virtuoso, Datadoc):-
   delete_resource(NG, Datadoc),
 
   datadoc_directory(Datadoc, DatadocDir),
-  (   absolute_file_name(data(.), DataDir, [access(read)]),
+  (   absolute_file_name(data(.), DataDir, [file_type(directory)]),
       DatadocDir == DataDir
   ->  gtrace %DEB
   ;   true
