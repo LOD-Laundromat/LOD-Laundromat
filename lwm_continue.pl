@@ -32,6 +32,7 @@ lwm_continue:-
   datadoc_unpacking(L1),
   datadoc_cleaning(L2),
   debug_datadocs(L3),
+gtrace,
   findall(
     X2,
     (
@@ -64,6 +65,7 @@ debug_datadocs(L):-
   ).
 
 erroneous_datadocs0([]).
+/*
 % Archive entries that are not clean yet.
 erroneous_datadocs0(L):-
   lwm_sparql_select(
@@ -77,6 +79,7 @@ erroneous_datadocs0(L):-
     L,
     []
   ).
+*/
 % Unpacked without an MD5.
 erroneous_datadocs0(L):-
   lwm_sparql_select(
@@ -89,6 +92,8 @@ erroneous_datadocs0(L):-
     L,
     []
   ).
+/*
+% Not clear yet (1/2).
 erroneous_datadocs0(L):-
   lwm_sparql_select(
     [llo],
@@ -125,6 +130,7 @@ erroneous_datadocs0(L):-
     L,
     []
   ).
+*/
 % Archives with a datadump location.
 erroneous_datadocs0(L):-
   lwm_sparql_select(
@@ -137,6 +143,7 @@ erroneous_datadocs0(L):-
     L,
     []
   ).
+/*
 % Unrecognized RDF format.
 erroneous_datadocs0(L):-
   lwm_sparql_select(
@@ -146,3 +153,4 @@ erroneous_datadocs0(L):-
     L,
     []
   ).
+*/

@@ -38,7 +38,11 @@
 :- dynamic(debug:debug_md5/2).
 :- multifile(debug:debug_md5/2).
 
-%debug:debug_md5('28665808584a3425631a805afbd72336', unpack).
+% /bin/mv: cannot stat '/scratch/lodlaundromat/crawls/12/002a4d72db756e36f9cbd7acff21fc19/test/af/page_links_af.nq.bz2': No such file or directory.
+debug:debug_md5('002a4d72db756e36f9cbd7acff21fc19', unpack).
+
+% Instantiation error.
+debug:debug_md5('fd0707f9bb0cc2dc9beb461b7b03b32b', unpack).
 
 show_idle:-
   flag(number_of_idle_loops_clean_small, Small, Small),
