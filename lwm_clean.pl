@@ -395,11 +395,7 @@ clean_streamed_triples(Out, State, BNodePrefix, Triples0, Graph0):-
   maplist(fix_triple(Graph), Triples0, Triples),
   maplist(ctriples_write_triple(Out, State, BNodePrefix), Triples).
 
-%! graph_without_line(+WonkyGraph:compound, -Graph:atom) is det.
-% Remove file line numbers from the graph name.
 
-graph_without_line(Graph:_, Graph):- !.
-graph_without_line(Graph, Graph).
 
 %! fix_triple(
 %!   +Graph:atom,
@@ -425,21 +421,22 @@ fix_triple(Graph, rdf(S,P,O,G0), Triple):-
   ;   Triple = rdf(S,P,O)
   ).
 
+
+
+%! graph_without_line(+WonkyGraph:compound, -Graph:atom) is det.
+% Remove file line numbers from the graph name.
+
+graph_without_line(Graph:_, Graph):- !.
+graph_without_line(Graph, Graph).
+
+
+
 %! is_named_graph(+Graph:atom) is semidet.
 % Succeeds for all and only named graphs.
 
 is_named_graph(Graph):-
   ground(Graph),
   Graph \== user.
-
-%! set_has_quadruples is det.
-% Store the fact that a quadruple occurred in the parser stream
-% as a thread-local global Prolog fact.
-
-set_has_quadruples:-
-  has_quadruples(true), !.
-set_has_quadruples:-
-  assert(has_quadruples(true)).
 
 
 
@@ -456,4 +453,15 @@ rdf_guess_format(_, In, FileExtension, ContentType, Format):-
 rdf_guess_format(Datadoc, _, _, _, _):-
   datadoc_source(Datadoc, Source),
   throw(error(no_rdf(Source))).
+
+
+
+%! set_has_quadruples is det.
+% Store the fact that a quadruple occurred in the parser stream
+% as a thread-local global Prolog fact.
+
+set_has_quadruples:-
+  has_quadruples(true), !.
+set_has_quadruples:-
+  assert(has_quadruples(true)).
 
