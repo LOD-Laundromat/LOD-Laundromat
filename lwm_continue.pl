@@ -18,6 +18,8 @@ Continues an interrupted LOD Washing Machine crawl.
 :- use_module(library(semweb/rdf_db), except([rdf_node/1])).
 :- use_module(library(ordsets)).
 
+:- use_module(generics(list_script)).
+
 :- use_module(lwm(lwm_reset)).
 :- use_module(lwm(query/lwm_sparql_generics)).
 :- use_module(lwm(query/lwm_sparql_query)).
@@ -42,16 +44,15 @@ lwm_continue:-
   ),
   maplist(list_to_ord_set, [L1,L2,L3|Ls], Sets),
   ord_union(Sets, Set),
-  length(Set, N),
-  reset_datadocs(0, N, Set).
+  list_script(
+    reset_datadoc,
+    Set,
+    [message('LWM Reset'),with_mutex(lwm_endpoint_access)]
+  ).
 
-reset_datadocs(_, _, []).
-reset_datadocs(M, N, [H|T]):-
-  reset_datadoc(H),
-  format(user_output, '[RESET] ~D/~D', [M,N]),
-  NextM is M + 1,
-  reset_datadocs(NextM, N, T).
 
+
+%! debug_datadocs(-Datadocs:list(atom)) is det.
 
 debug_datadocs(L):-
   findall(
@@ -62,6 +63,8 @@ debug_datadocs(L):-
     ),
     L
   ).
+
+
 
 erroneous_datadocs0([]).
 /*
