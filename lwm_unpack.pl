@@ -107,7 +107,12 @@ lwm_unpack(Datadoc, DirtyUrl):-
     Status,
     Warnings
   ),
-  (Status == false -> gtrace ; true), %DEB
+  (   Status == false
+  ->  gtrace %DEB
+  ;   Status == true
+  ->  true
+  ;   debug(lwm_status, '[STATUS] ~w', [Status])
+  ),
 
   % DEB: *end* of downloading+unpacking.
   lwm_debug_message(

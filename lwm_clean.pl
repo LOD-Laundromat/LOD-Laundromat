@@ -120,7 +120,12 @@ lwm_clean(Category, Datadoc, UnpackedSize):-
     Status,
     Warnings1
   ),
-  (Status == false -> gtrace ; true), %DEB
+  (   Status == false
+  ->  gtrace %DEB
+  ;   Status == true
+  ->  true
+  ;   debug(lwm_status, '[STATUS] ~w', [Status])
+  ),
 
   % Store the number of warnings.
   length(Warnings1, NumberOfWarnings),
