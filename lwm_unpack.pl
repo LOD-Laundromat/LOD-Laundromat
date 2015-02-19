@@ -117,13 +117,16 @@ lwm_unpack(Datadoc, DirtyUrl):-
 
   % Store the warnings and status as metadata.
   maplist(store_warning(Datadoc), Warnings),
-  store_end_unpack(Md5, Datadoc, Status).
+  store_end_unpack(Md5, Datadoc, Status),
+  
+  % Remove the archive file.
+  delete_file(ArchiveFile).
 
 
-%! unpack_datadoc(+Md5:atom, +Datadoc:iri, ?DirtyUrl:uri) is det.
+%! unpack_datadoc(+Md5:atom, +Datadoc:iri, ?DirtyUrl:uri, -File:atom) is det.
 
 % The given MD5 denotes an archive entry.
-unpack_datadoc(Md5, Datadoc, DirtyUrl):-
+unpack_datadoc(Md5, Datadoc, DirtyUrl, File):-
   % Uninstantiated SPARQL variable (using keyword OPTIONAL).
   DirtyUrl == '$null$', !,
 
@@ -135,7 +138,7 @@ unpack_datadoc(Md5, Datadoc, DirtyUrl):-
   % Further unpack the archive entry.
   unpack_file(Md5, Md5Dir, Datadoc, File).
 % The given MD5 denotes a URL.
-unpack_datadoc(Md5, Datadoc, DirtyUrl):-
+unpack_datadoc(Md5, Datadoc, DirtyUrl, DownloadFile):-
   % Create a directory for the dirty version of the given Md5.
   md5_directory(Md5, Md5Dir),
 
@@ -240,10 +243,7 @@ unpack_file(Md5, Md5Dir, Datadoc, ArchiveFile):-
       % Archives cannot be cleaned,
       % so skip the cleaning phase by using metadata.
       store_skip_clean(Md5, Datadoc)
-  ),
-
-  % Remove the archive file.
-  delete_file(ArchiveFile).
+  ).
 
 %! process_entry_pair(
 %!   +ParentMd5:atom,
