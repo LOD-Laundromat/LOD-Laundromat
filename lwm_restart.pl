@@ -62,6 +62,10 @@ restart_store(virtuoso):-
   http_goal(Uri, true, [fail_on_status([404]),status(Status)]), !,
   (   between(200, 299, Status)
   ->  true
-  ;   gtrace %DEB
+  ;   append_to_log(
+        lwm,
+        '[RESTART FAILED] Status code ~d received.',
+        [Status]
+      )
   ).
 

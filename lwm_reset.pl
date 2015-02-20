@@ -21,6 +21,7 @@ Reset data documents in the triple store.
 :- use_module(library(thread)).
 :- use_module(library(uri)).
 
+:- use_module(generics(logging)).
 :- use_module(generics(meta_ext)).
 
 :- use_module(plDcg(dcg_generics)).
@@ -84,7 +85,7 @@ reset_datadoc(cliopatria, Datadoc):- !,
   http_goal(Uri, true, Options),
   (   between(200, 299, Status)
   ->  true
-  ;   gtrace %DEB
+  ;   append_to_log(lwm, '[RESET FAILED] Status code ~d received.', [Status])
   ),
   print_message(informational, lwm_reset(Datadoc)).
 reset_datadoc(virtuoso, Datadoc):-
@@ -103,11 +104,10 @@ reset_datadoc(virtuoso, Datadoc):-
   datadoc_directory(Datadoc, DatadocDir),
   (   absolute_file_name(data(.), DataDir, [file_type(directory)]),
       DatadocDir == DataDir
-  ->  gtrace %DEB
-  ;   true
-  ),
-  delete_directory_and_contents(DatadocDir),
-  print_message(informational, lwm_reset(NG,Datadoc)).
+  ->  true
+  ;   delete_directory_and_contents(DatadocDir),
+      print_message(informational, lwm_reset(NG,Datadoc))
+  ).
 
 
 

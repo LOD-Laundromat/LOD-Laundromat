@@ -26,6 +26,7 @@ The cleaning process performed by the LOD Washing Machine.
 
 :- use_module(generics(list_ext)).
 :- use_module(generics(list_script)).
+:- use_module(generics(logging)).
 :- use_module(generics(sort_ext)).
 :- use_module(os(archive_ext)).
 :- use_module(os(file_ext)).
@@ -104,7 +105,8 @@ lwm_clean(Category, Datadoc, UnpackedSize):-
   rdf_global_id(ll:Md5, Datadoc),
 
   % DEB
-  (   debug:debug_md5(Md5, clean)
+  (   user:debug_mode,
+      debug:debug_md5(Md5, clean)
   ->  gtrace %DEB
   ;   true
   ),
@@ -121,7 +123,7 @@ lwm_clean(Category, Datadoc, UnpackedSize):-
     Warnings1
   ),
   (   Status == false
-  ->  gtrace %DEB
+  ->  append_to_log(lwm, '[CLEANING FAILED] ~w', [Md5])
   ;   Status == true
   ->  true
   ;   debug(lwm_status, '[STATUS] ~w', [Status])
@@ -384,9 +386,6 @@ clean_triples(Format, In, Out, State, BNodePrefix, Options1):-
     clean_streamed_triples(Out, State, BNodePrefix),
     Options2
   ).
-clean_triples(Format, In, Out, State, BNodePrefix, Options):-
-  gtrace, %DEB
-  clean_triples(Format, In, Out, State, BNodePrefix, Options).
 
 
 
