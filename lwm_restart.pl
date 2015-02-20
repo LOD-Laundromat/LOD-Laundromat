@@ -15,6 +15,7 @@ Restart the LOD Washing Machine during debugging.
 
 :- use_module(library(thread)).
 
+:- use_module(generics(logging)).
 :- use_module(generics(meta_ext)).
 
 :- use_module(plUri(uri_query)).
