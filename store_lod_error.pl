@@ -19,6 +19,7 @@ Stores error term denoting exceptions in a LOD format.
 :- use_module(library(uri)).
 
 :- use_module(generics(atom_ext)).
+:- use_module(generics(logging)).
 
 :- use_module(plXml(xml_dom)).
 
@@ -36,8 +37,11 @@ Stores error term denoting exceptions in a LOD format.
 store_lod_error(Datadoc, Kind, ErrorTerm):-
   store_lod_error0(Datadoc, Kind, ErrorTerm), !.
 store_lod_error(Datadoc, Kind, Error):-
-  gtrace,
+  user:debug_mode, !,
+  gtrace, %DEB
   store_lod_error(Datadoc, Kind, Error).
+store_lod_error(Datadoc, _, Error):-
+  append_to_log(lwm, '[STORE-ERROR FAILED] ~w ~w', [Datadoc,Error]).
 
 % Archive error
 store_lod_error0(Datadoc, Kind, error(archive_error(Code,_),_)):- !,

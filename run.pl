@@ -127,7 +127,7 @@ init(Options):-
       option(datadoc(Datadoc0), Options),
       ground(Datadoc0)
   ->  ensure_datadoc(Datadoc0, Datadoc),
-      gtrace,
+      gtrace, %DEB
       debug_datadoc(Datadoc)
   ;   init_production
   ).

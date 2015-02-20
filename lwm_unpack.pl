@@ -18,6 +18,7 @@ Unpacks files for the LOD Washing Machine to clean.
 :- use_module(library(lists), except([delete/3,subset/2])).
 
 :- use_module(generics(list_script)).
+:- use_module(generics(logging)).
 :- use_module(os(archive_ext)).
 :- use_module(os(file_ext)).
 :- use_module(os(file_gnu)).
@@ -90,7 +91,8 @@ lwm_unpack(Datadoc, DirtyUrl):-
   rdf_global_id(ll:Md5, Datadoc),
 
   % DEB
-  (   debug:debug_md5(Md5, unpack)
+  (   user:debug_mode,
+      debug:debug_md5(Md5, unpack)
   ->  gtrace %DEB
   ;   true
   ),
@@ -108,7 +110,7 @@ lwm_unpack(Datadoc, DirtyUrl):-
     Warnings
   ),
   (   Status == false
-  ->  gtrace %DEB
+  ->  append_to_log(lwm, '[UNPACKING FAILED] ~w', [Md5])
   ;   Status == true
   ->  true
   ;   debug(lwm_status, '[STATUS] ~w', [Status])

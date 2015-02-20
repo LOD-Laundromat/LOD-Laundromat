@@ -24,6 +24,8 @@ and at the same time send small RDF messages using SPARQL Update requests.
 
 :- use_module(library(semweb/rdf_db), except([rdf_node/1])).
 
+:- use_module(generics(logging)).
+
 :- use_module(plSparql(http/sparql_graph_store)).
 :- use_module(plSparql(update/sparql_update_api)).
 
@@ -59,15 +61,12 @@ post_rdf_triples:-
     Triples
   ),
 
-  post_rdf_triples(Triples, Code),
+  post_rdf_triples(Triples, Status),
 
   % Debug
-  (   between(100, 599, Code)
+  (   between(200, 299, Status)
   ->  true
-  ;   writeln(Code),
-      maplist(writeln, Triples),
-      gtrace, %DEB
-      post_rdf_triples
+  ;   append_to_log(lwm, '[POST-METADATA FAILED]', [])
   ),
 
   % Cleanup.
