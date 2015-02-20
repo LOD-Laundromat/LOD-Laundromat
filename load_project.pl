@@ -22,6 +22,9 @@ Generic code for loading a project:
 :- use_module(library(ansi_term)). % Colorized terminal messages.
 :- use_module(library(apply)).
 
+:- dynamic(user:debug_mode).
+:- multifile(user:debug_mode).
+
 :- dynamic(user:project/2).
 :- multifile(user:project/2).
 :- dynamic(user:project/3).
