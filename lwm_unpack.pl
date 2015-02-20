@@ -103,7 +103,7 @@ lwm_unpack(Datadoc, DirtyUrl):-
 
   % Downloading+unpacking of a specific data document.
   run_collect_messages(
-    unpack_datadoc(Md5, Datadoc, DirtyUrl),
+    unpack_datadoc(Md5, Datadoc, DirtyUrl, ArchiveFile),
     Status,
     Warnings
   ),
@@ -123,9 +123,12 @@ lwm_unpack(Datadoc, DirtyUrl):-
   % Store the warnings and status as metadata.
   maplist(store_warning(Datadoc), Warnings),
   store_end_unpack(Md5, Datadoc, Status),
-  
+
   % Remove the archive file.
-  delete_file(ArchiveFile).
+  (   ground(ArchiveFile)
+  ->  delete_file(ArchiveFile)
+  ;   true
+  ).
 
 
 %! unpack_datadoc(+Md5:atom, +Datadoc:iri, ?DirtyUrl:uri, -File:atom) is det.
