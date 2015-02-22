@@ -63,7 +63,7 @@ archive_to_entries(Archive, Entries):-
       [llo],
       [entry],
       [
-        rdf(Datadoc, llo:containsEntry, var(entry))
+        rdf(Archive, llo:containsEntry, var(entry))
       ],
       10000,
       Rows,
