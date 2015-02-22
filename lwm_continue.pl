@@ -83,6 +83,7 @@ erroneous_datadocs0(L):-
     []
   ).
 */
+/*
 % Unpacked without an MD5.
 erroneous_datadocs0(L):-
   lwm_sparql_select(
@@ -95,6 +96,7 @@ erroneous_datadocs0(L):-
     L,
     []
   ).
+*/
 /*
 % Not clear yet (1/2).
 erroneous_datadocs0(L):-
@@ -134,6 +136,7 @@ erroneous_datadocs0(L):-
     []
   ).
 */
+/*
 % Archives with a datadump location.
 erroneous_datadocs0(L):-
   lwm_sparql_select(
@@ -146,6 +149,7 @@ erroneous_datadocs0(L):-
     L,
     []
   ).
+*/
 /*
 % Unrecognized RDF format.
 erroneous_datadocs0(L):-

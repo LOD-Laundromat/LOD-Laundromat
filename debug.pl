@@ -19,10 +19,10 @@
 % Show progress.
 :- debug(lwm_progress(clean_large)).
 :- debug(lwm_progress(clean_medium)).
-%:- debug(lwm_progress(clean_small)).
-%:- debug(lwm_progress(unpack)).
+:- debug(lwm_progress(clean_small)).
+:- debug(lwm_progress(unpack)).
 
-%:- debug(lwm_restart).
+:- debug(lwm_restart).
 :- debug(lwm_seedpoint).
 :- debug(lwm_status).
 :- debug(lwm_unpack).
