@@ -260,13 +260,13 @@ datadoc_p_os(Datadoc, P, Os):-
 
 
 
-%! entry_to_archive(+Entry:iri, -Archive:iri) is det.
+%! entry_to_archive(+Entry:iri, -Archive:iri) is semidet.
 
 entry_to_archive(Entry, Archive):-
   lwm_sparql_select(
     [llo],
     [archive],
     [rdf(var(archive), llo:containsEntry, Entry)],
-    [Archive],
+    [[Archive]],
     []
   ).
