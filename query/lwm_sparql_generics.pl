@@ -15,10 +15,11 @@
                          % +Bgps:list(compound)
                          % -Result:list(list)
                          % +Options:list(nvpair)
-    lwm_sparql_select_iteratively/5 % +Prefixes:list(atom)
+    lwm_sparql_select_iteratively/6 % +Prefixes:list(atom)
                                     % +Variables:list(atom)
                                     % +Bgps:list(compound)
-                                    % -Result:list(list)
+                                    % +MaximumNumberOfResults:positive_integer
+                                    % -Results:list(list)
                                     % +Options:list(nvpair)
   ]
 ).
@@ -50,8 +51,8 @@ the LOD Laundromat's washing machine.
 :- predicate_options(lwm_sparql_select/5, 5, [
      pass_to(sparql_select/6, 6)
    ]).
-:- predicate_options(lwm_sparql_select_iteratively/5, 5, [
-     pass_to(sparql_select_iteratively/6, 6)
+:- predicate_options(lwm_sparql_select_iteratively/6, 6, [
+     pass_to(sparql_select_iteratively/7, 7)
    ]).
 
 
@@ -137,11 +138,19 @@ lwm_sparql_select(Prefixes, Variables, Bgps, Result, Options1):-
 %!   +Prefixes:list(atom),
 %!   +Variables:list(atom),
 %!   +Bgps:list(compound),
-%!   -Result:list(list),
+%!   +MaximumNumberOfResults:positive_integer,
+%!   -NResults:list(list),
 %!   +Options:list(nvpair)
 %! ) is nondet.
 
-lwm_sparql_select_iteratively(Prefixes, Variables, Bgps, Result, Options1):-
+lwm_sparql_select_iteratively(
+  Prefixes,
+  Variables,
+  Bgps,
+  N,
+  NResults,
+  Options1
+):-
   endpoint_options(Options1, Endpoint, Options2),
   loop_until_true(
     sparql_select_iteratively(
@@ -149,7 +158,8 @@ lwm_sparql_select_iteratively(Prefixes, Variables, Bgps, Result, Options1):-
       Prefixes,
       Variables,
       Bgps,
-      Result,
+      N,
+      NResults,
       Options2
     )
   ).

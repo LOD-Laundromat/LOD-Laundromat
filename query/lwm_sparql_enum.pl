@@ -43,6 +43,7 @@ datadoc_enum_cleaning(Datadoc):-
         rdf(var(datadoc), llo:endClean, var(endClean))
       ])
     ],
+    1,
     Rows,
     []
   ),
@@ -79,6 +80,7 @@ datadoc_enum_pending(Datadoc, DirtyUrl):-
         rdf(var(datadoc), llo:url, var(dirty))
       ])
     ],
+    1,
     [[Datadoc,DirtyUrl]],
     []
   ).
@@ -99,6 +101,7 @@ datadoc_enum_unpacked(Min, Max, Datadoc, UnpackedSize):-
     [llo],
     [datadoc,unpackedSize],
     Query,
+    1,
     [[Datadoc,UnpackedSizeLiteral]],
     []
   ),
@@ -118,6 +121,7 @@ datadoc_enum_unpacking(Datadoc):-
         rdf(var(datadoc), llo:endUnpack, var(endUnpack))
       ])
     ],
+    1,
     [[Datadoc]],
     []
   ).
