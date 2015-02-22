@@ -1,28 +1,32 @@
 :- module(
   lwm_sparql_query,
   [
-    datadoc_archive_entry/3, % +Datadoc:uri
+    archive_to_entries/2, % +Archive:iri
+                          % -Entries:list(iri)
+    datadoc_archive_entry/3, % +Datadoc:iri
                              % -ParentMd5:atom
                              % -EntryPath:atom
     datadoc_cleaning/1, % -Datadocs:list(iri))
-    datadoc_content_type/2, % +Datadoc:uri
+    datadoc_content_type/2, % +Datadoc:iri
                             % -ContentType:atom
     datadoc_describe/2, % +Md5:atom
                         % -Triples:list(compound)
-    datadoc_exists/1, % +Datadoc:uri
-    datadoc_file_extension/2, % +Datadoc:uri
+    datadoc_exists/1, % +Datadoc:iri
+    datadoc_file_extension/2, % +Datadoc:iri
                               % -FileExtension:atom
-    datadoc_has_triples/1, % +Datadoc:uri
-    datadoc_source/2, % +Datadoc:uri
+    datadoc_has_triples/1, % +Datadoc:iri
+    datadoc_source/2, % +Datadoc:iri
                       % -Source:atom
     datadoc_location/2, % +Datadoc:iri
-                        % -Location:uri
+                        % -Location:iri
     datadoc_unpacked_size/2, % +Datadoc:iri
                              % -UnpackedSize:nonneg
     datadoc_unpacking/1, % -Datadocs:list(iri))
-    datadoc_p_os/3 % +Datadoc:iri
-                   % +Property:iri
-                   % -Objects:list(rdf_term)
+    datadoc_p_os/3, % +Datadoc:iri
+                    % +Property:iri
+                    % -Objects:list(rdf_term)
+    entry_to_archive/2  % +Entry:iri
+                        % -Archive:iri
   ]
 ).
 
@@ -48,8 +52,31 @@ in the LOD Washing Machine.
 
 
 
+%! archive_to_entries(+Archive:iri, -Entries:list(iri)) is det.
+
+archive_to_entries(Archive, Entries):-
+  % This query has to be performed iteratively
+  % since there may be many results.
+  findall(
+    Rows,
+    lwm_sparql_select_iteratively(
+      [llo],
+      [entry],
+      [
+        rdf(Datadoc, llo:containsEntry, var(entry))
+      ],
+      10000,
+      Rows,
+      []
+    ),
+    Entries0
+  ),
+  flatten(Entries0, Entries).
+
+
+
 %! datadoc_archive_entry(
-%!   +Datadoc:uri,
+%!   +Datadoc:iri,
 %!   -ParentMd5:atom,
 %!   -EntryPath:atom
 %! ) is det.
@@ -87,7 +114,7 @@ datadoc_cleaning(L):-
 
 
 
-%! datadoc_content_type(+Datadoc:uri, -ContentType:atom) is semidet.
+%! datadoc_content_type(+Datadoc:iri, -ContentType:atom) is semidet.
 % Returns a variable if the content type is not known.
 
 datadoc_content_type(Datadoc, ContentType):-
@@ -102,7 +129,7 @@ datadoc_content_type(Datadoc, ContentType):-
 
 
 
-%! datadoc_describe(+Datadoc:uri, -Triples:list(compound)) is det.
+%! datadoc_describe(+Datadoc:iri, -Triples:list(compound)) is det.
 
 datadoc_describe(Datadoc, Triples):-
   lwm_sparql_select(
@@ -118,14 +145,14 @@ pair_to_triple(S, [P,O], rdf(S,P,O)).
 
 
 
-%! datadoc_exists(+Datadoc:uri) is semidet.
+%! datadoc_exists(+Datadoc:iri) is semidet.
 
 datadoc_exists(Datadoc):-
   lwm_sparql_ask([llo], [rdf(Datadoc,llo:md5,var(md5))], []).
 
 
 
-%! datadoc_file_extension(+Datadoc:uri, -FileExtension:atom) is det.
+%! datadoc_file_extension(+Datadoc:iri, -FileExtension:atom) is det.
 
 datadoc_file_extension(Datadoc, FileExtension):-
   lwm_sparql_select(
@@ -139,14 +166,14 @@ datadoc_file_extension(Datadoc, FileExtension):-
 
 
 
-%! datadoc_has_triples(+Datadoc:uri) is semidet.
+%! datadoc_has_triples(+Datadoc:iri) is semidet.
 
 datadoc_has_triples(Datadoc):-
   lwm_sparql_ask([llo], [rdf(Datadoc,llo:triples,var(triples))], []).
 
 
 
-%! datadoc_source(+Datadoc:uri, -Source:atom) is det.
+%! datadoc_source(+Datadoc:iri, -Source:atom) is det.
 % Returns the original source of the given datadocument.
 %
 % This is either a URL simpliciter,
@@ -173,7 +200,7 @@ datadoc_source(Datadoc, Source):-
 
 
 
-%! datadoc_location(+Datadoc:iri, -Location:uri) is det.
+%! datadoc_location(+Datadoc:iri, -Location:iri) is det.
 
 datadoc_location(Datadoc, Url):-
   lwm_sparql_select(
@@ -231,3 +258,15 @@ datadoc_p_os(Datadoc, P, Os):-
   ),
   flatten(Os0, Os).
 
+
+
+%! entry_to_archive(+Entry:iri, -Archive:iri) is det.
+
+entry_to_archive(Entry, Archive):-
+  lwm_sparql_select(
+    [llo],
+    [archive],
+    [rdf(var(archive), llo:containsEntry, Entry)],
+    [Archive],
+    []
+  ).

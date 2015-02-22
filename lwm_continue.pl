@@ -43,7 +43,8 @@ lwm_continue:-
     Ls
   ),
   maplist(list_to_ord_set, [L1,L2,L3|Ls], Sets),
-  ord_union(Sets, Set),
+  ord_union(Sets, Set0),
+  closure_over_reset_datadocs(Set0, Set),
   list_script(
     reset_datadoc,
     Set,
@@ -156,3 +157,25 @@ erroneous_datadocs0(L):-
     []
   ).
 */
+
+closure_over_reset_datadocs(L1, L2):-
+  closure_over_reset_datadocs(L1, [], L2).
+
+closure_over_reset_datadocs([], L, L):- !.
+closure_over_reset_datadocs([H|T], Set, L):-
+  memberchk(H, Set), !,
+  closure_over_reset_datadocs(T, Set, L).
+closure_over_reset_datadocs([Entry|T], Set0, L):-
+  datadoc_is_archive_entry(Entry), !,
+  entry_to_archive(Entry, Archive),
+  ord_add_element(Set0, Entry, Set),
+  closure_over_reset_datadocs([Archive|T], Set, L).
+closure_over_reset_datadocs([Archive|T1], Set0, L):-
+  datadoc_is_archive(Archive), !,
+  archive_to_entries(Archive, Entries),
+  append(Entries, T1, T2),
+  ord_add_element(Set0, Archive, Set),
+  closure_over_reset_datadocs(T2, Set, L).
+closure_over_reset_datadocs([H|T1], Set0, L):-
+  ord_add_element(Set0, H, Set),
+  closure_over_reset_datadocs(T1, Set, L).
