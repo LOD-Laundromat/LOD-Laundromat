@@ -21,6 +21,7 @@ Continues an interrupted LOD Washing Machine crawl.
 :- use_module(generics(list_script)).
 
 :- use_module(lwm(lwm_reset)).
+:- use_module(lwm(query/lwm_sparql_generics)).
 :- use_module(lwm(query/lwm_sparql_query)).
 
 
@@ -42,7 +43,7 @@ lwm_continue:-
     Ls
   ),
   maplist(list_to_ord_set, [L1,L2,L3|Ls], Sets),
-  ord_union(Sets, Set0),
+  ord_union(Sets, Set),
   %%%%closure_over_reset_datadocs(Set0, Set),
   list_script(
     reset_datadoc,
