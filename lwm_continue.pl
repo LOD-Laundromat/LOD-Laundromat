@@ -43,7 +43,7 @@ lwm_continue:-
   ),
   maplist(list_to_ord_set, [L1,L2,L3|Ls], Sets),
   ord_union(Sets, Set0),
-  closure_over_reset_datadocs(Set0, Set),
+  %%%%closure_over_reset_datadocs(Set0, Set),
   list_script(
     reset_datadoc,
     Set,
@@ -97,7 +97,7 @@ erroneous_datadocs0(L):-
   ).
 */
 /*
-% Not clear yet (1/2).
+% Not clean yet (1/2).
 erroneous_datadocs0(L):-
   lwm_sparql_select(
     [llo],
@@ -149,7 +149,6 @@ erroneous_datadocs0(L):-
     []
   ).
 */
-/*
 % Unrecognized RDF format.
 erroneous_datadocs0(L):-
   lwm_sparql_select(
@@ -159,7 +158,6 @@ erroneous_datadocs0(L):-
     L,
     []
   ).
-*/
 
 closure_over_reset_datadocs(L1, L2):-
   closure_over_reset_datadocs(L1, [], L2).
