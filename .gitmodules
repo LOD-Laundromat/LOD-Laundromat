@@ -26,9 +26,6 @@
 [submodule "plLangTag"]
 	path = plLangTag
 	url = https://github.com/wouterbeek/plLangTag.git
-[submodule "plLatticeDraw"]
-	path = plLatticeDraw
-	url = https://github.com/wouterbeek/plLatticeDraw.git
 [submodule "plRdf"]
 	path = plRdf
 	url = https://github.com/wouterbeek/plRdf.git
