@@ -1,6 +1,3 @@
-[submodule "ModelTheory"]
-	path = ModelTheory
-	url = https://github.com/wouterbeek/ModelTheory.git
 [submodule "Prolog-Library-Collection"]
 	path = Prolog-Library-Collection
 	url = https://github.com/wouterbeek/Prolog-Library-Collection.git
@@ -11,12 +8,6 @@
 [submodule "plGraph"]
 	path = plGraph
 	url = https://github.com/wouterbeek/plGraph.git
-[submodule "plGraphDraw"]
-	path = plGraphDraw
-	url = https://github.com/wouterbeek/plGraphDraw.git
-[submodule "plGraphViz"]
-	path = plGraphViz
-	url = https://github.com/wouterbeek/plGraphViz.git
 [submodule "plHtml"]
 	path = plHtml
 	url = https://github.com/wouterbeek/plHtml.git
@@ -36,18 +27,12 @@
 [submodule "plSparql"]
 	path = plSparql
 	url = https://github.com/wouterbeek/plSparql.git
-[submodule "plSvg"]
-	path = plSvg
-	url = https://github.com/wouterbeek/plSvg.git
 [submodule "plTms"]
 	path = plTms
 	url = https://github.com/wouterbeek/plTms.git
 [submodule "plTree"]
 	path = plTree
 	url = https://github.com/wouterbeek/plTree.git
-[submodule "plTreeDraw"]
-	path = plTreeDraw
-	url = https://github.com/wouterbeek/plTreeDraw.git
 [submodule "plUri"]
 	path = plUri
 	url = https://github.com/wouterbeek/plUri.git
