@@ -67,6 +67,7 @@ debug_datadocs(L):-
 
 
 erroneous_datadocs0([]).
+/*
 % Unrecognized RDF format.
 erroneous_datadocs0(L):-
   lwm_sparql_select(
@@ -76,6 +77,9 @@ erroneous_datadocs0(L):-
     L,
     []
   ).
+*/
+/*
+% fedBench
 erroneous_datadocs0([
   '6c7100daab8122f770ae9feaa45fc47c',
   'd1e641a73d97429e3fe5cd5e2d8dd37c',
@@ -101,4 +105,4 @@ erroneous_datadocs0([
   'a6c84464231c829eeb951dd9e69634d5',
   '65c8fe18943bfb26667c8d428f3d52a5'
 ]).
-
+*/
