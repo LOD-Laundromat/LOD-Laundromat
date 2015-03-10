@@ -44,7 +44,6 @@ lwm_continue:-
   ),
   maplist(list_to_ord_set, [L1,L2,L3|Ls], Sets),
   ord_union(Sets, Set),
-  %%%%closure_over_reset_datadocs(Set0, Set),
   list_script(
     reset_datadoc,
     Set,
@@ -68,88 +67,6 @@ debug_datadocs(L):-
 
 
 erroneous_datadocs0([]).
-/*
-% Archive entries that are not clean yet.
-erroneous_datadocs0(L):-
-  lwm_sparql_select(
-    [llo],
-    [datadoc],
-    [
-      rdf(var(datadoc), llo:added, var(added)),
-      not([rdf(var(datadoc), llo:endClean, var(endClean))]),
-      not([rdf(var(datadoc), llo:url, var(url))])
-    ],
-    L,
-    []
-  ).
-*/
-/*
-% Unpacked without an MD5.
-erroneous_datadocs0(L):-
-  lwm_sparql_select(
-    [llo],
-    [datadoc],
-    [
-      rdf(var(datadoc), llo:endUnpack, var(endUnpack)),
-      not([rdf(var(datadoc), llo:md5, var(md5))])
-    ],
-    L,
-    []
-  ).
-*/
-/*
-% Not clean yet (1/2).
-erroneous_datadocs0(L):-
-  lwm_sparql_select(
-    [llo],
-    [datadoc],
-    [
-      rdf(var(datadoc), llo:md5, var(md5)),
-      not([rdf(var(datadoc), llo:endClean, var(endClean))])
-    ],
-    L,
-    []
-  ).
-% Not clean yet (2/2).
-erroneous_datadocs0(L):-
-  lwm_sparql_select(
-    [llo],
-    [datadoc],
-    [
-      rdf(var(datadoc), llo:endUnpack, var(endUnpack)),
-      not([rdf(var(datadoc), llo:endClean, var(endClean))])
-    ],
-    L,
-    []
-  ).
-% Crawled more than once.
-erroneous_datadocs0(L):-
-  lwm_sparql_select(
-    [llo],
-    [datadoc],
-    [
-      rdf(var(datadoc), llo:startUnpack, var(startUnpack1)),
-      rdf(var(datadoc), llo:startUnpack, var(startUnpack2)),
-      filter(str(var(startUnpack1)) < str(var(startUnpack2)))
-    ],
-    L,
-    []
-  ).
-*/
-/*
-% Archives with a datadump location.
-erroneous_datadocs0(L):-
-  lwm_sparql_select(
-    [llo,rdf],
-    [datadoc],
-    [
-      rdf(var(datadoc), rdf:type, llo:'Archive'),
-      rdf(var(datadoc), void:dataDump, var(dataDump))
-    ],
-    L,
-    []
-  ).
-*/
 % Unrecognized RDF format.
 erroneous_datadocs0(L):-
   lwm_sparql_select(
@@ -159,24 +76,29 @@ erroneous_datadocs0(L):-
     L,
     []
   ).
+erroneous_datadocs0([
+  '6c7100daab8122f770ae9feaa45fc47c',
+  'd1e641a73d97429e3fe5cd5e2d8dd37c',
+  '03f6f715d4339d7a62d0b693634f1cbc',
+  '7d24b8cc9fb5255d8d53dee3138c56d3',
+  '1c4c8920a6e136d6bf2f050d31d78cd2',
+  '6c5e3bba18d848704c882f23f21813fd',
+  '69801d94cb75c15bfda0d8265b6e7d75',
+  'd11b99e99ca29ec3dd4231f4681a3b7b',
+  '31d1024d3cfbdb30358c208e8b09ba64',
+  'f4285af57cb8152a874fdf611bf875f9',
+  'b5075134338585f5f5ff47299a8bda30',
+  '65a2b25a4df5b593ce1c4a7a80d7b5b6',
+  'c26458fd28f02e90292e60565d2ce427',
+  '4fbd5c29adbbaba306fcdf1f9012556e',
+  '51631129c96af54f69792459a6395ee0',
+  '6108b9db4f7ffe62ad52d62c9bc2e3db',
+  'c951af2cd6bd89917c0ff08185e0db33',
+  '0a54e7b9edc759c8d78d15e649c39dd1',
+  'd1153876a11e0ff78023ab43e708c843',
+  '69bac2bdcf003789787e6ac0a0a292a4',
+  '7c034cdabbe0d82eda31ea22d353d23e',
+  'a6c84464231c829eeb951dd9e69634d5',
+  '65c8fe18943bfb26667c8d428f3d52a5'
+]).
 
-closure_over_reset_datadocs(L1, L2):-
-  closure_over_reset_datadocs(L1, [], L2).
-
-closure_over_reset_datadocs([], L, L):- !.
-closure_over_reset_datadocs([H|T], Set, L):-
-  memberchk(H, Set), !,
-  closure_over_reset_datadocs(T, Set, L).
-closure_over_reset_datadocs([Entry|T], Set0, L):-
-  entry_to_archive(Entry, Archive), !,
-  ord_add_element(Set0, Entry, Set),
-  closure_over_reset_datadocs([Archive|T], Set, L).
-closure_over_reset_datadocs([Archive|T1], Set0, L):-
-  archive_to_entries(Archive, Entries),
-  Entries \== [], !,
-  append(Entries, T1, T2),
-  ord_add_element(Set0, Archive, Set),
-  closure_over_reset_datadocs(T2, Set, L).
-closure_over_reset_datadocs([H|T1], Set0, L):-
-  ord_add_element(Set0, H, Set),
-  closure_over_reset_datadocs(T1, Set, L).

@@ -5,34 +5,33 @@
 
 :- dynamic(user:project/3).
 :- multifile(user:project/3).
-   user:project(
-     llWashingMachine,
-     'Where we clean other people\'s dirty data',
-     lwm
-   ).
+user:project(
+  llWashingMachine,
+  'Where we clean other people\'s dirty data',
+  lwm
+).
 
 :- use_module(load_project).
 :- load_project([
-     mt-'ModelTheory',
-     plc-'Prolog-Library-Collection',
-     plDcg,
-     plGraph,
-     plGraphDraw,
-     plGraphViz,
-     plHtml,
-     plHttp,
-     plLangTag,
-     plLattice,
-     plLatticeDraw,
-     plRdf,
-     plSet,
-     plSparql,
-     plSvg,
-     plTms,
-     plTree,
-     plTreeDraw,
-     plUri,
-     plXml,
-     plXsd
+  mt-'ModelTheory',
+  plc-'Prolog-Library-Collection',
+  plGraph,
+  plGraphDraw,
+  plGraphViz,
+  plHtml,
+  plHttp,
+  plLangTag,
+  plLattice,
+  plLatticeDraw,
+  plRdf,
+  plSet,
+  plSparql,
+  plSvg,
+  plTms,
+  plTree,
+  plTreeDraw,
+  plUri,
+  plXml,
+  plXsd
 ]).
 

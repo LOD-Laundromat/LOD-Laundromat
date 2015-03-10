@@ -39,6 +39,7 @@
 :- dynamic(debug:debug_md5/2).
 :- multifile(debug:debug_md5/2).
 
+debug:debug_md5('12336fc95b072ce38550a293ba4e9114', unpack).
 debug:debug_md5('6e1b5b1c576b6f1a5368a642bef4ecd5', clean).
 debug:debug_md5('c57f2c71a56955607aa3d99cd0559630', unpack).
 debug:debug_md5('e3df124b12ec0d4a9005ab7132838dda', unpack).
