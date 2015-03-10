@@ -13,23 +13,15 @@ user:project(
 
 :- use_module(load_project).
 :- load_project([
-  mt-'ModelTheory',
   plc-'Prolog-Library-Collection',
   plGraph,
-  plGraphDraw,
-  plGraphViz,
   plHtml,
   plHttp,
   plLangTag,
-  plLattice,
-  plLatticeDraw,
   plRdf,
   plSet,
   plSparql,
-  plSvg,
-  plTms,
   plTree,
-  plTreeDraw,
   plUri,
   plXml,
   plXsd

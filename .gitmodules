@@ -24,9 +24,6 @@
 [submodule "plSparql"]
 	path = plSparql
 	url = https://github.com/wouterbeek/plSparql.git
-[submodule "plTms"]
-	path = plTms
-	url = https://github.com/wouterbeek/plTms.git
 [submodule "plTree"]
 	path = plTree
 	url = https://github.com/wouterbeek/plTree.git
