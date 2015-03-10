@@ -17,12 +17,12 @@ Unpacks files for the LOD Washing Machine to clean.
 :- use_module(library(apply)).
 :- use_module(library(lists), except([delete/3,subset/2])).
 
-:- use_module(generics(list_script)).
-:- use_module(generics(logging)).
-:- use_module(os(archive_ext)).
-:- use_module(os(file_ext)).
-:- use_module(os(file_gnu)).
-:- use_module(pl(pl_log)).
+:- use_module(plc(generics/logging)).
+:- use_module(plc(io/archive_ext)).
+:- use_module(plc(io/file_ext)).
+:- use_module(plc(io/file_gnu)).
+:- use_module(plc(process/list_script)).
+:- use_module(plc(prolog/pl_log)).
 
 :- use_module(plUri(uri_ext)).
 

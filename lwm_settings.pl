@@ -22,8 +22,8 @@ Generic predicates for the LOD Washing Machine.
 :- use_module(library(settings)).
 :- use_module(library(uri)).
 
-:- use_module(generics(atom_ext)).
-:- use_module(generics(service_db)).
+:- use_module(plc(generics/atom_ext)).
+:- use_module(plc(generics/service_db)).
 
 :- use_module(plSparql(sparql_db)).
 

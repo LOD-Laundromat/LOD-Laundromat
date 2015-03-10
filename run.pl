@@ -23,7 +23,7 @@ for storing the metadata. See module [lwm_settings] for this.
 :- use_module(library(optparse)).
 :- use_module(library(semweb/rdf_db), except([rdf_node/1])).
 
-:- use_module(generics(typecheck)).
+:- use_module(plc(generics/typecheck)).
 
 :- use_module(lwm(lwm_clean)).
 :- use_module(lwm(lwm_continue)).

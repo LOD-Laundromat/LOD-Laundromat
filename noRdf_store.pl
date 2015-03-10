@@ -24,7 +24,7 @@ and at the same time send small RDF messages using SPARQL Update requests.
 
 :- use_module(library(semweb/rdf_db), except([rdf_node/1])).
 
-:- use_module(generics(logging)).
+:- use_module(plc(generics/logging)).
 
 :- use_module(plSparql(http/sparql_graph_store)).
 :- use_module(plSparql(update/sparql_update_api)).

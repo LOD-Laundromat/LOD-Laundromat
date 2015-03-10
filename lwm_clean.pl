@@ -24,16 +24,15 @@ The cleaning process performed by the LOD Washing Machine.
 :- use_module(library(semweb/turtle)). % Formats `turtle`, `trig`.
 :- use_module(library(zlib)).
 
-:- use_module(generics(list_ext)).
-:- use_module(generics(list_script)).
-:- use_module(generics(logging)).
-:- use_module(generics(sort_ext)).
-:- use_module(os(archive_ext)).
-:- use_module(os(file_ext)).
-:- use_module(os(file_gnu)).
-:- use_module(pl(pl_log)).
-
-:- use_module(plDcg(dcg_generics)).
+:- use_module(plc(dcg/dcg_generics)).
+:- use_module(plc(generics/list_ext)).
+:- use_module(plc(generics/logging)).
+:- use_module(plc(generics/sort_ext)).
+:- use_module(plc(io/archive_ext)).
+:- use_module(plc(io/file_ext)).
+:- use_module(plc(io/file_gnu)).
+:- use_module(plc(process/list_script)).
+:- use_module(plc(prolog/pl_log)).
 
 :- use_module(plHttp(header/representation/http_content_type)).
 

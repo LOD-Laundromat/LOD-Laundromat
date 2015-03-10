@@ -18,7 +18,7 @@ Continues an interrupted LOD Washing Machine crawl.
 :- use_module(library(semweb/rdf_db), except([rdf_node/1])).
 :- use_module(library(ordsets)).
 
-:- use_module(generics(list_script)).
+:- use_module(plc(process/list_script)).
 
 :- use_module(lwm(lwm_reset)).
 :- use_module(lwm(query/lwm_sparql_generics)).

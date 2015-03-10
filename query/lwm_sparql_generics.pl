@@ -35,8 +35,8 @@ the LOD Laundromat's washing machine.
 
 :- use_module(library(option)).
 
-:- use_module(generics(list_ext)).
-:- use_module(generics(meta_ext)).
+:- use_module(plc(generics/list_ext)).
+:- use_module(plc(generics/meta_ext)).
 
 :- use_module(plSparql(query/sparql_query_api)).
 

@@ -21,10 +21,9 @@ Reset data documents in the triple store.
 :- use_module(library(thread)).
 :- use_module(library(uri)).
 
-:- use_module(generics(logging)).
-:- use_module(generics(meta_ext)).
-
-:- use_module(plDcg(dcg_generics)).
+:- use_module(plc(dcg/dcg_generics)).
+:- use_module(plc(generics/logging)).
+:- use_module(plc(generics/meta_ext)).
 
 :- use_module(plUri(uri_query)).
 

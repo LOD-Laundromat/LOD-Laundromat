@@ -18,8 +18,8 @@ Stores error term denoting exceptions in a LOD format.
 :- use_module(library(semweb/rdf_db), except([rdf_node/1])).
 :- use_module(library(uri)).
 
-:- use_module(generics(atom_ext)).
-:- use_module(generics(logging)).
+:- use_module(plc(generics/atom_ext)).
+:- use_module(plc(generics/logging)).
 
 :- use_module(plXml(xml_dom)).
 
