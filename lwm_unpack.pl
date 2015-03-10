@@ -68,7 +68,7 @@ lwm_unpack_loop:-
   lwm_unpack_loop.
 % Done for now. Check whether there are new jobs in one seconds.
 lwm_unpack_loop:-
-  sleep(5),
+  sleep(30),
   lwm_debug_message(lwm_idle_loop(unpack)), % DEB
   lwm_unpack_loop.
 
