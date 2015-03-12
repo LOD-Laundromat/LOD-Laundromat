@@ -14,7 +14,7 @@
 Generic predicates for the LOD Washing Machine.
 
 @author Wouter Beek
-@version 2014/06, 2014/08-2014/09, 2015/01-2015/02
+@version 2014/06, 2014/08-2014/09, 2015/01-2015/03
 */
 
 :- use_module(library(filesex)).
@@ -32,73 +32,66 @@ Generic predicates for the LOD Washing Machine.
 
 user:prolog_file_type(conf, configuration).
 
-:- rdf_register_prefix(
-     error,
-     'http://lodlaundromat.org/error/ontology/'
-   ).
-:- rdf_register_prefix(ll, 'http://lodlaundromat.org/resource/').
-:- rdf_register_prefix(llo, 'http://lodlaundromat.org/ontology/').
-
 :- setting(
-     endpoint,
-     oneof([both,cliopatria,virtuoso]),
-     both,
-     'The endpoint that is used to store the crawling metadata in.'
-   ).
+  endpoint,
+  oneof([both,cliopatria,virtuoso]),
+  both,
+  'The endpoint that is used to store the crawling metadata in.'
+).
 :- setting(
-     keep_old_datadoc,
-     boolean,
-     true,
-     'Whether the original data document is stored or not.'
-   ).
+  keep_old_datadoc,
+  boolean,
+  true,
+  'Whether the original data document is stored or not.'
+).
 :- setting(
-     max_number_of_warnings,
-     nonneg,
-     100,
-     'The maximum number of warnings that is stored per data document.'
-   ).
+  max_number_of_warnings,
+  nonneg,
+  100,
+  'The maximum number of warnings that is stored per data document.'
+).
 :- setting(
-     number_of_large_cleaning_threads,
-     nonneg,
-     1,
-     'The number of threads for cleaning large data documents.'
-   ).
+  number_of_large_cleaning_threads,
+  nonneg,
+  1,
+  'The number of threads for cleaning large data documents.'
+).
 :- setting(
-     number_of_medium_cleaning_threads,
-     nonneg,
-     1,
-     'The number of threads for cleaning medium data documents.'
-   ).
+  number_of_medium_cleaning_threads,
+  nonneg,
+  1,
+  'The number of threads for cleaning medium data documents.'
+).
 :- setting(
-     number_of_small_cleaning_threads,
-     nonneg,
-     1,
-     'The number of threads for cleaning small data documents.'
-   ).
+  number_of_small_cleaning_threads,
+  nonneg,
+  1,
+  'The number of threads for cleaning small data documents.'
+).
 :- setting(
-     number_of_sorting_threads,
-     nonneg,
-     1,
-     'The number of threads for sorting data documents.'
-   ).
+  number_of_sorting_threads,
+  nonneg,
+  1,
+  'The number of threads for sorting data documents.'
+).
 :- setting(
-     number_of_unpacking_threads,
-     nonneg,
-     1,
-     'The number of threads for downloading and unpacking data documents.'
-   ).
+  number_of_unpacking_threads,
+  nonneg,
+  1,
+  'The number of threads for downloading and unpacking data documents.'
+).
 :- setting(
-     post_processing,
-     boolean,
-     false,
-     'Whether or not a post-processing script is run.'
-   ).
+  post_processing,
+  boolean,
+  false,
+  'Whether or not a post-processing script is run.'
+).
 :- setting(
-     version,
-     nonneg,
-     12,
-     'The version number of the scrape.'
-   ).
+  version,
+  nonneg,
+  12,
+  'The version number of the scrape.'
+).
 
 
 

@@ -1,7 +1,5 @@
-% The load file for the LOD Washing Machine,
-% part of the LOD Laundromat project.
-
-:- use_module(library(ansi_term)).
+% The load file for the LOD Washing Machine.
+% This is part of the LOD Laundromat.
 
 :- dynamic(user:project/3).
 :- multifile(user:project/3).
@@ -10,6 +8,7 @@ user:project(
   'Where we clean other people\'s dirty data',
   lwm
 ).
+
 
 :- use_module(load_project).
 :- load_project([
@@ -26,4 +25,12 @@ user:project(
   plXml,
   plXsd
 ]).
+
+
+:- use_module(library(semweb/rdf_db), except([rdf_node/1])).
+
+:- rdf_register_prefix(error, 'http://lodlaundromat.org/error/ontology/').
+:- rdf_register_prefix(httpo, 'http://lodlaundromat.org/http/ontology/').
+:- rdf_register_prefix(ll, 'http://lodlaundromat.org/resource/').
+:- rdf_register_prefix(llo, 'http://lodlaundromat.org/ontology/').
 
