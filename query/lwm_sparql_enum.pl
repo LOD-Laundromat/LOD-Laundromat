@@ -68,7 +68,6 @@ datadoc_enum_cleaning(Datadoc):-
 %      Add argument `Host` for releasing the lock in [lwm_unpack].
 
 datadoc_enum_pending(Datadoc, DirtyUrl):-
-gtrace,
   lwm_sparql_select_iteratively(
     [llo],
     [datadoc,dirty],
@@ -97,7 +96,6 @@ gtrace,
 % UnpackedSize is expressed as the number of bytes.
 
 datadoc_enum_unpacked(Min, Max, Datadoc, UnpackedSize):-
-gtrace,
   build_unpacked_query(Min, Max, Query),
   lwm_sparql_select_iteratively(
     [llo],
