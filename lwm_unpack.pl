@@ -147,7 +147,7 @@ unpack_datadoc(Md5, Datadoc, DirtyUrl, File):-
 
   % Further unpack the archive entry.
   unpack_file(Md5, Md5Dir, Datadoc, File).
-% The given MD5 denotes a URL.
+% The given MD5 denotes a URI.
 unpack_datadoc(Md5, Datadoc, DirtyUrl, DownloadFile):-
   % Create a directory for the dirty version of the given Md5.
   md5_directory(Md5, Md5Dir),
@@ -174,10 +174,11 @@ unpack_datadoc(Md5, Datadoc, DirtyUrl, DownloadFile):-
       header(content_length, ContentLength),
       header(content_type, ContentType),
       header(last_modified, LastModified),
-      request_header('Accept'=AcceptValue)
+      request_header('Accept'=AcceptValue),
+      status_code(Status)
     ]
   ),
-
+  
   % Store the file size of the dirty file.
   size_file(DownloadFile, DownloadSize),
   store_triple(
@@ -187,9 +188,13 @@ unpack_datadoc(Md5, Datadoc, DirtyUrl, DownloadFile):-
   ),
 
   % Store HTTP statistics.
-  store_http(Datadoc, ContentLength, ContentType, LastModified),
+  store_http(Datadoc, Status, ContentLength, ContentType, LastModified),
 
-  unpack_file(Md5, Md5Dir, Datadoc, DownloadFile).
+  % Process the HTTP status code.
+  (   between(400, 599, Status)
+  ->  throw(error(http_status(Status),lwm_unpack:unpack_datadoc/4))
+  ;   unpack_file(Md5, Md5Dir, Datadoc, DownloadFile)
+  ).
 
 
 %! unpack_file(

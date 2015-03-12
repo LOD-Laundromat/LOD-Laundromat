@@ -113,11 +113,11 @@ store_lod_error0(
 
 % HTTP status
 store_lod_error0(Datadoc, Kind, error(http_status(Status),_)):- !,
-  (   between(400, 599, Status)
-  ->  store_triple(Datadoc, llo-Kind, httpo-Status)
-  ;   true
-  ),
-  store_triple(Datadoc, llo-httpStatus, httpo-Status).
+  (   between(400, 499, Status)
+  ->  store_triple(Datadoc, llo-Kind, httpo-'4xxHttpError')
+  ;   between(500, 599, Status)
+  ->  store_triple(Datadoc, llo-Kind, httpo-'5xxHttpError')
+  ).
 
 % IO error: read
 store_lod_error0(

@@ -17,7 +17,8 @@
                        % +Status:or([boolean,compound]))
     store_file_extension/2, % +Datadoc:uri
                             % +FileExtension:atom
-    store_http/4, % +Datadoc:uri
+    store_http/5, % +Datadoc:uri
+                  % +Status:nonneg
                   % ?ContentLength:nonneg
                   % ?ContentType:atom
                   % ?LastModified:nonneg
@@ -214,12 +215,15 @@ store_file_extension(Datadoc, FileExtension):-
 
 %! store_http(
 %!   +Datadoc:uri,
+%!   +Status:nonneg,
 %!   ?ContentLength:nonneg,
 %!   ?ContentType:atom,
 %!   ?LastModified:nonneg
 %! ) is det.
 
-store_http(Datadoc, ContentLength, ContentType, LastModified):-
+store_http(Datadoc, Status, ContentLength, ContentType, LastModified):-
+  atom_number(Status, Status0),
+  store_triple(Datadoc, llo-status, httpo-Status0),
   unless(
     ContentLength == '',
     store_triple(
