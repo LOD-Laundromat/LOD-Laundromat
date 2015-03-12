@@ -360,8 +360,12 @@ store_stream(Datadoc, Stream):-
 % @tbd Should we distinguish between `warning` and `error`
 %      in the second argument here?
 
-store_warning(Datadoc, message(Term,Kind,_)):-
+store_warning(Datadoc, message(Term,Kind0,_)):-
+  once(rename_kind(Kind0, Kind)),
   store_lod_error(Datadoc, Kind, Term).
+
+rename_kind(error, warning).
+rename_kind(Kind, Kind).
 
 
 
