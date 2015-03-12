@@ -47,6 +47,7 @@ Reset data documents in the triple store.
 % Make sure the input is indeed a data document.
 % Otherwise the entire graph may be removed.
 reset_datadoc(Datadoc):-
+  % Make sure the MD5 is not empty.
   rdf_global_id(ll:Md5, Datadoc),
   dcg_phrase(whites, Md5), !.
 reset_datadoc(Datadoc):-

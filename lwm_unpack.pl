@@ -264,7 +264,7 @@ unpack_file(Md5, Md5Dir, Datadoc, ArchiveFile):-
 %!   +ParentMd5:atom,
 %!   +ParentMd5Dir:atom,
 %!   +Datadoc:atom,
-%!   EntryPair:pair(atom,list(nvpair))
+%!   -EntryPair:pair(atom,list(nvpair))
 %! ) is det.
 
 process_entry_pair(_, _, _, _-EntryProperties):-
