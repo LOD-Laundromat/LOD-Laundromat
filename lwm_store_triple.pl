@@ -295,7 +295,7 @@ store_seedpoint(Uri):-
   rdf_global_id(ll:Md5, Datadoc),
   (   datadoc_exists(Datadoc)
   ->  true
-  ;   store_triple(Datadoc, rdf-type, llo-'ArchiveEntry'),
+  ;   store_triple(Datadoc, rdf-type, llo-'URI'),
       store_triple(Datadoc, llo-url, Uri),
       store_added(Datadoc, Md5)
   ).
