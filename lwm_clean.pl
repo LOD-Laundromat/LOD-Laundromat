@@ -277,7 +277,7 @@ clean_datastream(
         ctriples_write_begin(State, BNodePrefix, Options3),
         setup_call_cleanup(
           open(CleaningFile, write, UnsortedOut),
-          clean_triples(
+          rdf_clean:clean_triples(
             Format,
             DirtyIn,
             UnsortedOut,
@@ -311,38 +311,11 @@ clean_datastream(
   ),
 
   % Sort file.
-  buffer_size_file(CleaningFile, BufferSize),
-  (   BufferSize > 6 * (1024 ** 3) % >6GB
-  ->  Threads = 3
-  ;   BufferSize > 3 * (1024 ** 3) % >3GB
-  ->  Threads = 2
-  ;   Threads = 1 % =<3GB
-  ),
-  gnu_sort(
-    CleaningFile,
-    [
-      buffer_size(BufferSize),
-      duplicates(false),
-      output(CleaningFile),
-      parallel(Threads),
-      temporary_directory('/ssd/lodlaundromat/tmp'),
-      utf8(true)
-    ]
-  ),
+  rdf_clean:sort_file(CleaningFile, '/ssd/lodlaundromat/tmp'),
   file_lines(CleaningFile, NumberOfUniqueTriples),
 
   % Compress file.
-  atomic_list_concat([clean,Ext,gz], '.', LocalName),
-  directory_file_path(Dir, LocalName, CleanFile),
-  setup_call_cleanup(
-    gzopen(CleanFile, write, CleanOut),
-    setup_call_cleanup(
-      open(CleaningFile, read, SortedIn),
-      copy_stream_data(SortedIn, CleanOut),
-      close(SortedIn)
-    ),
-    close(CleanOut)
-  ),
+  rdf_clean:compress_file(Dir, Ext, CleaningFile),
   delete_file(CleaningFile),
 
   % Store statistics about the number of (duplicate) triples.
@@ -363,92 +336,10 @@ clean_datastream(
   ;   true
   ).
 
-clean_triples(xml, In, Out, State, BNodePrefix, Options):- !,
-  process_rdf(
-    In,
-    clean_streamed_triples(Out, State, BNodePrefix),
-    Options
-  ).
-clean_triples(Format, In, Out, State, BNodePrefix, Options1):-
-  memberchk(Format, [nquads,ntriples]), !,
-  merge_options([anon_prefix(BNodePrefix)], Options1, Options2),
-  rdf_process_ntriples(
-    In,
-    clean_streamed_triples(Out, State, BNodePrefix),
-    Options2
-  ).
-clean_triples(Format, In, Out, State, BNodePrefix, Options1):-
-  memberchk(Format, [trig,turtle]), !,
-  merge_options([anon_prefix(BNodePrefix)], Options1, Options2),
-  rdf_process_turtle(
-    In,
-    clean_streamed_triples(Out, State, BNodePrefix),
-    Options2
-  ).
-
-
 
 
 
 % HELPERS %
-
-%! clean_streamed_triples(
-%!   +Out:stream,
-%!   +State:compound,
-%!   +BNodePrefix:atom,
-%!   +Triples:compound,
-%!   +LinePosition:compound
-%! ) is det.
-
-clean_streamed_triples(Out, State, BNodePrefix, Triples0, Graph0):-
-  graph_without_line(Graph0, Graph),
-  maplist(fix_triple(Graph), Triples0, Triples),
-  maplist(ctriples_write_triple(Out, State, BNodePrefix), Triples).
-
-
-
-%! fix_triple(
-%!   +Graph:atom,
-%!   +WonkyStatement:compound,
-%!   -Statement:compound
-%! ) is det.
-%
-
-fix_triple(Graph, rdf(S,P,O), Triple):- !,
-  (   is_named_graph(Graph)
-  ->  set_has_quadruples,
-      Triple = rdf(S,P,O,Graph)
-  ;   Triple = rdf(S,P,O)
-  ).
-fix_triple(Graph, rdf(S,P,O,G0), Triple):-
-  (   graph_without_line(G0, G),
-      is_named_graph(G)
-  ->  set_has_quadruples,
-      Triple = rdf(S,P,O,G)
-  ;   is_named_graph(Graph)
-  ->  set_has_quadruples,
-      Triple = rdf(S,P,O,Graph)
-  ;   Triple = rdf(S,P,O)
-  ).
-
-
-
-%! graph_without_line(+WonkyGraph:compound, -Graph:atom) is det.
-% Remove file line numbers from the graph name.
-
-graph_without_line(Graph:_, Graph):- !.
-graph_without_line(Graph, Graph).
-
-
-
-%! is_named_graph(+Graph:atom) is semidet.
-% Succeeds for all and only named graphs.
-
-is_named_graph(Graph):-
-  ground(Graph),
-  Graph \== user.
-
-
 
 %! rdf_guess_format(
 %!   +Datadoc:uri,
@@ -463,15 +354,3 @@ rdf_guess_format(_, In, FileExtension, ContentType, Format):-
 rdf_guess_format(Datadoc, _, _, _, _):-
   datadoc_source(Datadoc, Source),
   throw(error(no_rdf(Source))).
-
-
-
-%! set_has_quadruples is det.
-% Store the fact that a quadruple occurred in the parser stream
-% as a thread-local global Prolog fact.
-
-set_has_quadruples:-
-  has_quadruples(true), !.
-set_has_quadruples:-
-  assert(has_quadruples(true)).
-
