@@ -11,13 +11,14 @@
 Unpacks files for the LOD Washing Machine to clean.
 
 @author Wouter Beek
-@version 2014/06, 2014/08-2014/09, 2014/11, 2015/01-2015/02
+@version 2014/06, 2014/08-2014/09, 2014/11, 2015/01-2015/02, 2015/06
 */
 
 :- use_module(library(apply)).
+:- use_module(library(debug)).
 :- use_module(library(lists), except([delete/3,subset/2])).
+:- use_module(library(semweb/rdf_http_plugin)).
 
-:- use_module(plc(generics/logging)).
 :- use_module(plc(io/archive_ext)).
 :- use_module(plc(io/file_ext)).
 :- use_module(plc(io/file_gnu)).
@@ -110,7 +111,7 @@ lwm_unpack(Datadoc, DirtyUrl):-
     Warnings
   ),
   (   Status == false
-  ->  append_to_log(lwm, '[UNPACKING FAILED] ~w', [Md5])
+  ->  debug(lwm, '[UNPACKING FAILED] ~w', [Md5])
   ;   Status == true
   ->  true
   ;   debug(lwm_status, '[STATUS] ~w', [Status])
@@ -163,19 +164,18 @@ unpack_datadoc(Md5, Datadoc, DirtyUrl, DownloadFile):-
   directory_file_path(Md5Dir, LocalDownloadFile, DownloadFile),
 
   % Download the dirty file for the given Md5.
-  rdf_accept_header_value(AcceptValue),
+  rdf_http_plugin:rdf_extra_headers(DefaultRdfHttpOpts, []),
   download_to_file(
     DirtyUrl,
     DownloadFile,
     [
-      cert_verify_hook(ssl_verify),
       % Always redownload.
       freshness_lifetime(0.0),
       header(content_length, ContentLength),
       header(content_type, ContentType),
       header(last_modified, LastModified),
-      request_header('Accept'=AcceptValue),
       status_code(Status)
+    | DefaultRdfHttpOpts
     ]
   ),
   

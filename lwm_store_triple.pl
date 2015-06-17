@@ -46,13 +46,14 @@ the stored triples are sent in a SPARQL Update request
 (see module [noRdf_store].
 
 @author Wouter Beek
-@version 2014/04-2014/06, 2014/08-2014/09, 2015/01-2015/02
+@version 2014/04-2014/06, 2014/08-2014/09, 2015/01-2015/02, 2015/06
 */
 
 :- use_module(library(lists), except([delete/3,subset/2])).
 :- use_module(library(semweb/rdf_db), except([rdf_node/1])).
 :- use_module(library(uri)).
 
+:- use_module(plc(os/date_ext)).
 :- use_module(plc(prolog/pl_control)).
 
 :- use_module(plXsd(xsd)).
@@ -378,6 +379,6 @@ rename_kind(Kind, Kind).
 % HELPERS %
 
 get_dateTime_lexical(Added0):-
-  get_dateTime(Added),
+  get_date(Added),
   xsd_canonical_map(xsd:dateTime, Added, Added0).
 

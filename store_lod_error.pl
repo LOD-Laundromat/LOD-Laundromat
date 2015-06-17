@@ -12,14 +12,14 @@
 Stores error term denoting exceptions in a LOD format.
 
 @author Wouter Beek
-@version 2014/09, 2015/01-2015/02
+@version 2014/09, 2015/01-2015/02, 2015/06
 */
 
+:- use_module(library(debug)).
 :- use_module(library(semweb/rdf_db), except([rdf_node/1])).
 :- use_module(library(uri)).
 
 :- use_module(plc(generics/atom_ext)).
-:- use_module(plc(generics/logging)).
 
 :- use_module(plXml(xml_dom)).
 
@@ -41,7 +41,7 @@ store_lod_error(Datadoc, Kind, Error):-
   gtrace, %DEB
   store_lod_error(Datadoc, Kind, Error).
 store_lod_error(Datadoc, _, Error):-
-  append_to_log(lwm, '[STORE-ERROR FAILED] ~w ~w', [Datadoc,Error]).
+  debug(lwm, '[STORE-ERROR FAILED] ~w ~w', [Datadoc,Error]).
 
 % Archive error
 store_lod_error0(Datadoc, Kind, error(archive_error(Code,_),_)):- !,

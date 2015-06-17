@@ -22,6 +22,7 @@
 :- debug(lwm_progress(clean_small)).
 :- debug(lwm_progress(unpack)).
 
+:- debug(lwm).
 :- debug(lwm_restart).
 :- debug(lwm_seedpoint).
 :- debug(lwm_status).

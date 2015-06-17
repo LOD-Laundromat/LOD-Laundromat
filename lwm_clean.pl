@@ -13,10 +13,11 @@
 The cleaning process performed by the LOD Washing Machine.
 
 @author Wouter Beek
-@version 2014/03-2014/06, 2014/08-2014/09, 2015/01-2015/02
+@version 2014/03-2014/06, 2014/08-2014/09, 2015/01-2015/02, 2015/06
 */
 
 :- use_module(library(apply)).
+:- use_module(library(debug)).
 :- use_module(library(option)).
 :- use_module(library(semweb/rdf_db), except([rdf_node/1])). % Format `xml`.
 :- use_module(library(semweb/rdf_ntriples)). % Formats `ntriples`, `nquads`.
@@ -26,11 +27,10 @@ The cleaning process performed by the LOD Washing Machine.
 
 :- use_module(plc(dcg/dcg_generics)).
 :- use_module(plc(generics/list_ext)).
-:- use_module(plc(generics/logging)).
-:- use_module(plc(generics/sort_ext)).
 :- use_module(plc(io/archive_ext)).
 :- use_module(plc(io/file_ext)).
 :- use_module(plc(io/file_gnu)).
+:- use_module(plc(process/gnu_sort)).
 :- use_module(plc(process/list_script)).
 :- use_module(plc(prolog/pl_log)).
 
@@ -122,7 +122,7 @@ lwm_clean(Category, Datadoc, UnpackedSize):-
     Warnings1
   ),
   (   Status == false
-  ->  append_to_log(lwm, '[CLEANING FAILED] ~w', [Md5])
+  ->  debug(lwm, '[CLEANING FAILED] ~w', [Md5])
   ;   Status == true
   ->  true
   ;   debug(lwm_status, '[STATUS] ~w', [Status])
@@ -174,7 +174,7 @@ clean_md5(Category, Md5, Datadoc, DirtyFile):-
   % Stays uninstantiated in case no content type is set.
   ignore((
     datadoc_content_type(Datadoc, ContentType0),
-    dcg_phrase('Content-Type'(ContentType), ContentType0)
+    atom_phrase('Content-Type'(ContentType), ContentType0)
   )),
 
   % Clean the data document in an RDF transaction.
@@ -233,7 +233,7 @@ clean_datastream(
   ignore(datadoc_file_extension(Datadoc, FileExtension)),
   rdf_guess_format(Datadoc, DirtyIn, FileExtension, ContentType, Format),
 
-  rdf_serialization(_, Format, _, Uri),
+  rdf_serialization_resource(Uri, Format),
   store_triple(Datadoc, llo-serializationFormat, Uri),
 
   % Load all triples by parsing the data document

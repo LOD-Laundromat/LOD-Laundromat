@@ -19,12 +19,11 @@ This means that we can use RDF transactions + snapshots
 and at the same time send small RDF messages using SPARQL Update requests.
 
 @author Wouter Beek
-@version 2014/05-2014/06, 2014/08-2014/09, 2015/01-2015/02
+@version 2014/05-2014/06, 2014/08-2014/09, 2015/01-2015/02, 2015/06
 */
 
+:- use_module(library(debug)).
 :- use_module(library(semweb/rdf_db), except([rdf_node/1])).
-
-:- use_module(plc(generics/logging)).
 
 :- use_module(plSparql(http/sparql_graph_store)).
 :- use_module(plSparql(update/sparql_update_api)).
@@ -66,7 +65,7 @@ post_rdf_triples:-
   % Debug
   (   between(200, 299, Status)
   ->  true
-  ;   append_to_log(lwm, '[POST-METADATA FAILED]', [])
+  ;   debug(lwm, '[POST-METADATA FAILED]', [])
   ),
 
   % Cleanup.

@@ -10,12 +10,12 @@
 Restart the LOD Washing Machine during debugging.
 
 @author Wouter Beek
-@version 2014/08-2014/09, 2015/01-2015/02
+@version 2014/08-2014/09, 2015/01-2015/02, 2015/06
 */
 
+:- use_module(library(debug)).
 :- use_module(library(thread)).
 
-:- use_module(plc(generics/logging)).
 :- use_module(plc(generics/meta_ext)).
 
 :- use_module(plUri(uri_query)).
@@ -63,7 +63,7 @@ restart_store(virtuoso):-
   http_goal(Uri, true, [fail_on_status([404]),status(Status)]), !,
   (   between(200, 299, Status)
   ->  true
-  ;   append_to_log(
+  ;   debug(
         lwm,
         '[RESTART FAILED] Status code ~d received.',
         [Status]

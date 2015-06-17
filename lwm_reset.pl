@@ -10,11 +10,12 @@
 Reset data documents in the triple store.
 
 @author Wouter Beek
-@version 2015/01-2015/02
+@version 2015/01-2015/02, 2015/06
 */
 
 :- use_module(library(apply)).
 :- use_module(library(dcg/basics)).
+:- use_module(library(debug)).
 :- use_module(library(filesex)).
 :- use_module(library(lists), except([delete/3,subset/2])).
 :- use_module(library(settings)).
@@ -22,7 +23,6 @@ Reset data documents in the triple store.
 :- use_module(library(uri)).
 
 :- use_module(plc(dcg/dcg_generics)).
-:- use_module(plc(generics/logging)).
 :- use_module(plc(generics/meta_ext)).
 
 :- use_module(plUri(uri_query)).
@@ -49,7 +49,7 @@ Reset data documents in the triple store.
 reset_datadoc(Datadoc):-
   % Make sure the MD5 is not empty.
   rdf_global_id(ll:Md5, Datadoc),
-  dcg_phrase(whites, Md5), !.
+  atom_phrase(whites, Md5), !.
 reset_datadoc(Datadoc):-
   lwm_settings:setting(endpoint, both), !,
   concurrent(
@@ -85,7 +85,7 @@ reset_datadoc(cliopatria, Datadoc):- !,
   http_goal(Uri, true, Options),
   (   between(200, 299, Status)
   ->  true
-  ;   append_to_log(lwm, '[RESET FAILED] Status code ~d received.', [Status])
+  ;   debug(lwm, '[RESET FAILED] Status code ~d received.', [Status])
   ),
   print_message(informational, lwm_reset(Datadoc)).
 reset_datadoc(virtuoso, Datadoc):-
