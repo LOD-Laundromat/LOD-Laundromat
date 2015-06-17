@@ -16,7 +16,7 @@ Generic code for loading a project:
   * Load the index of subprojects onto the file search path.
 
 @author Wouter Beek
-@version 2014/11/22
+@version 2015/06/08
 */
 
 :- use_module(library(ansi_term)). % Colorized terminal messages.
@@ -47,8 +47,8 @@ load_project(ChildProjects):-
   % Load the root of submodules onto the file search path.
   maplist(load_subproject(ParentFsp), ChildProjects),
 
-  % Load the index into the file search path.
-  load_project_index(ParentFsp).
+  % Load the initialization file, if any.
+  load_file(ParentFsp, init).
 
 
 
@@ -59,7 +59,8 @@ load_project(ChildProjects):-
 
 load_subproject(ParentFsp, ChildFsp-ChildDir):- !,
   load_subproject_file_search_path(ParentFsp, ChildFsp, ChildDir),
-  load_project_index(ChildFsp).
+  % Load the initialization file of the subproject, if any.
+  load_file(ChildFsp, init).
 load_subproject(ParentFsp, Child):-
   load_subproject(ParentFsp, Child-Child).
 
@@ -81,17 +82,17 @@ load_subproject_file_search_path(_, ChildFsp, ChildDir):-
   print_message(warning, missing_subproject_directory(ChildFsp,ChildDir)).
 
 
-%! load_project_index(+FileSearchPath:atom) is det.
+%! load_file(+FileSearchPath:atom, +LocalName:atom) is det.
 
-load_project_index(Fsp):-
-  Spec =.. [Fsp,index],
+load_file(Fsp, LocalName):-
+  Spec =.. [Fsp,LocalName],
   absolute_file_name(
     Spec,
     File,
     [access(read),file_errors(fail),file_type(prolog)]
   ), !,
   ensure_loaded(File).
-load_project_index(_).
+load_file(_, _).
 
 
 %! parent_alias(-ParentFsp:atom) is det.
