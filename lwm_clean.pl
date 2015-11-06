@@ -238,7 +238,6 @@ clean_datastream(
 
   % Load all triples by parsing the data document
   % according to the guessed RDF serialization format.
-  md5_base_url(Md5, Base),
   Options1 = [
       base_uri(Base),
       format(Format),
@@ -253,8 +252,7 @@ clean_datastream(
   % Prepare the file name.
   file_directory_name(DirtyFile, Dir),
 
-  md5_bnode_base(Md5, BaseComponents),
-  Options3 = [bnode_base(BaseComponents),number_of_triples(NumberOfTriples)],
+  Options3 = [base_iri(BaseIri),number_of_triples(NumberOfTriples)],
 
   retractall(datadump/1),
   directory_file_path(Dir, cleaning, CleaningFile),

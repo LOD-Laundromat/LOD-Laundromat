@@ -6,34 +6,34 @@
                            % +Entry:atom
                            % +EntryPath:atom
                            % +EntryProperties:list(nvpair)
-    store_archive_filters/2, % +Datadoc:uri
+    store_archive_filters/2, % +Document:iri
                              % +ArchiveFilters:list(atom)
     store_end_clean/2, % +Md5:atom
-                       % +Datadoc:uri
+                       % +Document:iri
     store_end_unpack/3, % +Md5:atom
-                        % +Datadoc:uri
+                        % +Document:iri
                         % +Status
-    store_exception/2, % +Datadoc:uri
+    store_exception/2, % +Document:iri
                        % +Status:or([boolean,compound]))
-    store_file_extension/2, % +Datadoc:uri
+    store_file_extension/2, % +Document:iri
                             % +FileExtension:atom
-    store_http/5, % +Datadoc:uri
+    store_http/5, % +Document:iri
                   % +Status:nonneg
                   % ?ContentLength:nonneg
                   % ?ContentType:atom
                   % ?LastModified:nonneg
     store_number_of_triples/4, % +Category:atom
-                               % +Datadoc:uri
+                               % +Document:iri
                                % +NumberOfTriples:nonneg
                                % +NumberOfUniqueTriples:nonneg
     store_skip_clean/2, % +Md5:atom
-                        % +Datadoc:uri
-    store_seedpoint/1, % +Uri:atom
-    store_start_clean/1, % +Datadoc:uri
-    store_start_unpack/1, % +Datadoc:uri
-    store_stream/2, % +Datadoc:uri
+                        % +Document:iri
+    store_seedpoint/1, % +Iri:atom
+    store_start_clean/1, % +Document:iri
+    store_start_unpack/1, % +Document:iri
+    store_stream/2, % +Document:iri
                     % +Stream:stream
-    store_warning/2 % +Datadoc:uri
+    store_warning/2 % +Document:iri
                     % +Warning:compound
   ]
 ).
@@ -68,13 +68,13 @@ the stored triples are sent in a SPARQL Update request
 
 
 
-%! store_added(+Datadoc:uri, +Md5:atom) is det.
-% Datetime at which the seedpoint URI was added to the LOD Basket.
+%! store_added(+Document:iri, +Md5:atom) is det.
+% Datetime at which the seedpoint IRI was added to the LOD Basket.
 
-store_added(Datadoc, Md5):-
+store_added(Document, Md5):-
   get_dateTime_lexical(Added),
-  store_triple(Datadoc, llo-added, literal(type(xsd-dateTime,Added))),
-  store_triple(Datadoc, llo-md5, literal(type(xsd-string,Md5))),
+  store_triple(Document, llo-added, literal(type(xsd-dateTime,Added))),
+  store_triple(Document, llo-md5, literal(type(xsd-string,Md5))),
   post_rdf_triples.
 
 
@@ -127,12 +127,12 @@ store_archive_entry(Parent, EntryMd5, Entry, EntryPath, EntryProperties0):-
 
 
 
-%! store_archive_filters(+Datadoc:uri, +ArchiveFilters:list(atom)) is det.
+%! store_archive_filters(+Document:iri, +ArchiveFilters:list(atom)) is det.
 
 store_archive_filters(_, []):- !.
-store_archive_filters(Datadoc, ArchiveFilters):-
+store_archive_filters(Document, ArchiveFilters):-
   rdf_bnode(BNode),
-  store_triple(Datadoc, llo-archiveFilters, BNode),
+  store_triple(Document, llo-archiveFilters, BNode),
   store_archive_filters0(BNode, ArchiveFilters).
 
 store_archive_filters0(BNode, [H]):- !,
@@ -146,24 +146,24 @@ store_archive_filters0(BNode1, [H|T]):-
 
 
 
-%! store_end_clean(+Md5:atom, +Datadoc:uri) is det.
+%! store_end_clean(+Md5:atom, +Document:iri) is det.
 
-store_end_clean(Md5, Datadoc):-
-  store_end_clean0(Md5, Datadoc),
+store_end_clean(Md5, Document):-
+  store_end_clean0(Md5, Document),
   post_rdf_triples.
 
-store_end_clean0(Md5, Datadoc):-
+store_end_clean0(Md5, Document):-
   get_dateTime_lexical(Now),
-  store_triple(Datadoc, llo-endClean, literal(type(xsd-dateTime,Now))),
+  store_triple(Document, llo-endClean, literal(type(xsd-dateTime,Now))),
 
   % Construct the download URL for non-archive files.
-  (   datadoc_has_triples(Datadoc)
+  (   datadoc_has_triples(Document)
   ->  atom_concat('/', Md5, Path),
       uri_components(
         Datadump,
         uri_components(http,'download.lodlaundromat.org',Path,_,_)
       ),
-      store_triple(Datadoc, void-dataDump, Datadump)
+      store_triple(Document, void-dataDump, Datadump)
   ;   true
   ).
 
@@ -171,43 +171,43 @@ store_end_clean0(Md5, Datadoc):-
 
 %! store_end_unpack(
 %!   +Md5:atom,
-%!   +Datadoc:uri,
+%!   +Document:iri,
 %!   +Status:or([boolean,compound])
 %! ) is det.
 
 % Only unpacking actions with status `true` proceed to cleaning.
-store_end_unpack(_, Datadoc, true):- !,
-  store_end_unpack0(Datadoc),
+store_end_unpack(_, Document, true):- !,
+  store_end_unpack0(Document),
   post_rdf_triples.
 % Skip cleaning if unpacking failed or throw a critical exception.
-store_end_unpack(Md5, Datadoc, Status):-
-  store_end_unpack0(Datadoc),
-  store_start_clean0(Datadoc),
-  store_end_clean0(Md5, Datadoc),
-  store_exception(Datadoc, Status),
+store_end_unpack(Md5, Document, Status):-
+  store_end_unpack0(Document),
+  store_start_clean0(Document),
+  store_end_clean0(Md5, Document),
+  store_exception(Document, Status),
   post_rdf_triples.
 
-store_end_unpack0(Datadoc):-
+store_end_unpack0(Document):-
   get_dateTime_lexical(Now),
-  store_triple(Datadoc, llo-endUnpack, literal(type(xsd-dateTime,Now))).
+  store_triple(Document, llo-endUnpack, literal(type(xsd-dateTime,Now))).
 
 
 
-%! store_exception(+Datadoc:uri, +Status:or([boolean,compound])) is det.
+%! store_exception(+Document:iri, +Status:or([boolean,compound])) is det.
 
 % Not an exception.
 store_exception(_, true):- !.
 % Format exceptions.
-store_exception(Datadoc, exception(Error)):-
-  store_lod_error(Datadoc, exception, Error).
+store_exception(Document, exception(Error)):-
+  store_lod_error(Document, exception, Error).
 
 
 
-%! store_file_extension(+Datadoc:uri, +FileExtension:atom) is det.
+%! store_file_extension(+Document:iri, +FileExtension:atom) is det.
 
-store_file_extension(Datadoc, FileExtension):-
+store_file_extension(Document, FileExtension):-
   store_triple(
-    Datadoc,
+    Document,
     llo-fileExtension,
     literal(type(xsd-string,FileExtension))
   ).
@@ -215,20 +215,20 @@ store_file_extension(Datadoc, FileExtension):-
 
 
 %! store_http(
-%!   +Datadoc:uri,
+%!   +Document:iri,
 %!   +Status:nonneg,
 %!   ?ContentLength:nonneg,
 %!   ?ContentType:atom,
 %!   ?LastModified:nonneg
 %! ) is det.
 
-store_http(Datadoc, Status, ContentLength, ContentType, LastModified):-
+store_http(Document, Status, ContentLength, ContentType, LastModified):-
   atom_number(Status, Status0),
-  store_triple(Datadoc, llo-status, httpo-Status0),
+  store_triple(Document, llo-status, httpo-Status0),
   unless(
     ContentLength == '',
     store_triple(
-      Datadoc,
+      Document,
       llo-contentLength,
       literal(type(xsd-nonNegativeInteger,ContentLength))
     )
@@ -236,7 +236,7 @@ store_http(Datadoc, Status, ContentLength, ContentType, LastModified):-
   unless(
     ContentType == '',
     store_triple(
-      Datadoc,
+      Document,
       llo-contentType,
       literal(type(xsd-string,ContentType))
     )
@@ -245,7 +245,7 @@ store_http(Datadoc, Status, ContentLength, ContentType, LastModified):-
   unless(
     LastModified == '',
     store_triple(
-      Datadoc,
+      Document,
       llo-lastModified,
       literal(type(xsd-string,LastModified))
     )
@@ -255,20 +255,20 @@ store_http(Datadoc, Status, ContentLength, ContentType, LastModified):-
 
 %! store_number_of_triples(
 %!   +Category:atom,
-%!   +Datadoc:uri,
+%!   +Document:iri,
 %!   +NumberOfTriples:nonneg,
 %!   +NumberOfUniqueTriples:nonneg
 %! ) is det.
 
 store_number_of_triples(
   Category,
-  Datadoc,
+  Document,
   NumberOfTriples,
   NumberOfUniqueTriples
 ):-
   % Store the number of unique triples.
   store_triple(
-    Datadoc,
+    Document,
     llo-triples,
     literal(type(xsd-nonNegativeInteger,NumberOfUniqueTriples))
   ),
@@ -276,7 +276,7 @@ store_number_of_triples(
   % Store the number of duplicate triples.
   NumberOfDuplicateTriples is NumberOfTriples - NumberOfUniqueTriples,
   store_triple(
-    Datadoc,
+    Document,
     llo-duplicates,
     literal(type(xsd-nonNegativeInteger,NumberOfDuplicateTriples))
   ),
@@ -293,81 +293,81 @@ store_number_of_triples(
 
 store_seedpoint(Uri):-
   rdf_atom_md5(Uri, 1, Md5),
-  rdf_global_id(ll:Md5, Datadoc),
-  (   datadoc_exists(Datadoc)
+  rdf_global_id(ll:Md5, Document),
+  (   datadoc_exists(Document)
   ->  true
-  ;   store_triple(Datadoc, rdf-type, llo-'URI'),
-      store_triple(Datadoc, llo-url, Uri),
-      store_added(Datadoc, Md5)
+  ;   store_triple(Document, rdf-type, llo-'URI'),
+      store_triple(Document, llo-url, Uri),
+      store_added(Document, Md5)
   ).
 
 
 
-%! store_skip_clean(+Md5:atom, +Datadoc:uri) is det.
+%! store_skip_clean(+Md5:atom, +Document:iri) is det.
 
-store_skip_clean(Md5, Datadoc):-
-  store_start_clean0(Datadoc),
-  store_end_clean0(Md5, Datadoc),
+store_skip_clean(Md5, Document):-
+  store_start_clean0(Document),
+  store_end_clean0(Md5, Document),
   post_rdf_triples.
 
 
 
-%! store_start_clean(+Datadoc:uri) is det.
+%! store_start_clean(+Document:iri) is det.
 
-store_start_clean(Datadoc):-
-  store_start_clean0(Datadoc),
+store_start_clean(Document):-
+  store_start_clean0(Document),
   post_rdf_triples.
 
-store_start_clean0(Datadoc):-
+store_start_clean0(Document):-
   get_dateTime_lexical(Now),
-  store_triple(Datadoc, llo-startClean, literal(type(xsd-dateTime,Now))).
+  store_triple(Document, llo-startClean, literal(type(xsd-dateTime,Now))).
 
 
 
-%! store_start_unpack(+Datadoc:uri) is det.
+%! store_start_unpack(+Document:iri) is det.
 
-store_start_unpack(Datadoc):-
+store_start_unpack(Document):-
   get_dateTime_lexical(Now),
-  store_triple(Datadoc, llo-startUnpack, literal(type(xsd-dateTime,Now))),
+  store_triple(Document, llo-startUnpack, literal(type(xsd-dateTime,Now))),
   post_rdf_triples.
 
 
 
-%! store_stream(+Datadoc:uri, +Stream:stream) is det.
+%! store_stream(+Document:iri, +Stream:stream) is det.
 
-store_stream(Datadoc, Stream):-
+store_stream(Document, Stream):-
   stream_property(Stream, position(Position)),
 
   stream_position_data(byte_count, Position, ByteCount),
   store_triple(
-    Datadoc,
+    Document,
     llo-byteCount,
     literal(type(xsd-nonNegativeInteger,ByteCount))
   ),
 
   stream_position_data(char_count, Position, CharCount),
   store_triple(
-    Datadoc,
+    Document,
     llo-charCount,
     literal(type(xsd-nonNegativeInteger,CharCount))
   ),
 
   stream_position_data(line_count, Position, LineCount),
   store_triple(
-    Datadoc,
+    Document,
     llo-lineCount,
     literal(type(xsd-nonNegativeInteger,LineCount))
   ).
 
 
 
-%! store_warning(+Datadoc:uri, +Warning:compound) is det.
+%! store_warning(+Document:iri, +Warning:compound) is det.
 % @tbd Should we distinguish between `warning` and `error`
 %      in the second argument here?
 
-store_warning(Datadoc, message(Term,Kind0,_)):-
+store_warning(Document, message(Term,Kind0,_)):-
   once(rename_kind(Kind0, Kind)),
-  store_lod_error(Datadoc, Kind, Term).
+  store_lod_error(Document, Kind, Term).
 
 rename_kind(error, warning).
 rename_kind(Kind, Kind).

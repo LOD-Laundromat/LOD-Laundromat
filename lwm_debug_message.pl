@@ -1,9 +1,11 @@
 :- module(
   lwm_debug_message,
   [
+    document_name//1, % +Document:iri
     lwm_debug_message/1, % ?Topic:compound
-    lwm_debug_message/2 % ?Topic:compound
-                        % +Message:compound
+    lwm_debug_message/2, % ?Topic:compound
+                         % +Message:compound
+    lwm_debugging/0
   ]
 ).
 
@@ -12,23 +14,26 @@
 Prints debug messages for the LOD Washing Machine.
 
 @author Wouter Beek
-@version 2014/06, 2014/08-2014/09, 2015/01
+@version 2015/11
 */
 
 :- use_module(library(apply)).
+:- use_module(library(dcg/dcg_content)).
 :- use_module(library(debug)).
-
-:- use_module(lwm(query/lwm_sparql_query)).
 
 :- discontiguous(lwm_debug_message/2).
 
 
 
-%! lwm_debug_message(+Topic:compound) is det.
-% @see lwm_debug_message/2
 
-lwm_debug_message(Topic):-
-  lwm_debug_message(Topic, Topic).
+
+%! document_name(+Document:iri)// is det.
+
+document_name(Doc) -->
+  {document_name(Doc, Name},
+  atom(Name).
+  
+
 
 
 %! lwm_debug_message(+Topic:compound, +Message:compound) is det.
@@ -40,7 +45,7 @@ lwm_debug_message(Topic, lwm_idle_loop(Category)):- !,
   atomic_list_concat([number_of_idle_loops,Category], '_', Flag),
   flag(Flag, X, X + 1),
 
-  debug(Topic, '[IDLE] ~a ~D', [Category,X]).
+  debug(Topic, "[IDLE] ~a ~D", [Category,X]).
 
 
 % Do not print debug message.
@@ -57,19 +62,19 @@ lwm_debug_message(
 ):-
   % Duplicates
   (   NumberOfDuplicateTriples =:= 0
-  ->  DuplicatesString = ''
+  ->  DuplicatesString = ""
   ;   format(
         string(DuplicatesString),
-        ' (~D duplicates)',
+        " (~D duplicates)",
         [NumberOfDuplicateTriples]
       )
   ),
-  debug(Topic, '[+~D~s]', [NumberOfUniqueTriples,DuplicatesString]).
+  debug(Topic, "[+~D~s]", [NumberOfUniqueTriples,DuplicatesString]).
 
 
 
 % End a process.
-lwm_debug_message(Topic, lwm_end(Category1,Md5,Source,Status,_)):- !,
+lwm_debug_message(Topic, lwm_end(Category1,Source,Status,_)):- !,
   % Category
   upcase_atom(Category1, Category2),
 
@@ -77,30 +82,32 @@ lwm_debug_message(Topic, lwm_end(Category1,Md5,Source,Status,_)):- !,
   (   Status == true
   ->  true
   ;   Status == false
-  ->  debug(Topic, '  [STATUS] FALSE', [])
-  ;   debug(Topic, '  [STATUS] ~w', [Status])
+  ->  debug(Topic, "  [STATUS] FALSE", [])
+  ;   debug(Topic, "  [STATUS] ~w", [Status])
   ),
 
-  debug(Topic, '[END ~a] ~w ~w', [Category2,Md5,Source]).
+  rdf_global_id(ll:Md5, Document),
+  debug(Topic, "[END ~a] ~w ~w", [Category2,Md5,Source]).
 
 
 % Start a process.
-lwm_debug_message(Topic, lwm_start(unpack,Md5,Datadoc,Source)):- !,
-  lwm_start_generic(Topic, unpack, Md5, Datadoc, Source, "").
+lwm_debug_message(Topic, lwm_start(unpack,Document,Source)):- !,
+  lwm_start_generic(Topic, unpack, Document, Source, "").
 
-lwm_debug_message(Topic, lwm_start(Category,Md5,Datadoc,Source,Size)):- !,
+lwm_debug_message(Topic, lwm_start(Category,Document,Source,Size)):- !,
   % `Size` is the number of bytes.
   NumberOfGigabytes is Size / (1024 ** 3),
-  format(string(SizeString), ' (~f GB)', [NumberOfGigabytes]),
-  lwm_start_generic(Topic, Category, Md5, Datadoc, Source, SizeString).
+  format(string(SizeString), " (~f GB)", [NumberOfGigabytes]),
+  lwm_start_generic(Topic, Category, Document, Source, SizeString).
 
-lwm_start_generic(Topic, Category1, Md5, Datadoc, Source, SizeString):-
+lwm_start_generic(Topic, Category1, Document, Source, SizeString):-
   % Category
   upcase_atom(Category1, Category2),
 
-  % File source: URL or archive
-  datadoc_source(Datadoc, Source),
+  % Document source: IRI or IRI+entry (for archives).
+  datadoc_source(Document, Source),
 
+  rdf_global_id(ll:Md5, Document),
   debug(Topic, '[START ~a] ~w ~w~s', [Category2,Md5,Source,SizeString]).
 
 
@@ -110,7 +117,19 @@ lwm_debug_message(Topic, void_found(Urls)):-
 
 
 
-% Helpers
+%! lwm_debugging is semidet.
+% Succeeds iff the LOD Washing Machine is currently in debugging mode.
+
+lwm_debugging:-
+  debugging(_), !.
+lwm_debugging:-
+  once(debug:debug_md5(_, _)).
+
+
+
+
+
+% HELPERS %
 
 %! void_found(+Topic:compound, +Url:atom) is det.
 

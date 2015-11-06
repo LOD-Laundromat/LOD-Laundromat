@@ -11,69 +11,55 @@
 /** <module> Debug LOD Washing Machine queries
 
 @author Wouter Beek
-@version 2015/01
+@version 2015/11
 */
 
-:- use_module(library(lists), except([delete/3,subset/2])).
+:- use_module(library(lists)).
+:- use_module(library(rdf/rdf_print)).
 
-:- use_module(lwm(query/lwm_sparql_enum)).
-:- use_module(lwm(query/lwm_sparql_query)).
+:- use_module('LOD-Laundromat'(query/lwm_sparql_det)).
+:- use_module('LOD-Laundromat'(query/lwm_sparql_nondet)).
 
 
 
 
 
 debug_cleaning:-
-  datadoc_enum_cleaning(Datadoc),
-  datadoc_queries(Datadoc).
+  cleaning(Document),
+  print_document_overview(Document).
 
 debug_pending:-
-  datadoc_enum_pending(Datadoc, Dirty),
-  format('Dirty:\t~a\n', [Dirty]),
-  datadoc_queries(Datadoc).
+  pending(Document, Download),
+  format("Dirty:\t~a\n", [Download]),
+  print_document_overview(Document).
 
 debug_unpacked:-
-  datadoc_enum_unpacked(_, _, Datadoc, Size),
-  format('Size:\t~D\n', [Size]),
-  datadoc_queries(Datadoc).
+  unpacked(_, _, Document, Size),
+  format("Size:\t~D~n", [Size]),
+  print_document_overview(Document).
 
 debug_unpacking:-
-  datadoc_enum_unpacking(Datadoc),
-  datadoc_queries(Datadoc).
+  unpacking(Document),
+  print_document_overview(Document).
 
 
-
-%! datadoc_queries(+Datadoc:uri) is det.
-
-datadoc_queries(Datadoc):-
+print_document_overview(Document):-
   forall(
-    datadoc_archive_entry(Datadoc, ParentMd5, EntryPath),
-    (
-      format('Parent MD5:\t~a\n', [ParentMd5]),
-      format('Entry path:\t~a\n', [EntryPath])
-    )
+    document_archive_entry(Document, EntryPath),
+    format("Entry path:\t~a~n", [EntryPath])
   ),
 
-  (   datadoc_content_type(Datadoc, ContentType)
-  ->  format('Content-Type:\t~a\n', [ContentType])
+  (   document_content_type(Document, ContentType)
+  ->  format("Content-Type:\t~a~n", [ContentType])
   ;   true
   ),
 
-  datadoc_describe(Datadoc, Triples),
-  (   Triples \== []
-  ->  format('Triples:\n', []),
-      forall(
-        member(Triple, Triples),
-        format('\t~w\n', Triple)
-      )
+  rdf_print_describe(Document),
+
+  (   document_file_extension(Document, Ext)
+  ->  format("File extension:\t~a~n", [Ext])
   ;   true
   ),
 
-  (   datadoc_file_extension(Datadoc, FileExtension)
-  ->  format('File extension:\t~a\n', [FileExtension])
-  ;   true
-  ),
-
-  datadoc_source(Datadoc, Source),
-  format('Source:\t~a\n', [Source]).
-
+  document_source(Document, Source),
+  format("Source:\t~a~n", [Source]).

@@ -7,60 +7,56 @@ that serves the cleaned files and an accessible SPARQL endpoint
 for storing the metadata. See module [lwm_settings] for this.
 
 @author Wouter Beek
-@version 2014/06, 2014/08-2014/09, 2014/11, 2015/01
+@version 2015/11
 */
 
-:- set_prolog_stack(global, limit(125*10**9)).
+%:- set_prolog_stack(global, limit(125*10**9)).
 
+:- ensure_loaded(config).
 
-:- if(current_prolog_flag(argv, ['--debug'|_])).
-  :- ensure_loaded(debug).
-:- else.
-  :- ensure_loaded(load).
-:- endif.
-
-:- use_module(library(option)).
+:- use_module(library(option_ext)).
 :- use_module(library(optparse)).
-:- use_module(library(semweb/rdf_db), except([rdf_node/1])).
+:- use_module(library(os/thread_ext)).
+:- use_module(library(semweb/rdf_db)).
 
-:- use_module(plc(generics/typecheck)).
+:- rdf_register_prefix(error, 'http://lodlaundromat.org/error/ontology/').
+:- rdf_register_prefix(httpo, 'http://lodlaundromat.org/http/ontology/').
+:- rdf_register_prefix(ll, 'http://lodlaundromat.org/resource/').
+:- rdf_register_prefix(llo, 'http://lodlaundromat.org/ontology/').
 
-:- use_module(lwm(lwm_clean)).
-:- use_module(lwm(lwm_continue)).
-:- use_module(lwm(lwm_restart)).
-:- use_module(lwm(lwm_settings)).
-:- use_module(lwm(lwm_unpack)).
-:- use_module(lwm(debug/debug_datadoc)).
+:- use_module('LOD-Laundromat'(debug/lwm_debug)).
+:- use_module('LOD-Laundromat'(lwm_clean)).
+:- use_module('LOD-Laundromat'(lwm_continue)).
+:- use_module('LOD-Laundromat'(lwm_restart)).
+:- use_module('LOD-Laundromat'(lwm_settings)).
+:- use_module('LOD-Laundromat'(lwm_unpack)).
+:- use_module('LOD-Laundromat'(debug/debug_datadoc)).
 
 :- initialization(init).
 
-
-
 init:-
-  % Read the command-line arguments.
-  absolute_file_name(data(.), DefaultDir, [file_type(directory)]),
+  default_number_of_threads(DefaultNumberOfThreads),
   OptSpec= [
-    [
+    [ % Datadoc
       help('Debug a specific data document based on its MD5.'),
       longflags([datadoc]),
       opt(datadoc),
       type(atom)
     ],
-    [
+    [ % Debug
       default(false),
       help('Whether debug messages are displayed or not.'),
       longflags([debug]),
       opt(debug),
       type(boolean)
     ],
-    [
-      default(DefaultDir),
+    [ % Directory
       help('The directory where the cleaned data is stored.'),
       longflags([dir,directory]),
       opt(directory),
       type(atom)
     ],
-    [
+    [ % Help
       default(false),
       help('Enumerate the supported command-line options.'),
       longflags([help]),
@@ -68,39 +64,28 @@ init:-
       shortflags([h]),
       type(boolean)
     ],
-    [
-      default(4001),
+    [ % Port
       help('The port at which the triple store for the scrape metadata \c
             can be reached.'),
       longflags([port]),
       opt(port),
       shortflags([p]),
       type(integer)
-    ],
-    [
-      default(default),
-      help('The mode in which the LOD Washing Machine runs.\c
-            Possible values are `default` (which is the default),\c
-            `continue`, and `restart`.'),
-      longflags([mode]),
-      opt(mode),
-      shortflags([m]),
-      type(atom)
     ]
   ],
-  opt_arguments(OptSpec, Options, _),
+  opt_arguments(OptSpec, Opts, _),
+
+  % Process debug option.
+  if_option(debug(true), Opts, set_debug_flags),
 
   % Process help.
-  (   option(help(true), Options)
-  ->  opt_help(OptSpec, Help),
-      format(user_output, '~a\n', [Help]),
-      halt
-  ;   init(Options)
-  ).
+  if_option(help(true), Opts, show_help(OptSpec)),
 
-init(Options):-
+  init(Opts).
+
+init(Opts):-
   % Process the directory option.
-  option(directory(Dir), Options),
+  option(directory(Dir), Opts),
   make_directory_path(Dir),
   retractall(user:file_search_path(data, _)),
   assert(user:file_search_path(data, Dir)),
@@ -109,22 +94,13 @@ init(Options):-
   clean_lwm_state,
 
   % Set the port of the LOD Laundromat Endpoint.
-  option(port(Port), Options),
+  option(port(Port), Opts),
   init_lwm_settings(Port),
-
-  % Process the restart or continue option.
-  option(mode(Mode), Options),
-  (   Mode == restart
-  ->  lwm_restart
-  ;   Mode == continue
-  ->  lwm_continue
-  ;   true
-  ),
 
   % Either process a specific data documents in a single thread (debug)
   % or start a couple of continuous threads (production).
-  (   option(debug(true), Options),
-      option(datadoc(Datadoc0), Options),
+  (   option(debug(true), Opts),
+      option(datadoc(Datadoc0), Opts),
       ground(Datadoc0)
   ->  ensure_datadoc(Datadoc0, Datadoc),
       gtrace, %DEB
@@ -198,18 +174,6 @@ init_production(
   ).
 
 
-clean_lwm_state:-
-  % Each file is loaded in an RDF serialization + snapshot.
-  % These inherit the triples that are not in an RDF serialization.
-  % We therefore have to clear all such triples before we begin.
-  forall(
-    rdf_graph(G),
-    rdf_unload_graph(G)
-  ),
-  rdf_retractall(_, _, _, _).
-
-
-
 
 
 % HELPERS %
@@ -251,4 +215,3 @@ start_small_thread(Id):-
 start_unpack_thread(Id):-
   format(atom(Alias), 'unpack_~d', [Id]),
   thread_create(lwm_unpack_loop, _, [alias(Alias),detached(true)]).
-

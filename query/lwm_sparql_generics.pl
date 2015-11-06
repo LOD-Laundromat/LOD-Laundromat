@@ -6,21 +6,21 @@
                             % -Query:atom
     lwm_sparql_ask/3, % +Prefixes:list(atom)
                       % +Bgps:list(compound)
-                      % +Options:list(nvpair)
+                      % +Options:list(compound)
     lwm_sparql_select/3, % +Query:atom
                          % -Result:list(list)
-                         % +Options:list(nvpair)
+                         % +Options:list(compound)
     lwm_sparql_select/5, % +Prefixes:list(atom)
                          % +Variables:list(atom)
                          % +Bgps:list(compound)
                          % -Result:list(list)
-                         % +Options:list(nvpair)
+                         % +Options:list(compound)
     lwm_sparql_select_iteratively/6 % +Prefixes:list(atom)
                                     % +Variables:list(atom)
                                     % +Bgps:list(compound)
                                     % +MaximumNumberOfResults:positive_integer
                                     % -Results:list(list)
-                                    % +Options:list(nvpair)
+                                    % +Options:list(compound)
   ]
 ).
 
@@ -30,17 +30,12 @@ Generic support predicates for SPARQL queries conducted by
 the LOD Laundromat's washing machine.
 
 @author Wouter Beek
-@version 2014/06, 2014/08-2014/09, 2014/11, 2015/01-2015/02
+@version 2015/11
 */
 
 :- use_module(library(option)).
 
-:- use_module(plc(generics/list_ext)).
-:- use_module(plc(generics/meta_ext)).
-
-:- use_module(plSparql(query/sparql_query_api)).
-
-:- use_module(lwm(lwm_settings)).
+:- use_module('LOD-Laundromat'(lwm_settings)).
 
 :- predicate_options(lwm_sparql_ask/3, 3, [
      pass_to(sparql_ask/4, 4)
@@ -67,22 +62,14 @@ the LOD Laundromat's washing machine.
 build_unpacked_query(Min, Max, Query2):-
   Query1 = [
     rdf(var(datadoc), llo:endUnpack, var(endUnpack)),
-    not([
-      rdf(var(datadoc), llo:startClean, var(startClean))
-    ]),
+    not([rdf(var(datadoc), llo:startClean, var(startClean))]),
     rdf(var(datadoc), llo:unpackedSize, var(unpackedSize)),
     rdf(var(datadoc), llo:added, var(added))
   ],
 
   % Insert the range restriction on the unpacked file size as a filter.
-  (   nonvar(Min)
-  ->  MinFilter = >(var(unpackedSize),Min)
-  ;   true
-  ),
-  (   nonvar(Max)
-  ->  MaxFilter = <(var(unpackedSize),Max)
-  ;   true
-  ),
+  (nonvar(Min) -> MinFilter = >(var(unpackedSize),Min) ; true),
+  (nonvar(Max) -> MaxFilter = <(var(unpackedSize),Max) ; true),
   exclude(var, [MinFilter,MaxFilter], FilterComponents),
   (   list_binary_term(FilterComponents, and, FilterContent)
   ->  append(Query1, [filter(FilterContent)], Query2)
@@ -94,28 +81,24 @@ build_unpacked_query(Min, Max, Query2):-
 %! lwm_sparql_ask(
 %!   +Prefixes:list(atom),
 %!   +Bgps:list(compound),
-%!   +Options:list(nvpair)
+%!   +Options:list(compound)
 %! ) is semidet.
 
-lwm_sparql_ask(Prefixes, Bgps, Options1):-
-  endpoint_options(Options1, Endpoint, Options2),
-  loop_until_true(
-    sparql_ask(Endpoint, Prefixes, Bgps, Options2)
-  ).
+lwm_sparql_ask(Prefixes, Bgps, Opts1):-
+  endpoint_options(Opts1, Opts2),
+  loop_until_true(sparql_ask(lwm_endpoint, Prefixes, Bgps, Opts2)).
 
 
 
 %! lwm_sparql_select(
 %!   +Query:atom,
 %!   -Result:list(list),
-%!   +Options:list(nvpair)
+%!   +Options:list(compound)
 %! ) is det.
 
-lwm_sparql_select(Query, Result, Options1):-
-  endpoint_options(Options1, Endpoint, Options2),
-  loop_until_true(
-    sparql_select(Endpoint, Query, Result, Options2)
-  ).
+lwm_sparql_select(Query, Result, Opts1):-
+  endpoint_options(Opts1, Opts2),
+  loop_until_true(sparql_select(lwm_endpoint, Query, Result, Opts2)).
 
 
 
@@ -124,13 +107,13 @@ lwm_sparql_select(Query, Result, Options1):-
 %!   +Variables:list(atom),
 %!   +Bgps:list(compound),
 %!   -Result:list(list),
-%!   +Options:list(nvpair)
+%!   +Options:list(compound)
 %! ) is det.
 
-lwm_sparql_select(Prefixes, Variables, Bgps, Result, Options1):-
-  endpoint_options(Options1, Endpoint, Options2),
+lwm_sparql_select(Prefixes, Vars, Bgps, Result, Opts1):-
+  endpoint_options(Opts1, Opts2),
   loop_until_true(
-    sparql_select(Endpoint, Prefixes, Variables, Bgps, Result, Options2)
+    sparql_select(lwm_endpoint, Prefixes, Vars, Bgps, Result, Opts2)
   ).
 
 
@@ -141,27 +124,20 @@ lwm_sparql_select(Prefixes, Variables, Bgps, Result, Options1):-
 %!   +Bgps:list(compound),
 %!   +MaximumNumberOfResults:positive_integer,
 %!   -NResults:list(list),
-%!   +Options:list(nvpair)
+%!   +Options:list(compound)
 %! ) is nondet.
 
-lwm_sparql_select_iteratively(
-  Prefixes,
-  Variables,
-  Bgps,
-  N,
-  NResults,
-  Options1
-):-
-  endpoint_options(Options1, Endpoint, Options2),
+lwm_sparql_select_iteratively(Prefixes, Vars, Bgps, N, NResults, Opts1):-
+  endpoint_options(Opts1, Endpoint, Opts2),
   loop_until_true(
     sparql_select_iteratively(
-      Endpoint,
+      lwm_endpoint,
       Prefixes,
-      Variables,
+      Vars,
       Bgps,
       N,
       NResults,
-      Options2
+      Opts2
     )
   ).
 
@@ -171,18 +147,14 @@ lwm_sparql_select_iteratively(
 
 % HELPERS %
 
-%! endpoint_options(
-%!   +Options1:list(nvpair),
-%!   -Endpoint:oneof([cliopatria,virtuoso_query]),
-%!   -Options2:list(nvpair)
+%! lwm_sparql_options(
+%!   +Options1:list(compound),
+%!   -Options2:list(compound)
 %! ) is det.
+% Notice that Virtuoso queries are requested within a named graph.
 
-endpoint_options(Options, cliopatria, Options):-
-  lwm_settings:setting(endpoint, cliopatria), !.
-% Virtuoso queries are requested within a named graph.
-endpoint_options(Options1, virtuoso_query, Options2):-
+lwm_endpoint_options(Opts1, virtuoso_query, Opts2):-
   lwm_settings:setting(endpoint, virtuoso),
   lod_basket_graph(G1),
   lwm_version_graph(G2),
-  merge_options([default_graph(G1),default_graph(G2)], Options1, Options2).
-
+  merge_options([default_graph(G1),default_graph(G2)], Opts1, Opts2).

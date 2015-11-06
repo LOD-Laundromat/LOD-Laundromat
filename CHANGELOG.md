@@ -1,3 +1,11 @@
+Changelog LOD Laundromat 13 (changes since LOD Laundromat 12)
+=============================================================
+
+This is the version on (2015/11/??).
+
+
+
+
 Changelog LOD Laundromat 12 (changes since LOD Laundromat 10)
 =============================================================
 

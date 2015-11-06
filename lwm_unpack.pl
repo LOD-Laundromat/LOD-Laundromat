@@ -1,7 +1,7 @@
 :- module(
   lwm_unpack,
   [
-    lwm_unpack/1, % +Datadoc:iri
+    lwm_unpack/1, % +Document:iri
     lwm_unpack_loop/0
   ]
 ).
@@ -11,32 +11,21 @@
 Unpacks files for the LOD Washing Machine to clean.
 
 @author Wouter Beek
-@version 2014/06, 2014/08-2014/09, 2014/11, 2015/01-2015/02, 2015/06
+@version 2015/11
 */
 
 :- use_module(library(apply)).
-:- use_module(library(debug)).
-:- use_module(library(lists), except([delete/3,subset/2])).
+:- use_module(library(dcg/dcg_debug)).
+:- use_module(library(debug_ext)).
+:- use_module(library(lists)).
 :- use_module(library(semweb/rdf_http_plugin)).
 
-:- use_module(plc(io/archive_ext)).
-:- use_module(plc(io/file_ext)).
-:- use_module(plc(io/file_gnu)).
-:- use_module(plc(process/list_script)).
-:- use_module(plc(prolog/pl_log)).
-
-:- use_module(plUri(uri_ext)).
-
-:- use_module(plHttp(download_to_file)).
-
-:- use_module(plRdf(management/rdf_file_db)).
-
-:- use_module(lwm(md5)).
-:- use_module(lwm(lwm_debug_message)).
-:- use_module(lwm(lwm_store_triple)).
-:- use_module(lwm(noRdf_store)).
-:- use_module(lwm(query/lwm_sparql_enum)).
-:- use_module(lwm(query/lwm_sparql_query)).
+:- use_module('LOD-Laundromat'(md5)).
+:- use_module('LOD-Laundromat'(lwm_debug_message)).
+:- use_module('LOD-Laundromat'(lwm_store_triple)).
+:- use_module('LOD-Laundromat'(noRdf_store)).
+:- use_module('LOD-Laundromat'(query/lwm_sparql_enum)).
+:- use_module('LOD-Laundromat'(query/lwm_sparql_query)).
 
 :- dynamic(debug:debug_md5/2).
 :- multifile(debug:debug_md5/2).
@@ -54,17 +43,16 @@ lwm_unpack_loop:-
   % to wait in case a SPARQL endpoint is temporarily down.
   catch(
     with_mutex(lwm_endpoint_access, (
-      % `DirtyUrl` is only instantiated if `Datadoc`
-      % is not an archive entry.
-      datadoc_enum_pending(Datadoc, DirtyUrl),
+      % `Download` is only instantiated if `Document` is not an archive entry.
+      pending(Document, Download),
       % Update the database, saying we are ready
       % to begin downloading+unpacking this data document.
-      store_start_unpack(Datadoc)
+      store_start_unpack(Document)
     )),
-    Exception,
-    var(Exception)
+    W,
+    var(E)
   ),
-  lwm_unpack(Datadoc, DirtyUrl),
+  lwm_unpack(Document, DirtyIn),
   % Intermittent loop.
   lwm_unpack_loop.
 % Done for now. Check whether there are new jobs in one seconds.
@@ -75,99 +63,92 @@ lwm_unpack_loop:-
 
 
 
-%! lwm_unpack(+Datadoc:iri) is det.
+%! lwm_unpack(+Document:iri) is det.
+% Manual way of downloading+unpacking a data document.
 
-lwm_unpack(Datadoc):-
+lwm_unpack(Document):-
   % Update the database, saying we are ready
   % to begin downloading+unpacking this data document.
-  store_start_unpack(Datadoc),
+  store_start_unpack(Document),
+  datadoc_location(Document, Download),
+  lwm_unpack(Document, Download).
 
-  datadoc_location(Datadoc, DirtyUrl),
-  lwm_unpack(Datadoc, DirtyUrl).
 
-%! lwm_unpack(+Datadoc:iri, +DirtyUrl:uri) is det.
 
-lwm_unpack(Datadoc, DirtyUrl):-
-  % We sometimes need the MD5 atom.
-  rdf_global_id(ll:Md5, Datadoc),
+%! lwm_unpack(+Document:iri, +Download:iri) is det.
 
-  % DEB
-  (   user:debug_mode,
+lwm_unpack(Document, Download):-
+  % Allow the debugger to pop up for specific MD5s.
+  (   lwm_debugging,
+      rdf_global_id(ll:Md5, Document),
       debug:debug_md5(Md5, unpack)
-  ->  gtrace %DEB
+  ->  gtrace
   ;   true
   ),
 
   % DEB: *start* of downloading+unpacking..
   lwm_debug_message(
     lwm_progress(unpack),
-    lwm_start(unpack,Md5,Datadoc,Source)
+    lwm_start(unpack,Document,Source)
   ),
 
   % Downloading+unpacking of a specific data document.
-  run_collect_messages(
-    unpack_datadoc(Md5, Datadoc, DirtyUrl, ArchiveFile),
+  call_collect_messages(
+    unpack_datadoc(Document, Download, ArchiveFile),
     Status,
     Warnings
   ),
   (   Status == false
-  ->  debug(lwm, '[UNPACKING FAILED] ~w', [Md5])
+  ->  dcg_debug(lwm(unpack(status), ("[UNPACKING FAILED] ", document_name(Document)))
   ;   Status == true
   ->  true
-  ;   debug(lwm_status, '[STATUS] ~w', [Status])
+  ;   debug(lwm(unpack(status)), "[STATUS] ~w", [Status])
   ),
 
   % DEB: *end* of downloading+unpacking.
   lwm_debug_message(
-    lwm_progress(unpack),
-    lwm_end(unpack,Md5,Source,Status,Warnings)
+    lwm(unpack(progress)),
+    lwm_end(unpack,Source,Status,Warnings)
   ),
 
   % Store the warnings and status as metadata.
-  maplist(store_warning(Datadoc), Warnings),
-  store_end_unpack(Md5, Datadoc, Status),
+  maplist(store_warning(Document), Warnings),
+  store_end_unpack(Document, Status),
 
   % Remove the archive file.
-  (   ground(ArchiveFile)
-  ->  delete_file(ArchiveFile)
-  ;   true
-  ).
+  (ground(ArchiveFile) -> delete_file(ArchiveFile) ; true).
 
 
-%! unpack_datadoc(+Md5:atom, +Datadoc:iri, ?DirtyUrl:uri, -File:atom) is det.
+%! unpack_datadoc(+Document:iri, ?Download:iri, -File:atom) is det.
 
-% The given MD5 denotes an archive entry.
-unpack_datadoc(Md5, Datadoc, DirtyUrl, File):-
-  % Uninstantiated SPARQL variable (using keyword OPTIONAL).
-  DirtyUrl == '$null$', !,
+% We are dealing with an archive entry.
+unpack_datadoc(Document, Download, File):-
+  % Uninstantiated SPARQL variable (due to the use of the `OPTIONAL` keyword).
+  Download == '$null$', !,
 
   % Entries occur in a path.
-  md5_directory(Md5, Md5Dir),
-  datadoc_archive_entry(Datadoc, _, EntryPath),
-  relative_file_path(File, Md5Dir, EntryPath),
+  document_directory(Document, Dir),
+  document_archive_entry(Document, EntryPath),
+  relative_file_path(File, Dir, EntryPath),
 
   % Further unpack the archive entry.
-  unpack_file(Md5, Md5Dir, Datadoc, File).
-% The given MD5 denotes a URI.
-unpack_datadoc(Md5, Datadoc, DirtyUrl, DownloadFile):-
-  % Create a directory for the dirty version of the given Md5.
-  md5_directory(Md5, Md5Dir),
+  unpack_file(Dir, Document, File).
+% We are dealing with an IRI.
+unpack_datadoc(Document, Download, File):-
+  document_directory(Document, Dir),
 
-  % Extracting and store the file extensions from the download URL, if any.
-  (   uri_file_extension(DirtyUrl, FileExtension)
-  ->  true
-  ;   FileExtension = ''
-  ),
+  % Extract and store the file extensions from the download IRI, if any.
+  (uri_file_extension(Download, Ext) -> true ; Ext = ""),
 
   % Construct the download file.
-  file_name_extension(download, FileExtension, LocalDownloadFile),
-  directory_file_path(Md5Dir, LocalDownloadFile, DownloadFile),
+  file_name_extension(download, Ext, Base),
+  directory_file_path(Dir, Base, File),
 
   % Download the dirty file for the given Md5.
   rdf_http_plugin:rdf_extra_headers(DefaultRdfHttpOpts, []),
   download_to_file(
-    DirtyUrl,
-    DownloadFile,
+    Download,
+    File,
     [
       % Always redownload.
       freshness_lifetime(0.0),
@@ -180,41 +161,36 @@ unpack_datadoc(Md5, Datadoc, DirtyUrl, DownloadFile):-
   ),
   
   % Store the file size of the dirty file.
-  size_file(DownloadFile, DownloadSize),
+  size_file(File, Size),
   store_triple(
-    Datadoc,
+    Document,
     llo-downloadSize,
-    literal(type(xsd-nonNegativeInteger,DownloadSize))
+    literal(type(xsd-nonNegativeInteger,Size))
   ),
 
   % Store HTTP statistics.
-  store_http(Datadoc, Status, ContentLength, ContentType, LastModified),
+  store_http(Document, Status, ContentLength, ContentType, LastModified),
 
   % Process the HTTP status code.
   (   between(400, 599, Status)
   ->  throw(error(http_status(Status),lwm_unpack:unpack_datadoc/4))
-  ;   unpack_file(Md5, Md5Dir, Datadoc, DownloadFile)
+  ;   unpack_file(Dir, Document, File)
   ).
 
 
-%! unpack_file(
-%!   +Md5:atom,
-%!   +Md5Dir:atom,
-%!   +Datadoc:iri,
-%!   +ArchiveFile:atom
-%! ) is det.
+%! unpack_file(+Directory:atom, +Document:iri, +ArchiveFile:atom) is det.
 
-unpack_file(Md5, Md5Dir, Datadoc, ArchiveFile):-
+unpack_file(Md5, Md5Dir, Document, ArchiveFile):-
   % Store the file extension, if any.
   file_name_extension(_, FileExtension, ArchiveFile),
   (   FileExtension == ''
   ->  true
-  ;   store_file_extension(Datadoc, FileExtension)
+  ;   store_file_extension(Document, FileExtension)
   ),
 
   % Extract archive.
   archive_extract(ArchiveFile, _, ArchiveFilters, EntryPairs),
-  store_archive_filters(Datadoc, ArchiveFilters),
+  store_archive_filters(Document, ArchiveFilters),
 
   (   % Case 1: There is no archive file to unpack.
       EntryPairs == []
@@ -240,7 +216,7 @@ unpack_file(Md5, Md5Dir, Datadoc, ArchiveFile):-
       % Store the size of the dirty data file after unpacking.
       size_file(DirtyFile, UnpackedSize),
       store_triple(
-        Datadoc,
+        Document,
         llo-unpackedSize,
         literal(type(xsd-nonNegativeInteger,UnpackedSize))
       )
@@ -250,20 +226,20 @@ unpack_file(Md5, Md5Dir, Datadoc, ArchiveFile):-
       % Create the archive entries
       % and copy the entry files to their own MD5 dirs.
       list_script(
-        process_entry_pair(Md5, Md5Dir, Datadoc),
+        process_entry_pair(Md5, Md5Dir, Document),
         EntryPairs,
         [message('LWM ArchiveEntry')]
       ),
 
       % Archives cannot be cleaned,
       % so skip the cleaning phase by using metadata.
-      store_skip_clean(Md5, Datadoc)
+      store_skip_clean(Md5, Document)
   ).
 
 %! process_entry_pair(
 %!   +ParentMd5:atom,
 %!   +ParentMd5Dir:atom,
-%!   +Datadoc:atom,
+%!   +Document:atom,
 %!   -EntryPair:pair(atom,list(nvpair))
 %! ) is det.
 
@@ -272,7 +248,7 @@ process_entry_pair(_, _, _, _-EntryProperties):-
 process_entry_pair(
   ParentMd5,
   ParentMd5Dir,
-  Datadoc,
+  Document,
   EntryPath-EntryProperties
 ):-
   % Establish the entry name.
@@ -288,11 +264,10 @@ process_entry_pair(
   gnu_mv(FromEntryFile, ToEntryFile),
 
   % Store the metadata.
-  store_archive_entry(Datadoc, EntryMd5, Entry, EntryPath, EntryProperties).
+  store_archive_entry(Document, EntryMd5, Entry, EntryPath, EntryProperties).
 
 %! create_entry_hash(+ParentMd5:atom, +EntryPath:atom, -EntryMd5:atom) is det.
 
 create_entry_hash(ParentMd5, EntryPath, EntryMd5):-
   atomic_list_concat([ParentMd5,EntryPath], ' ', Temp),
   rdf_atom_md5(Temp, 1, EntryMd5).
-

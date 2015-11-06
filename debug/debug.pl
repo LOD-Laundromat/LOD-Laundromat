@@ -1,9 +1,5 @@
-% Debug file for the llWashingMachine project.
-
-
 :- use_module(library(debug)).
 
-% PLC
 :- debug(list_script).
 
 % plSparql
@@ -17,23 +13,14 @@
 %:- debug(lwm_idle_loop(unpack)).
 
 % Show progress.
-:- debug(lwm_progress(clean_large)).
-:- debug(lwm_progress(clean_medium)).
-:- debug(lwm_progress(clean_small)).
-:- debug(lwm_progress(unpack)).
-
-:- debug(lwm).
-:- debug(lwm_restart).
-:- debug(lwm_seedpoint).
-:- debug(lwm_status).
-:- debug(lwm_unpack).
-
-:- [load].
-
-
-:- use_module(debug_project).
-%:- debug_all_files.
-
+:- debug(lwm(progress(clean(large)))).
+:- debug(lwm(progress(clean(medium)))).
+:- debug(lwm(progress(clean(small)))).
+:- debug(lwm(progress(unpack))).
+:- debug(lwm(restart)).
+:- debug(lwm(seedpoint)).
+:- debug(lwm(status)).
+:- debug(lwm(unpack)).
 
 % Debugging specific data documents, based on their MD5.
 
@@ -59,4 +46,3 @@ show_idle:-
 :- use_module(lwm(lwm_reset)).
 :- use_module(lwm(debug/debug_datadoc)).
 :- use_module(lwm(debug/debug_query)).
-
