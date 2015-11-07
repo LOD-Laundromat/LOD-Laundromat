@@ -17,8 +17,9 @@ Unpacks files for the LOD Washing Machine to clean.
 :- use_module(library(apply)).
 :- use_module(library(dcg/dcg_debug)).
 :- use_module(library(debug_ext)).
+:- use_module(library(http/http_info)).
 :- use_module(library(lists)).
-:- use_module(library(semweb/rdf_http_plugin)).
+:- use_module(library(rdf/rdf_download)).
 
 :- use_module('LOD-Laundromat'(md5)).
 :- use_module('LOD-Laundromat'(lwm_debug_message)).
@@ -144,21 +145,8 @@ unpack_datadoc(Document, Download, File):-
   file_name_extension(download, Ext, Base),
   directory_file_path(Dir, Base, File),
 
-  % Download the dirty file for the given Md5.
-  rdf_http_plugin:rdf_extra_headers(DefaultRdfHttpOpts, []),
-  download_to_file(
-    Download,
-    File,
-    [
-      % Always redownload.
-      freshness_lifetime(0.0),
-      header(content_length, ContentLength),
-      header(content_type, ContentType),
-      header(last_modified, LastModified),
-      status_code(Status)
-    | DefaultRdfHttpOpts
-    ]
-  ),
+  % Download the dirty file of the document.
+  rdf_download(Download, File, [freshness_lifetime(0.0),metadata(M)]),
   
   % Store the file size of the dirty file.
   size_file(File, Size),
@@ -169,24 +157,21 @@ unpack_datadoc(Document, Download, File):-
   ),
 
   % Store HTTP statistics.
-  store_http(Document, Status, ContentLength, ContentType, LastModified),
+  store_http(Document, M),
 
   % Process the HTTP status code.
-  (   between(400, 599, Status)
-  ->  throw(error(http_status(Status),lwm_unpack:unpack_datadoc/4))
+  (   is_http_error(Status)
+  ->  throw(error(http_status(Status), lwm_unpack:unpack_datadoc/4))
   ;   unpack_file(Dir, Document, File)
   ).
 
 
 %! unpack_file(+Directory:atom, +Document:iri, +ArchiveFile:atom) is det.
 
-unpack_file(Md5, Md5Dir, Document, ArchiveFile):-
+unpack_file(Dir, Document, ArchiveFile):-
   % Store the file extension, if any.
-  file_name_extension(_, FileExtension, ArchiveFile),
-  (   FileExtension == ''
-  ->  true
-  ;   store_file_extension(Document, FileExtension)
-  ),
+  file_name_extension(_, Ext, ArchiveFile),
+  (Ext == "" -> true ; store_file_extension(Document, Ext)),
 
   % Extract archive.
   archive_extract(ArchiveFile, _, ArchiveFilters, EntryPairs),

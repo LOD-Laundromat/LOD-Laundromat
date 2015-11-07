@@ -17,11 +17,8 @@
                        % +Status:or([boolean,compound]))
     store_file_extension/2, % +Document:iri
                             % +FileExtension:atom
-    store_http/5, % +Document:iri
-                  % +Status:nonneg
-                  % ?ContentLength:nonneg
-                  % ?ContentType:atom
-                  % ?LastModified:nonneg
+    store_http/2, % +Document:iri
+                  % +Metadata:dict
     store_number_of_triples/4, % +Category:atom
                                % +Document:iri
                                % +NumberOfTriples:nonneg
@@ -46,35 +43,31 @@ the stored triples are sent in a SPARQL Update request
 (see module [noRdf_store].
 
 @author Wouter Beek
-@version 2014/04-2014/06, 2014/08-2014/09, 2015/01-2015/02, 2015/06
+@version 2015/11
 */
 
-:- use_module(library(lists), except([delete/3,subset/2])).
-:- use_module(library(semweb/rdf_db), except([rdf_node/1])).
+:- use_module(library(apply)).
+:- use_module(library(lists)).
+:- use_module(library(semweb/rdf_db)).
 :- use_module(library(uri)).
 
-:- use_module(plc(os/date_ext)).
-:- use_module(plc(prolog/pl_control)).
-
-:- use_module(plXsd(xsd)).
-:- use_module(plXsd(dateTime/xsd_dateTime_functions)).
-
-:- use_module(lwm(lwm_debug_message)).
-:- use_module(lwm(noRdf_store)).
-:- use_module(lwm(store_lod_error)).
-:- use_module(lwm(query/lwm_sparql_query)).
+:- use_module('LOD-Laundromat'(lwm_debug_message)).
+:- use_module('LOD-Laundromat'(noRdf_store)).
+:- use_module('LOD-Laundromat'(store_lod_error)).
+:- use_module('LOD-Laundromat'(query/lwm_sparql_query)).
 
 
 
 
 
-%! store_added(+Document:iri, +Md5:atom) is det.
+%! store_added(+Document:iri) is det.
 % Datetime at which the seedpoint IRI was added to the LOD Basket.
 
-store_added(Document, Md5):-
+store_added(Document):-
+  document_name(Document, Name),
   get_dateTime_lexical(Added),
   store_triple(Document, llo-added, literal(type(xsd-dateTime,Added))),
-  store_triple(Document, llo-md5, literal(type(xsd-string,Md5))),
+  store_triple(Document, llo-md5, literal(type(xsd-string,Name))),
   post_rdf_triples.
 
 
@@ -214,42 +207,15 @@ store_file_extension(Document, FileExtension):-
 
 
 
-%! store_http(
-%!   +Document:iri,
-%!   +Status:nonneg,
-%!   ?ContentLength:nonneg,
-%!   ?ContentType:atom,
-%!   ?LastModified:nonneg
-%! ) is det.
+%! store_http(+Document:iri, +Metadata:dict) is det.
 
-store_http(Document, Status, ContentLength, ContentType, LastModified):-
-  atom_number(Status, Status0),
-  store_triple(Document, llo-status, httpo-Status0),
-  unless(
-    ContentLength == '',
-    store_triple(
-      Document,
-      llo-contentLength,
-      literal(type(xsd-nonNegativeInteger,ContentLength))
-    )
-  ),
-  unless(
-    ContentType == '',
-    store_triple(
-      Document,
-      llo-contentType,
-      literal(type(xsd-string,ContentType))
-    )
-  ),
-  % @tbd Store as xsd:dateTime
-  unless(
-    LastModified == '',
-    store_triple(
-      Document,
-      llo-lastModified,
-      literal(type(xsd-string,LastModified))
-    )
-  ).
+store_http(Document, M):-
+  store_triple(Document, llo-status, httpo-M.http.status_code),
+  maplist(store_http_header(Document), M.http.headers).
+
+store_http_header(Document, Header):-
+  rdf_global_id(llo:Header, P),
+  store_triple(Document, P, literal(type(xsd-string,Header))).
 
 
 
