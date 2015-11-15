@@ -1,8 +1,6 @@
 :- module(
   lwm_generics,
   [
-    document_name/2, % ?Document:iri
-                     % ?Name:atom
     document_directory/2 % +Document:iri
                          % -Directory:atom
   ]
@@ -47,12 +45,3 @@ document_directory(Doc, Dir2):-
     [access(write),file_type(directory),relative_to(Dir1)]
   ),
   make_directory_path(Dir2).
-
-
-
-%! document_name(+Document:iri, +Name:atom) is semidet.
-%! document_name(+Document:iri, -Name:atom) is det.
-%! document_name(-Document:iri, +Name:atom) is det.
-
-document_name(Doc, Name):-
-  rdf_global_id(ll:Name, Doc).

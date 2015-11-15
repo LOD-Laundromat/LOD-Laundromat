@@ -20,6 +20,7 @@ Prints debug messages for the LOD Washing Machine.
 :- use_module(library(apply)).
 :- use_module(library(dcg/dcg_content)).
 :- use_module(library(debug)).
+:- use_module(library(lodapi/lodapi_generics)).
 
 :- discontiguous(lwm_debug_message/2).
 
