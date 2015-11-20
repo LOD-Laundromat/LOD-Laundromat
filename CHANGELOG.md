@@ -1,8 +1,34 @@
 Changelog LOD Laundromat 13 (changes since LOD Laundromat 12)
 =============================================================
 
-This is the version on (2015/11/??).
+This is the version on (2015/11/20).
 
+Major features
+--------------
+
+  - **LOD-Laundromat-CLI**: Allows the LOD Washing Machine to be run
+    locally, from your command prompt.  This requires installing
+    SWI-Prolog.
+  - **New stains**: The following data stains are now recorded in
+    the metadata.  (1) invalidCentralDirectorySignature (archive error),
+    (2) HTTP status codes in the 4xx- and 5xx-range.
+
+
+Deployment
+----------
+
+  - The scrape version number is now set as part of the settings
+    configuration.
+  - Make it less easy to reset all crawled data documents at once.
+  - LIFO processing of seed list and intermediary (e.g., unpacked) results.
+
+
+Bugfixes
+--------
+
+  - Slowdown when very many (>100K) seedpoints are stored based on
+    metadata encountered while cleaning a data file.
+  - VoID seedpoints were incorrectly typed as archive entries.
 
 
 

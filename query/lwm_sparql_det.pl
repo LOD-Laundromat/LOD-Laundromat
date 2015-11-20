@@ -16,10 +16,10 @@
     document_file_extension/2, % +Document:iri
                                % -FileExtension:atom
     document_has_triples/1, % +Document:iri
+    document_original_location/2, % +Document:iri
+                                  % -Location:iri
     document_source/2, % +Document:iri
                        % -Source:atom
-    document_location/2, % +Document:iri
-                         % -Location:iri
     document_unpacked_size/2, % +Document:iri
                               % -UnpackedSize:nonneg
     document_unpacking/1, % -Documents:list(iri))
@@ -75,11 +75,11 @@ archive_to_entries(Archive, Entries):-
 
 %! document_archive_entry(+Document:iri, -EntryPath:atom) is det.
 
-document_archive_entry(Document, EntryPath):-
+document_archive_entry(Doc, EntryPath):-
   lwm_sparql_select(
     [llo],
     [entryPath],
-    [rdf(Document, llo:path, var(entryPath))],
+    [rdf(Doc, llo:path, var(entryPath))],
     [EntryPathLit],
     [limit(1)]
   ),
@@ -89,11 +89,11 @@ document_archive_entry(Document, EntryPath):-
 
 %! document_archive_parent(+Document:iri, -Parent:iri) is det.
 
-document_archive_parent(Document, Parent):-
+document_archive_parent(Doc, Parent):-
   lwm_sparql_select(
     [llo],
     [parent],
-    [rdf(var(parent), llo:containsEntry, Document)],
+    [rdf(var(parent), llo:containsEntry, Doc)],
     [Parent],
     [limit(1)]
   ).
@@ -106,9 +106,7 @@ document_cleaning(L):-
     [datadoc],
     [
       rdf(var(datadoc), llo:startClean, var(startClean)),
-      not([
-        rdf(var(datadoc), llo:endClean, var(endClean))
-      ])
+      not([rdf(var(datadoc), llo:endClean, var(endClean))])
     ],
     L0,
     []
@@ -120,11 +118,11 @@ document_cleaning(L):-
 %! document_content_type(+Document:iri, -ContentType:atom) is semidet.
 % Returns a variable if the content type is not known.
 
-document_content_type(Document, ContentType):-
+document_content_type(Doc, ContentType):-
   lwm_sparql_select(
     [llo],
     [contentType],
-    [rdf(Document, llo:contentType, var(contentType))],
+    [rdf(Doc, llo:contentType, var(contentType))],
     [[ContentTypeLit]],
     [limit(1)]
   ),
@@ -134,15 +132,15 @@ document_content_type(Document, ContentType):-
 
 %! document_describe(+Document:iri, -Triples:list(compound)) is det.
 
-document_describe(Document, Ts):-
+document_describe(Doc, Ts):-
   lwm_sparql_select(
     [llo],
     [p,o],
-    [rdf(Document, var(p), var(o))],
+    [rdf(Doc, var(p), var(o))],
     Rows,
     [distinct(true)]
   ),
-  maplist(pair_to_triple(Document), Rows, Ts).
+  maplist(pair_to_triple(Doc), Rows, Ts).
 
 pair_to_triple(S, [P,O], rdf(S,P,O)).
 
@@ -150,18 +148,18 @@ pair_to_triple(S, [P,O], rdf(S,P,O)).
 
 %! document_exists(+Document:iri) is semidet.
 
-document_exists(Document):-
-  lwm_sparql_ask([llo], [rdf(Document,llo:md5,var(md5))], []).
+document_exists(Doc):-
+  lwm_sparql_ask([llo], [rdf(Doc,llo:md5,var(md5))], []).
 
 
 
 %! document_file_extension(+Document:iri, -Extension:atom) is det.
 
-document_file_extension(Document, Ext):-
+document_file_extension(Doc, Ext):-
   lwm_sparql_select(
     [llo],
     [ext],
-    [rdf(Document, llo:fileExtension, var(ext))],
+    [rdf(Doc, llo:fileExtension, var(ext))],
     [[ExtLit]],
     [limit(1)]
   ),
@@ -171,8 +169,21 @@ document_file_extension(Document, Ext):-
 
 %! document_has_triples(+Document:iri) is semidet.
 
-document_has_triples(Document):-
-  lwm_sparql_ask([llo], [rdf(Document,llo:triples,var(triples))], []).
+document_has_triples(Doc):-
+  lwm_sparql_ask([llo], [rdf(Doc,llo:triples,var(triples))], []).
+
+
+
+%! document_original_location(+Document:iri, -Download:iri) is det.
+
+document_original_location(Doc, Url):-
+  lwm_sparql_select(
+    [llo],
+    [download],
+    [rdf(Doc, llo:url, var(download))],
+    [[Download]],
+    [limit(1)]
+  ).
 
 
 
@@ -183,17 +194,14 @@ document_has_triples(Document):-
 % or an IRI suffixed by an archive entry path.
 
 % The data document derives from an IRI.
-document_source(Document, Source):-
-  document_location(Document, Source), !.
+document_source(Doc, Source):-
+  document_original_location(Doc, Source), !.
 % The data document derives from an archive entry.
-document_source(Document, Source):-
+document_source(Doc, Source):-
   lwm_sparql_select(
     [llo],
     [parent,path],
-    [
-      rdf(Document, llo:path, var(path)),
-      rdf(var(parent), llo:containsEntry, Document)
-    ],
+    [rdf(Doc, llo:path, var(path)), rdf(var(parent), llo:containsEntry, Doc)],
     [[Parent,PathLiteral]],
     [limit(1)]
   ),
@@ -203,26 +211,13 @@ document_source(Document, Source):-
 
 
 
-%! document_location(+Document:iri, -Download:iri) is det.
-
-document_location(Document, Url):-
-  lwm_sparql_select(
-    [llo],
-    [download],
-    [rdf(Document, llo:url, var(download))],
-    [[Download]],
-    [limit(1)]
-  ).
-
-
-
 %! document_unpacked_size(+Document:iri, -UnpackedSize:nonneg) is det.
 
-document_unpacked_size(Document, UnpackedSize):-
+document_unpacked_size(Doc, UnpackedSize):-
   lwm_sparql_select(
     [llo],
     [unpackedSize],
-    [rdf(Document, llo:unpackedSize, var(unpackedSize))],
+    [rdf(Doc, llo:unpackedSize, var(unpackedSize))],
     [[UnpackedSizeLiteral]],
     [limit(1)]
   ),
@@ -249,14 +244,8 @@ document_unpacking(Docs):-
 
 %! document_p_os(+Document:iri, +Property:iri, -Objects:list(rdf_term)) is det.
 
-document_p_os(Document, P, Os):-
-  lwm_sparql_select(
-    [llo],
-    [o],
-    [rdf(Document,P,var(o))],
-    Os0,
-    []
-  ),
+document_p_os(Doc, P, Os):-
+  lwm_sparql_select([llo], [o], [rdf(Doc,P,var(o))], Os0, []),
   flatten(Os0, Os).
 
 
