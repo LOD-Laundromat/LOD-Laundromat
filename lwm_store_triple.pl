@@ -63,11 +63,9 @@ the stored triples are sent in a SPARQL Update request
 %! store_added(+Document:iri) is det.
 % Datetime at which the seedpoint IRI was added to the LOD Basket.
 
-store_added(Document):-
-  document_name(Document, Name),
+store_added(Doc):-
   get_dateTime_lexical(Added),
-  store_triple(Document, llo-added, literal(type(xsd-dateTime,Added))),
-  store_triple(Document, llo-md5, literal(type(xsd-string,Name))),
+  store_triple(Doc, llo-added, literal(type(xsd-dateTime,Added))),
   post_rdf_triples.
 
 
