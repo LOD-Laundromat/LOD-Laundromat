@@ -60,7 +60,7 @@ lwm_unpack_loop:-
 % Done for now. Check whether there are new jobs in one seconds.
 lwm_unpack_loop:-
   sleep(100),
-  lwm_debug_message(lwm_idle_loop(unpack)), % DEB
+  dcg_debug(unpack(idle), idle_loop(unpack)),
   lwm_unpack_loop.
 
 
@@ -88,28 +88,18 @@ lwm_unpack(Doc, Origin):-
   )),
 
   % DEB: *start* of downloading+unpacking..
-  lwm_debug_message(
-    lwm_progress(unpack),
-    lwm_start(unpack,Doc,Source)
-  ),
+  dcg_debug(lwm(progress(unpack)), start_process(unpack, Doc, Origin)),
 
   % Downloading+unpacking of a specific data document.
   call_collect_messages(
-    unpack_datadoc(Doc, Download, ArchiveFile),
+    unpack_datadoc(Doc, Origin, ArchiveFile),
     Status,
     Warnings
   ),
-  (   Status == false
-  ->  dcg_debug(lwm(unpack(status), ("[UNPACKING FAILED] ", document_name(Doc)))
-  ;   Status == true
-  ->  true
-  ;   debug(lwm(unpack(status)), "[STATUS] ~w", [Status])
-  ),
 
   % DEB: *end* of downloading+unpacking.
-  lwm_debug_message(
-    lwm(unpack(progress)),
-    lwm_end(unpack,Source,Status,Warnings)
+  dcg_debug(lwm(unpack(progress)),
+    end_process(unpack, Doc, Origin, Status, Warnings)
   ),
 
   % Store the warnings and status as metadata.
@@ -120,7 +110,7 @@ lwm_unpack(Doc, Origin):-
   (ground(ArchiveFile) -> delete_file(ArchiveFile) ; true).
 
 
-%! unpack_datadoc(+Document:iri, ?Download:iri, -File:atom) is det.
+%! unpack_datadoc(+Document:iri, ?Origin:url, -File:atom) is det.
 
 % We are dealing with an archive entry.
 unpack_datadoc(Doc, Url, File):-
@@ -134,7 +124,7 @@ unpack_datadoc(Doc, Url, File):-
 
   % Further unpack the archive entry.
   unpack_file(Dir, Doc, File).
-% We are dealing with an IRI.
+% We are dealing with a URL.
 unpack_datadoc(Doc, Url, File):-
   lwm_document_dir(Doc, Dir),
 

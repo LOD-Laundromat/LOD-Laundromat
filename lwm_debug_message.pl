@@ -1,11 +1,17 @@
 :- module(
   lwm_debug_message,
   [
-    document_name//1, % +Document:iri
-    lwm_debug_message/1, % ?Topic:compound
-    lwm_debug_message/2, % ?Topic:compound
-                         % +Message:compound
-    lwm_debugging/0
+    end_process//5, % +Category:oneof([clean,unpack])
+                    % +Document:iri
+                    % +Origin:url
+                    % +Status:or([boolean,compound])
+                    % +Warnings:list(compound)
+    idle_loop//1, % +Category:oneof([clean,unpack])
+    start_process//3, % +Category, +Document, +Origin
+    start_process//4 % +Category:oneof([clean,unpack])
+                     % +Document:iri
+                     % +Origin:url
+                     % +Size:number
   ]
 ).
 
@@ -18,13 +24,21 @@ Prints debug messages for the LOD Washing Machine.
 */
 
 :- use_module(library(apply)).
-:- use_module(library(dcg/dcg_content)).
+:- use_module(library(counter)).
+:- use_module(library(dcg/basics)).
+:- use_module(library(dcg/dcg_atom)).
+:- use_module(library(default)).
 :- use_module(library(debug)).
 :- use_module(library(lodapi/lodapi_generics)).
 
-:- discontiguous(lwm_debug_message/2).
 
 
+
+%! category(+Category:oneof([clean,unpack]))// is det.
+% Print a category name.
+
+category(Category) -->
+  upper_atom(Category).
 
 
 
@@ -37,102 +51,101 @@ document_name(Doc) -->
 
 
 
-%! lwm_debug_message(+Topic:compound, +Message:compound) is det.
-% `Topic` is a debug topic, specified in `library(debug)`.
+%! end_process(
+%!   +Category:oneof([clean,unpack]),
+%!   +Document:iri,
+%!   +Origin:url,
+%!   +Status:or([boolean,compound]),
+%!   +Warnings:list(compound)
+%! )// is det.
 
-% Idle loop.
-lwm_debug_message(Topic, lwm_idle_loop(Category)):- !,
-  % Every category has its own idle loop flag.
-  atomic_list_concat([number_of_idle_loops,Category], '_', Flag),
-  flag(Flag, X, X + 1),
-
-  debug(Topic, "[IDLE] ~a ~D", [Category,X]).
-
-
-% Do not print debug message.
-lwm_debug_message(Topic, _):-
-  nonvar(Topic),
-  \+ debugging(Topic), !.
+end_process(Category, Doc, Origin, Status, Warnings) -->
+  "[END ", category(Category), "] ",
+  status(Status), " "
+  document_name(Doc), " ",
+  atom(Origin).
 
 
-% C-Triples written.
-lwm_debug_message(_, ctriples_written(_,0,_)):- !.
-lwm_debug_message(
-  Topic,
-  ctriples_written(_,NumberOfUniqueTriples,NumberOfDuplicateTriples)
-):-
-  % Duplicates
-  (   NumberOfDuplicateTriples =:= 0
-  ->  DuplicatesString = ""
-  ;   format(
-        string(DuplicatesString),
-        " (~D duplicates)",
-        [NumberOfDuplicateTriples]
-      )
+
+%! idle_loop(+Category:oneof([clean,unpack]))// is det.
+% Print the fact that an idle loop is being traversed.
+
+idle_loop(Category) -->
+  % Every category has its own idle loop counter.
+  {increment_counter(number_of_idle_loops(Category), N)},
+  "[IDLE ", category(Cat), "] ", integer(N).
+
+
+
+%! simpleRdf_written(
+%!   +NumberOfUniqueTriples:nonneg,
+%!   +NumberOfDuplicateTriples:nonneg
+%! )// is det.
+% Prints how many Simple-RDF statements were written.
+%
+% @tbd Quadruples?
+
+simpleRdf_written(0, _) --> !, "".
+simpleRdf_written(NumberOfUniqueTriples, NumberOfDuplicateTriples) -->
+  "[+", integer(NumberOfUniqueTriples),
+  (   {NumberOfDuplicateTriples =:= 0}
+  ->  ""
+  ;   " (", integer(NumberOfDuplicateTriples), " duplicates)"
   ),
-  debug(Topic, "[+~D~s]", [NumberOfUniqueTriples,DuplicatesString]).
+  "]".
 
 
 
-% End a process.
-lwm_debug_message(Topic, lwm_end(Category1,Source,Status,_)):- !,
-  % Category
-  upcase_atom(Category1, Category2),
+%! size(+Size:number)// is det.
+% Prints a stream size indicator.
+% Size is the number of megabytes.
 
-  % Status
-  (   Status == true
-  ->  true
-  ;   Status == false
-  ->  debug(Topic, "  [STATUS] FALSE", [])
-  ;   debug(Topic, "  [STATUS] ~w", [Status])
-  ),
-
-  rdf_global_id(ll:Md5, Document),
-  debug(Topic, "[END ~a] ~w ~w", [Category2,Md5,Source]).
-
-
-% Start a process.
-lwm_debug_message(Topic, lwm_start(unpack,Document,Source)):- !,
-  lwm_start_generic(Topic, unpack, Document, Source, "").
-
-lwm_debug_message(Topic, lwm_start(Category,Document,Source,Size)):- !,
-  % `Size` is the number of bytes.
-  NumberOfGigabytes is Size / (1024 ** 3),
-  format(string(SizeString), " (~f GB)", [NumberOfGigabytes]),
-  lwm_start_generic(Topic, Category, Document, Source, SizeString).
-
-lwm_start_generic(Topic, Category1, Document, Source, SizeString):-
-  % Category
-  upcase_atom(Category1, Category2),
-
-  % Document source: IRI or IRI+entry (for archives).
-  datadoc_source(Document, Source),
-
-  rdf_global_id(ll:Md5, Document),
-  debug(Topic, '[START ~a] ~w ~w~s', [Category2,Md5,Source,SizeString]).
-
-
-% VoID description found
-lwm_debug_message(Topic, void_found(Urls)):-
-  maplist(void_found(Topic), Urls).
+size(Size) --> {var(Size)}, !, "".
+size(Size) -->
+  " (", 
+  {NumberOfGigabytes is Size / (1024 ** 3)},
+  float(NumberOfGigabytes),
+  " GB)".
 
 
 
-%! lwm_debugging is semidet.
-% Succeeds iff the LOD Washing Machine is currently in debugging mode.
+%! start_process(
+%!   +Category:oneof([clean,unpack]),
+%!   +Document:iri,
+%!   +Origin:url
+%! )// is det.
+% Wrapper around start_process//4 with no size indicator.
 
-lwm_debugging:-
-  debugging(_), !.
-lwm_debugging:-
-  once(debug:debug_md5(_, _)).
+start_process(Category, Doc, Origin) -->
+  start_process(Category, Doc, Origin, _).
+
+
+%! start_process(
+%!   +Category:oneof([clean,unpack]),
+%!   +Document:iri,
+%!   +Origin:url,
+%!   +Size:number
+%! )// is det.
+% Prints the start of a LOD Washing Machine process.
+
+start_process(Process, Doc, Origin, SizeString) -->
+  "START ", atom_upper(Process), " ", document_name(Doc), nl,
+  "  ", atom(Origin), nl
+  "  ", size(Size).
 
 
 
+%! status(+Status:or([boolean,compound]))// is det.
+% Prints the given LOD Washing Machine process status.
+
+status(true) --> !, "".
+status(false) --> "  FAILED ".
+status(Status) --> "  [STATUS] ", pl_term(Status).
 
 
-% HELPERS %
 
-%! void_found(+Topic:compound, +Url:atom) is det.
+%! void_found(+Urls:list(url))// is det.
+% Prints the fact that seed points have been found inside VoID descriptions.
 
-void_found(Topic, Url):-
-  debug(Topic, '  [VOID] ~a', [Url]).
+void_found([]) --> !, "".
+void_found([H|T]) --> "  [VOID] ", atom(H), void_found(T).
