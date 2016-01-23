@@ -1,0 +1,23 @@
+# TODO
+
+* Bugs
+* Libraries
+** Parsers for HTTP headers
+** Downloading URIs with the FTP scheme
+* LOD Laundromat
+** Query HDT directly
+** Store all HTTP headers
+** Keep track of non-IRIs
+Unexpanded IRIs in prefix notation.
+** Keep track of malformed literals.
+~message(error(syntax_error(xml_date(2013-10-31+02:00)),_G75881),warning,[Syntax error: ,~w-[xml_date(2013-10-31+02:00)]])~
+
+
+
+# Notes
+
+* Problematic MD5s
+** 2570ea2d41d6f3c2ce902ec233e51a68
+Contains Illegal UTF-8 start (183:0).
+* How to run LOD Laundromat
+~swipl run.pl --debug --dir=/scratch/lodlaundromat/crawls/12/ --mode=continue~
