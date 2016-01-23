@@ -13,47 +13,27 @@
 The cleaning process performed by the LOD Washing Machine.
 
 @author Wouter Beek
-@version 2014/03-2014/06, 2014/08-2014/09, 2015/01-2015/02, 2015/06
+@version 2016/01
 */
 
 :- use_module(library(apply)).
 :- use_module(library(debug)).
 :- use_module(library(option)).
-:- use_module(library(semweb/rdf_db), except([rdf_node/1])). % Format `xml`.
-:- use_module(library(semweb/rdf_ntriples)). % Formats `ntriples`, `nquads`.
-:- use_module(library(semweb/rdfa)). % Format `rdfa`
-:- use_module(library(semweb/turtle)). % Formats `turtle`, `trig`.
+:- use_module(library(rdf/rdf_load)).
 :- use_module(library(zlib)).
 
-:- use_module(plc(dcg/dcg_generics)).
-:- use_module(plc(generics/list_ext)).
-:- use_module(plc(io/archive_ext)).
-:- use_module(plc(io/file_ext)).
-:- use_module(plc(io/file_gnu)).
-:- use_module(plc(process/gnu_sort)).
-:- use_module(plc(process/list_script)).
-:- use_module(plc(prolog/pl_log)).
+:- use_module(lwm_debug_message).
+:- use_module(lwm_store_triple).
+:- use_module(noRdf_store).
 
-:- use_module(plHttp(header/representation/http_content_type)).
+:- dynamic
+    debug:debug_md5/2.
+:- multifile
+    debug:debug_md5/2.
 
-:- use_module(plRdf(management/rdf_file_db)).
-:- use_module(plRdf(management/rdf_guess_format)).
-:- use_module(plRdf(syntax/ctriples/ctriples_write_generics)).
-:- use_module(plRdf(syntax/ctriples/ctriples_write_graph)).
-:- use_module(plRdf(syntax/ctriples/ctriples_write_triples)).
-
-:- use_module(lwm(lwm_debug_message)).
-:- use_module(lwm(lwm_store_triple)).
-:- use_module(lwm(md5)).
-:- use_module(lwm(noRdf_store)).
-:- use_module(lwm(query/lwm_sparql_enum)).
-:- use_module(lwm(query/lwm_sparql_query)).
-
-:- dynamic(debug:debug_md5/2).
-:- multifile(debug:debug_md5/2).
-
-:- thread_local(datadump/1).
-:- thread_local(has_quadruples/1).
+:- thread_local
+   datadump/1,
+   has_quadruples/1.
 
 
 
@@ -318,7 +298,6 @@ clean_datastream(
 
   % Store statistics about the number of (duplicate) triples.
   store_number_of_triples(
-    Category,
     Datadoc,
     NumberOfTriples,
     NumberOfUniqueTriples

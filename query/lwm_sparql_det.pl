@@ -37,16 +37,18 @@ SPARQL queries for retrieving specific properties of a data document
 in the LOD Washing Machine.
 
 @author Wouter Beek
-@version 2015/11
+@version 2016/01
 */
 
 :- use_module(library(apply)).
 :- use_module(library(lists)).
-:- use_module(library(rdf/rdf_literal)).
+:- use_module(library(rdf/rdf_term)).
+:- use_module(library(rdf11/rdf11)).
 
-:- use_module('LOD-Laundromat'(query/lwm_sparql_generics)).
+:- use_module(query/lwm_sparql_generics).
 
-:- rdf_meta(document_p_os(r,r,-)).
+:- rdf_meta
+   document_p_os(r, r, -).
 
 
 
@@ -176,7 +178,7 @@ document_has_triples(Doc):-
 
 %! document_original_location(+Document:iri, -Download:iri) is det.
 
-document_original_location(Doc, Url):-
+document_original_location(Doc, Download):-
   lwm_sparql_select(
     [llo],
     [download],

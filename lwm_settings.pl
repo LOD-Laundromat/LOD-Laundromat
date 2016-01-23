@@ -2,10 +2,10 @@
   lwm_settings,
   [
     init_lwm_settings/1, % +Port:nonneg
-    ll_authority/1, % ?Authority:atom
-    ll_scheme/1, % ?Scheme:atom
-    lod_basket_graph/1, % -Graph:atom
-    lwm_version_graph/1 % -Graph:atom
+    ll_authority/1,      % ?Authority:atom
+    ll_scheme/1,         % ?Scheme:atom
+    lod_basket_graph/1,  % -G
+    lwm_version_graph/1  % -G
   ]
 ).
 
@@ -14,109 +14,103 @@
 Generic predicates for the LOD Washing Machine.
 
 @author Wouter Beek
-@version 2014/06, 2014/08-2014/09, 2015/01-2015/03
+@version 2016/01
 */
 
 :- use_module(library(filesex)).
-:- use_module(library(semweb/rdf_db), except([rdf_node/1])).
 :- use_module(library(settings)).
+:- use_module(library(sparql/sparql_db)).
 :- use_module(library(uri)).
 
-:- use_module(plc(generics/atom_ext)).
-:- use_module(plc(generics/service_db)).
-
-:- use_module(plSparql(sparql_db)).
-
-:- dynamic(user:prolog_file_type/2).
-:- multifile(user:prolog_file_type/2).
+:- dynamic
+    user:prolog_file_type/2.
+:- multifile
+    user:prolog_file_type/2.
 
 user:prolog_file_type(conf, configuration).
 
 :- setting(
-  endpoint,
-  oneof([both,cliopatria,virtuoso]),
-  both,
-  'The endpoint that is used to store the crawling metadata in.'
-).
+     endpoint,
+     oneof([both,cliopatria,virtuoso]),
+     both,
+     'The endpoint that is used to store the crawling metadata in.'
+   ).
 :- setting(
-  keep_old_datadoc,
-  boolean,
-  true,
-  'Whether the original data document is stored or not.'
-).
+     keep_old_datadoc,
+     boolean,
+     true,
+     'Whether the original data document is stored or not.'
+   ).
 :- setting(
-  max_number_of_warnings,
-  nonneg,
-  100,
-  'The maximum number of warnings that is stored per data document.'
-).
+     max_number_of_warnings,
+     nonneg,
+     100,
+     'The maximum number of warnings that is stored per data document.'
+   ).
 :- setting(
-  number_of_large_cleaning_threads,
-  nonneg,
-  1,
-  'The number of threads for cleaning large data documents.'
-).
+     number_of_large_cleaning_threads,
+     nonneg,
+     1,
+     'The number of threads for cleaning large data documents.'
+   ).
 :- setting(
-  number_of_medium_cleaning_threads,
-  nonneg,
-  1,
-  'The number of threads for cleaning medium data documents.'
-).
+     number_of_medium_cleaning_threads,
+     nonneg,
+     1,
+     'The number of threads for cleaning medium data documents.'
+   ).
 :- setting(
-  number_of_small_cleaning_threads,
-  nonneg,
-  1,
-  'The number of threads for cleaning small data documents.'
-).
+     number_of_small_cleaning_threads,
+     nonneg,
+     1,
+     'The number of threads for cleaning small data documents.'
+   ).
 :- setting(
-  number_of_sorting_threads,
-  nonneg,
-  1,
-  'The number of threads for sorting data documents.'
-).
+     number_of_sorting_threads,
+     nonneg,
+     1,
+     'The number of threads for sorting data documents.'
+   ).
 :- setting(
-  number_of_unpacking_threads,
-  nonneg,
-  1,
-  'The number of threads for downloading and unpacking data documents.'
-).
+     number_of_unpacking_threads,
+     nonneg,
+     1,
+     'The number of threads for downloading and unpacking data documents.'
+   ).
 :- setting(
-  post_processing,
-  boolean,
-  false,
-  'Whether or not a post-processing script is run.'
-).
+     post_processing,
+     boolean,
+     false,
+     'Whether or not a post-processing script is run.'
+   ).
 :- setting(
-  version,
-  nonneg,
-  12,
-  'The version number of the scrape.'
-).
+     version,
+     nonneg,
+     12,
+     'The version number of the scrape.'
+   ).
 
 
 
 
 
-%! lod_basket_graph(-Graph:atom) is det.
+%! lod_basket_graph(-G) is det.
 
-lod_basket_graph(Graph):-
+lod_basket_graph(Graph) :-
   ll_scheme(Scheme),
   ll_authority(Authority),
   uri_components(Graph, uri_components(Scheme,Authority,'',_,seedlist)).
 
 
 
-%! lwm_version_graph(-Graph:atom) is det.
+%! lwm_version_graph(-G) is det.
 
-lwm_version_graph(Graph):-
+lwm_version_graph(G) :-
   ll_scheme(Scheme),
-  ll_authority(Authority),
+  ll_authority(Auth),
   setting(lwm_settings:version, Version0),
-  to_atom(Version0, Version),
-  uri_components(
-    Graph,
-    uri_components(Scheme,Authority,'',_,Version)
-  ).
+  atom_number(Version, Version0),
+  uri_components(G, uri_components(Scheme,Auth,'',_,Version)).
 
 
 
@@ -141,7 +135,7 @@ ll_scheme(http).
 
 % INITIALIZATION %
 
-init_lwm_settings(Port):-
+init_lwm_settings(Port) :-
   (   absolute_file_name(
         lwm(settings),
         File,

@@ -22,15 +22,14 @@ Unpacks files for the LOD Washing Machine to clean.
 :- use_module(library(lodapi/lodapi_generics)).
 :- use_module(library(rdf/rdf_download)).
 
-:- use_module('LOD-Laundromat'(md5)).
-:- use_module('LOD-Laundromat'(lwm_debug_message)).
-:- use_module('LOD-Laundromat'(lwm_store_triple)).
-:- use_module('LOD-Laundromat'(noRdf_store)).
-:- use_module('LOD-Laundromat'(query/lwm_sparql_enum)).
-:- use_module('LOD-Laundromat'(query/lwm_sparql_query)).
+:- use_module(lwm_debug_message).
+:- use_module(lwm_store_triple).
+:- use_module(noRdf_store).
 
-:- dynamic(debug:debug_md5/2).
-:- multifile(debug:debug_md5/2).
+:- dynamic
+    debug:debug_md5/2.
+:- multifile
+    debug:debug_md5/2.
 
 
 
@@ -51,7 +50,7 @@ lwm_unpack_loop:-
       % to begin downloading+unpacking this data document.
       store_start_unpack(Doc)
     )),
-    W,
+    E,
     var(E)
   ),
   lwm_unpack(Doc, Origin),
@@ -80,31 +79,27 @@ lwm_unpack(Doc):-
 %! lwm_unpack(+Document:iri, +Download:iri) is det.
 
 lwm_unpack(Doc, Origin):-
-  % Allow the debugger to pop up for specific MD5s.
+  % DEBUG: Allow the debugger to pop up for specific MD5s.
   if_debug(lwm(unpack), (
     document_name(Doc, Md5),
-    debug:debug_md5(Md5, unpack)
+    debug:debug_md5(Md5, unpack),
     gtrace
   )),
 
-  % DEB: *start* of downloading+unpacking..
+  % DEBUG: mention that downloading+unpacking has started.
   dcg_debug(lwm(progress(unpack)), start_process(unpack, Doc, Origin)),
 
   % Downloading+unpacking of a specific data document.
-  call_collect_messages(
-    unpack_datadoc(Doc, Origin, ArchiveFile),
-    Status,
-    Warnings
-  ),
+  call_collect_messages(unpack_datadoc(Doc, Origin, ArchiveFile), Result, Warnings),
 
   % DEB: *end* of downloading+unpacking.
   dcg_debug(lwm(unpack(progress)),
-    end_process(unpack, Doc, Origin, Status, Warnings)
+    end_process(unpack, Doc, Origin, Result, Warnings)
   ),
 
   % Store the warnings and status as metadata.
   maplist(store_warning(Doc), Warnings),
-  store_end_unpack(Doc, Status),
+  store_end_unpack(Doc, Result),
 
   % Remove the archive file.
   (ground(ArchiveFile) -> delete_file(ArchiveFile) ; true).
@@ -113,9 +108,9 @@ lwm_unpack(Doc, Origin):-
 %! unpack_datadoc(+Document:iri, ?Origin:url, -File:atom) is det.
 
 % We are dealing with an archive entry.
-unpack_datadoc(Doc, Url, File):-
+unpack_datadoc(Doc, Uri, File):-
   % Uninstantiated SPARQL variable (due to the use of the `OPTIONAL` keyword).
-  Url == '$null$', !,
+  Uri == '$null$', !,
 
   % Entries occur in a path.
   lwm_document_dir(Doc, Dir),
@@ -125,18 +120,18 @@ unpack_datadoc(Doc, Url, File):-
   % Further unpack the archive entry.
   unpack_file(Dir, Doc, File).
 % We are dealing with a URL.
-unpack_datadoc(Doc, Url, File):-
+unpack_datadoc(Doc, Uri, File):-
   lwm_document_dir(Doc, Dir),
 
   % Extract and store the file extensions from the download IRI, if any.
-  (uri_file_extension(Url, Ext) -> true ; Ext = ""),
+  (uri_file_extension(Uri, Ext) -> true ; Ext = ""),
 
   % Construct the download file.
   file_name_extension(download, Ext, Base),
   directory_file_path(Dir, Base, File),
 
   % Download the dirty file of the document.
-  rdf_download(Url, File, [freshness_lifetime(0.0),metadata(M)]),
+  rdf_download(Uri, File, [freshness_lifetime(0.0),metadata(M)]),
   
   % Store the file size of the dirty file.
   size_file(File, Size),
@@ -146,8 +141,8 @@ unpack_datadoc(Doc, Url, File):-
   store_http(Doc, M),
 
   % Process the HTTP status code.
-  (   is_http_error(Status)
-  ->  throw(error(http_status(Status), lwm_unpack:unpack_datadoc/4))
+  (   is_http_error(M.http.status_code)
+  ->  throw(error(http_status(M.http.status_code), lwm_unpack:unpack_datadoc/4))
   ;   unpack_file(Dir, Doc, File)
   ).
 
@@ -160,7 +155,7 @@ unpack_file(Dir, Doc, ArchiveFile):-
   (Ext == "" -> true ; store_file_extension(Doc, Ext)),
 
   % Extract archive.
-  archive_extract(ArchiveFile, _, ArchiveFilters, EntryPairs),
+  archive_extract(ArchiveFile),
   store_archive_filters(Doc, ArchiveFilters),
 
   (   % Case 1: There is no archive file to unpack.
@@ -168,7 +163,7 @@ unpack_file(Dir, Doc, ArchiveFile):-
   ->  % To keep the process simple / consistent with other cases,
       % we create an empty dirty file
       % (acting as the 'content' of the absent archive file.
-      directory_file_path(Md5Dir, dirty, DirtyFile),
+      directory_file_path(Dir, dirty, DirtyFile),
       touch_file(DirtyFile)
   ;   % Case 2: The archive file is present, but it is a raw data file
       %         (so not an archive proper).
@@ -181,7 +176,7 @@ unpack_file(Dir, Doc, ArchiveFile):-
       % Notice that the data file may appear in an entry path.
       directory_file_path(ArchiveDir, _, ArchiveFile),
       directory_file_path(ArchiveDir, data, DataFile),
-      directory_file_path(Md5Dir, dirty, DirtyFile),
+      directory_file_path(Dir, dirty, DirtyFile),
       gnu_mv(DataFile, DirtyFile),
 
       % Store the size of the dirty data file after unpacking.
@@ -197,7 +192,7 @@ unpack_file(Dir, Doc, ArchiveFile):-
       % Create the archive entries
       % and copy the entry files to their own MD5 dirs.
       list_script(
-        process_entry_pair(Md5, Md5Dir, Doc),
+        process_entry_pair(Md5, Dir, Doc),
         EntryPairs,
         [message('LWM ArchiveEntry')]
       ),
@@ -235,7 +230,8 @@ process_entry_pair(
   gnu_mv(FromEntryFile, ToEntryFile),
 
   % Store the metadata.
-  store_archive_entry(Doc, EntryMd5, Entry, EntryPath, EntryProperties).
+  store_archive_entry(Doc, Entry, EntryPath, EntryProperties).
+
 
 %! create_entry_hash(+ParentMd5:atom, +EntryPath:atom, -EntryMd5:atom) is det.
 

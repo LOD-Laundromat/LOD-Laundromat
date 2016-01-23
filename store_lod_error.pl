@@ -12,18 +12,14 @@
 Stores error term denoting exceptions in a LOD format.
 
 @author Wouter Beek
-@version 2014/09, 2015/01-2015/02, 2015/06
+@version 2016/01
 */
 
 :- use_module(library(debug)).
-:- use_module(library(semweb/rdf_db), except([rdf_node/1])).
+:- use_module(library(rdf11/rdf11)).
 :- use_module(library(uri)).
 
-:- use_module(plc(generics/atom_ext)).
-
-:- use_module(plXml(xml_dom)).
-
-:- use_module(lwm(noRdf_store)).
+:- use_module(noRdf_store).
 
 :- rdf_register_prefix(error, 'http://lodlaundromat.org/error/ontology/').
 :- rdf_register_prefix(httpo, 'http://lodlaundromat.org/http/ontology/').
@@ -41,7 +37,7 @@ store_lod_error(Datadoc, Kind, Error):-
   gtrace, %DEB
   store_lod_error(Datadoc, Kind, Error).
 store_lod_error(Datadoc, _, Error):-
-  debug(lwm, '[STORE-ERROR FAILED] ~w ~w', [Datadoc,Error]).
+  debug(lwm, "[STORE-ERROR FAILED] ~w ~w", [Datadoc,Error]).
 
 % Archive error
 store_lod_error0(Datadoc, Kind, error(archive_error(Code,_),_)):- !,
@@ -317,4 +313,3 @@ store_position(Resource, Line, Column, Character):-
     error-character,
     literal(type(xsd-nonNegativeInteger,Character))
   ).
-

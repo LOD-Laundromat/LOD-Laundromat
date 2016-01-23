@@ -4,8 +4,8 @@
     end_process//5, % +Category:oneof([clean,unpack])
                     % +Document:iri
                     % +Origin:url
-                    % +Status:or([boolean,compound])
-                    % +Warnings:list(compound)
+                    % +Result:or([boolean,compound])
+                    % +Msgs:list(compound)
     idle_loop//1, % +Category:oneof([clean,unpack])
     start_process//3, % +Category, +Document, +Origin
     start_process//4 % +Category:oneof([clean,unpack])
@@ -20,13 +20,16 @@
 Prints debug messages for the LOD Washing Machine.
 
 @author Wouter Beek
-@version 2015/11
+@version 2015/11, 2016/01
 */
 
 :- use_module(library(apply)).
 :- use_module(library(counter)).
 :- use_module(library(dcg/basics)).
 :- use_module(library(dcg/dcg_atom)).
+:- use_module(library(dcg/dcg_cardinal)).
+:- use_module(library(dcg/dcg_content)).
+:- use_module(library(dcg/dcg_pl)).
 :- use_module(library(default)).
 :- use_module(library(debug)).
 :- use_module(library(lodapi/lodapi_generics)).
@@ -38,14 +41,14 @@ Prints debug messages for the LOD Washing Machine.
 % Print a category name.
 
 category(Category) -->
-  upper_atom(Category).
+  atom_upper(Category).
 
 
 
 %! document_name(+Document:iri)// is det.
 
 document_name(Doc) -->
-  {document_name(Doc, Name},
+  {document_name(Doc, Name)},
   atom(Name).
   
 
@@ -54,16 +57,18 @@ document_name(Doc) -->
 %! end_process(
 %!   +Category:oneof([clean,unpack]),
 %!   +Document:iri,
-%!   +Origin:url,
-%!   +Status:or([boolean,compound]),
-%!   +Warnings:list(compound)
+%!   +Origin:uri,
+%!   +Result:or([boolean,compound]),
+%!   +Msgs:list(compound)
 %! )// is det.
 
-end_process(Category, Doc, Origin, Status, Warnings) -->
+end_process(Category, Doc, Origin, Result, Msgs) -->
   "[END ", category(Category), "] ",
-  status(Status), " "
+  status(Result), " ",
   document_name(Doc), " ",
-  atom(Origin).
+  atom(Origin), " ",
+  {length(Msgs, NMsgs)},
+  thousands_integer(NMsgs), " errors".
 
 
 
@@ -73,7 +78,7 @@ end_process(Category, Doc, Origin, Status, Warnings) -->
 idle_loop(Category) -->
   % Every category has its own idle loop counter.
   {increment_counter(number_of_idle_loops(Category), N)},
-  "[IDLE ", category(Cat), "] ", integer(N).
+  "[IDLE ", category(Category), "] ", thousands_integer(N).
 
 
 
@@ -90,7 +95,7 @@ simpleRdf_written(NumberOfUniqueTriples, NumberOfDuplicateTriples) -->
   "[+", integer(NumberOfUniqueTriples),
   (   {NumberOfDuplicateTriples =:= 0}
   ->  ""
-  ;   " (", integer(NumberOfDuplicateTriples), " duplicates)"
+  ;   " (", thousands_integer(NumberOfDuplicateTriples), " duplicates)"
   ),
   "]".
 
@@ -128,19 +133,19 @@ start_process(Category, Doc, Origin) -->
 %! )// is det.
 % Prints the start of a LOD Washing Machine process.
 
-start_process(Process, Doc, Origin, SizeString) -->
+start_process(Process, Doc, Origin, Size) -->
   "START ", atom_upper(Process), " ", document_name(Doc), nl,
-  "  ", atom(Origin), nl
+  "  ", atom(Origin), nl,
   "  ", size(Size).
 
 
 
-%! status(+Status:or([boolean,compound]))// is det.
+%! status(+Result:or([boolean,compound]))// is det.
 % Prints the given LOD Washing Machine process status.
 
 status(true) --> !, "".
 status(false) --> "  FAILED ".
-status(Status) --> "  [STATUS] ", pl_term(Status).
+status(Result) --> "  [RESULT] ", pl_term(Result).
 
 
 

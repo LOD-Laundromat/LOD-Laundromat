@@ -30,12 +30,17 @@ Generic support predicates for SPARQL queries conducted by
 the LOD Laundromat's washing machine.
 
 @author Wouter Beek
-@version 2015/11
+@version 2015/11, 2016/01
 */
 
+:- use_module(library(dcg/dcg_phrase)).
+:- use_module(library(list_ext)).
 :- use_module(library(option)).
+:- use_module(library(pl/pl_control)).
+:- use_module(library(sparql/query/sparql_query)).
+:- use_module(library(sparql/query/sparql_query_build)).
 
-:- use_module('LOD-Laundromat'(lwm_settings)).
+:- use_module(lwm_settings).
 
 :- predicate_options(lwm_sparql_ask/3, 3, [
      pass_to(sparql_ask/4, 4)
@@ -85,8 +90,9 @@ build_unpacked_query(Min, Max, Query2):-
 %! ) is semidet.
 
 lwm_sparql_ask(Prefixes, Bgps, Opts1):-
-  endpoint_options(Opts1, Opts2),
-  loop_until_true(sparql_ask(lwm_endpoint, Prefixes, Bgps, Opts2)).
+  lwm_endpoint_options(Opts1, Opts2),
+  atom_phrase(Query, sparql_build_ask(Prefixes, Bgps, Opts2)),
+  loop_until_true(sparql_ask(lwm_endpoint, Query, Opts2)).
 
 
 
@@ -97,7 +103,7 @@ lwm_sparql_ask(Prefixes, Bgps, Opts1):-
 %! ) is det.
 
 lwm_sparql_select(Query, Result, Opts1):-
-  endpoint_options(Opts1, Opts2),
+  lwm_endpoint_options(Opts1, Opts2),
   loop_until_true(sparql_select(lwm_endpoint, Query, Result, Opts2)).
 
 
@@ -111,10 +117,9 @@ lwm_sparql_select(Query, Result, Opts1):-
 %! ) is det.
 
 lwm_sparql_select(Prefixes, Vars, Bgps, Result, Opts1):-
-  endpoint_options(Opts1, Opts2),
-  loop_until_true(
-    sparql_select(lwm_endpoint, Prefixes, Vars, Bgps, Result, Opts2)
-  ).
+  lwm_endpoint_options(Opts1, Opts2),
+  atom_phrase(Query, sparql_build_select(Prefixes, Vars, Bgps, Opts2)),
+  loop_until_true(sparql_select(lwm_endpoint, Query, Result, Opts2)).
 
 
 
@@ -127,19 +132,10 @@ lwm_sparql_select(Prefixes, Vars, Bgps, Result, Opts1):-
 %!   +Options:list(compound)
 %! ) is nondet.
 
-lwm_sparql_select_iteratively(Prefixes, Vars, Bgps, N, NResults, Opts1):-
-  endpoint_options(Opts1, Endpoint, Opts2),
-  loop_until_true(
-    sparql_select_iteratively(
-      lwm_endpoint,
-      Prefixes,
-      Vars,
-      Bgps,
-      N,
-      NResults,
-      Opts2
-    )
-  ).
+lwm_sparql_select_iteratively(Prefixes, Vars, Bgps, N, Results, Opts1):-
+  lwm_endpoint_options(Opts1, Opts2),
+  atom_phrase(Q, sparql_build_select(Prefixes, Vars, Bgps)),
+  sparql_select(lwm_endpoint, Q, Results, Opts2).
 
 
 
@@ -153,8 +149,7 @@ lwm_sparql_select_iteratively(Prefixes, Vars, Bgps, N, NResults, Opts1):-
 %! ) is det.
 % Notice that Virtuoso queries are requested within a named graph.
 
-lwm_endpoint_options(Opts1, virtuoso_query, Opts2):-
-  lwm_settings:setting(endpoint, virtuoso),
+lwm_endpoint_options(Opts1, Opts2):-
   lod_basket_graph(G1),
   lwm_version_graph(G2),
   merge_options([default_graph(G1),default_graph(G2)], Opts1, Opts2).
