@@ -83,7 +83,7 @@ document_archive_entry(Doc, EntryPath):-
     [EntryPathLit],
     [limit(1)]
   ),
-  rdf_literal_data(value, EntryPathLit, EntryPath).
+  rdf_literal_value(EntryPathLit, EntryPath).
 
 
 
@@ -126,7 +126,7 @@ document_content_type(Doc, ContentType):-
     [[ContentTypeLit]],
     [limit(1)]
   ),
-  rdf_literal_data(value, ContentTypeLit, ContentType).
+  rdf_literal_value(ContentTypeLit, ContentType).
 
 
 
@@ -163,7 +163,7 @@ document_file_extension(Doc, Ext):-
     [[ExtLit]],
     [limit(1)]
   ),
-  rdf_literal_data(value, ExtLit, Ext).
+  rdf_literal_value(ExtLit, Ext).
 
 
 
@@ -205,7 +205,7 @@ document_source(Doc, Source):-
     [[Parent,PathLiteral]],
     [limit(1)]
   ),
-  rdf_literal_data(value, PathLiteral, Path),
+  rdf_literal_value(PathLiteral, Path),
   document_source(Parent, ParentSource),
   atomic_list_concat([ParentSource,Path], ' ', Source).
 
@@ -221,7 +221,7 @@ document_unpacked_size(Doc, UnpackedSize):-
     [[UnpackedSizeLiteral]],
     [limit(1)]
   ),
-  rdf_literal_data(value, UnpackedSizeLiteral, UnpackedSize).
+  rdf_literal_value(UnpackedSizeLiteral, UnpackedSize).
 
 
 

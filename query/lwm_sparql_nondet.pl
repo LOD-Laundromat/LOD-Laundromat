@@ -18,10 +18,11 @@ SPARQL queries that enumerate various kinds of data documents
 for the LOD Washing Machine.
 
 @author Wouter Beek
-@version 2015/11
+@version 2015/11, 2016/01
 */
 
 :- use_module(library(lists)).
+:- use_module(library(rdf/rdf_term)).
 
 :- use_module('LOD-Laundromat'(query/lwm_sparql_generics)).
 
@@ -101,7 +102,7 @@ unpacked(Min, Max, Document, UnpackedSize):-
     [[Document,UnpackedSizeLiteral]],
     [order(descending-added)]
   ),
-  rdf_literal_data(value, UnpackedSizeLiteral, UnpackedSize).
+  rdf_literal_value(UnpackedSizeLiteral, UnpackedSize).
 
 
 
