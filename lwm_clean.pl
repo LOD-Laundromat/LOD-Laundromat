@@ -84,8 +84,7 @@ lwm_clean(Category, Datadoc, UnpackedSize):-
   rdf_global_id(ll:Md5, Datadoc),
 
   % DEB
-  (   user:debug_mode,
-      debug:debug_md5(Md5, clean)
+  (   debug:debug_md5(Md5, clean)
   ->  gtrace %DEB
   ;   true
   ),
@@ -100,12 +99,6 @@ lwm_clean(Category, Datadoc, UnpackedSize):-
     clean_md5(Category, Md5, Datadoc, DirtyFile),
     Status,
     Warnings1
-  ),
-  (   Status == false
-  ->  debug(lwm, '[CLEANING FAILED] ~w', [Md5])
-  ;   Status == true
-  ->  true
-  ;   debug(lwm_status, '[STATUS] ~w', [Status])
   ),
 
   % Store the number of warnings.

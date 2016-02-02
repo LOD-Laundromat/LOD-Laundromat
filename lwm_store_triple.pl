@@ -12,8 +12,6 @@
     store_end_unpack/3, % +Md5
                         % +Doc
                         % +Status
-    store_exception/2, % +Doc
-                       % +Status:or([boolean,compound]))
     store_file_extension/2, % +Doc
                             % +FileExtension:atom
     store_http/2, % +Doc
@@ -174,16 +172,6 @@ store_end_unpack(Md5, Doc, Status) :-
 store_end_unpack0(Doc) :-
   get_dateTime_lexical(Now),
   store_triple(Doc, llo-endUnpack, literal(type(xsd-dateTime,Now))).
-
-
-
-%! store_exception(+Doc, +Status:or([boolean,compound])) is det.
-
-% Not an exception.
-store_exception(_, true) :- !.
-% Format exceptions.
-store_exception(Doc, exception(Error)) :-
-  store_lod_error(Doc, exception, Error).
 
 
 

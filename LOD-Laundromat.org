@@ -2,22 +2,27 @@
 
 * Bugs
 * Libraries
+** Assert warnings at the spot, i.e., without collecting them in memory
 ** Parsers for HTTP headers
 ** Downloading URIs with the FTP scheme
+*** TODO Ask SWI mailinglist
 * LOD Laundromat
 ** Query HDT directly
+*** TODO Try using the C++ library
 ** Store all HTTP headers
+*** TODO Extend the HTTP vocabulary for headers
 ** Keep track of non-IRIs
-Unexpanded IRIs in prefix notation.
+*** TODO Unexpanded IRIs in prefix notation.
+*** TODO IRI normalization HOWTO?
 ** Keep track of malformed literals.
-~message(error(syntax_error(xml_date(2013-10-31+02:00)),_G75881),warning,[Syntax error: ,~w-[xml_date(2013-10-31+02:00)]])~
+*** TODO ~message(error(syntax_error(xml_date(2013-10-31+02:00)),_G75881),warning,[Syntax error: ,~w-[xml_date(2013-10-31+02:00)]])~
 
 
 
 # Notes
 
 * Problematic MD5s
-** 2570ea2d41d6f3c2ce902ec233e51a68
+** TODO 2570ea2d41d6f3c2ce902ec233e51a68
 Contains Illegal UTF-8 start (183:0).
 * How to run LOD Laundromat
 ~swipl run.pl --debug --dir=/scratch/lodlaundromat/crawls/12/ --mode=continue~

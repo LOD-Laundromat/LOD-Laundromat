@@ -1,13 +1,9 @@
 :- module(
   noRdf_store,
   [
-    post_rdf_triples/0,
-    rdf_triple/3, % +Subject
-                  % +Predicate
-                  % +Object
-    store_triple/3 % +Subject
-                   % +Predicate
-                   % +Object
+    post_nordf_triples/0,
+    nordf_triple/3,       % ?S, ?P, ?O
+    store_nordf_triple/3  % +S, +P, +O
   ]
 ).
 
@@ -23,12 +19,12 @@ and at the same time send small RDF messages using SPARQL Update requests.
 */
 
 :- use_module(library(debug)).
-:- use_module(library(rdf11/rdf11)).
+:- use_module(library(rdf/rdf_api)).
 :- use_module(library(sparql/http/sparql_graph_store)).
 
 :- use_module(lwm_settings).
 
-%! rdf_triple0(?S, ?P, ?O) is nondet.
+%! nordf_triple0(?S, ?P, ?O) is nondet.
 % Since threads load data in RDF transactions with snapshots,
 % we cannot use the triple store for anything else during
 % the load-save cycle of a data document.
@@ -36,54 +32,44 @@ and at the same time send small RDF messages using SPARQL Update requests.
 % as thread-specific Prolog assertions.
 
 :- thread_local
-   rdf_triple0/3.
+   nordf_triple0/3.
 
 :- rdf_meta
-   rdf_triple(r, r, o).
+   nordf_triple(r,r,o).
 
 
 
 
 
-%! post_rdf_triples is det.
+%! post_nordf_triples is det.
 % Sends a SPARQL Update request to the LOD Laundromat Endpoint
 % containing all current noRdf triples, for a particular MD5.
 %
-% The thread-local rdf_triple0/3 statements form the contents
+% The thread-local nordf_triple0/3 statements form the contents
 % of the update request.
 
-post_rdf_triples:-
+post_nordf_triples:-
   lwm_version_graph(G),
   with_mutex(lwm_endpoint_access, (
-    aggregate_all(set(rdf(S,P,O)), rdf_triple0(S, P, O), Ts),
+    aggregate_all(set(rdf(S,P,O)), nordf_triple0(S, P, O), Ts),
     sparql_post_graph_statements(virtuoso_http, G, Ts),
-    retractall(rdf_triple0(_,_,_))
+    retractall(nordf_triple0(_,_,_))
   )).
 
 
 
-%! rdf_triple(
-%!   ?Subject:or([bnode,iri]),
-%!   ?Predicate:iri,
-%!   ?Object:or([bnode,iri,literal])
-%! ) is nondet.
+%! nordf_triple(?S, ?P, ?O) is nondet.
 
-rdf_triple(S, P, O) :-
-  rdf_triple0(S, P, O).
+nordf_triple(S, P, O) :-
+  nordf_triple0(S, P, O).
 
 
 
-%! store_triple(+Subject, +Predicate, +Object) is det.
+%! store_nordf_triple(+S, +P, +O) is det.
 
-store_triple(S1, P1, O1) :-
+store_nordf_triple(S1, P1, O1) :-
   maplist(rdf_term_map, [S1,P1,O1], [S2,P2,O2]),
-  assert(rdf_triple0(S2, P2, O2)).
-
-
-
-
-
-% HELPERS %
+  assert(nordf_triple0(S2, P2, O2)).
 
 rdf_term_map(X-Y0, Z) :- !,
   (number(Y0) -> atom_number(Y, Y0) ; Y = Y0),

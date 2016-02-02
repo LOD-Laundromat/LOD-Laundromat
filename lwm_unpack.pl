@@ -11,7 +11,7 @@
 Unpacks files for the LOD Washing Machine to clean.
 
 @author Wouter Beek
-@version 2015/11
+@version 2015/11, 2016/01
 */
 
 :- use_module(library(apply)).
@@ -20,7 +20,7 @@ Unpacks files for the LOD Washing Machine to clean.
 :- use_module(library(http/http_info)).
 :- use_module(library(lists)).
 :- use_module(library(lodapi/lodapi_generics)).
-:- use_module(library(rdf/rdf_download)).
+:- use_module(library(rdf/rdf_load)).
 
 :- use_module(lwm_debug_message).
 :- use_module(lwm_store_triple).
@@ -59,6 +59,8 @@ lwm_unpack_loop:-
 % Done for now. Check whether there are new jobs in one seconds.
 lwm_unpack_loop:-
   sleep(100),
+  increment_counter(number_of_idle_loops(Category), N),
+  "[IDLE ", category(Category), "] ", thousands_integer(N).
   dcg_debug(unpack(idle), idle_loop(unpack)),
   lwm_unpack_loop.
 
@@ -131,7 +133,7 @@ unpack_datadoc(Doc, Uri, File):-
   directory_file_path(Dir, Base, File),
 
   % Download the dirty file of the document.
-  rdf_download(Uri, File, [freshness_lifetime(0.0),metadata(M)]),
+  rdf_download_to_file(Uri, File, [freshness_lifetime(0.0),metadata(M)]),
   
   % Store the file size of the dirty file.
   size_file(File, Size),
