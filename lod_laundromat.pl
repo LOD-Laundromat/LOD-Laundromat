@@ -2,9 +2,11 @@
   lod_laundromat,
   [
     ll_add_seed/1, % +Iri
+    ll_add_seed_http/1, % +Iri
     ll_add_old_seeds/0,
     ll_add_thread/0,
-    ll_clean/1
+    ll_clean/1, % +Iri
+    ll_current_seed/1 % ?Iri
   ]
 ).
 
@@ -69,17 +71,31 @@ init_lod_laundromat :-
 
 
 
-%! ll_add_seed(+Iri) is det.
-
-ll_add_seed(Iri) :-
+ll_add_seed_http(Iri) :-
   catch(
-    http_post('http://localhost:3000/seedlist', json(_{from: Iri})),
+    http_post('http://localhost:3000/seedlist', json(_{from: Iri}), true0),
     E,
     writeln(E)
   ).
 
+true0(_,_).
 
-%! ll_add_old_seeds is det.
+
+ll_add_seed(Iri1) :-
+  iri_normalized(Iri1, Iri2),
+  with_mutex(ll_endpoint, ll_add_seed0(Iri2)).
+
+ll_add_seed0(Iri) :-
+  seed(_,Iri,_,_,_), !.
+ll_add_seed0(Iri) :-
+  get_time(Now),
+  md5(Iri, Hash),
+  assert_seed(Hash, Iri, Now, 0.0, 0.0).
+
+
+ll_current_seed(seed(Hash,Iri,Added,Started,Ended)) :-
+  seed(Hash,Iri,Added,Started,Ended).
+
 
 ll_add_old_seeds :-
   absolute_file_name(seedlist, File, [access(write),file_type(prolog)]),
@@ -97,8 +113,7 @@ WHERE {\n\c
     ),
     close(Write)
   ),
-  sort_file(File),
-  halt.
+  sort_file(File).
 
 
 %! seedlist(+Request) is det.
@@ -109,9 +124,9 @@ WHERE {\n\c
 seedlist(Req) :-
   http_method(Req, get), !,
   findall(
-    _{added:Added, ended:Ended2, from:From, hash:Hash, started:Started2},
+    _{added:Added, ended:Ended2, from:Iri, hash:Hash, started:Started2},
     (
-      seed(Hash, From, Added, Started1, Ended1),
+      seed(Hash, Iri, Added, Started1, Ended1),
       maplist(var_to_null, [Started1,Ended1], [Started2,Ended2])
     ),
     Ds
@@ -125,11 +140,11 @@ seedlist(Req) :-
     (
       http_read_json_dict(Req, Data),
       get_time(Now),
-      iri_normalized(Data.from, From),
-      md5(From, Hash),
+      iri_normalized(Data.from, Iri),
+      md5(Iri, Hash),
       (   seed(Hash, _, _, _, _)
       ->  reply_json(_{}, [status(409)])
-      ;   assert_seed(Hash, From, Now, 0.0, 0.0)
+      ;   assert_seed(Hash, Iri, Now, 0.0, 0.0)
       )
     ),
     E,
@@ -140,13 +155,13 @@ seedlist(Req) :-
 var_to_null(X, null) :- var(X), !.
 var_to_null(X, X).
 
+
 ll_add_thread :-
   detached_thread(ll_thread).
 
 ll_thread :-
-  with_mutex(ll_endpoint, (seed(Hash, From, _, 0.0, 0.0), ll_store_begin0(Hash))),
-  document_name(Doc, Hash),
-  ll_clean(Doc, From),
+  with_mutex(ll_endpoint, (seed(Hash, Iri, _, 0.0, 0.0), ll_store_begin0(Hash))),
+  ll_clean0(Hash, Iri),
   with_mutex(ll_endpoint, ll_store_end0(Hash)),
   ll_thread.
 ll_thread :-
@@ -159,22 +174,26 @@ ll_thread :-
   ll_thread.
 
 ll_store_begin0(Hash) :-
-  retract_seed(Hash, From, Added, 0.0, 0.0),
+  retract_seed(Hash, Iri, Added, 0.0, 0.0),
   get_time(Started),
-  assert_seed(Hash, From, Added, Started, 0.0).
+  assert_seed(Hash, Iri, Added, Started, 0.0).
 
 ll_store_end0(Hash) :-
-  retract_seed(Hash, From, Added, Started, 0.0),
+  retract_seed(Hash, Iri, Added, Started, 0.0),
   get_time(Ended),
-  assert_seed(Hash, From, Added, Started, Ended).
+  assert_seed(Hash, Iri, Added, Started, Ended).
 
-ll_clean(From0):-
-  iri_normalized(From0, From),
-  md5(From, Hash),
+
+ll_clean(Iri1):-
+  iri_normalized(Iri1, Iri2),
+  ll_clean0(Iri2).
+
+ll_clean0(Iri) :-
+  md5(Iri, Hash),
+  ll_clean0(Hash, Iri).
+
+ll_clean0(Hash, Iri) :-
   document_name(Doc, Hash),
-  ll_clean(Doc, From).
-
-ll_clean(Doc, From) :-
   Dir1 = '/scratch',
   document_path(Doc, Dir2),
   directory_file_path(Dir1, Dir2, Dir),
@@ -183,25 +202,25 @@ ll_clean(Doc, From) :-
   absolute_file_name('dirty.gz', DTo, Opts),
   absolute_file_name('clean.nq.gz', CTo, Opts),
   absolute_file_name('metadata.nq.gz', MTo, Opts),
-  rdf_download_to_file(From, DTo, [compress(gzip)]),
+  rdf_download_to_file(Iri, DTo, [compress(gzip)]),
   setup_call_cleanup(
     open_any2(MTo, append, Write, Close_0, [compress(gzip)]),
     with_output_to(Write,
       rdf_store_messages(Doc, (
-        rdf_clean(From, CTo, [compress(gzip),metadata(M)]),
+        rdf_clean(Iri, CTo, [compress(gzip),metadata(M)]),
         rdf_store_metadata(Doc, M)
       ))
     ),
     close_any2(Close_0)
   ).
 
-ll_clean_test(From, N):-
+ll_clean_test(Iri, N):-
   (   var(N)
-  ->  test_source(From)
-  ;   findnsols(N, From, test_source(From), Froms),
-      last(Froms, From)
+  ->  test_source(Iri)
+  ;   findnsols(N, Iri, test_source(Iri), Iris),
+      last(Iris, Iri)
   ),
-  ll_clean(From).
+  ll_clean(Iri).
 
 test_source(Source):-
   document(Doc),
