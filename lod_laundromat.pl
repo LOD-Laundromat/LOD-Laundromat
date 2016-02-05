@@ -1,6 +1,8 @@
 :- module(
   lod_laundromat,
   [
+    ll_add_seed/1, % +Iri
+    ll_add_seeds/0,
     ll_add_thread/0,
     ll_clean/1
   ]
@@ -44,15 +46,20 @@
 
 :- persistent seed(hash:atom, from:atom, added:float, started:float, ended:float).
 
-:- initialization((
-     db_attach('seedlist.db', [sync(flush)]),
-     start_server([port(3000)])
-   )).
+:- initialization(init_lod_laundromat).
+
+init_lod_laundromat :-
+  absolute_file_name(seedlist, File, [access(read),file_type(prolog)]),
+  db_attach(File, [sync(flush)]),
+  start_server([port(3000)]).
 
 :- debug(http(parse)).
 :- debug(rdf(clean)).
 
 
+
+ll_add_seed(Iri) :-
+  
 
 %! seedlist(+Request) is det.
 % ```json
