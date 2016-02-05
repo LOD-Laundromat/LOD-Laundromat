@@ -2,7 +2,7 @@
   lod_laundromat,
   [
     ll_add_seed/1, % +Iri
-    ll_add_seeds/0,
+    ll_add_old_seeds/0,
     ll_add_thread/0,
     ll_clean/1
   ]
@@ -24,6 +24,7 @@
 :- use_module(library(http/http_header)).
 :- use_module(library(http/http_json)).
 :- use_module(library(http/http_receive)).
+:- use_module(library(http/http_request)).
 :- use_module(library(http/http_server)).
 :- use_module(library(json_ext)).
 :- use_module(library(jsonld/jsonld_metadata)).
@@ -33,6 +34,7 @@
 :- use_module(library(lodapi/lodapi_generics)).
 :- use_module(library(lodapi/lodapi_metadata)).
 :- use_module(library(os/archive_ext)).
+:- use_module(library(os/gnu_sort)).
 :- use_module(library(os/open_any2)).
 :- use_module(library(os/thread_counter)).
 :- use_module(library(os/thread_ext)).
@@ -41,29 +43,67 @@
 :- use_module(library(rdf/rdf_debug)).
 :- use_module(library(rdf/rdf_load)).
 :- use_module(library(rdf/rdf_print)).
+:- use_module(library(rdf11/rdf11)). % Operators.
+:- use_module(library(sparql/sparql_db)).
+:- use_module(library(sparql/query/sparql_query)).
 
 :- http_handler(root(seedlist), seedlist, []).
 
 :- persistent seed(hash:atom, from:atom, added:float, started:float, ended:float).
 
+:- sparql_register_endpoint(
+     ll_endpoint,
+     ['http://sparql.backend.lodlaundromat.org'],
+     virtuoso
+   ).
+
 :- initialization(init_lod_laundromat).
 
 init_lod_laundromat :-
-  absolute_file_name(seedlist, File, [access(read),file_type(prolog)]),
-  db_attach(File, [sync(flush)]),
+  db_attach('seedlist.pl', [sync(flush)]),
   start_server([port(3000)]).
 
 :- debug(http(parse)).
 :- debug(rdf(clean)).
+:- debug(sparql(_)).
 
 
+
+%! ll_add_seed(+Iri) is det.
 
 ll_add_seed(Iri) :-
-  
+  catch(
+    http_post('http://localhost:3000/seedlist', json(_{from: Iri})),
+    E,
+    writeln(E)
+  ).
+
+
+%! ll_add_old_seeds is det.
+
+ll_add_old_seeds :-
+  absolute_file_name(seedlist, File, [access(write),file_type(prolog)]),
+  Q = '\c
+PREFIX llo: <http://lodlaundromat.org/ontology/>\n\c
+SELECT ?url\n\c
+WHERE {\n\c
+  ?doc llo:url ?url\n\c
+}\n',
+  setup_call_cleanup(
+    open(File, write, Write),
+    forall(
+      sparql_select(ll_endpoint, Q, Rows),
+      forall(member([Url], Rows), ll_add_seed(Url))
+    ),
+    close(Write)
+  ),
+  sort_file(File),
+  halt.
+
 
 %! seedlist(+Request) is det.
 % ```json
-% {from: IRI}
+% {from: Iri}
 % ```
 
 seedlist(Req) :-
