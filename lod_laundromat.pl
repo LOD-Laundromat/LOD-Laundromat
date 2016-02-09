@@ -184,6 +184,8 @@ ll_store_end0(Hash) :-
   assert_seed(Hash, Iri, Added, Started, Ended).
 
 
+ll_clean(seed(Hash,Iri,_,_,_)) :- !,
+  ll_clean0(Hash, Iri).
 ll_clean(Iri1):-
   iri_normalized(Iri1, Iri2),
   ll_clean0(Iri2).
@@ -194,7 +196,8 @@ ll_clean0(Iri) :-
 
 ll_clean0(Hash, Iri) :-
   document_name(Doc, Hash),
-  Dir1 = '/scratch',
+  %Dir1 = '/scratch/lodlab/crawls/13/',
+  Dir1 = '/home/wbeek/Data/',
   document_path(Doc, Dir2),
   directory_file_path(Dir1, Dir2, Dir),
   make_directory_path(Dir),

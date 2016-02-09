@@ -6,5 +6,4 @@ name('LOD-Laundromat').
 packager('Wouter Beek', 'me@wouterbeek.com').
 requires(plRdf).
 title('Cleaning Other People\'s Dirty Data.').
-type(app).
 version('0.0.13').
