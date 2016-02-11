@@ -202,15 +202,15 @@ ll_clean0(Hash, Iri) :-
   directory_file_path(Dir1, Dir2, Dir),
   make_directory_path(Dir),
   Opts = [access(write),relative_to(Dir)],
-  absolute_file_name('dirty.gz', DTo, Opts),
-  absolute_file_name('clean.nq.gz', CTo, Opts),
-  absolute_file_name('metadata.nq.gz', MTo, Opts),
-  rdf_download_to_file(Iri, DTo, [compress(gzip)]),
+  absolute_file_name('dirty.gz', DirtyTo, Opts),
+  absolute_file_name('data.nq.gz', DataTo, Opts),
+  absolute_file_name('meta.nq.gz', MetaTo, Opts),
+  rdf_download_to_file(Iri, DirtyTo, [compress(gzip)]),
   setup_call_cleanup(
-    open_any2(MTo, append, Write, Close_0, [compress(gzip)]),
+    open_any2(MetaTo, append, Write, Close_0, [compress(gzip)]),
     with_output_to(Write,
       rdf_store_messages(Doc, (
-        rdf_clean(Iri, CTo, [compress(gzip),metadata(M)]),
+        rdf_clean(Iri, DataTo, [compress(gzip),metadata(M)]),
         rdf_store_metadata(Doc, M)
       ))
     ),
