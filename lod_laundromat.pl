@@ -67,6 +67,7 @@ init_lod_laundromat :-
 
 :- debug(http(parse)).
 :- debug(rdf(clean)).
+:- debug(rdf(debug)).
 :- debug(sparql(_)).
 
 
