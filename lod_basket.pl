@@ -45,11 +45,7 @@
      virtuoso
    ).
 
-:- initialization(init_seedlist).
-
-init_seedlist :-
-  db_attach('seedlist.pl', [sync(flush)]),
-  start_server([port(3000)]).
+:- initialization(db_attach('seedlist.pl', [sync(flush)])).
 
 
 
