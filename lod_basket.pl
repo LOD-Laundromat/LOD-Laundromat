@@ -18,6 +18,7 @@
 */
 
 :- use_module(library(hash_ext)).
+:- use_module(library(html/html_meta)).
 :- use_module(library(http/html_write)).
 :- use_module(library(http/http_dispatch)).
 :- use_module(library(http/http_header)).
@@ -135,7 +136,7 @@ is_current_seed(Iri) :-
 %   - POST requests add a new seed to the list (201) if it is not already there
 %     (409).  The HTPP body is expected to be `{"seed": $IRI}`.
 
-basket(Req) :- gtrace,rest_handler(Req, basket, is_current_seed, seed, seeds).
+basket(Req) :- rest_handler(Req, basket, is_current_seed, seed, seeds).
 seed(Method, MTs, Seed) :- rest_mediatype(Method, MTs, Seed, seed_mediatype).
 seeds(Method, MTs) :- rest_mediatype(Method, MTs, seeds_mediatype).
 
@@ -153,7 +154,10 @@ seeds_mediatype(get, text/html) :- !,
   asc_pairs_values(Pairs, Seeds),
   reply_html_page(cliopatria(default), title('LOD Basket - Contents'), [
     h1('LOD Basket Contents'),
-    cp_table(['Iri','Added','Started','Ended','Hash'], seed_rows(Seeds))
+    \cp_table(
+      ['Iri','Added','Started','Ended','Hash'],
+      \html_maplist(seed_row, Seeds)
+    )
   ]).
 seeds_mediatype(post, application/json) :-
   http_output(Req, Out),
@@ -181,3 +185,5 @@ seed_to_dict(
 
 var_to_null(X, null) :- var(X), !.
 var_to_null(X, X).
+
+seed_row(seed(H,I,A,S,E)) --> html(tr([td(I),td(A),td(S),td(E),td(H)])).
