@@ -2,8 +2,8 @@
 *#
 *.conf
 *.db
+*.log
 *.out
 data/
-*.log
 daemon.pl
 settings.conf
