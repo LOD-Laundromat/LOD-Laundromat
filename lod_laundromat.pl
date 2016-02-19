@@ -24,7 +24,7 @@
 :- use_module(library(rdf/rdf_load)).
 :- use_module(library(rdf11/rdf11)). % Operators.
 
-:- use_module(seedlist_api).
+:- use_module(cpack('LOD-Laundromat'/lod_basket)).
 
 :- debug(http(parse)).
 :- debug(rdf(clean)).
