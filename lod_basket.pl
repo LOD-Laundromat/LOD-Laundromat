@@ -17,6 +17,8 @@
 @version 2016/01-2016/02
 */
 
+:- use_module(library(apply)).
+:- use_module(library(bs/bs_panel)).
 :- use_module(library(hash_ext)).
 :- use_module(library(html/html_datetime)).
 :- use_module(library(html/html_link)).
@@ -35,6 +37,7 @@
 :- use_module(library(persistency)).
 :- use_module(library(sparql/sparql_db)).
 :- use_module(library(sparql/query/sparql_query)).
+:- use_module(library(thread)).
 :- use_module(library(true)).
 
 :- use_module(cliopatria(components/basics)).
@@ -160,15 +163,23 @@ seeds_mediatype(get, application/json) :- !,
   length(Ds, N),
   reply_json(_{seeds:Ds,size:N}, [status(200)]).
 seeds_mediatype(get, text/html) :- !,
-  findall(Iri-seed(H,Iri,A,S,E), current_seed(seed(H,Iri,A,S,E)), Pairs),
-  asc_pairs_values(Pairs, Seeds),
-  list_truncate(Seeds, 100, Page1),
+  findall(Iri-seed(H,Iri,A,S,E), current_seed(seed(H,Iri,A,S,E)), Seeds0),
+  partition(seed_status0, Seeds0, Cleaned0, Cleaning0, ToBeCleaned0),
+  concurrent_maplist(
+    asc_pairs_values,
+    [Cleaned0,Cleaning0,ToBeCleaned0],
+    [Cleaned,Cleaning,ToBeCleaned]
+  ),
+  list_truncate(Cleaned, 10, CleanedPage1),
+  list_truncate(Cleaning, 10, CleaningPage1),
+  list_truncate(ToBeCleaned, 10, ToBeCleanedPage1),
   reply_html_page(cliopatria(default), title('LOD Basket - Contents'), [
-    h1('LOD Basket Contents'),
-    \cp_table(
-      ['Seed','Added','Started','Ended'],
-      \html_maplist(seed_row, Page1)
-    )
+    h1('LOD Basket'),
+    \bs_panels(seeds_table, [
+      'Cleaned'-CleanedPage1,
+      'Cleaning'-CleaningPage1,
+      'To be cleaned'-ToBeCleanedPage1
+    ])
   ]).
 seeds_mediatype(post, application/json) :-
   http_output(Req, Out),
@@ -188,6 +199,10 @@ seeds_mediatype(post, application/json) :-
   ),
   reply_json(_{}, [status(201)]).
 
+seed_status0(_-seed(_,_,_,0.0,0.0), >) :- !.
+seed_status0(_-seed(_,_,_,_  ,0.0), =) :- !.
+seed_status0(_                    , <).
+
 seed_to_dict(
   seed(Hash,Iri,Added,Started1,Ended1),
   _{added:Added, ended:Ended2, hash:Hash, seed:Iri, started:Started2}
@@ -197,12 +212,18 @@ seed_to_dict(
 var_to_null(X, null) :- var(X), !.
 var_to_null(X, X).
 
+seeds_table(Seeds) -->
+  cp_table(['Seed','Added','Started','Ended'], \html_maplist(seed_row, Seeds)).
+
 seed_row(seed(H,I,A,S,E)) -->
   html(
     tr([
       td([div(\html_link(I)),div(H)]),
-      td(\html_datetime(A, [offset])),
-      td(\html_datetime(S, [offset])),
-      td(\html_datetime(E, [offset]))
+      td(\seed_datetime(A)),
+      td(\seed_datetime(S)),
+      td(\seed_datetime(E))
     ])
   ).
+
+seed_datetime(DT) --> {DT =:= 0.0}, !, html('∅').
+seed_datetime(DT) --> html_datetime(DT, [offset]).
