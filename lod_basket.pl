@@ -18,6 +18,8 @@
 */
 
 :- use_module(library(hash_ext)).
+:- use_module(library(html/html_datetime)).
+:- use_module(library(html/html_link)).
 :- use_module(library(html/html_meta)).
 :- use_module(library(http/html_write)).
 :- use_module(library(http/http_dispatch)).
@@ -27,6 +29,7 @@
 :- use_module(library(http/http_request)).
 :- use_module(library(http/http_server)).
 :- use_module(library(http/rest)).
+:- use_module(library(list_ext)).
 :- use_module(library(os/gnu_sort)).
 :- use_module(library(pair_ext)).
 :- use_module(library(persistency)).
@@ -46,7 +49,14 @@
      virtuoso
    ).
 
-:- initialization(db_attach('seedlist.pl', [sync(flush)])).
+:- initialization((
+     absolute_file_name(
+       cpack('LOD-Laundromat'/seedlist),
+       File,
+       [access(read),file_type(prolog)]
+     ),
+     db_attach(File, [sync(flush)])
+   )).
 
 
 
@@ -152,11 +162,12 @@ seeds_mediatype(get, application/json) :- !,
 seeds_mediatype(get, text/html) :- !,
   findall(Iri-seed(H,Iri,A,S,E), current_seed(seed(H,Iri,A,S,E)), Pairs),
   asc_pairs_values(Pairs, Seeds),
+  list_truncate(Seeds, 100, Page1),
   reply_html_page(cliopatria(default), title('LOD Basket - Contents'), [
     h1('LOD Basket Contents'),
     \cp_table(
-      ['Iri','Added','Started','Ended','Hash'],
-      \html_maplist(seed_row, Seeds)
+      ['Seed','Added','Started','Ended'],
+      \html_maplist(seed_row, Page1)
     )
   ]).
 seeds_mediatype(post, application/json) :-
@@ -186,4 +197,12 @@ seed_to_dict(
 var_to_null(X, null) :- var(X), !.
 var_to_null(X, X).
 
-seed_row(seed(H,I,A,S,E)) --> html(tr([td(I),td(A),td(S),td(E),td(H)])).
+seed_row(seed(H,I,A,S,E)) -->
+  html(
+    tr([
+      td([div(\html_link(I)),div(H)]),
+      td(\html_datetime(A, [offset])),
+      td(\html_datetime(S, [offset])),
+      td(\html_datetime(E, [offset]))
+    ])
+  ).
