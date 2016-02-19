@@ -140,10 +140,10 @@ is_current_seed(Iri) :-
 %     (409).  The HTPP body is expected to be `{"seed": $IRI}`.
 
 basket(Req) :- gtrace,rest_handler(Req, basket, is_current_seed, seed, seeds).
-seed(Method, Seed, MTs) :- rest_mediatype(Method, Seed, MTs, seed_mediatype).
+seed(Method, MTs, Seed) :- rest_mediatype(Method, MTs, Seed, seed_mediatype).
 seeds(Method, MTs) :- rest_mediatype(Method, MTs, seeds_mediatype).
 
-seed_mediatype(get, Iri, application/json) :-
+seed_mediatype(get, application/json, Iri) :-
   current_seed(seed(Hash,Iri,Added,Started,Ended)),
   seed_to_dict(seed(Hash,Iri,Added,Started,Ended), D),
   reply_json(D, [status(200)]).
