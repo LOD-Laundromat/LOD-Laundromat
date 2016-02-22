@@ -12,7 +12,7 @@
 @version 2016/01-2016/02
 */
 
-:- use_module(library(debug_ext)).
+:- use_module(library(debug)).
 :- use_module(library(filesex)).
 :- use_module(library(hash_ext)).
 :- use_module(library(lodapi/lodapi_generics)).
@@ -26,6 +26,16 @@
 
 :- use_module(cpack('LOD-Laundromat'/lod_basket)).
 
+%:- rdf_register_prefix(lld, 'http://cliopatria.lod.labs.vu.nl/odm/data/').
+%:- rdf_register_prefix(llm, 'http://cliopatria.lod.labs.vu.nl/odm/meta/').
+
+%:- http_handler(root(wardrobe), lld, [prefix]).
+%:- http_handler(root('wardrobe/data'), odm_data, [prefix]).
+%:- http_handler(root('wardrobe/meta'), odm_meta, [prefix]).
+
+
+
+
 
 
 %! add_thread is det.
@@ -35,12 +45,8 @@ add_thread :-
   detached_thread(thread).
 
 thread :-
-  with_mutex(seedlist, (
-    current_seed(seed(Hash, Iri, _, 0.0, 0.0)),
-    begin_seed(Hash)
-  )),
-  clean0(Hash, Iri),
-  with_mutex(seedlist, end_seed(Hash)),
+  clean(Hash, Iri),
+  debug(lod_laundromat(thread), "Cleaned ~a (~a)", [Hash,Iri]),
   thread.
 thread :-
   M = 100,
@@ -48,25 +54,31 @@ thread :-
   thread_name(Name),
   increment_thread_counter(lod_laundromat(idle), N),
   S is M * N,
-  debug(lod_laundromat(idle),
-    "Thread ~w has been idle for ~D seconds.", [Name,S]
-  ),
+  debug(lod_laundromat(idle), "Thread ~w is ~D sec. idle", [Name,S]),
   thread.
-
 
 
 %! clean(+Seed) is det.
 % Cleans either a seed from the seedlist API or an IRI.
 
-clean(seed(Hash,Iri,_,_,_)) :- !,
-  clean0(Hash, Iri).
-clean(Iri1):-
-  iri_normalized(Iri1, Iri2),
-  clean0(Iri2).
+clean(Seed) :-
+  (   Seed = seed(Hash,Iri,_,_,_)
+  ->  true
+  ;   iri_normalized(Seed, Iri),
+      md5(Iri, Hash)
+  ),
+  clean(Hash, Iri).
 
-clean0(Iri) :-
-  md5(Iri, Hash),
-  clean0(Hash, Iri).
+
+%! clean(+Hash, +Iri) is det.
+
+clean(Hash, Iri) :-
+  with_mutex(seedlist, (
+    once(current_seed(seed(Hash, Iri, _, 0.0, 0.0))),
+    begin_seed(Hash)
+  )),
+  clean0(Hash, Iri),
+  with_mutex(seedlist, end_seed(Hash)).
 
 clean0(Hash, Iri) :-
   document_name(Doc, Hash),
