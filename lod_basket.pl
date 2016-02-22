@@ -5,6 +5,8 @@
     begin_seed/1,   % +Hash
     current_seed/1, % -Seed
     end_seed/1,     % +Hash
+    remove_seed/1,  % +Hash
+    reset_seed/1,   % +Hash
   % DEBUG
     add_old_seeds/0,
     add_seed_http/1 % +Iri
@@ -19,19 +21,22 @@
 
 :- use_module(library(apply)).
 :- use_module(library(bs/bs_panel)).
+:- use_module(library(debug_ext)).
 :- use_module(library(hash_ext)).
-:- use_module(library(html/html_datetime)).
+:- use_module(library(html/html_date_time)).
 :- use_module(library(html/html_link)).
 :- use_module(library(html/html_meta)).
 :- use_module(library(http/html_write)).
 :- use_module(library(http/http_dispatch)).
 :- use_module(library(http/http_header)).
 :- use_module(library(http/http_json)).
+:- use_module(library(http/http_path)).
 :- use_module(library(http/http_receive)).
 :- use_module(library(http/http_request)).
 :- use_module(library(http/http_server)).
 :- use_module(library(http/rest)).
 :- use_module(library(list_ext)).
+:- use_module(library(nlp/nlp_lang)).
 :- use_module(library(os/gnu_sort)).
 :- use_module(library(pair_ext)).
 :- use_module(library(persistency)).
@@ -92,13 +97,17 @@ WHERE {\n\c
 
 add_seed(Iri1) :-
   iri_normalized(Iri1, Iri2),
-  with_mutex(seedlist, add_seed0(Iri2)).
+  with_mutex(seedlist, add_seed0(Iri2)),
+  debug(lod_basket(add), "Added to seedlist: ~a", [Iri1]).
 
 add_seed0(Iri) :-
   seed(_,Iri,_,_,_), !.
 add_seed0(Iri) :-
-  get_time(Now),
   md5(Iri, Hash),
+  add_seed0(Hash, Iri).
+
+add_seed0(Hash, Iri) :-
+  get_time(Now),
   assert_seed(Hash, Iri, Now, 0.0, 0.0).
 
 
@@ -108,20 +117,20 @@ add_seed0(Iri) :-
 % This is intended for debugging purposes only.
 
 add_seed_http(Iri) :-
-  catch(
-    http_post('http://localhost:3000/seedlist', json(_{seed: Iri}), true),
-    E,
-    writeln(E)
-  ).
+  http_absolute_uri(root(basket), Endpoint),
+  call_collect_messages(http_post(Endpoint, json(_{seed: Iri}), true)).
 
 
 
 %! begin_seed(+Hash) is det.
 
 begin_seed(Hash) :-
-  retract_seed(Hash, Iri, Added, 0.0, 0.0),
   get_time(Started),
-  assert_seed(Hash, Iri, Added, Started, 0.0).
+  with_mutex(seedlist, (
+    retract_seed(Hash, Iri, Added, 0.0, 0.0),
+    assert_seed(Hash, Iri, Added, Started, 0.0)
+  )),
+  debug(lod_basket(start), "Started cleaning seed ~a", [Hash]).
 
 
 
@@ -136,12 +145,40 @@ current_seed(seed(Hash,Iri,Added,Started,Ended)) :-
 %! end_seed(+Hash) is det.
 
 end_seed(Hash) :-
-  retract_seed(Hash, Iri, Added, Started, 0.0),
   get_time(Ended),
-  assert_seed(Hash, Iri, Added, Started, Ended).
+  with_mutex(seedlist, (
+    retract_seed(Hash, Iri, Added, Started, 0.0),
+    assert_seed(Hash, Iri, Added, Started, Ended)
+  )),
+  debug(lod_basket(end), "Ended cleaning seed ~a", [Hash]).
+
+
+
+%! is_current_seed(+Iri) is semidet.
 
 is_current_seed(Iri) :-
   current_seed(seed(_,Iri,_,_,_)).
+
+
+
+%! remove_seed(+Hash) is det.
+
+remove_seed(Hash) :-
+  with_mutex(seedlist, retract_seed(Hash, Iri, _, _, _)),
+  debug(lod_basket(remove), "Removed seed ~a (~a)", [Hash,Iri]).
+
+
+
+%! reset_seed(+Hash) is det.
+
+reset_seed(Hash) :-
+  with_mutex(seedlist, (
+    retract_seed(Hash, Iri, _, _, _),
+    add_seed0(Hash, Iri)
+  )),
+  debug(lod_basket(reset), "Reset seed ~a (~a)", [Hash,Iri]).
+
+
 
 %! basket(+Request) is det.
 % Implementation of the seedlist HTTP API:
@@ -163,10 +200,10 @@ seeds_mediatype(get, application/json) :- !,
   length(Ds, N),
   reply_json(_{seeds:Ds,size:N}, [status(200)]).
 seeds_mediatype(get, text/html) :- !,
-  findall(Iri-seed(H,Iri,A,S,E), current_seed(seed(H,Iri,A,S,E)), Seeds0),
+  findall(A-seed(H,Iri,A,S,E), current_seed(seed(H,Iri,A,S,E)), Seeds0),
   partition(seed_status0, Seeds0, Cleaned0, Cleaning0, ToBeCleaned0),
   concurrent_maplist(
-    asc_pairs_values,
+    desc_pairs_values,
     [Cleaned0,Cleaning0,ToBeCleaned0],
     [Cleaned,Cleaning,ToBeCleaned]
   ),
@@ -182,23 +219,22 @@ seeds_mediatype(get, text/html) :- !,
     ])
   ]).
 seeds_mediatype(post, application/json) :-
-  http_output(Req, Out),
   catch(
     (
-      http_read_json_dict(Req, Data),
+      http_read_json_dict(Data),
       get_time(Now),
       iri_normalized(Data.seed, Iri),
       md5(Iri, Hash),
       (   seed(Hash, _, _, _, _)
       ->  reply_json(_{}, [status(409)])
-      ;   assert_seed(Hash, Iri, Now, 0.0, 0.0)
+      ;   assert_seed(Hash, Iri, Now, 0.0, 0.0),
+          reply_json(_{}, [status(201)])
       )
     ),
     E,
-    http_status_reply(bad_request(E), Out, [], _)
-  ),
-  reply_json(_{}, [status(201)]).
-
+    http_status_reply(bad_request(E))
+  ).
+  
 seed_status0(_-seed(_,_,_,0.0,0.0), >) :- !.
 seed_status0(_-seed(_,_,_,_  ,0.0), =) :- !.
 seed_status0(_                    , <).
@@ -213,17 +249,31 @@ var_to_null(X, null) :- var(X), !.
 var_to_null(X, X).
 
 seeds_table(Seeds) -->
-  cp_table(['Seed','Added','Started','Ended'], \html_maplist(seed_row, Seeds)).
+  cp_table(['Seed','Actions','Added','Started','Ended'], \html_maplist(seed_row, Seeds)).
 
 seed_row(seed(H,I,A,S,E)) -->
   html(
     tr([
       td([div(\html_link(I)),div(H)]),
-      td(\seed_datetime(A)),
-      td(\seed_datetime(S)),
-      td(\seed_datetime(E))
+      td(\seed_actions(seed(H,I,A,S,E))),
+      td(\seed_date_time(A)),
+      td(\seed_date_time(S)),
+      td(\seed_date_time(E))
     ])
   ).
 
-seed_datetime(DT) --> {DT =:= 0.0}, !, html('∅').
-seed_datetime(DT) --> html_datetime(DT, [offset]).
+seed_date_time(DT) -->
+  {DT =:= 0.0}, !,
+  html('∅').
+seed_date_time(DT) -->
+  {current_ltag(LTag)},
+  html_date_time(DT, _{ltag: LTag, masks: [offset], month_abbr: true}).
+
+seed_actions(seed(_,_,_,_,0.0)) --> !, [].
+seed_actions(seed(_,_,_,_,_  )) -->
+  html(
+    div([
+      button(class=[btn,'btn-default'], 'Data'),
+      button(class=[btn,'btn-default'], 'Meta')
+    ])
+  ).

@@ -26,11 +26,6 @@
 
 :- use_module(cpack('LOD-Laundromat'/lod_basket)).
 
-:- debug(http(parse)).
-:- debug(rdf(clean)).
-:- debug(rdf(debug)).
-:- debug(sparql(_)).
-
 
 
 %! add_thread is det.
@@ -40,7 +35,10 @@ add_thread :-
   detached_thread(thread).
 
 thread :-
-  with_mutex(seedlist, (current_seed(seed(Hash, Iri, _, 0.0, 0.0)), begin_seed(Hash))),
+  with_mutex(seedlist, (
+    current_seed(seed(Hash, Iri, _, 0.0, 0.0)),
+    begin_seed(Hash)
+  )),
   clean0(Hash, Iri),
   with_mutex(seedlist, end_seed(Hash)),
   thread.
@@ -50,7 +48,9 @@ thread :-
   thread_name(Name),
   increment_thread_counter(lod_laundromat(idle), N),
   S is M * N,
-  debug(lod_laundromat(idle), "Thread ~w has been idle for ~D seconds.", [Name,S]),
+  debug(lod_laundromat(idle),
+    "Thread ~w has been idle for ~D seconds.", [Name,S]
+  ),
   thread.
 
 
