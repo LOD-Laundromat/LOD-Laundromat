@@ -28,12 +28,11 @@
 :- use_module(library(html/html_meta)).
 :- use_module(library(http/html_write)).
 :- use_module(library(http/http_dispatch)).
+:- use_module(library(http/http_ext)).
 :- use_module(library(http/http_header)).
 :- use_module(library(http/http_json)).
 :- use_module(library(http/http_path)).
-:- use_module(library(http/http_receive)).
 :- use_module(library(http/http_request)).
-:- use_module(library(http/http_server)).
 :- use_module(library(http/rest)).
 :- use_module(library(list_ext)).
 :- use_module(library(nlp/nlp_lang)).

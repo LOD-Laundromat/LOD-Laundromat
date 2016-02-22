@@ -17,7 +17,7 @@ Unpacks files for the LOD Washing Machine to clean.
 :- use_module(library(apply)).
 :- use_module(library(dcg/dcg_debug)).
 :- use_module(library(debug_ext)).
-:- use_module(library(http/http_info)).
+:- use_module(library(http/http_ext)).
 :- use_module(library(lists)).
 :- use_module(library(lodapi/lodapi_generics)).
 :- use_module(library(rdf/rdf_load)).
