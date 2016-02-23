@@ -1,4 +1,4 @@
-:- module(conf_lod_laundromat, []).
+:- module('conf_LOD-Laundromat', []).
 
 /** <module> LOD Laundromat
 */
