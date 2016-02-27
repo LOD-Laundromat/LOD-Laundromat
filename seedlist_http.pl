@@ -47,6 +47,7 @@ A POST request adds a new seed to the list (201) if it is not already there
 :- use_module(library(pair_ext)).
 :- use_module(library(string_ext)).
 :- use_module(library(true)).
+:- use_module(library(uri)).
 
 :- use_module(cliopatria(components/basics)). % HTML tables.
 
@@ -58,43 +59,22 @@ seedlist(Req) :- rest_handler(Req, seedlist, is_current_seed0, seed, seeds).
 seed(Method, MTs, Seed) :- rest_mediatype(Method, MTs, Seed, seed_mediatype).
 seeds(Method, MTs) :- rest_mediatype(Method, MTs, seeds_mediatype).
 
-is_current_seed0(Iri) :-
-  uri_to_hash(Iri, Hash),
-  is_current_seed(Hash).
-
-uri_to_hash(Uri, Hash) :-
-  uri_components(Uri, uri_components(_,_,Path,_,_)),
-  atomic_list_concat(['',seedlist,Hash], /, Path).
-
-hash_to_uri(Hash, Uri) :-
-  http_link_to_id(seedlist, path_postfix(Hash), Uri).
-
 seed_mediatype(delete, application/json, Iri) :- !,
-  uri_to_hash(Iri, Hash),
+  iri_to_hash(Iri, Hash),
   remove_seed(Hash).
 seed_mediatype(get, application/json, Iri) :- !,
-  uri_to_hash(Iri, Hash),
+  iri_to_hash(Iri, Hash),
   current_seed(Hash, Seed),
-  seed_to_dict(Seed, Dict),
+  seed_to_dict0(Seed, Dict),
   reply_json_dict(Dict, [status(200)]).
 seed_mediatype(get, text/html, Iri) :-
-  uri_to_hash(Iri, Hash),
+  iri_to_hash(Iri, Hash),
   current_seed(Hash, Seed),
   string_list_concat(["LOD Laundromat","Seed",Hash], " - ", Title),
   reply_html_page(cliopatria(default), title(Title), \html_seed(Seed)).
 
-html_seed(seed(H,I,A,S,E)) -->
-  html([
-    h1(\external_link(I, H)),
-    \bs_table([
-      tr([th("Added"),td(\seed_date_time(A))]),
-      tr([th("Started"),td(\seed_date_time(S))]),
-      tr([th("Ended"),td(\seed_date_time(E))])
-    ])
-  ]).
-
 seeds_mediatype(get, application/json) :- !,
-  findall(D, (current_seed(Seed), seed_to_dict(Seed, D)), Ds),
+  findall(D, (current_seed(Seed), seed_to_dict0(Seed, D)), Ds),
   length(Ds, N),
   reply_json_dict(_{seeds:Ds,size:N}, [status(200)]).
 seeds_mediatype(get, text/html) :- !,
@@ -119,25 +99,13 @@ seeds_mediatype(get, text/html) :- !,
 seeds_mediatype(post, application/json) :-
   http_read_json_dict(Data),
   add_iri(Data.seed, Hash),
-  hash_to_uri(Hash, Uri),
-  reply_json_dict(_{hash: Uri}, [status(201)]).
-
-seed_status0(_-seed(_,_,_,0.0,0.0), >) :- !.
-seed_status0(_-seed(_,_,_,_  ,0.0), =) :- !.
-seed_status0(_                    , <).
+  hash_to_iri(Hash, Iri),
+  reply_json_dict(_{hash: Iri}, [status(201)]).
 
 
-%! seed_to_dict(+Seed, -Dict) is det.
-% Prolog term conversion that make formulating a JSON response very easy.
 
-seed_to_dict(
-  seed(Hash,Iri,Added,Started1,Ended1),
-  _{added:Added, ended:Ended2, hash:Hash, seed:Iri, started:Started2}
-):-
-  maplist(var_to_null, [Started1,Ended1], [Started2,Ended2]).
-
-var_to_null(X, null) :- var(X), !.
-var_to_null(X, X).
+%! seeds_table(+Seeds:list(compound))// is det.
+% Generates an HTML table representing the given seeds.
 
 seeds_table(Seeds) -->
   bs_table(
@@ -145,29 +113,27 @@ seeds_table(Seeds) -->
     \html_maplist(seed_row, Seeds)
   ).
 
+
+%! seed_row(+Seed:compound)// is det.
+% Generates a row in an HTML table representing seeds.
+
 seed_row(seed(H,I1,A,S,E)) -->
   {
     atom_truncate(I1, 40, I2),
-    hash_to_uri(H, Uri)
+    hash_to_iri(H, Uri)
   },
   html(
     tr([
       td([div(\external_link(I1, I2)),\internal_link(Uri, H)]),
       td(\seed_actions(seed(H,I1,A,S,E))),
-      td(\seed_date_time(A)),
-      td(\seed_date_time(S)),
-      td(\seed_date_time(E))
+      td(\seed_date_time0(A)),
+      td(\seed_date_time0(S)),
+      td(\seed_date_time0(E))
     ])
   ).
 
-seed_date_time(DT) -->
-  {DT =:= 0.0}, !,
-  html('∅').
-seed_date_time(DT) -->
-  {current_ltag(LTag)},
-  html_date_time(DT, _{ltag: LTag, masks: [offset], month_abbr: true}).
 
-% Start crawling.
+% Start crawling of ‘todo’ seeds.
 seed_actions(seed(H,_,_,0.0,_)) --> !,
   {
     http_link_to_id(seedlist, path_postfix(H), About),
@@ -187,14 +153,11 @@ function deleteSeed(about) {
     button([class=[btn,'default-btn'],onclick=SFunc], 'Start'),
     button([class=[btn,'default-btn'],onclick=DFunc], 'Delete')
   ]).
+% No buttons for ‘cleaning’.
 seed_actions(seed(_,_,_,_,0.0)) --> !, [].
-% Show results.
+% Show results for ‘cleaned’.
 seed_actions(seed(H,_,_,_,_  )) -->
   html(div([\bs_button_link(data, H),\bs_button_link(meta, H)])).
-
-bs_button_link(Alias, Postfix) -->
-  {http_link_to_id(Alias, path_postfix(Postfix), Uri)},
-  html(a([class=[btn,'btn-default'],href=Uri], Alias)).
 
 
 
@@ -205,3 +168,103 @@ bs_button_link(Alias, Postfix) -->
 add_iri_http(Iri) :-
   http_absolute_uri(root(seedlist), Endpoint),
   call_collect_messages(http_post(Endpoint, json(_{seed: Iri}), true)).
+
+
+
+
+
+% HELPERS %
+
+%! bs_button_link(+Alias, +Postfix)// is det.
+% Generate an HTML link that looks like a button and that uses the convenient
+% http_link_to_id/3 in order to build the request IRI.
+
+bs_button_link(Alias, Postfix) -->
+  {http_link_to_id(Alias, path_postfix(Postfix), Iri)},
+  html(a([class=[btn,'btn-default'],href=Iri], Alias)).
+
+
+
+%! is_current_seed0(+Iri) is semidet.
+% Succeeds if the given IRI denotes a seed point in the seedlist.
+
+is_current_seed0(Iri) :-
+  iri_to_hash(Iri, Hash),
+  is_current_seed(Hash).
+
+
+
+%! hash_to_iri(+Hash:atom, -Iri:atom) is det.
+% Translate from a seedlist hash to a seedlist HTTP IRI.
+
+hash_to_iri(Hash, Uri) :-
+  http_link_to_id(seedlist, path_postfix(Hash), Uri).
+
+
+
+%! html_seed(+Seed:compound)// is det.
+% Generates a simple HTML representation of the given seed compound term.
+
+html_seed(seed(H,I,A,S,E)) -->
+  html([
+    h1(\external_link(I, H)),
+    \bs_table([
+      tr([th("Added"),td(\seed_date_time0(A))]),
+      tr([th("Started"),td(\seed_date_time0(S))]),
+      tr([th("Ended"),td(\seed_date_time0(E))])
+    ])
+  ]).
+
+
+
+%! iri_to_hash(+Iri, -Hash) is det.
+% Translate from a seedlist HTTP IRI to a seedlist hash.
+
+iri_to_hash(Uri, Hash) :-
+  uri_components(Uri, uri_components(_,_,Path,_,_)),
+  atomic_list_concat(['',seedlist,Hash], /, Path).
+
+
+
+%! seed_date_time0(+DT)// is det.
+% Generate a human- and machine-processable date/time representation
+% if a date/time is present.  Display a stub otherwise.
+
+seed_date_time0(DT) -->
+  {DT =:= 0.0}, !,
+  html('∅').
+seed_date_time0(DT) -->
+  {current_ltag(LTag)},
+  html_date_time(DT, _{ltag: LTag, masks: [offset], month_abbr: true}).
+
+
+
+%! seed_status0(+Pair, -Order:oneof([<,=,>]))is det.
+% Partition the seeds into ‘done’ (<), ‘doing’ (=) and ‘todo’ (>).
+
+seed_status0(_-seed(_,_,_,0.0,0.0), >) :- !.
+seed_status0(_-seed(_,_,_,_  ,0.0), =) :- !.
+seed_status0(_                    , <).
+
+
+
+%! seed_to_dict0(+Seed, -Dict) is det.
+% Prolog term conversion that make formulating a JSON response very easy.
+
+seed_to_dict0(
+  seed(Hash,Iri,Added,Started1,Ended1),
+  _{added:Added, ended:Ended2, hash:Hash, seed:Iri, started:Started2}
+):-
+  maplist(var_to_null0, [Started1,Ended1], [Started2,Ended2]).
+
+
+
+%! var_to_null0(+Term, -NullifiedTerm) is det.
+% Maps Prolog terms to themselves unless they are variables,
+% in which case they are mapped to the atom `null`.
+%
+% The is used for exporting seedpoints, where Prolog variables
+% have no equivalent in JSON.
+
+var_to_null0(X, null) :- var(X), !.
+var_to_null0(X, X).
