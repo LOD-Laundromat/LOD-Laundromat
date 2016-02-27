@@ -61,7 +61,8 @@ seeds(Method, MTs) :- rest_mediatype(Method, MTs, seeds_mediatype).
 
 seed_mediatype(delete, application/json, Iri) :- !,
   iri_to_hash(Iri, Hash),
-  remove_seed(Hash).
+  remove_seed(Hash),
+  reply_json_dict(_{}, [status(200)]).
 seed_mediatype(get, application/json, Iri) :- !,
   iri_to_hash(Iri, Hash),
   current_seed(Hash, Seed),
@@ -108,10 +109,31 @@ seeds_mediatype(post, application/json) :-
 % Generates an HTML table representing the given seeds.
 
 seeds_table(Seeds) -->
-  bs_table(
-    \bs_table_header(['Seed','Actions','Added','Started','Ended']),
-    \html_maplist(seed_row, Seeds)
-  ).
+  {http_link_to_id(data, [], Iri)},
+  html([
+    \js_script({|javascript(Iri)||
+function deleteSeed(about) {
+  $.ajax(about, {
+    "error": function(xhr, textStatus, errorThrown) {error(xhr.responseText);},
+    "success": function() {location.reload();},
+    "type": "DELETE"
+  });
+}
+function startSeed(hash) {
+  $.ajax(Iri, {
+    "contentType": "application/json",
+    "data": JSON.stringify({"seed": hash}),
+    "error": function(xhr, textStatus, errorThrown) {error(xhr.responseText);},
+    "success": function() {location.reload();},
+    "type": "POST"
+  });
+}
+    |}),
+    \bs_table(
+      \bs_table_header(['Seed','Actions','Added','Started','Ended']),
+      \html_maplist(seed_row, Seeds)
+    )
+  ]).
 
 
 %! seed_row(+Seed:compound)// is det.
@@ -136,20 +158,11 @@ seed_row(seed(H,I1,A,S,E)) -->
 % Start crawling of ‘todo’ seeds.
 seed_actions(seed(H,_,_,0.0,_)) --> !,
   {
-    http_link_to_id(seedlist, path_postfix(H), About),
-    format(atom(SFunc), 'startSeed("~a");', [About]),
-    format(atom(DFunc), 'deleteSeed("~a");', [About])
+    format(atom(SFunc), 'startSeed("~a");', [H]),
+    http_link_to_id(seedlist, path_postfix(H), Seed),
+    format(atom(DFunc), 'deleteSeed("~a");', [Seed])
   },
   html([
-    \js_script({|javascript(_)||
-function deleteSeed(about) {
-  $.ajax(about, {
-    "error": function(xhr, textStatus, errorThrown) {error(xhr.responseText);},
-    "success": function() {location.reload();},
-    "type": "DELETE"
-  });
-}
-    |}),
     button([class=[btn,'default-btn'],onclick=SFunc], 'Start'),
     button([class=[btn,'default-btn'],onclick=DFunc], 'Delete')
   ]).
@@ -157,7 +170,7 @@ function deleteSeed(about) {
 seed_actions(seed(_,_,_,_,0.0)) --> !, [].
 % Show results for ‘cleaned’.
 seed_actions(seed(H,_,_,_,_  )) -->
-  html(div([\bs_button_link(data, H),\bs_button_link(meta, H)])).
+  bs_button_link(data, H).
 
 
 

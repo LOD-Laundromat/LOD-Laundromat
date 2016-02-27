@@ -1,17 +1,13 @@
-:- module(
-  washing_machine_http,
-  [
-  ]
-).
+:- module(washing_machine_http, []).
 
 /** <module> HTTP API on top of the Washing Machine
 
-| *Path*         | *Method* | *Media type*         | *Status codes* |
-|:---------------|:---------|:---------------------|:---------------|
-| `/laundry`     | `POST`   | `application/json`   | 201            |
-| `/laundry/MD5` | `DELETE` |                      |                |
-| `/laundry/MD5` | `GET`    | `application/nquads` | 200            |
-| `/laundry/MD5` | `GET`    | `text/html`          | 200            |
+| *Path*      | *Method* | *Media type*         | *Status codes* |
+|:------------|:---------|:---------------------|:---------------|
+| `/data`     | `POST`   | `application/json`   | 201            |
+| `/data/MD5` | `DELETE` |                      |                |
+| `/data/MD5` | `GET`    | `application/nquads` | 200            |
+| `/data/MD5` | `GET`    | `text/html`          | 200            |
 
 ---
 
@@ -35,32 +31,33 @@
 :- use_module(cpack('LOD-Laundromat'/seedlist)).
 :- use_module(cpack('LOD-Laundromat'/washing_machine)).
 
-:- http_handler(root(laundry), laundry, [prefix]).
+:- rdf_register_prefix(data, 'http://cliopatria.lod.labs.vu.nl/data/').
+:- rdf_register_prefix(meta, 'http://cliopatria.lod.labs.vu.nl/meta/').
 
-laundry(Req) :- rest_handler(Req, laundry, is_document, document, documents).
+:- http_handler(root(data), data, [prefix]).
+
+data(Req) :- rest_handler(Req, data, is_document, document, documents).
 document(Method, MTs, Doc) :- rest_mediatype(Method, MTs, Doc, document_mediatype).
 documents(Method, MTs) :- rest_mediatype(Method, MTs, documents_mediatype).
 
 document_mediatype(delete, application/json, Doc) :- !,
-  uri_path(Doc, Md5),
-  reset_seed(Md5).
+  document_to_hash(Doc, Hash),
+  reset_seed(Hash).
 document_mediatype(get, application/nquads, Doc) :- !,
-  document_to_path(Doc, Dir),
-  resolve_file(Dir, 'data.nq.gz', File),
-  http_current_request(Req),
-  http_reply_file(File, [], Req).
+  document_to_directory(Doc, Dir),
+  directory_file_path(Dir, 'data.nq.gz', File),
+  http_reply_file(File).
 document_mediatype(get, text/html, Doc) :-
-  uri_path(Doc, Md5),
-  rdf_global_id(llr:Md5, Res),
-  (   rdf_graph(Res)
+  (   rdf_graph(Doc)
   ->  true
-  ;   document_to_path(Doc, Dir),
-      resolve_file(Dir, 'meta.nq.gz', File),
-      rdf_load_file(File, [graph(Res)])
+  ;   document_to_directory(Doc, Dir),
+      directory_file_path(Dir, 'meta.nq.gz', File),
+      rdf_load_file(File, [graph(Doc)])
   ),
-  string_list_concat(['Open Data Market',Res], " - ", Title),
+  document_to_hash(Doc, Hash),
+  string_list_concat(["Washing Machine",Hash], " - ", Title),
   reply_html_page(cliopatria(default), title(Title),
-    \(cpa_browse:list_triples(_, Res, _, _))
+    \(cpa_browse:list_triples(_, Doc, _, _))
   ).
 
 documents_mediatype(get, text/html) :- !,
@@ -68,7 +65,7 @@ documents_mediatype(get, text/html) :- !,
   reply_html_page(cliopatria(default), title(Title), "").
 documents_mediatype(post, application/json) :-
   http_read_json_dict(Data),
-  H = Data.seed,
+  atom_string(H, Data.seed),
   (   is_current_seed(H)
   ->  detached_thread(clean_seed(H)),
       reply_json_dict(_{}, [status(201)])

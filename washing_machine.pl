@@ -2,11 +2,11 @@
   washing_machine,
   [
     add_washing_machine/0,
-    clean_iri/1,           % +Iri
-    clean_seed/1,          % +Hash
-    document_to_path/2,    % +Doc, -Path
-    is_document/1,         % +Doc
-    resolve_file/3         % +Doc, +Local, -File
+    clean_iri/1,             % +Iri
+    clean_seed/1,            % +Hash
+    document_to_directory/2, % +Doc, -Dir
+    document_to_hash/2,      % +Doc, -Hash
+    is_document/1            % +Doc
   ]
 ).
 
@@ -20,7 +20,6 @@
 :- use_module(library(debug)).
 :- use_module(library(filesex)).
 :- use_module(library(hash_ext)).
-:- use_module(library(lodapi/lodapi_generics)).
 :- use_module(library(os/open_any2)).
 :- use_module(library(os/thread_counter)).
 :- use_module(library(os/thread_ext)).
@@ -71,24 +70,19 @@ clean_seed(H, I) :-
   clean0(H, I),
   end_seed(H).
 
-clean0(H, I) :-
-  document_name(Doc, H),
-  % @tbd This should be a setting.
-  %Dir1 = '/scratch/lodlab/crawls/13/',
-  Dir1 = '/home/wbeek/Data/',
-  document_path(Doc, Dir2),
-  directory_file_path(Dir1, Dir2, Dir),
+clean0(Hash, Iri) :-
+  hash_to_directory(Hash, Dir),
   make_directory_path(Dir),
   Opts = [access(write),relative_to(Dir)],
   absolute_file_name('dirty.gz', DirtyTo, Opts),
   absolute_file_name('data.nq.gz', DataTo, Opts),
   absolute_file_name('meta.nq.gz', MetaTo, Opts),
-  rdf_download_to_file(I, DirtyTo, [compress(gzip)]),
+  rdf_download_to_file(Iri, DirtyTo, [compress(gzip)]),
   setup_call_cleanup(
     open_any2(MetaTo, append, Write, Close_0, [compress(gzip)]),
     with_output_to(Write,
       rdf_store_messages(Doc, (
-        rdf_clean(I, DataTo, [compress(gzip),metadata(M)]),
+        rdf_clean(Iri, DataTo, [compress(gzip),metadata(M)]),
         rdf_store_metadata(Doc, M)
       ))
     ),
@@ -97,31 +91,30 @@ clean0(H, I) :-
 
 
 
-%! document_to_path(+Document, -Path) is det.
+%! document_to_directory(+Document, -Directory) is det.
 
-document_to_path(Doc, Path) :-
-  uri_path(Doc, Md5),
-  atom_codes(Md5, [H1,H2|T]),
+document_to_directory(Doc, Dir) :-
+  document_to_hash(Doc, Hash),
+  hash_to_directory(Hash, Dir).
+
+
+
+%! document_to_hash(+Document, -Hash) is det.
+
+document_to_hash(Doc, Hash) :-
+  rdf_global_id(data:Hash, Doc).
+
+
+
+%! hash_to_directory(+Hash, -Directory) is det.
+
+hash_to_directory(Hash, Dir4) :-
+  atom_codes(Hash, [H1,H2|T]),
   maplist(atom_codes, [Dir1,Dir2], [[H1,H2],T]),
-  atomic_list_concat([Dir1,Dir2], /, Path).
-
-
-
-%! is_document(+Document) is semidet.
-
-is_document(Doc) :-
-  document_to_path(Doc, Dir1),
-  resolve_dir(Dir1, Dir2),
-  exists_directory(Dir2).
-
-
-
-%! resolve_dir(+Directory, -ResolvedDirectory) is det.
-
-resolve_dir(Dir1, Dir2) :-
+  atomic_list_concat([Dir1,Dir2], /, Dir3),
   absolute_file_name(
-    Dir1,
-    Dir2,
+    Dir3,
+    Dir4,
     [
       access(read),
       file_type(directory),
@@ -132,11 +125,11 @@ resolve_dir(Dir1, Dir2) :-
 
 
 
-%! resolve_file(+Directory, +Local, -File) is det.
+%! is_document(+Document) is semidet.
 
-resolve_file(Dir1, Local, File) :-
-  resolve_dir(Dir1, Dir2),
-  directory_file_path(Dir2, Local, File).
+is_document(Doc) :-
+  document_to_directory(Doc, Dir),
+  exists_directory(Dir).
 
 
 
