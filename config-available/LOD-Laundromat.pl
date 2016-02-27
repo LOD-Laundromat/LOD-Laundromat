@@ -25,7 +25,7 @@ cliopatria:menu_item(600=places/seedlist, 'Seedist').
 :- use_module(library(debug)).
 
 :- debug(http(parse)).
-:- debug(rdf(_)).
+%:- debug(rdf(_)).
 :- debug(seedlist(_)).
 :- debug(sparql(_)).
 :- debug(washing_machine(_)).

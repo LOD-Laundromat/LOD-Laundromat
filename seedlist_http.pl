@@ -112,6 +112,13 @@ seeds_table(Seeds) -->
   {http_link_to_id(data, [], Iri)},
   html([
     \js_script({|javascript(Iri)||
+function deleteData(about) {
+  $.ajax(about, {
+    "error": function(xhr, textStatus, errorThrown) {error(xhr.responseText);},
+    "success": function() {location.reload();},
+    "type": "DELETE"
+  });
+}
 function deleteSeed(about) {
   $.ajax(about, {
     "error": function(xhr, textStatus, errorThrown) {error(xhr.responseText);},
@@ -167,7 +174,12 @@ seed_actions(seed(H,_,_,0.0,_)) --> !,
     button([class=[btn,'default-btn'],onclick=DFunc], 'Delete')
   ]).
 % No buttons for ‘cleaning’.
-seed_actions(seed(_,_,_,_,0.0)) --> !, [].
+seed_actions(seed(H,_,_,_,0.0)) --> !,
+  {
+    rdf_global_id(data:H, Iri),
+    format(atom(Func), 'deleteData("~a");', [Iri])
+  },
+  html(button([class=[btn,'default-btn'],onclick=Func], 'Reset')).
 % Show results for ‘cleaned’.
 seed_actions(seed(H,_,_,_,_  )) -->
   bs_button_link(data, H).

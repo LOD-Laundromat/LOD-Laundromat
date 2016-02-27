@@ -112,16 +112,7 @@ hash_to_directory(Hash, Dir4) :-
   atom_codes(Hash, [H1,H2|T]),
   maplist(atom_codes, [Dir1,Dir2], [[H1,H2],T]),
   atomic_list_concat([Dir1,Dir2], /, Dir3),
-  absolute_file_name(
-    Dir3,
-    Dir4,
-    [
-      access(read),
-      file_type(directory),
-      file_errors(fail),
-      relative_to('/home/wbeek/Data/')
-    ]
-  ).
+  directory_file_path('/home/wbeek/Data/', Dir3, Dir4).
 
 
 
