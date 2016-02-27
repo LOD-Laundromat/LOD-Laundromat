@@ -2,6 +2,7 @@
   seedlist,
   [
     add_iri/1,         % +Iri
+    add_iri/2,         % +Iri, -Hash
     begin_seed/2,      % -Hash, -Iri
     current_seed/1,    % -Seed
     current_seed/2,    % +Hash, -Seed
@@ -44,23 +45,27 @@
 
 
 %! add_iri(+Iri) is det.
+%! add_iri(+Iri, -Hash) is det.
 % Adds an IRI to the seedlist.
 %
 % @throws existence_error if IRI is already in the seedlist.
 
-add_iri(I1) :-
-  iri_normalized(I1, I2),
-  with_mutex(seedlist, add_iri0(I2)),
-  debug(seedlist, "Added to seedlist: ~a", [I1]).
+add_iri(I) :-
+  add_iri(I, _).
 
-add_iri0(I) :-
+add_iri(I1, H) :-
+  iri_normalized(I1, I2),
+  with_mutex(seedlist, add_iri_with_check0(I2, H)),
+  debug(seedlist, "Added to seedlist: ~a (~a)", [I1,H]).
+
+add_iri_with_check0(I, _) :-
   seed(_, I, _, _, _), !,
   existence_error(seed, I).
-add_iri0(I) :-
+add_iri_with_check0(I, H) :-
   md5(I, H),
-  add_iri0(H, I).
+  add_iri_without_check0(I, H).
 
-add_iri0(H, I) :-
+add_iri_without_check0(I, H) :-
   get_time(A),
   assert_seed(H, I, A, 0.0, 0.0).
 
@@ -133,6 +138,6 @@ remove_seed(H) :-
 reset_seed(H) :-
   with_mutex(seedlist, (
     retract_seed(H, I, _, _, _),
-    add_iri0(H, I)
+    add_iri_without_check0(I, H)
   )),
   debug(seedlist(reset), "Reset seed ~a (~a)", [H,I]).

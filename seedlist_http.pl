@@ -1,7 +1,6 @@
 :- module(
   seedlist_http,
   [
-  % DEBUG
     add_iri_http/1 % +Iri
   ]
 ).
@@ -31,7 +30,6 @@ A POST request adds a new seed to the list (201) if it is not already there
 :- use_module(library(apply)).
 :- use_module(library(atom_ext)).
 :- use_module(library(debug_ext)).
-:- use_module(library(hash_ext)).
 :- use_module(library(html/html_bs)).
 :- use_module(library(html/html_date_time)).
 :- use_module(library(html/html_ext)).
@@ -39,59 +37,61 @@ A POST request adds a new seed to the list (201) if it is not already there
 :- use_module(library(http/html_write)).
 :- use_module(library(http/http_dispatch)).
 :- use_module(library(http/http_ext)).
-:- use_module(library(http/http_header)).
 :- use_module(library(http/http_json)).
 :- use_module(library(http/http_path)).
 :- use_module(library(http/http_request)).
+:- use_module(library(http/js_write)).
 :- use_module(library(http/rest)).
 :- use_module(library(list_ext)).
 :- use_module(library(nlp/nlp_lang)).
 :- use_module(library(pair_ext)).
 :- use_module(library(string_ext)).
 :- use_module(library(true)).
-:- use_module(library(uri/uri_ext)).
 
-:- use_module(cliopatria(components/basics)).
+:- use_module(cliopatria(components/basics)). % HTML tables.
 
 :- use_module(cpack('LOD-Laundromat'/seedlist)).
 
-:- http_handler(root(seedlist), seedlist, []).
+:- http_handler(root(seedlist), seedlist, [prefix]).
 
 seedlist(Req) :- rest_handler(Req, seedlist, is_current_seed0, seed, seeds).
 seed(Method, MTs, Seed) :- rest_mediatype(Method, MTs, Seed, seed_mediatype).
 seeds(Method, MTs) :- rest_mediatype(Method, MTs, seeds_mediatype).
 
 is_current_seed0(Iri) :-
-  uri_path(Iri, Hash),
+  uri_to_hash(Iri, Hash),
   is_current_seed(Hash).
 
+uri_to_hash(Uri, Hash) :-
+  uri_components(Uri, uri_components(_,_,Path,_,_)),
+  atomic_list_concat(['',seedlist,Hash], /, Path).
+
+hash_to_uri(Hash, Uri) :-
+  http_link_to_id(seedlist, path_postfix(Hash), Uri).
+
 seed_mediatype(delete, application/json, Iri) :- !,
-  uri_path(Iri, Hash),
+  uri_to_hash(Iri, Hash),
   remove_seed(Hash).
 seed_mediatype(get, application/json, Iri) :- !,
-  uri_path(Iri, Hash),
+  uri_to_hash(Iri, Hash),
   current_seed(Hash, Seed),
   seed_to_dict(Seed, Dict),
   reply_json_dict(Dict, [status(200)]).
 seed_mediatype(get, text/html, Iri) :-
-  uri_path(Iri, Hash),
+  uri_to_hash(Iri, Hash),
   current_seed(Hash, Seed),
   string_list_concat(["LOD Laundromat","Seed",Hash], " - ", Title),
   reply_html_page(cliopatria(default), title(Title), \html_seed(Seed)).
 
 html_seed(seed(H,I,A,S,E)) -->
-  html(
-    section(
-      \bs_unary_row([
-        \external_link(I, H),
-        bs_table([
-          tr([th("Added"),td(\seed_date_time(A))]),
-          tr([th("Started"),td(\seed_date_time(S))]),
-          tr([th("Ended"),td(\seed_date_time(E))])
-        ])
-      ])
-    )
-  ).
+  html([
+    h1(\external_link(I, H)),
+    \bs_table([
+      tr([th("Added"),td(\seed_date_time(A))]),
+      tr([th("Started"),td(\seed_date_time(S))]),
+      tr([th("Ended"),td(\seed_date_time(E))])
+    ])
+  ]).
 
 seeds_mediatype(get, application/json) :- !,
   findall(D, (current_seed(Seed), seed_to_dict(Seed, D)), Ds),
@@ -118,18 +118,13 @@ seeds_mediatype(get, text/html) :- !,
   ]).
 seeds_mediatype(post, application/json) :-
   http_read_json_dict(Data),
-  catch(add_iri(Data.seed), E,
-    (    var(E)
-    ->  reply_json_dict(_{}, [status(201)])
-    ;   E = existence_error(_,_)
-    ->  reply_json_dict(_{}, [status(409)])
-    )
-  ).
-  
+  add_iri(Data.seed, Hash),
+  hash_to_uri(Hash, Uri),
+  reply_json_dict(_{hash: Uri}, [status(201)]).
+
 seed_status0(_-seed(_,_,_,0.0,0.0), >) :- !.
 seed_status0(_-seed(_,_,_,_  ,0.0), =) :- !.
 seed_status0(_                    , <).
-
 
 
 %! seed_to_dict(+Seed, -Dict) is det.
@@ -151,10 +146,13 @@ seeds_table(Seeds) -->
   ).
 
 seed_row(seed(H,I1,A,S,E)) -->
-  {atom_truncate(I1, 40, I2)},
+  {
+    atom_truncate(I1, 40, I2),
+    hash_to_uri(H, Uri)
+  },
   html(
     tr([
-      td([div(\external_link(I1, I2)),div(H)]),
+      td([div(\external_link(I1, I2)),\internal_link(Uri, H)]),
       td(\seed_actions(seed(H,I1,A,S,E))),
       td(\seed_date_time(A)),
       td(\seed_date_time(S)),
@@ -171,8 +169,24 @@ seed_date_time(DT) -->
 
 % Start crawling.
 seed_actions(seed(H,_,_,0.0,_)) --> !,
-  {format(atom(Func), 'startCrawling("~a")', [H])},
-  html(button([class=[btn,'default-btn'],onclick=Func], 'Start')).
+  {
+    http_link_to_id(seedlist, path_postfix(H), About),
+    format(atom(SFunc), 'startSeed("~a");', [About]),
+    format(atom(DFunc), 'deleteSeed("~a");', [About])
+  },
+  html([
+    \js_script({|javascript(_)||
+function deleteSeed(about) {
+  $.ajax(about, {
+    "error": function(xhr, textStatus, errorThrown) {error(xhr.responseText);},
+    "success": function() {location.reload();},
+    "type": "DELETE"
+  });
+}
+    |}),
+    button([class=[btn,'default-btn'],onclick=SFunc], 'Start'),
+    button([class=[btn,'default-btn'],onclick=DFunc], 'Delete')
+  ]).
 seed_actions(seed(_,_,_,_,0.0)) --> !, [].
 % Show results.
 seed_actions(seed(H,_,_,_,_  )) -->

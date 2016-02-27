@@ -7,6 +7,7 @@
 /** <module> HTTP API on top of the Washing Machine
 
 | *Path*         | *Method* | *Media type*         | *Status codes* |
+|:---------------|:---------|:---------------------|:---------------|
 | `/laundry`     | `POST`   | `application/json`   | 201            |
 | `/laundry/MD5` | `DELETE` |                      |                |
 | `/laundry/MD5` | `GET`    | `application/nquads` | 200            |
