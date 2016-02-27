@@ -17,15 +17,15 @@
 user:file_search_path(web, cpack('LOD-Laundromat'/web)).
 user:file_search_path(img, web(img)).
 
-:- use_module(cpack('LOD-Laundromat'/lod_laundromat)).
-:- use_module(cpack('LOD-Laundromat'/seedlist)).
+:- use_module(cpack('LOD-Laundromat'/washing_machine_http)).
+:- use_module(cpack('LOD-Laundromat'/seedlist_http)).
 
 cliopatria:menu_item(600=places/seedlist, 'Seedist').
 
 :- use_module(library(debug)).
 
 :- debug(http(parse)).
-:- debug(lod_laundromat(_)).
 :- debug(rdf(_)).
 :- debug(seedlist(_)).
 :- debug(sparql(_)).
+:- debug(washing_machine(_)).
