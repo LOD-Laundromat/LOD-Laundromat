@@ -269,7 +269,8 @@ seed_date_time(DT) -->
   html_date_time(DT, _{ltag: LTag, masks: [offset], month_abbr: true}).
 
 % Start crawling.
-seed_actions(seed(_,_,_,0.0,_)) --> !,
+seed_actions(seed(H,_,_,0.0,_)) --> !,
+  {format(atom(Func), 'startCrawling("~a")', [H])},
   bs_button(Func).
 seed_actions(seed(_,_,_,_,0.0)) --> !, [].
 % Show results.
@@ -277,5 +278,5 @@ seed_actions(seed(H,_,_,_,_  )) -->
   html(div([\bs_button_link(data, H),\bs_button_link(meta, H)])).
 
 bs_button_link(Alias, Postfix) -->
-  {http_link_to_id(Alias, path_postfix(Postfix), Uri)}
+  {http_link_to_id(Alias, path_postfix(Postfix), Uri)},
   html(a([class=[btn,'btn-default'],href=Uri], Alias)).
