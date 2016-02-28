@@ -169,18 +169,16 @@ seed_actions(seed(H,_,_,0.0,_)) --> !,
     http_link_to_id(seedlist, path_postfix(H), Seed),
     format(atom(DFunc), 'deleteSeed("~a");', [Seed])
   },
-  html([\bs_button(SFunc, "Start"),\bs_button(DFunc, "Delete")]).
+  bs_button(SFunc, "Start"),
+  bs_button(DFunc, "Delete").
 % No buttons for ‘cleaning’.
 seed_actions(seed(H,_,_,_,0.0)) --> !,
-  {
-    rdf_global_id(data:H, Iri),
-    format(atom(Func), 'deleteData("~a");', [Iri])
-  },
-  bs_button(Func, "Reset").
+  reset_button(H).
 % Show results for ‘cleaned’.
 seed_actions(seed(H,_,_,_,_  )) -->
   {http_link_to_id(data, path_postfix(H), Iri)},
-  bs_link_button(Iri, "Data").
+  bs_link_button(Iri, "Data"),
+  reset_button(H).
 
 
 
@@ -236,6 +234,17 @@ html_seed(seed(H,I,A,S,E)) -->
 iri_to_hash(Uri, Hash) :-
   uri_components(Uri, uri_components(_,_,Path,_,_)),
   atomic_list_concat(['',seedlist,Hash], /, Path).
+
+
+
+%! reset_button(+Hash)// is det.
+
+reset_button(H) -->
+  {
+    rdf_global_id(data:H, Iri),
+    format(atom(Func), 'deleteData("~a");', [Iri])
+  },
+  bs_button(Func, "Reset").
 
 
 

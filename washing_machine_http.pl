@@ -16,6 +16,7 @@
 @version 2016/02
 */
 
+:- use_module(library(html/rdf_html_grid)).
 :- use_module(library(http/html_write)).
 :- use_module(library(http/http_dispatch)).
 :- use_module(library(http/http_ext)).
@@ -58,9 +59,10 @@ document_mediatype(get, text/html, Doc) :-
   ),
   document_hash(Doc, Hash),
   string_list_concat(["Washing Machine",Hash], " - ", Title),
-  reply_html_page(cliopatria(default), title(Title),
+  reply_html_page(cliopatria(default), title(Title), [
+    \rdf_html_grid(Doc),
     \(cpa_browse:list_triples(_, Doc, _, _))
-  ).
+  ]).
 
 documents_mediatype(get, text/html) :- !,
   string_list_concat(["LOD Laundromat","Documents"], " - ", Title),

@@ -4,7 +4,7 @@
     add_washing_machine/0,
     clean_iri/1,             % +Iri
     clean_seed/1,            % +Hash
-    document_hash/2,      % +Doc, -Hash
+    document_hash/2,         % +Doc, -Hash
     document_to_directory/2, % +Doc, -Dir
     is_document/1            % +Doc
   ]
@@ -17,7 +17,7 @@
 */
 
 :- use_module(library(apply)).
-:- use_module(library(debug)).
+:- use_module(library(debug_ext)).
 :- use_module(library(filesex)).
 :- use_module(library(hash_ext)).
 :- use_module(library(os/open_any2)).
@@ -78,7 +78,6 @@ clean0(Hash, Iri) :-
   absolute_file_name('dirty.gz', DirtyTo, Opts),
   absolute_file_name('data.nq.gz', DataTo, Opts),
   absolute_file_name('meta.nq.gz', MetaTo, Opts),
-  rdf_download_to_file(Iri, DirtyTo, [compress(gzip)]),
   setup_call_cleanup(
     open_any2(MetaTo, append, Write, Close_0, [compress(gzip)]),
     with_output_to(Write,
@@ -88,7 +87,8 @@ clean0(Hash, Iri) :-
       ))
     ),
     close_any2(Close_0)
-  ).
+  ),
+  call_collect_messages(rdf_download_to_file(Iri, DirtyTo, [compress(gzip)])).
 
 
 
