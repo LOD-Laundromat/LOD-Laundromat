@@ -42,7 +42,7 @@ document(Method, MTs, Doc) :- rest_mediatype(Method, MTs, Doc, document_mediatyp
 documents(Method, MTs) :- rest_mediatype(Method, MTs, documents_mediatype).
 
 document_mediatype(delete, application/json, Doc) :- !,
-  document_to_hash(Doc, Hash),
+  document_hash(Doc, Hash),
   reset_seed(Hash),
   reply_json_dict(_{}, [status(200)]).
 document_mediatype(get, application/nquads, Doc) :- !,
@@ -56,7 +56,7 @@ document_mediatype(get, text/html, Doc) :-
       directory_file_path(Dir, 'meta.nq.gz', File),
       rdf_load_file(File, [graph(Doc)])
   ),
-  document_to_hash(Doc, Hash),
+  document_hash(Doc, Hash),
   string_list_concat(["Washing Machine",Hash], " - ", Title),
   reply_html_page(cliopatria(default), title(Title),
     \(cpa_browse:list_triples(_, Doc, _, _))

@@ -169,20 +169,18 @@ seed_actions(seed(H,_,_,0.0,_)) --> !,
     http_link_to_id(seedlist, path_postfix(H), Seed),
     format(atom(DFunc), 'deleteSeed("~a");', [Seed])
   },
-  html([
-    button([class=[btn,'default-btn'],onclick=SFunc], 'Start'),
-    button([class=[btn,'default-btn'],onclick=DFunc], 'Delete')
-  ]).
+  html([\bs_button(SFunc, "Start"),\bs_button(DFunc, "Delete")]).
 % No buttons for ‘cleaning’.
 seed_actions(seed(H,_,_,_,0.0)) --> !,
   {
     rdf_global_id(data:H, Iri),
     format(atom(Func), 'deleteData("~a");', [Iri])
   },
-  html(button([class=[btn,'default-btn'],onclick=Func], 'Reset')).
+  bs_button(Func, "Reset").
 % Show results for ‘cleaned’.
 seed_actions(seed(H,_,_,_,_  )) -->
-  bs_button_link(data, H).
+  {http_link_to_id(data, path_postfix(H), Iri)},
+  bs_link_button(Iri, "Data").
 
 
 
@@ -199,16 +197,6 @@ add_iri_http(Iri) :-
 
 
 % HELPERS %
-
-%! bs_button_link(+Alias, +Postfix)// is det.
-% Generate an HTML link that looks like a button and that uses the convenient
-% http_link_to_id/3 in order to build the request IRI.
-
-bs_button_link(Alias, Postfix) -->
-  {http_link_to_id(Alias, path_postfix(Postfix), Iri)},
-  html(a([class=[btn,'btn-default'],href=Iri], Alias)).
-
-
 
 %! is_current_seed0(+Iri) is semidet.
 % Succeeds if the given IRI denotes a seed point in the seedlist.

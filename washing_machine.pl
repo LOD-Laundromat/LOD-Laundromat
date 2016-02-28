@@ -4,8 +4,8 @@
     add_washing_machine/0,
     clean_iri/1,             % +Iri
     clean_seed/1,            % +Hash
+    document_hash/2,      % +Doc, -Hash
     document_to_directory/2, % +Doc, -Dir
-    document_to_hash/2,      % +Doc, -Hash
     is_document/1            % +Doc
   ]
 ).
@@ -72,6 +72,7 @@ clean_seed(H, I) :-
 
 clean0(Hash, Iri) :-
   hash_to_directory(Hash, Dir),
+  document_hash(Doc, Hash),
   make_directory_path(Dir),
   Opts = [access(write),relative_to(Dir)],
   absolute_file_name('dirty.gz', DirtyTo, Opts),
@@ -94,14 +95,14 @@ clean0(Hash, Iri) :-
 %! document_to_directory(+Document, -Directory) is det.
 
 document_to_directory(Doc, Dir) :-
-  document_to_hash(Doc, Hash),
+  document_hash(Doc, Hash),
   hash_to_directory(Hash, Dir).
 
 
 
-%! document_to_hash(+Document, -Hash) is det.
+%! document_hash(+Document, -Hash) is det.
 
-document_to_hash(Doc, Hash) :-
+document_hash(Doc, Hash) :-
   rdf_global_id(data:Hash, Doc).
 
 
