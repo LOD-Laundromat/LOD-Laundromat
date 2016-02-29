@@ -43,8 +43,7 @@ document(Method, MTs, Doc) :- rest_mediatype(Method, MTs, Doc, document_mediatyp
 documents(Method, MTs) :- rest_mediatype(Method, MTs, documents_mediatype).
 
 document_mediatype(delete, application/json, Doc) :- !,
-  document_hash(Doc, Hash),
-  reset_seed(Hash),
+  reset_document(Doc),
   reply_json_dict(_{}, [status(200)]).
 document_mediatype(get, application/nquads, Doc) :- !,
   document_to_directory(Doc, Dir),

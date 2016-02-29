@@ -6,7 +6,8 @@
     clean_seed/1,            % +Hash
     document_hash/2,         % +Doc, -Hash
     document_to_directory/2, % +Doc, -Dir
-    is_document/1            % +Doc
+    is_document/1,           % +Doc
+    reset_document/1         % +Doc
   ]
 ).
 
@@ -75,7 +76,6 @@ clean0(Hash, Iri) :-
   document_hash(Doc, Hash),
   make_directory_path(Dir),
   Opts = [access(write),relative_to(Dir)],
-  absolute_file_name('dirty.gz', DirtyTo, Opts),
   absolute_file_name('data.nq.gz', DataTo, Opts),
   absolute_file_name('meta.nq.gz', MetaTo, Opts),
   setup_call_cleanup(
@@ -87,8 +87,9 @@ clean0(Hash, Iri) :-
       ))
     ),
     close_any2(Close_0)
-  ),
-  call_collect_messages(rdf_download_to_file(Iri, DirtyTo, [compress(gzip)])).
+  ).
+  %absolute_file_name('dirty.gz', DirtyTo, Opts),
+  %call_collect_messages(rdf_download_to_file(Iri, DirtyTo, [compress(gzip)])).
 
 
 
@@ -122,6 +123,22 @@ hash_to_directory(Hash, Dir4) :-
 is_document(Doc) :-
   document_to_directory(Doc, Dir),
   exists_directory(Dir).
+
+
+
+%! reset_document(+Doc) is det.
+
+reset_document(Doc) :-
+  % Step 1: Unload the RDF metadata from memory.
+  rdf_unload_graph(Doc),
+  
+  % Step 2: Remove the data and metadata files from disk.
+  document_to_directory(Doc, Dir),
+  delete_directory_and_contents(Dir),
+
+  % Step 3: Reset the seed in the seedlist.
+  document_hash(Doc, Hash),
+  reset_seed(Hash).
 
 
 
