@@ -33,8 +33,6 @@ A POST request adds a new seed to the list (201) if it is not already there
 :- use_module(library(html/html_bs)).
 :- use_module(library(html/html_date_time)).
 :- use_module(library(html/html_ext)).
-:- use_module(library(html/html_meta)).
-:- use_module(library(http/html_write)).
 :- use_module(library(http/http_dispatch)).
 :- use_module(library(http/http_ext)).
 :- use_module(library(http/http_json)).
