@@ -44,7 +44,7 @@ the stored triples are sent in a SPARQL Update request
 
 :- use_module(library(apply)).
 :- use_module(library(lists)).
-:- use_module(library(rdf11/rdf11)).
+:- use_module(library(semweb/rdf11)).
 :- use_module(library(uri)).
 
 :- use_module(lwm_debug_message).

@@ -19,8 +19,8 @@ and at the same time send small RDF messages using SPARQL Update requests.
 */
 
 :- use_module(library(debug)).
-:- use_module(library(rdf/rdf_api)).
-:- use_module(library(sparql/http/sparql_graph_store)).
+:- use_module(library(rdf/rdf_ext)).
+:- use_module(library(sparql/sparql_graph_store)).
 
 :- use_module(lwm_settings).
 

@@ -16,7 +16,7 @@
 @version 2016/02
 */
 
-:- use_module(library(html/rdf_html_grid)).
+:- use_module(library(html/rdfh_grid)).
 :- use_module(library(http/html_write)).
 :- use_module(library(http/http_dispatch)).
 :- use_module(library(http/http_ext)).
@@ -25,7 +25,7 @@
 :- use_module(library(http/rest)).
 :- use_module(library(os/thread_ext)).
 :- use_module(library(pair_ext)).
-:- use_module(library(rdf/rdf_api)).
+:- use_module(library(rdf/rdf_ext)).
 :- use_module(library(rdf/rdf_load)).
 :- use_module(library(string_ext)).
 :- use_module(library(uri/uri_ext)).
@@ -59,7 +59,7 @@ document_mediatype(get, text/html, Doc) :-
   document_hash(Doc, Hash),
   string_list_concat(["Washing Machine",Hash], " - ", Title),
   reply_html_page(cliopatria(default), title(Title), [
-    \rdf_html_grid(Doc),
+    \rdfh_grid(Doc),
     \(cpa_browse:list_triples(_, Doc, _, _))
   ]).
 

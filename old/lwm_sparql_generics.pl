@@ -33,7 +33,7 @@ the LOD Laundromat's washing machine.
 @version 2015/11, 2016/01
 */
 
-:- use_module(library(dcg/dcg_phrase)).
+:- use_module(library(dcg/dcg_ext)).
 :- use_module(library(list_ext)).
 :- use_module(library(option)).
 :- use_module(library(pl/pl_control)).

@@ -27,7 +27,7 @@
 :- use_module(library(rdf/rdf_clean)).
 :- use_module(library(rdf/rdf_debug)).
 :- use_module(library(rdf/rdf_load)).
-:- use_module(library(rdf11/rdf11)). % Operators.
+:- use_module(library(semweb/rdf11)). % Operators.
 :- use_module(library(string_ext)).
 :- use_module(library(uri/uri_ext)).
 
