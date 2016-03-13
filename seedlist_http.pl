@@ -98,7 +98,7 @@ seeds_mediatype(get, text/html) :- !,
 seeds_mediatype(post, application/json) :-
   http_read_json_dict(Data),
   add_iri(Data.seed, Hash),
-  hash_to_iri(Hash, Iri),
+  hash_to_iri0(Hash, Iri),
   reply_json_dict(_{hash: Iri}, [status(201)]).
 
 
@@ -147,7 +147,7 @@ function startSeed(hash) {
 seed_row(seed(H,I1,A,S,E)) -->
   {
     atom_truncate(I1, 40, I2),
-    hash_to_iri(H, Uri)
+    hash_to_iri0(H, Uri)
   },
   html(
     tr([
@@ -203,10 +203,10 @@ is_current_seed0(Iri) :-
 
 
 
-%! hash_to_iri(+Hash:atom, -Iri:atom) is det.
+%! hash_to_iri0(+Hash:atom, -Iri:atom) is det.
 % Translate from a seedlist hash to a seedlist HTTP IRI.
 
-hash_to_iri(Hash, Uri) :-
+hash_to_iri0(Hash, Uri) :-
   http_link_to_id(seedlist, path_postfix(Hash), Uri).
 
 

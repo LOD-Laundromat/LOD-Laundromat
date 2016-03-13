@@ -21,6 +21,7 @@ user:file_search_path(img, web(img)).
 :- use_module(cpack('LOD-Laundromat'/seedlist_http)).
 
 cliopatria:menu_item(600=places/seedlist, 'Seedist').
+cliopatria:menu_item(700=places/data, 'Data').
 
 :- use_module(library(debug)).
 

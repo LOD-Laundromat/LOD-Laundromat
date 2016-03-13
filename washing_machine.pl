@@ -2,19 +2,17 @@
   washing_machine,
   [
     add_washing_machine/0,
-    clean_iri/1,             % +Iri
-    clean_seed/1,            % +Hash
-    document_hash/2,         % +Doc, -Hash
-    document_to_directory/2, % +Doc, -Dir
-    is_document/1,           % +Doc
-    reset_document/1         % +Doc
+    clean_iri/1,           % +Iri
+    clean_seed/1,          % +Hash
+    load_metadata/0,
+    reset_ldoc/1           % +Doc
   ]
 ).
 
 /* <module> LOD Laundromat
 
 @author Wouter Beek
-@version 2016/01-2016/02
+@version 2016/01-2016/03
 */
 
 :- use_module(library(apply)).
@@ -31,6 +29,7 @@
 :- use_module(library(string_ext)).
 :- use_module(library(uri/uri_ext)).
 
+:- use_module(cpack('LOD-Laundromat'/laundromat_fs)).
 :- use_module(cpack('LOD-Laundromat'/seedlist)).
 
 
@@ -72,12 +71,12 @@ clean_seed(H, I) :-
   end_seed(H).
 
 clean0(Hash, Iri) :-
-  hash_to_directory(Hash, Dir),
-  document_hash(Doc, Hash),
+  ldir_hash(Dir, Hash),
   make_directory_path(Dir),
   Opts = [access(write),relative_to(Dir)],
   absolute_file_name('data.nq.gz', DataTo, Opts),
   absolute_file_name('meta.nq.gz', MetaTo, Opts),
+  ldoc_hash(Doc, Hash),
   setup_call_cleanup(
     open_any2(MetaTo, append, Write, Close_0, [compress(gzip)]),
     with_output_to(Write,
@@ -93,51 +92,30 @@ clean0(Hash, Iri) :-
 
 
 
-%! document_to_directory(+Document, -Directory) is det.
+%! load_metadata is det.
+% Loads the metadata of all cleaned documents into ClioPatria.
 
-document_to_directory(Doc, Dir) :-
-  document_hash(Doc, Hash),
-  hash_to_directory(Hash, Dir).
-
-
-
-%! document_hash(+Document, -Hash) is det.
-
-document_hash(Doc, Hash) :-
-  rdf_global_id(data:Hash, Doc).
+load_metadata :-
+  forall(ldir(Dir), (
+    absolute_file_name('meta.nq.gz', Meta, [access(read),relative_to(Dir)]),
+    ldir_ldoc(Dir, Doc),
+    rdf_load_file(Meta, [graph(Doc)])
+  )).
 
 
 
-%! hash_to_directory(+Hash, -Directory) is det.
+%! reset_ldoc(+Doc) is det.
 
-hash_to_directory(Hash, Dir4) :-
-  atom_codes(Hash, [H1,H2|T]),
-  maplist(atom_codes, [Dir1,Dir2], [[H1,H2],T]),
-  atomic_list_concat([Dir1,Dir2], /, Dir3),
-  directory_file_path('/home/wbeek/Data/', Dir3, Dir4).
-
-
-
-%! is_document(+Document) is semidet.
-
-is_document(Doc) :-
-  document_to_directory(Doc, Dir),
-  exists_directory(Dir).
-
-
-
-%! reset_document(+Doc) is det.
-
-reset_document(Doc) :-
+reset_ldoc(Doc) :-
   % Step 1: Unload the RDF metadata from memory.
   rdf_unload_graph(Doc),
   
   % Step 2: Remove the data and metadata files from disk.
-  document_to_directory(Doc, Dir),
+  ldir_ldoc(Dir, Doc),
   delete_directory_and_contents(Dir),
 
   % Step 3: Reset the seed in the seedlist.
-  document_hash(Doc, Hash),
+  ldoc_hash(Doc, Hash),
   reset_seed(Hash).
 
 
