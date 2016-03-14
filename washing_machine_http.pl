@@ -67,6 +67,18 @@ ldoc_mediatype(get, text/html, Doc) :-
     \(cpa_browse:list_triples(_, Doc, _, _))
   ]).
 
+ldocs_mediatype(get, application/json) :-
+  desc_ldocs(Pairs),
+  maplist(pair_dict0, Pairs, Ds),
+  length(Ds, N),
+  reply_json_dict(_{ldocs:Ds,size:N}, [status(200)]).
+ldocs_mediatype(get, text/html) :-
+  desc_ldocs(Pairs),
+  string_list_concat(["LOD Laundromat","Documents"], " - ", Title),
+  reply_html_page(cliopatria(default), title(Title), [
+    h1(Title),
+    ol(\html_maplist(ldoc_card, Pairs))
+  ]).
 ldocs_mediatype(post, application/json) :- !,
   http_read_json_dict(Data),
   atom_string(H, Data.seed),
@@ -75,15 +87,20 @@ ldocs_mediatype(post, application/json) :- !,
       reply_json_dict(_{}, [status(201)])
   ;   reply_json_dict(_{}, [status(404)])
   ).
-ldocs_mediatype(get, text/html) :-
-  string_list_concat(["LOD Laundromat","Documents"], " - ", Title),
-  findall(Mod-Doc, (ldoc(Doc), ldoc_lmod(Doc, Mod)), Pairs),
-  desc_pairs(Pairs, SortedPairs),
-  reply_html_page(cliopatria(default), title(Title), [
-    h1("LOD Laundromat Documents"),
-    ol(\html_maplist(ldoc_card, SortedPairs))
-  ]).
 
 ldoc_card(Mod-Doc) -->
   {ldoc_hash(Doc, Hash)},
   card(\html_date_time(Mod), \bs_link_button(Doc, Hash)).
+
+
+
+
+
+% HELPERS %
+
+desc_ldocs(SortedPairs) :-
+  findall(Mod-Doc, (ldoc(Doc), ldoc_lmod(Doc, Mod)), Pairs),
+  desc_pairs(Pairs, SortedPairs).
+
+
+pair_dict0(Mod-Doc, _{doc:Doc,lmod:Mod}).
