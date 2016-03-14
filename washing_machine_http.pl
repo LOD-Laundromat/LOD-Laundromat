@@ -17,6 +17,7 @@
 @version 2016/02-2016/03
 */
 
+:- use_module(library(html/dataTables)).
 :- use_module(library(html/html_bs)).
 :- use_module(library(html/html_date_time)).
 :- use_module(library(html/html_ext)).
@@ -54,12 +55,7 @@ ldoc_mediatype(get, application/nquads, Doc) :- !,
   directory_file_path(Dir, 'data.nq.gz', File),
   http_reply_file(File).
 ldoc_mediatype(get, text/html, Doc) :-
-  (   rdf_graph(Doc)
-  ->  true
-  ;   ldir_ldoc(Dir, Doc),
-      directory_file_path(Dir, 'meta.nq.gz', File),
-      rdf_load_file(File, [graph(Doc)])
-  ),
+  ldoc_load_meta(Doc),
   ldoc_hash(Doc, Hash),
   string_list_concat(["Washing Machine",Hash], " - ", Title),
   reply_html_page(cliopatria(default), title(Title), [
@@ -69,16 +65,32 @@ ldoc_mediatype(get, text/html, Doc) :-
 
 ldocs_mediatype(get, application/json) :-
   desc_ldocs(Pairs),
-  maplist(pair_dict0, Pairs, Ds),
-  length(Ds, N),
-  reply_json_dict(_{ldocs:Ds,size:N}, [status(200)]).
+  maplist(pair_row0, Pairs, Rows),
+  reply_json_dict(Rows, [status(200)]).
 ldocs_mediatype(get, text/html) :-
-  desc_ldocs(Pairs),
   string_list_concat(["LOD Laundromat","Documents"], " - ", Title),
-  reply_html_page(cliopatria(default), title(Title), [
-    h1(Title),
-    ol(\html_maplist(ldoc_card, Pairs))
-  ]).
+  reply_html_page(cliopatria(default),
+    [title(Title),\html_requires(dataTables)],
+    [
+      h1(Title),
+      table([class=display,id=table_id],
+        thead(
+          tr([
+            th("Last modified"),
+            th("Document"),
+            th("Number of warnings")
+          ])
+        )
+      ),
+      \js_script({|javascript(_)||
+$(document).ready( function () {
+  $.ajax({"contentType": "application/json", "dataType": "json", "type": "GET", "url": "data"}).then(function(data) {
+    $('#table_id').DataTable({ data: data });
+  })
+});
+      |})
+    ]
+  ).
 ldocs_mediatype(post, application/json) :- !,
   http_read_json_dict(Data),
   atom_string(H, Data.seed),
@@ -87,10 +99,6 @@ ldocs_mediatype(post, application/json) :- !,
       reply_json_dict(_{}, [status(201)])
   ;   reply_json_dict(_{}, [status(404)])
   ).
-
-ldoc_card(Mod-Doc) -->
-  {ldoc_hash(Doc, Hash)},
-  card(\html_date_time(Mod), \bs_link_button(Doc, Hash)).
 
 
 
@@ -103,4 +111,6 @@ desc_ldocs(SortedPairs) :-
   desc_pairs(Pairs, SortedPairs).
 
 
-pair_dict0(Mod-Doc, _{doc:Doc,lmod:Mod}).
+pair_row0(Mod0-Doc, [Mod,Doc,N]) :-
+  rdf_has(Doc, llo:number_of_warnings, N^^xsd:nonNegativeInteger),
+  format_time(atom(Mod), "%FT%T%:z", Mod0).

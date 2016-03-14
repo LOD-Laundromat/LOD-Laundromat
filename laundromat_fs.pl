@@ -1,12 +1,13 @@
 :- module(
   laundromat_fs,
   [
-    ldir/1,      % ?Dir
-    ldir_hash/2, % ?Dir, ?Hash
-    ldir_ldoc/2, % ?Dir, ?Doc
-    ldoc/1,      % ?Doc
-    ldoc_hash/2, % ?Doc, ?Hash
-    ldoc_lmod/2  % +Doc, -Modified
+    ldir/1,          % ?Dir
+    ldir_hash/2,     % ?Dir, ?Hash
+    ldir_ldoc/2,     % ?Dir, ?Doc
+    ldoc/1,          % ?Doc
+    ldoc_hash/2,     % ?Doc, ?Hash
+    ldoc_lmod/2,     % +Doc, -LastModified
+    ldoc_load_meta/1 % +Doc
   ]
 ).
 
@@ -22,6 +23,7 @@ ldir -- ldoc
 
 :- use_module(library(error)).
 :- use_module(library(lists)).
+:- use_module(library(rdf/rdf_load)).
 :- use_module(library(settings)).
 
 :- setting(data_dir, atom, '/home/wbeek/Data/',
@@ -104,6 +106,17 @@ ldoc_hash(Doc, Hash) :-
 ldoc_lmod(Doc, Mod) :-
   ldir_ldoc(Dir, Doc),
   time_file(Dir, Mod).
+
+
+
+%! ldoc_load_meta(+Doc) is det.
+
+ldoc_load_meta(Doc) :-
+  rdf_graph(Doc), !.
+ldoc_load_meta(Doc) :-
+  ldir_ldoc(Dir, Doc),
+  directory_file_path(Dir, 'meta.nq.gz', File),
+  rdf_load_file(File, [graph(Doc)]).
 
 
 

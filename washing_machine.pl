@@ -86,7 +86,8 @@ clean0(Hash, Iri) :-
       ))
     ),
     close_any2(Close_0)
-  ).
+  ),
+  ldoc_load_meta(Doc).
   %absolute_file_name('dirty.gz', DirtyTo, Opts),
   %call_collect_messages(rdf_download_to_file(Iri, DirtyTo, [compress(gzip)])).
 
