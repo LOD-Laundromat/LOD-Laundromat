@@ -7,9 +7,9 @@
     current_seed/1,    % -Seed
     current_seed/2,    % +Hash, -Seed
     end_seed/1,        % +Hash
-    is_current_seed/1, % +Hash
     remove_seed/1,     % +Hash
-    reset_seed/1       % +Hash
+    reset_seed/1,      % +Hash
+    seed/1             % ?Hash
   ]
 ).
 
@@ -118,13 +118,6 @@ end_seed(H) :-
 
 
 
-%! is_current_seed(+Hash) is semidet.
-
-is_current_seed(H) :-
-  once(current_seed(H, _)).
-
-
-
 %! remove_seed(+Hash) is det.
 
 remove_seed(H) :-
@@ -141,3 +134,14 @@ reset_seed(H) :-
     add_iri_without_check0(I, H)
   )),
   debug(seedlist(reset), "Reset seed ~a (~a)", [H,I]).
+
+
+
+%! seed(+Hash) is semidet.
+%! seed(-Hash) is nondet.
+
+seed(H) :-
+  ground(H), !,
+  once(current_seed(H, _)).
+seed(H) :-
+  current_seed(seed(H,_,_,_,_)).

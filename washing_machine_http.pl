@@ -51,11 +51,10 @@ ldoc_mediatype(delete, application/json, Doc) :- !,
   reset_ldoc(Doc),
   reply_json_dict(_{}, [status(200)]).
 ldoc_mediatype(get, application/nquads, Doc) :- !,
-  ldir_ldoc(Dir, Doc),
-  directory_file_path(Dir, 'data.nq.gz', File),
+  ldoc_data_file(Doc, File),
   http_reply_file(File).
 ldoc_mediatype(get, text/html, Doc) :-
-  ldoc_load_meta(Doc),
+  ldoc_meta_load(Doc),
   ldoc_hash(Doc, Hash),
   string_list_concat(["Washing Machine",Hash], " - ", Title),
   reply_html_page(cliopatria(default), title(Title), [
@@ -76,9 +75,11 @@ ldocs_mediatype(get, text/html) :-
       table([class=display,id=table_id],
         thead(
           tr([
-            th("Last modified"),
             th("Document"),
-            th("Number of warnings")
+            th("Last modified"),
+            th("Tuples"),
+            th("Number of warnings"),
+            th("HTTP Status")
           ])
         )
       ),
@@ -94,7 +95,7 @@ $(document).ready( function () {
 ldocs_mediatype(post, application/json) :- !,
   http_read_json_dict(Data),
   atom_string(H, Data.seed),
-  (   is_current_seed(H)
+  (   seed(H)
   ->  detached_thread(clean_seed(H)),
       reply_json_dict(_{}, [status(201)])
   ;   reply_json_dict(_{}, [status(404)])
@@ -111,6 +112,8 @@ desc_ldocs(SortedPairs) :-
   desc_pairs(Pairs, SortedPairs).
 
 
-pair_row0(Mod0-Doc, [Mod,Doc,N]) :-
-  rdf_has(Doc, llo:number_of_warnings, N^^xsd:nonNegativeInteger),
-  format_time(atom(Mod), "%FT%T%:z", Mod0).
+pair_row0(Mod0-Doc, [Doc,Mod,Tuples,Warnings,Status]) :-
+  format_time(atom(Mod), "%FT%T%:z", Mod0),
+  (rdf_has(Doc, llo:processed_tuples, Tuples^^xsd:nonNegativeInteger) -> true ; Tuples = 0),
+  (rdf_has(Doc, llo:number_of_warnings, Warnings^^xsd:nonNegativeInteger) -> true ; Warnings = 0),
+  (rdf_has(Doc, llo:status_code, Status^^xsd:integer) -> true ; Tuples = 0).

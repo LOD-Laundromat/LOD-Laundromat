@@ -24,7 +24,7 @@ A POST request adds a new seed to the list (201) if it is not already there
 @author Wouter Beek
 @tbd Add authorization for DELETE and POST requests.
 @tbd Add pagination for GET requests.
-@version 2016/02
+@version 2016/02-2016/03
 */
 
 :- use_module(library(apply)).
@@ -53,7 +53,7 @@ A POST request adds a new seed to the list (201) if it is not already there
 
 :- http_handler(root(seedlist), seedlist, [prefix]).
 
-seedlist(Req) :- rest_handler(Req, seedlist, is_current_seed0, seed, seeds).
+seedlist(Req) :- rest_handler(Req, seedlist, iri_seed0, seed, seeds).
 seed(Method, MTs, Seed) :- rest_mediatype(Method, MTs, Seed, seed_mediatype).
 seeds(Method, MTs) :- rest_mediatype(Method, MTs, seeds_mediatype).
 
@@ -194,12 +194,12 @@ add_iri_http(Iri) :-
 
 % HELPERS %
 
-%! is_current_seed0(+Iri) is semidet.
+%! iri_seed0(+Iri) is semidet.
 % Succeeds if the given IRI denotes a seed point in the seedlist.
 
-is_current_seed0(Iri) :-
+iri_seed0(Iri) :-
   iri_to_hash(Iri, Hash),
-  is_current_seed(Hash).
+  seed(Hash).
 
 
 

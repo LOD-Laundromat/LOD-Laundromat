@@ -15,6 +15,7 @@
 @version 2016/01-2016/03
 */
 
+:- use_module(library(ansi_ext)).
 :- use_module(library(apply)).
 :- use_module(library(debug_ext)).
 :- use_module(library(filesex)).
@@ -56,19 +57,25 @@ clean_iri(I1) :-
 
 
 %! clean_seed(+Hash) is det.
+% Does not re-clean documents.
+%
 % @throws existence_error If the seed is not in the seedlist.
 
-clean_seed(H) :-
-  clean_seed(H, _).
+clean_seed(Hash) :-
+  ldoc_hash(Doc, Hash),
+  ldoc_is_done(Doc), !,
+  ansi_formatln([fg(red)], "Already cleaned ~a", [Doc]).
+clean_seed(Hash) :-
+  clean_seed(Hash, _).
 
 
 %! clean_seed(-Hash, -Iri) is det.
 % Cleans a dirty seed from the seedlist.
 
-clean_seed(H, I) :-
-  begin_seed(H, I),
-  clean0(H, I),
-  end_seed(H).
+clean_seed(Hash, Iri) :-
+  begin_seed(Hash, Iri),
+  clean0(Hash, Iri),
+  end_seed(Hash).
 
 clean0(Hash, Iri) :-
   ldir_hash(Dir, Hash),
@@ -87,7 +94,7 @@ clean0(Hash, Iri) :-
     ),
     close_any2(Close_0)
   ),
-  ldoc_load_meta(Doc).
+  ldoc_meta_load(Doc).
   %absolute_file_name('dirty.gz', DirtyTo, Opts),
   %call_collect_messages(rdf_download_to_file(Iri, DirtyTo, [compress(gzip)])).
 
