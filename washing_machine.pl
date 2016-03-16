@@ -2,6 +2,7 @@
   washing_machine,
   [
     add_washing_machine/0,
+    add_washing_machine/1, % +N
     clean/1,               % +Hash
     clean_iri/1,           % +Iri
     load_all_metadata/0,
@@ -41,10 +42,18 @@
 
 
 %! add_washing_machine is det.
+%! add_washing_machine(+N) is det.
 % Add a LOD Laundromat thread.
 
 add_washing_machine :-
   detached_thread(start_washing_machine0).
+
+add_washing_machine(N) :-
+  N =< 0, !.
+add_washing_machine(N1) :-
+  add_washing_machine,
+  N2 is N1 - 1,
+  add_washing_machine(N2).
 
 
 
@@ -74,19 +83,22 @@ clean0(Hash, Iri) :-
   ldir_hash(Dir, Hash),
   make_directory_path(Dir),
   Opts = [access(write),relative_to(Dir)],
-  absolute_file_name('data.nq.gz', DataTo, Opts),
-  absolute_file_name('meta.nq.gz', MetaTo, Opts),
+  absolute_file_name('data.nq.gz', DataFile, Opts),
+  absolute_file_name('meta.nt.gz', MetaFile, Opts),
+  absolute_file_name('msg.nt.gz', MsgFile, Opts),
   ldoc_hash(Doc, Hash),
   CleanOpts = [compress(gzip),metadata(M),relative_to(Dir),sort_dir(Dir)],
   setup_call_cleanup(
-    open_any2(MetaTo, append, Write, Close_0, [compress(gzip)]),
-    with_output_to(Write,
+    open_any2(MetaFile, append, _, MetaClose_0, [alias(meta),compress(gzip)]),
+    setup_call_cleanup(
+      open_any2(MsgFile, append, _, MsgClose_0, [alias(msg),compress(gzip)]),
       rdf_store_messages(Doc, (
-        rdf_clean(Iri, DataTo, CleanOpts),
+        rdf_clean(Iri, DataFile, CleanOpts),
         rdf_store_metadata(Doc, M)
-      ))
+      )),
+      close_any2(MsgClose_0)
     ),
-    close_any2(Close_0)
+    close_any2(MetaClose_0)
   ),
   ldoc_meta_load(Doc).
   %absolute_file_name('dirty.gz', DirtyTo, Opts),

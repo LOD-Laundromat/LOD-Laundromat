@@ -8,13 +8,15 @@
 /** <module> Legacy support for LOD Laundromat ≤12 seeds
 
 @author Wouter Beek
-@version 2016/02
+@version 2016/02-2016/03
 */
 
 :- use_module(library(lists)).
 :- use_module(library(os/gnu_sort)).
 :- use_module(library(sparql/sparql_db)).
-:- use_module(library(sparql/query/sparql_query)).
+:- use_module(library(sparql/sparql_query)).
+
+:- use_module(cpack('LOD-Laundromat/seedlist')).
 
 :- sparql_register_endpoint(
      lod_laundromat,
@@ -31,7 +33,8 @@
 % as a seedlist.  This is intended for debugging purposes only.
 
 add_old_iris :-
-  absolute_file_name(seedlist, File, [access(write),file_type(prolog)]),
+  gtrace,
+  absolute_file_name('seedlist.db', File, [access(write)]),
   Q = '\c
 PREFIX llo: <http://lodlaundromat.org/ontology/>\n\c
 SELECT ?url\n\c
@@ -47,6 +50,3 @@ WHERE {\n\c
     close(Write)
   ),
   sort_file(File).
-
-
-
