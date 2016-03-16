@@ -124,8 +124,8 @@ ldoc_hash(Doc, Hash) :-
 %! ldoc_is_done(+Doc) is semidet.
 
 ldoc_is_done(Doc) :-
-  ldir_ldoc(Dir, Doc),
-  exists_directory(Dir).
+  ldoc_data_file(Doc, File),
+  exists_file(File).
 
 
 

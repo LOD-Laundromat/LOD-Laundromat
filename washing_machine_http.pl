@@ -77,9 +77,10 @@ ldocs_mediatype(get, text/html) :-
           tr([
             th("Document"),
             th("Last modified"),
+            th("End status"),
             th("Tuples"),
             th("Number of warnings"),
-            th("HTTP Status")
+            th("HTTP status")
           ])
         )
       ),
@@ -112,8 +113,9 @@ desc_ldocs(SortedPairs) :-
   desc_pairs(Pairs, SortedPairs).
 
 
-pair_row0(Mod0-Doc, [Doc,Mod,Tuples,Warnings,Status]) :-
+pair_row0(Mod0-Doc, [Doc,Mod,End,Tuples,Warnings,Status]) :-
   format_time(atom(Mod), "%FT%T%:z", Mod0),
   (rdf_has(Doc, llo:processed_tuples, Tuples^^xsd:nonNegativeInteger) -> true ; Tuples = 0),
   (rdf_has(Doc, llo:number_of_warnings, Warnings^^xsd:nonNegativeInteger) -> true ; Warnings = 0),
-  (rdf_has(Doc, llo:status_code, Status^^xsd:integer) -> true ; Status = "∅").
+  (rdf_has(Doc, llo:status_code, Status^^xsd:integer) -> true ; Status = "∅"),
+  (rdf_has(Doc, llo:end, End^^xsd:string) -> true ; End = '∅').
