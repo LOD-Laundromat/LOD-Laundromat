@@ -17,6 +17,7 @@
 @version 2016/02-2016/03
 */
 
+:- use_module(library(aggregate)).
 :- use_module(library(html/dataTables)).
 :- use_module(library(html/html_bs)).
 :- use_module(library(html/html_date_time)).
@@ -72,6 +73,7 @@ ldocs_mediatype(get, text/html) :-
     [title(Title),\html_requires(dataTables)],
     [
       h1(Title),
+      \tuple_counter,
       table([class=display,id=table_id],
         thead(
           tr([
@@ -119,3 +121,8 @@ pair_row0(Mod0-Doc, [Doc,Mod,End,Tuples,Warnings,Status]) :-
   (rdf_has(Doc, llo:number_of_warnings, Warnings^^xsd:nonNegativeInteger) -> true ; Warnings = 0),
   (rdf_has(Doc, llo:status_code, Status^^xsd:integer) -> true ; Status = "∅"),
   (rdf_has(Doc, llo:end, End^^xsd:string) -> true ; End = '∅').
+
+
+tuple_counter -->
+  {aggregate_all(sum(N), rdf_has(_, llo:unique_tuples, N^^xsd:nonNegativeInteger), N)},
+  html(["Processed ",\thousands(N)," tuples."]).
