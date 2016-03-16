@@ -87,13 +87,20 @@ clean0(Hash, Iri) :-
   make_directory_path(Dir),
   maplist(ldoc_file(Doc), [data,meta,msg], [DataFile,MetaFile,MsgFile]),
   CleanOpts = [compress(gzip),metadata(M),relative_to(Dir),sort_dir(Dir)],
+  FileOpts = [compress(gzip)],
   setup_call_cleanup(
-    (gzopen(MetaFile, write, MetaSink, [alias(meta)]),gzopen(MsgFile, write, MsgSink, [alias(msg)])),
+    (
+      open_any2(MetaFile, append, _, MetaClose_0, [alias(meta)|FileOpts]),
+      open_any2(MsgFile, append, _, MsgClose_0, [alias(msg)|FileOpts])
+    ),
     rdf_store_messages(Doc, (
       rdf_clean(Iri, DataFile, CleanOpts),
       rdf_store_metadata(Doc, M)
     )),
-    (close(MsgSink),close(MetaSink))
+    (
+      close_any2(MsgClose_0),
+      close_any2(MetaClose_0)
+    )
   ),
   ldoc_load(Doc, meta).
   %absolute_file_name('dirty.gz', DirtyTo, Opts),
