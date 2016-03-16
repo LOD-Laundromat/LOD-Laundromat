@@ -30,6 +30,7 @@
 :- use_module(library(semweb/rdf11)). % Operators.
 :- use_module(library(string_ext)).
 :- use_module(library(uri/uri_ext)).
+:- use_module(library(zlib)).
 
 :- use_module(cpack('LOD-Laundromat'/laundromat_fs)).
 :- use_module(cpack('LOD-Laundromat'/seedlist)).
@@ -87,9 +88,9 @@ clean0(Hash, Iri) :-
   maplist(ldoc_file(Doc), [data,meta,msg], [DataFile,MetaFile,MsgFile]),
   CleanOpts = [compress(gzip),metadata(M),relative_to(Dir),sort_dir(Dir)],
   setup_call_cleanup(
-    open(MetaFile, write, MetaSink, [alias(meta),compress(gzip)]),
+    gzopen(MetaFile, write, MetaSink, [alias(meta)]),
     setup_call_cleanup(
-      open(MsgFile, write, MsgSink, [alias(msg),compress(gzip)]),
+      gzopen(MsgFile, write, MsgSink, [alias(msg)]),
       rdf_store_messages(Doc, (
         rdf_clean(Iri, DataFile, CleanOpts),
         rdf_store_metadata(Doc, M)
