@@ -1,17 +1,14 @@
 :- module(
   laundromat_fs,
   [
-    ldir/1,           % ?Dir
-    ldir_hash/2,      % ?Dir, ?Hash
-    ldir_ldoc/2,      % ?Dir, ?Doc
-    ldoc/1,           % ?Doc
-    ldoc_data_file/2, % +Doc, -File
-    ldoc_data_load/1, % +Doc
-    ldoc_hash/2,      % ?Doc, ?Hash
-    ldoc_hdt_file/2,  % +Doc, -File
-    ldoc_lmod/2,      % +Doc, -LastModified
-    ldoc_meta_file/2, % +Doc, -File
-    ldoc_meta_load/1  % +Doc
+    ldir/1,      % ?Dir
+    ldir_hash/2, % ?Dir, ?Hash
+    ldir_ldoc/2, % ?Dir, ?Doc
+    ldoc/1,      % ?Doc
+    ldoc_file/3, % +Doc, +Kind, -File
+    ldoc_hash/2, % ?Doc, ?Hash
+    ldoc_lmod/2, % +Doc, -LastModified
+    ldoc_load/2  % +Doc, +Kind
   ]
 ).
 
@@ -34,13 +31,10 @@ ldir -- ldoc
 :- rdf_meta
    ldir_ldoc(?, r),
    ldoc(r),
-   ldoc_data_file(r, -),
-   ldoc_data_load(r),
+   ldoc_file(r, +, -),
    ldoc_hash(r, ?),
-   ldoc_hdt_file(r, -),
    ldoc_lmod(r, -),
-   ldoc_meta_file(r, -),
-   ldoc_meta_load(r).
+   ldoc_load(r, +).
 
 :- setting(data_dir, atom, '/scratch/lodlab/crawls/13/',
      'Directory where LOD Laundromat stores the cleaned data.'
@@ -109,21 +103,15 @@ ldoc(Doc) :-
 
 
 
-%! ldoc_data_file(+Doc, -File) is det.
+%! ldoc_file(+Doc, +Kind, -File) is det.
+% Kind is either `data', `hdt', `meta' or `msg'.
 
-ldoc_data_file(Doc, File) :-
+ldoc_file(Doc, Kind, File) :-
   ldir_ldoc(Dir, Doc),
-  directory_file_path(Dir, 'data.nq.gz', File),
+  (Kind == hdt -> Exts = [hdt] ; Exts = [nq,gz]),
+  atomic_list_concat([Kind|Exts], ., Local),
+  directory_file_path(Dir, Local, File),
   exists_file(File).
-
-
-
-%! ldoc_data_load(+Doc) is det.
-
-ldoc_data_load(Doc) :-
-  ldoc_data_file(Doc, File),
-  access_file(read, File),
-  rdf_load_file(File, [graph(Doc)]).
 
 
 
@@ -135,15 +123,6 @@ ldoc_hash(Doc, Hash) :-
 
 
 
-%! ldoc_hdt_file(+Doc, -File) is det.
-
-ldoc_hdt_file(Doc, File) :-
-  ldir_ldoc(Dir, Doc),
-  directory_file_path(Dir, 'data.hdt', File),
-  exists_file(File).
-
-
-
 %! ldoc_lmod(+Doc, -Modified) is det.
 
 ldoc_lmod(Doc, Mod) :-
@@ -152,20 +131,12 @@ ldoc_lmod(Doc, Mod) :-
 
 
 
-%! loc_meta_file(+Doc, -File) is det.
+%! ldoc_load(+Doc, +Kind) is det.
+% @tbd Graph name for `data' and `msg' file.
 
-ldoc_meta_file(Doc, File) :-
-  ldir_ldoc(Dir, Doc),
-  directory_file_path(Dir, 'meta.nq.gz', File).
-
-
-
-%! ldoc_meta_load(+Doc) is det.
-
-ldoc_meta_load(Doc) :-
-  rdf_graph(Doc), !.
-ldoc_meta_load(Doc) :-
-  ldoc_meta_file(Doc, File),
+ldoc_load(Doc, Kind) :-
+  ldoc_file(Doc, Kind, File),
+  access_file(read, File),
   rdf_load_file(File, [graph(Doc)]).
 
 
