@@ -52,10 +52,10 @@ ldoc_mediatype(delete, application/json, Doc) :- !,
   reset_ldoc(Doc),
   reply_json_dict(_{}, [status(200)]).
 ldoc_mediatype(get, application/nquads, Doc) :- !,
-  ldoc_data_file(Doc, File),
+  ldoc_file(Doc, data, File),
   http_reply_file(File).
 ldoc_mediatype(get, text/html, Doc) :-
-  ldoc_meta_load(Doc),
+  ldoc_load(Doc, meta),
   ldoc_hash(Doc, Hash),
   string_list_concat(["Washing Machine",Hash], " - ", Title),
   reply_html_page(cliopatria(default), title(Title), [

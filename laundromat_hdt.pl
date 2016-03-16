@@ -36,10 +36,10 @@ hdt_build(Doc) :-
   var(Doc), !,
   instantiation_error(Doc).
 hdt_build(Doc) :-
-  ldoc_hdt_file(Doc, _), !,
+  ldoc_file(Doc, hdt, _), !,
   msg_notification("HDT file for ~a already exists.", [Doc]).
 hdt_build(Doc) :-
-  ldoc_data_file(Doc, NQuadsFile), !,
+  ldoc_file(Doc, data, NQuadsFile), !,
   access_file(NQuadsFile, read),
   ldir_ldoc(Dir, Doc),
   rdf_has(Doc, llo:base_iri, BaseIri^^xsd:anyURI),
@@ -57,7 +57,7 @@ hdt_build(Doc) :-
 %! hdt_read(?S, ?P, ?O, +Doc) is nondet.
 
 hdt_read(S, P, O, Doc) :-
-  ldoc_hdt_file(Doc, File),
+  ldoc_file(Doc, hdt, File),
   access_file(File, read),
   setup_call_cleanup(
     hdt_open(Hdt, File),

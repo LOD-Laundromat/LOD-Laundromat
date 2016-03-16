@@ -64,7 +64,7 @@ add_washing_machine(N1) :-
 
 clean(Hash) :-
   ldoc_hash(Doc, Hash),
-  ldoc_data_file(Doc, _), !,
+  ldoc_file(Doc, data, _), !,
   msg_notification("Already cleaned document ~a", [Doc]).
 clean(Hash) :-
   clean(Hash, _).
@@ -81,12 +81,9 @@ clean(Hash, Iri) :-
 clean0(Hash, Iri) :-
   currently_debugging(Hash),
   ldir_hash(Dir, Hash),
-  make_directory_path(Dir),
-  Opts = [access(write),relative_to(Dir)],
-  absolute_file_name('data.nq.gz', DataFile, Opts),
-  absolute_file_name('meta.nt.gz', MetaFile, Opts),
-  absolute_file_name('msg.nt.gz', MsgFile, Opts),
   ldoc_hash(Doc, Hash),
+  make_directory_path(Dir),
+  maplist(ldoc_file(Doc), [data,meta,msg], [DataFile,MetaFile,MsgFile]),
   CleanOpts = [compress(gzip),metadata(M),relative_to(Dir),sort_dir(Dir)],
   setup_call_cleanup(
     open(MetaFile, write, MetaSink, [alias(meta),compress(gzip)]),
@@ -100,7 +97,7 @@ clean0(Hash, Iri) :-
     ),
     close(MetaSink)
   ),
-  ldoc_meta_load(Doc).
+  ldoc_load(Doc, meta).
   %absolute_file_name('dirty.gz', DirtyTo, Opts),
   %call_collect_messages(rdf_download_to_file(Iri, DirtyTo, [compress(gzip)])).
 
@@ -131,7 +128,7 @@ clean_iri(I1) :-
 % Loads the metadata of all cleaned documents into ClioPatria.
 
 load_all_metadata :-
-  forall(ldoc(Doc), ldoc_meta_load(Doc)).
+  forall(ldoc(Doc), ldoc_load(Doc, meta)).
 
 
 
