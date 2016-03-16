@@ -64,7 +64,7 @@ ldoc_mediatype(get, text/html, Doc) :-
 
 ldocs_mediatype(get, application/json) :-
   desc_ldocs(Pairs),
-  maplist(pair_row0, Pairs, Rows),
+  findall(Row, (member(Pair, Pairs), pair_row0(Pair, Row)), Rows),
   reply_json_dict(Rows, [status(200)]).
 ldocs_mediatype(get, text/html) :-
   string_list_concat(["LOD Laundromat","Documents"], " - ", Title),
@@ -116,4 +116,4 @@ pair_row0(Mod0-Doc, [Doc,Mod,Tuples,Warnings,Status]) :-
   format_time(atom(Mod), "%FT%T%:z", Mod0),
   (rdf_has(Doc, llo:processed_tuples, Tuples^^xsd:nonNegativeInteger) -> true ; Tuples = 0),
   (rdf_has(Doc, llo:number_of_warnings, Warnings^^xsd:nonNegativeInteger) -> true ; Warnings = 0),
-  (rdf_has(Doc, llo:status_code, Status^^xsd:integer) -> true ; Tuples = 0).
+  (rdf_has(Doc, llo:status_code, Status^^xsd:integer) -> true ; Status = "∅").
