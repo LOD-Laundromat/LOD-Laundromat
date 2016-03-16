@@ -106,10 +106,13 @@ clean0(Hash, Iri) :-
 
 currently_debugging(Hash) :-
   currently_debugging0(Hash), !,
-  gtrace.
+  gtrace. %DEB
 currently_debugging(_).
 
-currently_debugging0('00385477bf97bd4ebe1d0719a65100e1').
+:- dynamic
+    currently_debugging0/1.
+
+%currently_debugging0('00385477bf97bd4ebe1d0719a65100e1').
 
 
 
