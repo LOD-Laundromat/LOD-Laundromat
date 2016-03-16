@@ -44,7 +44,7 @@
 % Add a LOD Laundromat thread.
 
 add_washing_machine :-
-  detached_thread(washing_machine).
+  detached_thread(start_washing_machine0).
 
 
 
@@ -128,15 +128,19 @@ reset_ldoc(Doc) :-
 
 
 
-washing_machine :-
+start_washing_machine0 :-
+  create_thread_counter(washing_machine(idle)),
+  washing_machine0.
+
+washing_machine0 :-
   clean(Hash, Iri),
   debug(washing_machine(thread), "Cleaned ~a (~a)", [Hash,Iri]),
-  washing_machine.
-washing_machine :-
+  washing_machine0.
+washing_machine0 :-
   M = 100,
   sleep(M),
   thread_name(Name),
   increment_thread_counter(washing_machine(idle), N),
   S is M * N,
   debug(washing_machine(idle), "Washing machine ~w is ~D sec. idle", [Name,S]),
-  washing_machine.
+  washing_machine0.
