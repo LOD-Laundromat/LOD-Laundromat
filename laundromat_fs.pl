@@ -110,8 +110,7 @@ ldoc_file(Doc, Kind, File) :-
   ldir_ldoc(Dir, Doc),
   (Kind == hdt -> Exts = [hdt] ; Exts = [nq,gz]),
   atomic_list_concat([Kind|Exts], ., Local),
-  directory_file_path(Dir, Local, File),
-  exists_file(File).
+  directory_file_path(Dir, Local, File).
 
 
 
@@ -136,7 +135,7 @@ ldoc_lmod(Doc, Mod) :-
 
 ldoc_load(Doc, Kind) :-
   ldoc_file(Doc, Kind, File),
-  access_file(read, File),
+  access_file(File, read),
   rdf_load_file(File, [graph(Doc)]).
 
 

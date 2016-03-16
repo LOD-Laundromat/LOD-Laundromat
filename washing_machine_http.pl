@@ -53,6 +53,7 @@ ldoc_mediatype(delete, application/json, Doc) :- !,
   reply_json_dict(_{}, [status(200)]).
 ldoc_mediatype(get, application/nquads, Doc) :- !,
   ldoc_file(Doc, data, File),
+  access_file(File, read),
   http_reply_file(File).
 ldoc_mediatype(get, text/html, Doc) :-
   ldoc_load(Doc, meta),

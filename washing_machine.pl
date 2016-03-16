@@ -64,7 +64,8 @@ add_washing_machine(N1) :-
 
 clean(Hash) :-
   ldoc_hash(Doc, Hash),
-  ldoc_file(Doc, data, _), !,
+  ldoc_file(Doc, data, File),
+  exists_file(File), !,
   msg_notification("Already cleaned document ~a", [Doc]).
 clean(Hash) :-
   clean(Hash, _).
@@ -83,6 +84,7 @@ clean0(Hash, Iri) :-
   ldir_hash(Dir, Hash),
   ldoc_hash(Doc, Hash),
   make_directory_path(Dir),
+  gtrace,
   maplist(ldoc_file(Doc), [data,meta,msg], [DataFile,MetaFile,MsgFile]),
   CleanOpts = [compress(gzip),metadata(M),relative_to(Dir),sort_dir(Dir)],
   setup_call_cleanup(

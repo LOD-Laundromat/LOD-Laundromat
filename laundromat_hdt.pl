@@ -36,7 +36,8 @@ hdt_build(Doc) :-
   var(Doc), !,
   instantiation_error(Doc).
 hdt_build(Doc) :-
-  ldoc_file(Doc, hdt, _), !,
+  ldoc_file(Doc, hdt, File),
+  exists_file(File), !,
   msg_notification("HDT file for ~a already exists.", [Doc]).
 hdt_build(Doc) :-
   ldoc_file(Doc, data, NQuadsFile), !,
