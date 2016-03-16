@@ -9,7 +9,7 @@
   ]
 ).
 
-/* <module> LOD Laundromat
+/* <module> LOD Laundromat washing machine
 
 @author Wouter Beek
 @version 2016/01-2016/03
@@ -32,6 +32,9 @@
 
 :- use_module(cpack('LOD-Laundromat'/laundromat_fs)).
 :- use_module(cpack('LOD-Laundromat'/seedlist)).
+
+:- rdf_meta
+   reset_ldoc(r).
 
 
 

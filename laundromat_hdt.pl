@@ -1,5 +1,5 @@
 :- module(
-  hdt_build,
+  laundromat_hdt,
   [
     hdt_build/1, % +Doc
     hdt_read/4   % ?S, ?P, ?O, +Doc
@@ -22,6 +22,10 @@
 
 :- use_module(cpack('LOD-Laundromat'/laundromat_fs)).
 
+:- rdf_meta
+   hdt_build(r),
+   hdt_read(r, r, o, r).
+
 
 
 
@@ -35,16 +39,18 @@ hdt_build(Doc) :-
   ldoc_hdt_file(Doc, _), !,
   msg_notification("HDT file for ~a already exists.", [Doc]).
 hdt_build(Doc) :-
-  ldoc_data_file(Doc, RdfFile1),
-  access_file(read, RdfFile1),
+  ldoc_data_file(Doc, NQuadsFile), !,
+  access_file(NQuadsFile, read),
   ldir_ldoc(Dir, Doc),
-  directory_file_path(Dir, 'data.nt', RdfFile2),
-  gzipped_nquads_to_ntriples(RdfFile1, RdfFile2),
   rdf_has(Doc, llo:base_iri, BaseIri^^xsd:anyURI),
   directory_file_path(Dir, 'data.hdt', HdtFile),
-  hdt_create_from_file(HdtFile, RdfFile2, [base_uri(BaseIri)]).
+  setup_call_cleanup(
+    ensure_ntriples(Dir, NQuadsFile, NTriplesFile),
+    hdt_create_from_file(HdtFile, NTriplesFile, [base_uri(BaseIri)]),
+    delete_file(NTriplesFile)
+  ).
 hdt_build(Doc) :-
-  msg_warning("N-Triples file for ~a is missing.", [Doc]).
+  msg_warning("Data file for ~a is missing.", [Doc]).
 
 
 
@@ -52,7 +58,7 @@ hdt_build(Doc) :-
 
 hdt_read(S, P, O, Doc) :-
   ldoc_hdt_file(Doc, File),
-  access_file(read, File),
+  access_file(File, read),
   setup_call_cleanup(
     hdt_open(Hdt, File),
     hdt_search(Hdt, S, P, O),
@@ -61,13 +67,20 @@ hdt_read(S, P, O, Doc) :-
 
 
 
-%! gzipped_nquads_to_ntriples(+From, +To) is det.
+%! ensure_ntriples(+Dir, +From, -To) is det.
 
-gzipped_nquads_to_ntriples(From, To) :-
-  rdf_call_on_tuples(From, write_ntriples0(To)).
+ensure_ntriples(Dir, From, To) :-
+  directory_file_path(Dir, 'data.nt', To),
+  setup_call_cleanup(
+    open(To, write, Sink),
+    rdf_call_on_tuples(From, write_ntriples0(Sink)),
+    close(Sink)
+  ).
 
-write_ntriples0(To, Tuples, _) :-
-  maplist(write_ntriple0(To), Tuples).
+write_ntriples0(Sink, Tuples, _) :-
+  maplist(write_ntriple0(Sink), Tuples).
 
-write_ntriple0(To, rdf(S,P,O)) :-
-  with_output_to(To, write_simple_triple(S, P, O)).
+write_ntriple0(Sink, rdf(S,P,O)) :- !,
+  with_output_to(Sink, write_simple_triple(S, P, O)).
+write_ntriple0(Sink, rdf(S,P,O,_)) :-
+  with_output_to(Sink, write_simple_triple(S, P, O)).

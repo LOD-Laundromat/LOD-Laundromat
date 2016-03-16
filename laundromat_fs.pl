@@ -28,7 +28,19 @@ ldir -- ldoc
 :- use_module(library(error)).
 :- use_module(library(lists)).
 :- use_module(library(rdf/rdf_load)).
+:- use_module(library(semweb/rdf11)).
 :- use_module(library(settings)).
+
+:- rdf_meta
+   ldir_ldoc(?, r),
+   ldoc(r),
+   ldoc_data_file(r, -),
+   ldoc_data_load(r),
+   ldoc_hash(r, ?),
+   ldoc_hdt_file(r, -),
+   ldoc_lmod(r, -),
+   ldoc_meta_file(r, -),
+   ldoc_meta_load(r).
 
 :- setting(data_dir, atom, '/scratch/lodlab/crawls/13/',
      'Directory where LOD Laundromat stores the cleaned data.'
