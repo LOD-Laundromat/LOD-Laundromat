@@ -97,9 +97,9 @@ $(document).ready( function () {
   ).
 ldocs_mediatype(post, application/json) :- !,
   http_read_json_dict(Data),
-  atom_string(H, Data.seed),
-  (   seed(H)
-  ->  detached_thread(clean_seed(H)),
+  atom_string(Hash, Data.seed),
+  (   seed(Hash)
+  ->  detached_thread(clean(Hash)),
       reply_json_dict(_{}, [status(201)])
   ;   reply_json_dict(_{}, [status(404)])
   ).

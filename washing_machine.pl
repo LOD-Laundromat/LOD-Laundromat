@@ -2,9 +2,9 @@
   washing_machine,
   [
     add_washing_machine/0,
+    clean/1,               % +Hash
     clean_iri/1,           % +Iri
-    clean_seed/1,          % +Hash
-    load_metadata/0,
+    load_all_metadata/0,
     reset_ldoc/1           % +Doc
   ]
 ).
@@ -15,11 +15,11 @@
 @version 2016/01-2016/03
 */
 
-:- use_module(library(ansi_ext)).
 :- use_module(library(apply)).
 :- use_module(library(debug_ext)).
 :- use_module(library(filesex)).
 :- use_module(library(hash_ext)).
+:- use_module(library(msg_ext)).
 :- use_module(library(os/open_any2)).
 :- use_module(library(os/thread_counter)).
 :- use_module(library(os/thread_ext)).
@@ -45,34 +45,23 @@ add_washing_machine :-
 
 
 
-%! clean_iri(+Iri) is det.
-% Clean a specific IRI, achieved by circumvents the seedlist.
-% For debugging purposes only.
-
-clean_iri(I1) :-
-  iri_normalized(I1, I2),
-  md5(I2, H),
-  clean0(H, I2).
-
-
-
-%! clean_seed(+Hash) is det.
+%! clean(+Hash) is det.
 % Does not re-clean documents.
 %
 % @throws existence_error If the seed is not in the seedlist.
 
-clean_seed(Hash) :-
+clean(Hash) :-
   ldoc_hash(Doc, Hash),
-  ldoc_is_done(Doc), !,
-  ansi_formatln([fg(red)], "Already cleaned ~a", [Doc]).
-clean_seed(Hash) :-
-  clean_seed(Hash, _).
+  ldoc_data_file(Doc, _), !,
+  msg_notification("Already cleaned document ~a", [Doc]).
+clean(Hash) :-
+  clean(Hash, _).
 
 
-%! clean_seed(-Hash, -Iri) is det.
+%! clean(-Hash, -Iri) is det.
 % Cleans a dirty seed from the seedlist.
 
-clean_seed(Hash, Iri) :-
+clean(Hash, Iri) :-
   begin_seed(Hash, Iri),
   clean0(Hash, Iri),
   end_seed(Hash).
@@ -101,15 +90,22 @@ clean0(Hash, Iri) :-
 
 
 
-%! load_metadata is det.
+%! clean_iri(+Iri) is det.
+% Clean a specific IRI, achieved by circumvents the seedlist.
+% For debugging purposes only.
+
+clean_iri(I1) :-
+  iri_normalized(I1, I2),
+  md5(I2, H),
+  clean0(H, I2).
+
+
+
+%! load_all_metadata is det.
 % Loads the metadata of all cleaned documents into ClioPatria.
 
-load_metadata :-
-  forall(ldir(Dir), (
-    absolute_file_name('meta.nq.gz', Meta, [access(read),relative_to(Dir)]),
-    ldir_ldoc(Dir, Doc),
-    rdf_load_file(Meta, [graph(Doc)])
-  )).
+load_all_metadata :-
+  forall(ldoc(Doc), ldoc_meta_load(Doc)).
 
 
 
@@ -130,7 +126,7 @@ reset_ldoc(Doc) :-
 
 
 washing_machine :-
-  clean_seed(Hash, Iri),
+  clean(Hash, Iri),
   debug(washing_machine(thread), "Cleaned ~a (~a)", [Hash,Iri]),
   washing_machine.
 washing_machine :-

@@ -7,8 +7,8 @@
     ldoc/1,           % ?Doc
     ldoc_data_file/2, % +Doc, -File
     ldoc_data_load/1, % +Doc
-    ldoc_is_done/1,   % +Doc
     ldoc_hash/2,      % ?Doc, ?Hash
+    ldoc_hdt_file/2,  % +Doc, -File
     ldoc_lmod/2,      % +Doc, -LastModified
     ldoc_meta_file/2, % +Doc, -File
     ldoc_meta_load/1  % +Doc
@@ -101,7 +101,8 @@ ldoc(Doc) :-
 
 ldoc_data_file(Doc, File) :-
   ldir_ldoc(Dir, Doc),
-  directory_file_path(Dir, 'data.nq.gz', File).
+  directory_file_path(Dir, 'data.nq.gz', File),
+  exists_file(File).
 
 
 
@@ -109,6 +110,7 @@ ldoc_data_file(Doc, File) :-
 
 ldoc_data_load(Doc) :-
   ldoc_data_file(Doc, File),
+  access_file(read, File),
   rdf_load_file(File, [graph(Doc)]).
 
 
@@ -121,10 +123,11 @@ ldoc_hash(Doc, Hash) :-
 
 
 
-%! ldoc_is_done(+Doc) is semidet.
+%! ldoc_hdt_file(+Doc, -File) is det.
 
-ldoc_is_done(Doc) :-
-  ldoc_data_file(Doc, File),
+ldoc_hdt_file(Doc, File) :-
+  ldir_ldoc(Dir, Doc),
+  directory_file_path(Dir, 'data.hdt', File),
   exists_file(File).
 
 
