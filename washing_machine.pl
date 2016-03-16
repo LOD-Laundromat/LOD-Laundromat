@@ -89,16 +89,16 @@ clean0(Hash, Iri) :-
   ldoc_hash(Doc, Hash),
   CleanOpts = [compress(gzip),metadata(M),relative_to(Dir),sort_dir(Dir)],
   setup_call_cleanup(
-    open_any2(MetaFile, append, _, MetaClose_0, [alias(meta),compress(gzip)]),
+    open(MetaFile, write, MetaSink, [alias(meta),compress(gzip)]),
     setup_call_cleanup(
-      open_any2(MsgFile, append, _, MsgClose_0, [alias(msg),compress(gzip)]),
+      open(MsgFile, write, MsgSink, [alias(msg),compress(gzip)]),
       rdf_store_messages(Doc, (
         rdf_clean(Iri, DataFile, CleanOpts),
         rdf_store_metadata(Doc, M)
       )),
-      close_any2(MsgClose_0)
+      close(MsgSink)
     ),
-    close_any2(MetaClose_0)
+    close(MetaSink)
   ),
   ldoc_meta_load(Doc).
   %absolute_file_name('dirty.gz', DirtyTo, Opts),
