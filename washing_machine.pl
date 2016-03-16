@@ -84,11 +84,12 @@ clean0(Hash, Iri) :-
   absolute_file_name('data.nq.gz', DataTo, Opts),
   absolute_file_name('meta.nq.gz', MetaTo, Opts),
   ldoc_hash(Doc, Hash),
+  CleanOpts = [compress(gzip),metadata(M),relative_to(Dir),sort_dir(Dir)],
   setup_call_cleanup(
     open_any2(MetaTo, append, Write, Close_0, [compress(gzip)]),
     with_output_to(Write,
       rdf_store_messages(Doc, (
-        rdf_clean(Iri, DataTo, [compress(gzip),metadata(M)]),
+        rdf_clean(Iri, DataTo, CleanOpts),
         rdf_store_metadata(Doc, M)
       ))
     ),
