@@ -70,6 +70,7 @@ clean(Hash, Iri) :-
   end_seed(Hash).
 
 clean0(Hash, Iri) :-
+  currently_debugging(Hash),
   ldir_hash(Dir, Hash),
   make_directory_path(Dir),
   Opts = [access(write),relative_to(Dir)],
@@ -90,6 +91,13 @@ clean0(Hash, Iri) :-
   ldoc_meta_load(Doc).
   %absolute_file_name('dirty.gz', DirtyTo, Opts),
   %call_collect_messages(rdf_download_to_file(Iri, DirtyTo, [compress(gzip)])).
+
+currently_debugging(Hash) :-
+  currently_debugging0(Hash), !,
+  gtrace.
+currently_debugging(_).
+
+currently_debugging0('00385477bf97bd4ebe1d0719a65100e1').
 
 
 
