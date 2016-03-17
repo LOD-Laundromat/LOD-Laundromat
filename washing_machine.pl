@@ -35,6 +35,11 @@
 :- use_module(cpack('LOD-Laundromat'/laundromat_fs)).
 :- use_module(cpack('LOD-Laundromat'/seedlist)).
 
+:- dynamic
+    currently_debugging0/1.
+
+%currently_debugging0('00385477bf97bd4ebe1d0719a65100e1').
+
 :- rdf_meta
    reset_ldoc(r).
 
@@ -85,20 +90,21 @@ clean0(Hash, Iri) :-
   ldir_hash(Dir, Hash),
   ldoc_hash(Doc, Hash),
   make_directory_path(Dir),
-  maplist(ldoc_file(Doc), [data,meta,msg], [DataFile,MetaFile,MsgFile]),
+  maplist(ldoc_file(Doc), [data,meta,warn], [DataFile,MetaFile,WarnFile]),
+  maplist(threadsafe_name, [meta,warn], [MetaAlias,WarnAlias]),
   CleanOpts = [compress(gzip),metadata(M),relative_to(Dir),sort_dir(Dir)],
   FileOpts = [compress(gzip)],
   setup_call_cleanup(
     (
-      open_any2(MetaFile, append, _, MetaClose_0, [alias(meta)|FileOpts]),
-      open_any2(MsgFile, append, _, MsgClose_0, [alias(msg)|FileOpts])
+      open_any2(MetaFile, append, _, MetaClose_0, [alias(MetaAlias)|FileOpts]),
+      open_any2(WarnFile, append, _, WarnClose_0, [alias(WarnAlias)|FileOpts])
     ),
     rdf_store_messages(Doc, (
       rdf_clean(Iri, DataFile, CleanOpts),
       rdf_store_metadata(Doc, M)
     )),
     (
-      close_any2(MsgClose_0),
+      close_any2(WarnClose_0),
       close_any2(MetaClose_0)
     )
   ),
@@ -110,11 +116,6 @@ currently_debugging(Hash) :-
   currently_debugging0(Hash), !,
   gtrace. %DEB
 currently_debugging(_).
-
-:- dynamic
-    currently_debugging0/1.
-
-%currently_debugging0('00385477bf97bd4ebe1d0719a65100e1').
 
 
 
