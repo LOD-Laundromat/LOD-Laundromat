@@ -212,8 +212,8 @@ rdf_store_messages(Output, S, Goal_0) :-
           ;   Result = exception(E),
               End0 = E
           ),
-          debug(rdf(debug), "[RESULT] ~w ~w", [Result,Goal_0])
-      ;   msg_warning("[FAILED] ~w", [Goal_0]),
+          debug(rdf(debug), "[RESULT] ~w", [Result])
+      ;   msg_warning("[FAILED]", []),
           End0 = fail
       ),
       with_output_to(string(End), write_term(End0)),
