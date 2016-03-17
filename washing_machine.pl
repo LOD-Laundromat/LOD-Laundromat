@@ -30,7 +30,6 @@
 :- use_module(library(os/thread_ext)).
 :- use_module(library(pl/pl_term)).
 :- use_module(library(rdf/rdf_clean)).
-:- use_module(library(rdf/rdf_debug)).
 :- use_module(library(rdf/rdf_ext)).
 :- use_module(library(rdf/rdf_load)).
 :- use_module(library(semweb/rdf11)). % Operators.
