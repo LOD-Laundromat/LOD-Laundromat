@@ -14,11 +14,11 @@
 
 :- use_module(library(apply)).
 :- use_module(library(error)).
+:- use_module(library(gen/gen_ntuples)).
 :- use_module(library(hdt)).
 :- use_module(library(msg_ext)).
 :- use_module(library(rdf/rdf_load)).
 :- use_module(library(semweb/rdf11)).
-:- use_module(library(simple/write_SimpleRDF)).
 
 :- use_module(cpack('LOD-Laundromat'/laundromat_fs)).
 
@@ -74,14 +74,6 @@ ensure_ntriples(Dir, From, To) :-
   directory_file_path(Dir, 'data.nt', To),
   setup_call_cleanup(
     open(To, write, Sink),
-    rdf_call_on_tuples(From, write_ntriples0(Sink)),
+    rdf_call_on_tuples(From, gen_nquad),
     close(Sink)
   ).
-
-write_ntriples0(Sink, Tuples, _) :-
-  maplist(write_ntriple0(Sink), Tuples).
-
-write_ntriple0(Sink, rdf(S,P,O)) :- !,
-  with_output_to(Sink, write_simple_triple(S, P, O)).
-write_ntriple0(Sink, rdf(S,P,O,_)) :-
-  with_output_to(Sink, write_simple_triple(S, P, O)).
