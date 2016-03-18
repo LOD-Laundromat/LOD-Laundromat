@@ -119,6 +119,7 @@ clean0(Hash, Iri) :-
       close(MetaSink)
     )
   ),
+  gtrace,
   ldoc_load(Doc, meta).
   %absolute_file_name('dirty.gz', DirtyTo, Opts),
   %call_collect_messages(rdf_download_to_file(Iri, DirtyTo, [compress(gzip)])).
@@ -212,9 +213,9 @@ rdf_store_messages(State, S, Goal_0, M) :-
           End0 = fail
       ),
       with_output_to(string(End), write_term(End0)),
-      with_output_to(State.meta, gen_ntriple(S, llo:end, End^^xsd:string))),
-    (
-      with_output_to(State.meta, gen_ntriple(S, llo:number_of_warnings, State.warns^^xsd:nonNegativeInteger)))
+      with_output_to(State.meta, gen_ntriple(S, llo:end, End^^xsd:string))
+    ),
+    with_output_to(State.meta, gen_ntriple(S, llo:number_of_warnings, State.warns^^xsd:nonNegativeInteger))
   ).
 
 error_kind(warning).
