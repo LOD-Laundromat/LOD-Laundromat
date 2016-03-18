@@ -18,6 +18,7 @@
 
 :- use_module(library(apply)).
 :- use_module(library(debug_ext)).
+:- use_module(library(dict_ext)).
 :- use_module(library(filesex)).
 :- use_module(library(gen/gen_ntuples)).
 :- use_module(library(hash_ext)).
@@ -26,7 +27,6 @@
 :- use_module(library(jsonld/jsonld_read)).
 :- use_module(library(msg_ext)).
 :- use_module(library(os/open_any2)).
-:- use_module(library(os/thread_counter)).
 :- use_module(library(os/thread_ext)).
 :- use_module(library(pl/pl_term)).
 :- use_module(library(rdf/rdf_clean)).
@@ -41,10 +41,10 @@
 :- use_module(cpack('LOD-Laundromat'/seedlist)).
 
 :- meta_predicate
-    rdf_store_messages(+, +, 0).
+    rdf_store_messages(+, +, 0, -).
 
 :- rdf_meta
-   rdf_store_messages(+, r, :).
+   rdf_store_messages(+, r, :, -).
 
 :- dynamic
     currently_debugging0/1.
@@ -102,23 +102,23 @@ clean0(Hash, Iri) :-
   ldoc_hash(Doc, Hash),
   make_directory_path(Dir),
   maplist(ldoc_file(Doc), [data,meta,warn], [DataFile,MetaFile,WarnFile]),
-  maplist(threadsafe_name, [meta,warn], [MetaAlias,WarnAlias]),
-  CleanOpts = [compress(gzip),metadata(M),relative_to(Dir),sort_dir(Dir)],
   setup_call_cleanup(
     (
-      gzopen(MetaFile, write, MetaSink, [alias(MetaAlias),format(gzip)]),
-      gzopen(WarnFile, write, WarnSink, [alias(WarnAlias),format(gzip)])
+      gzopen(MetaFile, write, MetaSink, [format(gzip)]),
+      gzopen(WarnFile, write, WarnSink, [format(gzip)])
     ),
-    rdf_store_messages(MetaAlias, Doc, (
-      rdf_clean(Iri, DataFile, CleanOpts),
-      rdf_store_metadata(MetaAlias, Doc, M)
-    )),
+    (
+      State = _{meta: MetaSink, warn: WarnSink, warns: 0},
+      CleanOpts = [compress(gzip),metadata(M1),relative_to(Dir),sort_dir(Dir),warn(WarnSink)],
+      rdf_store_messages(State, Doc, rdf_clean(Iri, DataFile, CleanOpts), M2),
+      (var(M2) -> M = M1 ; M = M2),
+      rdf_store_metadata(State, Doc, M)
+    ),
     (
       close(WarnSink),
       close(MetaSink)
     )
   ),
-  gtrace,
   ldoc_load(Doc, meta).
   %absolute_file_name('dirty.gz', DirtyTo, Opts),
   %call_collect_messages(rdf_download_to_file(Iri, DirtyTo, [compress(gzip)])).
@@ -166,38 +166,36 @@ reset_ldoc(Doc) :-
 
 
 start_washing_machine0 :-
-  create_thread_counter(washing_machine(idle)),
-  washing_machine0.
+  washing_machine0(_{idle: 0}).
 
-washing_machine0 :-
+washing_machine0(State) :-
   clean(Hash, Iri),
   debug(washing_machine(thread), "Cleaned ~a (~a)", [Hash,Iri]),
-  washing_machine0.
-washing_machine0 :-
+  washing_machine0(State).
+washing_machine0(State) :-
   M = 100,
   sleep(M),
   thread_name(Name),
-  increment_thread_counter(washing_machine(idle), N),
+  dict_inc(State, idle, N),
   S is M * N,
   debug(washing_machine(idle), "Washing machine ~w is ~D sec. idle", [Name,S]),
-  washing_machine0.
+  washing_machine0(State).
 
 
 
-%! rdf_store_messages(+MetaAlias, +S, :Goal_0) is det.
+%! rdf_store_messages(+State, +S, :Goal_0, -Metadata) is det.
 % Run Goal, unify Result with `true`, `false` or `exception(Error)`
 % and messages with a list of generated error and warning messages.
 % Each message is a term `message(Term,Kind,Lines)`.
 
-rdf_store_messages(MetaAlias, S, Goal_0) :-
+rdf_store_messages(State, S, Goal_0, M) :-
   setup_call_cleanup(
     (
-      create_thread_counter(rdf_warning),
       asserta((
         user:thread_message_hook(Term,Kind,_) :-
           error_kind(Kind),
-          threadsafe_format(warn, "~w~n", [Term]),
-          increment_thread_counter(rdf_warning)
+          format(State.warn, "~w~n", [Term]),
+          dict_inc(State, warns)
       ))
     ),
     (
@@ -205,7 +203,7 @@ rdf_store_messages(MetaAlias, S, Goal_0) :-
       ->  (   var(E)
           ->  End0 = true
           ;   E = error(existence_error(open_any2,M),_)
-          ->  rdf_store_metadata(MetaAlias, S, M),
+          ->  rdf_store_metadata(State, S, M),
               End0 = "No stream"
           ;   End0 = E
           ),
@@ -214,28 +212,23 @@ rdf_store_messages(MetaAlias, S, Goal_0) :-
           End0 = fail
       ),
       with_output_to(string(End), write_term(End0)),
-      with_output_to(MetaAlias,
-        gen_ntriple(S, llo:end, End^^xsd:string))
-    ),
+      with_output_to(State.meta, gen_ntriple(S, llo:end, End^^xsd:string))),
     (
-      delete_thread_counter(rdf_warning, N),
-      with_output_to(MetaAlias,
-        gen_ntriple(S, llo:number_of_warnings, N^^xsd:nonNegativeInteger))
-    )
+      with_output_to(State.meta, gen_ntriple(S, llo:number_of_warnings, State.warns^^xsd:nonNegativeInteger)))
   ).
 
 error_kind(warning).
 error_kind(error).
 
 
-%! rdf_store_metadata(+MetaAlias, +S, +M) is det.
+%! rdf_store_metadata(+State, +S, +M) is det.
 
-rdf_store_metadata(MetaAlias, S1, M) :-
+rdf_store_metadata(State, S1, M) :-
   jsonld_metadata(M, Jsonld1),
   atom_string(S1, S2),
   Jsonld2 = Jsonld1.put(_{'@id': S2}),
   (debugging(washing_machine(low)) -> json_write_dict(user_output, Jsonld2) ; true),
   forall(jsonld_tuple(Jsonld2, rdf(S,P,O)), (
     (debugging(washing_machine(low)) -> with_output_to(user_output, rdf_print(S, P, O, _)) ; true),
-    with_output_to(MetaAlias, gen_ntriple(S, P, O))
+    with_output_to(State.meta, gen_ntriple(S, P, O))
   )).
