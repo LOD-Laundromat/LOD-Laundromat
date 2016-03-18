@@ -177,7 +177,7 @@ washing_machine0(State) :-
   M = 100,
   sleep(M),
   thread_name(Name),
-  dict_inc(State, idle, N),
+  dict_inc(idle, State, N),
   S is M * N,
   debug(washing_machine(idle), "Washing machine ~w is ~D sec. idle", [Name,S]),
   washing_machine0(State).
@@ -196,7 +196,7 @@ rdf_store_messages(State, S, Goal_0, M) :-
         user:thread_message_hook(Term,Kind,_) :-
           error_kind(Kind),
           format(State.warn, "~w~n", [Term]),
-          dict_inc(State, warns)
+          dict_inc(warns, State)
       ))
     ),
     (
