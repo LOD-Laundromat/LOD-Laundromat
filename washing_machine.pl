@@ -208,7 +208,7 @@ rdf_store_messages(MetaAlias, S, Goal_0) :-
               End0 = "No stream"
           ;   End0 = E
           ),
-          debug(rdf(debug), "[RESULT] ~w", [End0])
+          debug(washing_machine(high), "[RESULT] ~w", [End0])
       ;   msg_warning("[FAILED]", []),
           End0 = fail
       ),
@@ -233,8 +233,8 @@ rdf_store_metadata(MetaAlias, S1, M) :-
   jsonld_metadata(M, Jsonld1),
   atom_string(S1, S2),
   Jsonld2 = Jsonld1.put(_{'@id': S2}),
-  (debugging(rdf(debug)) -> json_write_dict(user_output, Jsonld2) ; true),
+  (debugging(washing_machine(low)) -> json_write_dict(user_output, Jsonld2) ; true),
   forall(jsonld_tuple(Jsonld2, rdf(S,P,O)), (
-    (debugging(rdf(debug)) -> rdf_print(S, P, O, _) ; true),
+    (debugging(washing_machine(low)) -> with_output_to(user_output, rdf_print(S, P, O, _)) ; true),
     with_output_to(MetaAlias, gen_ntriple(S, P, O))
   )).
