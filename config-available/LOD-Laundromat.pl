@@ -27,9 +27,9 @@ cliopatria:menu_item(700=places/data, 'Data').
 :- use_module(library(debug)).
 
 :- debug(http(parse)).
-:- debug(http(raw)).
+%:- debug(http(raw)).
 :- debug(rdf(debug)).
-:- debug(rdf(grid)).
-:- debug(seedlist(_)).
-:- debug(sparql(_)).
+%:- debug(rdf(grid)).
+%:- debug(seedlist(_)).
+%:- debug(sparql(_)).
 :- debug(washing_machine(_)).

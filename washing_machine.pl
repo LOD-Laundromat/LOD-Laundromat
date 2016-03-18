@@ -104,19 +104,18 @@ clean0(Hash, Iri) :-
   maplist(ldoc_file(Doc), [data,meta,warn], [DataFile,MetaFile,WarnFile]),
   maplist(threadsafe_name, [meta,warn], [MetaAlias,WarnAlias]),
   CleanOpts = [compress(gzip),metadata(M),relative_to(Dir),sort_dir(Dir)],
-  FileOpts = [compress(gzip)],
   setup_call_cleanup(
     (
-      open_any2(MetaFile, append, _, MetaClose_0, [alias(MetaAlias)|FileOpts]),
-      open_any2(WarnFile, append, _, WarnClose_0, [alias(WarnAlias)|FileOpts])
+      gzopen(MetaFile, write, MetaSink, [alias(MetaAlias),format(gzip)]),
+      gzopen(WarnFile, write, WarnSink, [alias(WarnAlias),format(gzip)])
     ),
-    rdf_store_messages(WarnAlias, Doc, (
+    rdf_store_messages(MetaAlias, Doc, (
       rdf_clean(Iri, DataFile, CleanOpts),
       rdf_store_metadata(MetaAlias, Doc, M)
     )),
     (
-      close_any2(WarnClose_0),
-      close_any2(MetaClose_0)
+      close(WarnSink),
+      close(MetaSink)
     )
   ),
   ldoc_load(Doc, meta).
@@ -184,12 +183,12 @@ washing_machine0 :-
 
 
 
-%! rdf_store_messages(+Output, +S, :Goal_0) is det.
+%! rdf_store_messages(+MetaAlias, +S, :Goal_0) is det.
 % Run Goal, unify Result with `true`, `false` or `exception(Error)`
 % and messages with a list of generated error and warning messages.
 % Each message is a term `message(Term,Kind,Lines)`.
 
-rdf_store_messages(Output, S, Goal_0) :-
+rdf_store_messages(MetaAlias, S, Goal_0) :-
   setup_call_cleanup(
     (
       create_thread_counter(rdf_warning),
@@ -203,25 +202,23 @@ rdf_store_messages(Output, S, Goal_0) :-
     (
       (   catch(Goal_0, E, true)
       ->  (   var(E)
-          ->  Result = true,
-              End0 = true
+          ->  End0 = true
           ;   E = error(existence_error(open_any2,M),_)
-          ->  rdf_store_metadata(Output, S, M),
+          ->  rdf_store_metadata(MetaAlias, S, M),
               End0 = "No stream"
-          ;   Result = exception(E),
-              End0 = E
+          ;   End0 = E
           ),
-          debug(rdf(debug), "[RESULT] ~w", [Result])
+          debug(rdf(debug), "[RESULT] ~w", [End0])
       ;   msg_warning("[FAILED]", []),
           End0 = fail
       ),
       with_output_to(string(End), write_term(End0)),
-      with_output_to(Output,
+      with_output_to(MetaAlias,
         gen_ntriple(S, llo:end, End^^xsd:string))
     ),
     (
       delete_thread_counter(rdf_warning, N),
-      with_output_to(Output,
+      with_output_to(MetaAlias,
         gen_ntriple(S, llo:number_of_warnings, N^^xsd:nonNegativeInteger))
     )
   ).
@@ -230,14 +227,14 @@ error_kind(warning).
 error_kind(error).
 
 
-%! rdf_store_metadata(+Output, +S, +M) is det.
+%! rdf_store_metadata(+MetaAlias, +S, +M) is det.
 
-rdf_store_metadata(Output, S1, M) :-
+rdf_store_metadata(MetaAlias, S1, M) :-
   jsonld_metadata(M, Jsonld1),
   atom_string(S1, S2),
   Jsonld2 = Jsonld1.put(_{'@id': S2}),
   (debugging(rdf(debug)) -> json_write_dict(user_output, Jsonld2) ; true),
   forall(jsonld_tuple(Jsonld2, rdf(S,P,O)), (
     (debugging(rdf(debug)) -> rdf_print(S, P, O, _) ; true),
-    with_output_to(Output, gen_ntriple(S, P, O))
+    with_output_to(MetaAlias, gen_ntriple(S, P, O))
   )).
