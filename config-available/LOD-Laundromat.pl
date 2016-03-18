@@ -33,3 +33,4 @@ cliopatria:menu_item(700=places/data, 'Data').
 %:- debug(seedlist(_)).
 %:- debug(sparql(_)).
 :- debug(washing_machine(high)).
+:- debug(washing_machine(thread)).
