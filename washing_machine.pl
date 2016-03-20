@@ -212,7 +212,7 @@ rdf_store_messages(State, S, Goal_0, M) :-
       ->  rdf_store_metadata(State, S, M),
           End0 = "No stream"
       ;   End0 = E,
-          msg_warning("[FAILED] ~w", [End0])
+          msg_warning("[FAILED] ~w", [End0]),gtrace
       ),
       with_output_to(string(End), write_term(End0)),
       with_output_to(State.meta, gen_ntriple(S, llo:end, End^^xsd:string))
