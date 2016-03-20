@@ -16,7 +16,7 @@
 :- use_module(library(error)).
 :- use_module(library(gen/gen_ntuples)).
 :- use_module(library(hdt)).
-:- use_module(library(msg_ext)).
+:- use_module(library(print_ext)).
 :- use_module(library(rdf/rdf_load)).
 :- use_module(library(semweb/rdf11)).
 

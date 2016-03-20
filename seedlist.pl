@@ -96,7 +96,7 @@ begin_seed0(H, I) :-
 % Enumerates the seeds in the currently loaded seedlist.
 
 current_seed(seed(H,I,A,S,E)) :-
-  seed(H,I,A,S,E).
+  seed(H, I, A, S, E).
 
 
 %! current_seed(+Hash, -Seed) is det.

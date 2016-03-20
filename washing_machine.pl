@@ -25,10 +25,10 @@
 :- use_module(library(http/json)).
 :- use_module(library(jsonld/jsonld_metadata)).
 :- use_module(library(jsonld/jsonld_read)).
-:- use_module(library(msg_ext)).
 :- use_module(library(os/open_any2)).
 :- use_module(library(os/thread_ext)).
 :- use_module(library(pl/pl_term)).
+:- use_module(library(print_ext)).
 :- use_module(library(rdf/rdf_clean)).
 :- use_module(library(rdf/rdf_ext)).
 :- use_module(library(rdf/rdf_load)).
@@ -169,8 +169,9 @@ start_washing_machine0 :-
   washing_machine0(_{idle: 0}).
 
 washing_machine0(State) :-
-  clean(Hash, Iri),
-  debug(washing_machine(thread), "Cleaned ~a (~a)", [Hash,Iri]),
+  debug(washing_machine(thread), "---- Cleaning ~a", [Hash]),
+  clean(Hash, _Iri),
+  debug(washing_machine(thread), "---- Cleaned ~a", [Hash]),
   washing_machine0(State).
 washing_machine0(State) :-
   M = 100,
@@ -178,7 +179,7 @@ washing_machine0(State) :-
   thread_name(Name),
   dict_inc(idle, State, N),
   S is M * N,
-  debug(washing_machine(idle), "Washing machine ~w is ~D sec. idle", [Name,S]),
+  debug(washing_machine(idle), "==== Thread ~w idle ~D sec.", [Name,S]),
   washing_machine0(State).
 
 

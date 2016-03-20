@@ -60,7 +60,7 @@ lwm_unpack_loop:-
 lwm_unpack_loop:-
   sleep(100),
   increment_counter(number_of_idle_loops(Category), N),
-  "[IDLE ", category(Category), "] ", thousands_integer(N).
+  "[IDLE ", category(Category), "] ", thousands(N).
   dcg_debug(unpack(idle), idle_loop(unpack)),
   lwm_unpack_loop.
 

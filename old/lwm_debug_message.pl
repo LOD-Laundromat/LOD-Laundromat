@@ -68,7 +68,7 @@ end_process(Category, Doc, Origin, Result, Msgs) -->
   document_name(Doc), " ",
   atom(Origin), " ",
   {length(Msgs, NMsgs)},
-  thousands_integer(NMsgs), " errors".
+  thousands(NMsgs), " errors".
 
 
 
@@ -78,7 +78,7 @@ end_process(Category, Doc, Origin, Result, Msgs) -->
 idle_loop(Category) -->
   % Every category has its own idle loop counter.
   {increment_counter(number_of_idle_loops(Category), N)},
-  "[IDLE ", category(Category), "] ", thousands_integer(N).
+  "[IDLE ", category(Category), "] ", thousands(N).
 
 
 
@@ -95,7 +95,7 @@ simpleRdf_written(NumberOfUniqueTriples, NumberOfDuplicateTriples) -->
   "[+", integer(NumberOfUniqueTriples),
   (   {NumberOfDuplicateTriples =:= 0}
   ->  ""
-  ;   " (", thousands_integer(NumberOfDuplicateTriples), " duplicates)"
+  ;   " (", thousands(NumberOfDuplicateTriples), " duplicates)"
   ),
   "]".
 
