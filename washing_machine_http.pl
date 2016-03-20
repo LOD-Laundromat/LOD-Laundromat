@@ -125,5 +125,18 @@ pair_row0(Mod0-Doc, [Doc,Mod,End,Tuples,Warnings,Status]) :-
 
 
 tuple_counter -->
-  {aggregate_all(sum(N), rdf_has(_, llo:unique_tuples, N^^xsd:nonNegativeInteger), N)},
-  html(["Processed ",\html_thousands(N)," tuples."]).
+  {
+    aggregate_all(count, rdf_has(_, llo:unique_tuples, _), N1),
+    aggregate_all(
+      sum(N),
+      rdf_has(_, llo:unique_tuples, N^^xsd:nonNegativeInteger),
+      N2
+    )
+  },
+  html([
+    "Processed ",
+    \html_thousands(N1),
+    " documents containing ",
+    \html_thousands(N2),
+    " tuples."
+  ]).
