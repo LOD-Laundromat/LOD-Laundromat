@@ -74,7 +74,15 @@ add_washing_machine(N1) :-
 
 
 
+%! clean is det.
+% Clean some seed from the seedlist.
+
+clean :-
+  clean_seed(_, _).
+
+
 %! clean(+Hash) is det.
+% Clean a specific seed from the seedlist.
 % Does not re-clean documents.
 %
 % @throws existence_error If the seed is not in the seedlist.
@@ -85,18 +93,17 @@ clean(Hash) :-
   exists_file(File), !,
   msg_notification("Already cleaned document ~a", [Doc]).
 clean(Hash) :-
-  clean(Hash, _).
+  clean_seed(Hash, _).
 
 
-%! clean(-Hash, -Iri) is det.
-% Cleans a dirty seed from the seedlist.
-
-clean(Hash, Iri) :-
+clean_seed(Hash, Iri) :-
   begin_seed(Hash, Iri),
-  clean0(Hash, Iri),
+  debug(washing_machine(thread), "---- Cleaning ~a", [Hash]),
+  clean_seed0(Hash, Iri),
+  debug(washing_machine(thread), "---- Cleaned ~a", [Hash]),
   end_seed(Hash).
 
-clean0(Hash, Iri) :-
+clean_seed0(Hash, Iri) :-
   currently_debugging(Hash),
   ldir_hash(Dir, Hash),
   ldoc_hash(Doc, Hash),
@@ -137,7 +144,7 @@ currently_debugging(_).
 clean_iri(I1) :-
   iri_normalized(I1, I2),
   md5(I2, H),
-  clean0(H, I2).
+  clean_seed(H, I2).
 
 
 
@@ -169,9 +176,7 @@ start_washing_machine0 :-
   washing_machine0(_{idle: 0}).
 
 washing_machine0(State) :-
-  debug(washing_machine(thread), "---- Cleaning ~a", [Hash]),
-  clean(Hash, _Iri),
-  debug(washing_machine(thread), "---- Cleaned ~a", [Hash]),
+  clean,
   washing_machine0(State).
 washing_machine0(State) :-
   M = 100,
