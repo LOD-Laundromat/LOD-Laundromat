@@ -107,7 +107,7 @@ clean_seed0(Hash, Iri) :-
   currently_debugging(Hash),
   ldir_hash(Dir, Hash),
   ldoc_hash(Doc, Hash),
-  make_directory_path(Dir),
+  with_mutex(washing_machine, make_directory_path(Dir)),
   maplist(ldoc_file(Doc), [data,meta,warn], [DataFile,MetaFile,WarnFile]),
   setup_call_cleanup(
     (
