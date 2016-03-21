@@ -49,7 +49,7 @@ ldoc(Method, MTs, Doc) :- rest_mediatype(Method, MTs, Doc, ldoc_mediatype).
 ldocs(Method, MTs) :- rest_mediatype(Method, MTs, ldocs_mediatype).
 
 ldoc_mediatype(delete, application/json, Doc) :- !,
-  reset_ldoc(Doc),
+  ldoc_reset(Doc),
   reply_json_dict(_{}, [status(200)]).
 ldoc_mediatype(get, application/nquads, Doc) :- !,
   ldoc_file(Doc, data, File),

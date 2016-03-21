@@ -5,8 +5,9 @@
     add_washing_machine/1, % +N
     clean/1,               % +Hash
     clean_iri/1,           % +Iri
+    ldoc_reset/1,          % +Doc
     load_all_metadata/0,
-    reset_ldoc/1           % +Doc
+    reset_and_clean/1      % +Hash
   ]
 ).
 
@@ -52,7 +53,7 @@
 %currently_debugging0('00385477bf97bd4ebe1d0719a65100e1').
 
 :- rdf_meta
-   reset_ldoc(r).
+   ldoc_reset(r).
 
 
 
@@ -148,6 +149,24 @@ clean_iri(I1) :-
 
 
 
+%! ldoc_reset(+Doc) is det.
+
+ldoc_reset(Doc) :-
+  % Step 1: Unload the RDF metadata from memory.
+  rdf_unload_graph(Doc),
+  
+  % Step 2: Remove the data and metadata files from disk.
+  ldir_ldoc(Dir, Doc),
+  with_mutex(washing_machine, (
+    (exists_directory(Dir) -> delete_directory_and_contents(Dir) ; true)
+  )),
+  
+  % Step 3: Reset the seed in the seedlist.
+  ldoc_hash(Doc, Hash),
+  reset_seed(Hash).
+
+
+
 %! load_all_metadata is det.
 % Loads the metadata of all cleaned documents into ClioPatria.
 
@@ -156,19 +175,12 @@ load_all_metadata :-
 
 
 
-%! reset_ldoc(+Doc) is det.
+%! reset_and_clean(+Hash) is det.
 
-reset_ldoc(Doc) :-
-  % Step 1: Unload the RDF metadata from memory.
-  rdf_unload_graph(Doc),
-  
-  % Step 2: Remove the data and metadata files from disk.
-  ldir_ldoc(Dir, Doc),
-  delete_directory_and_contents(Dir),
-
-  % Step 3: Reset the seed in the seedlist.
+reset_and_clean(Hash) :-
   ldoc_hash(Doc, Hash),
-  reset_seed(Hash).
+  ldoc_reset(Doc),
+  clean(Hash).
 
 
 
