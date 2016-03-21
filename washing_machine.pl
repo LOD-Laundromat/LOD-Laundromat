@@ -1,13 +1,16 @@
 :- module(
   washing_machine,
   [
-    add_washing_machine/0,
-    add_washing_machine/1, % +N
-    clean/1,               % +Hash
-    clean_iri/1,           % +Iri
-    ldoc_reset/1,          % +Doc
+    add_wm/0,
+    add_wm/1,            % +N
+    clean/1,             % +Hash
+    clean_iri/1,         % +Iri
+    current_wm/1,        % ?Alias
+    current_wm/2,        % ?Alias, -Status
+    ldoc_reset/1,        % +Doc
     load_all_metadata/0,
-    reset_and_clean/1      % +Hash
+    number_of_wms/1,     % -N
+    reset_and_clean/1    % +Hash
   ]
 ).
 
@@ -17,7 +20,9 @@
 @version 2016/01-2016/03
 */
 
+:- use_module(library(aggregate)).
 :- use_module(library(apply)).
+:- use_module(library(atom_ext)).
 :- use_module(library(debug_ext)).
 :- use_module(library(dict_ext)).
 :- use_module(library(filesex)).
@@ -30,6 +35,7 @@
 :- use_module(library(os/thread_ext)).
 :- use_module(library(pl/pl_term)).
 :- use_module(library(print_ext)).
+:- use_module(library(prolog_stack)).
 :- use_module(library(rdf/rdf_clean)).
 :- use_module(library(rdf/rdf_ext)).
 :- use_module(library(rdf/rdf_load)).
@@ -41,6 +47,9 @@
 :- use_module(cpack('LOD-Laundromat'/laundromat_fs)).
 :- use_module(cpack('LOD-Laundromat'/seedlist)).
 
+prolog_stack:stack_guard('C').
+prolog_stack:stack_guard(none).
+
 :- meta_predicate
     rdf_store_messages(+, +, 0, -).
 
@@ -50,7 +59,7 @@
 :- dynamic
     currently_debugging0/1.
 
-%currently_debugging0('00385477bf97bd4ebe1d0719a65100e1').
+%currently_debugging0('0064ae0dd911eced3d034cce085d1ee7').
 
 :- rdf_meta
    ldoc_reset(r).
@@ -59,19 +68,20 @@
 
 
 
-%! add_washing_machine is det.
-%! add_washing_machine(+N) is det.
+%! add_wm is det.
+%! add_wm(+N) is det.
 % Add a LOD Laundromat thread.
 
-add_washing_machine :-
-  detached_thread(start_washing_machine0).
+add_wm :-
+  add_wm(1).
 
-add_washing_machine(N) :-
+add_wm(N) :-
   N =< 0, !.
-add_washing_machine(N1) :-
-  add_washing_machine,
+add_wm(N1) :-
+  atom_concat(wm, N1, Alias),
+  thread_create(start_wm0, _, [alias(Alias),detached(false)]),
   N2 is N1 - 1,
-  add_washing_machine(N2).
+  add_wm(N2).
 
 
 
@@ -99,16 +109,17 @@ clean(Hash) :-
 
 clean_seed(Hash, Iri) :-
   begin_seed(Hash, Iri),
-  debug(washing_machine(thread), "---- Cleaning ~a", [Hash]),
+  number_of_wms(N1),
+  debug(wm(thread), "---- [~D] Cleaning ~a", [N1,Hash]),
   clean_seed0(Hash, Iri),
-  debug(washing_machine(thread), "---- Cleaned ~a", [Hash]),
+  number_of_wms(N2),
+  debug(wm(thread), "---- [~D] Cleaned ~a", [N2,Hash]),
   end_seed(Hash).
 
 clean_seed0(Hash, Iri) :-
-  currently_debugging(Hash),
   ldir_hash(Dir, Hash),
   ldoc_hash(Doc, Hash),
-  with_mutex(washing_machine, make_directory_path(Dir)),
+  with_mutex(wm, make_directory_path(Dir)),
   maplist(ldoc_file(Doc), [data,meta,warn], [DataFile,MetaFile,WarnFile]),
   setup_call_cleanup(
     (
@@ -118,8 +129,10 @@ clean_seed0(Hash, Iri) :-
     (
       State = _{meta: MetaSink, warn: WarnSink, warns: 0},
       CleanOpts = [compress(gzip),metadata(M1),relative_to(Dir),sort_dir(Dir),warn(WarnSink)],
+      currently_debugging(Hash),
       rdf_store_messages(State, Doc, rdf_clean(Iri, DataFile, CleanOpts), M2),
-      (var(M2) -> M = M1 ; M = M2),
+      (var(M1) -> M = M2 ; M = M1),
+      (var(M) -> format(user_output, "~w~n", [Hash]) ; true),
       rdf_store_metadata(State, Doc, M)
     ),
     (
@@ -149,18 +162,34 @@ clean_iri(I1) :-
 
 
 
+%! current_wm(+Alias) is semidet.
+%! current_wm(-Alias) is nondet.
+%! current_wm(+Alias, -Status) is semidet.
+%! current_wm(-Alias, -Status) is nondet.
+
+current_wm(Alias) :-
+  current_wm(Alias, _).
+
+
+current_wm(Alias, Status) :-
+  thread_property(Id, alias(Alias)),
+  atom_prefix(wm, Alias),
+  thread_property(Id, status(Status)).
+
+
+
 %! ldoc_reset(+Doc) is det.
 
 ldoc_reset(Doc) :-
   % Step 1: Unload the RDF metadata from memory.
   rdf_unload_graph(Doc),
-  
+
   % Step 2: Remove the data and metadata files from disk.
   ldir_ldoc(Dir, Doc),
-  with_mutex(washing_machine, (
+  with_mutex(wm, (
     (exists_directory(Dir) -> delete_directory_and_contents(Dir) ; true)
   )),
-  
+
   % Step 3: Reset the seed in the seedlist.
   ldoc_hash(Doc, Hash),
   reset_seed(Hash).
@@ -175,6 +204,13 @@ load_all_metadata :-
 
 
 
+%! number_of_wms(-N) is det.
+
+number_of_wms(N) :-
+  aggregate_all(count, current_wm(_), N).
+
+
+
 %! reset_and_clean(+Hash) is det.
 
 reset_and_clean(Hash) :-
@@ -184,20 +220,20 @@ reset_and_clean(Hash) :-
 
 
 
-start_washing_machine0 :-
-  washing_machine0(_{idle: 0}).
+start_wm0 :-
+  wm0(_{idle: 0}).
 
-washing_machine0(State) :-
+wm0(State) :-
   clean,
-  washing_machine0(State).
-washing_machine0(State) :-
+  wm0(State).
+wm0(State) :-
   M = 100,
   sleep(M),
   thread_name(Name),
   dict_inc(idle, State, N),
   S is M * N,
-  debug(washing_machine(idle), "==== Thread ~w idle ~D sec.", [Name,S]),
-  washing_machine0(State).
+  debug(wm(idle), "==== Thread ~w idle ~D sec.", [Name,S]),
+  wm0(State).
 
 
 
@@ -221,10 +257,9 @@ rdf_store_messages(State, S, Goal_0, M) :-
       (   var(E)
       ->  End0 = true
       ;   E = error(existence_error(open_any2,M),_)
-      ->  rdf_store_metadata(State, S, M),
-          End0 = "No stream"
+      ->  End0 = "No stream"
       ;   End0 = E,
-          msg_warning("[FAILED] ~w", [End0]),
+          msg_warning("[FAILED] ~w~n", [End0]),
 	  M = _{}
       ),
       with_output_to(string(End), write_term(End0)),
@@ -243,8 +278,8 @@ rdf_store_metadata(State, S1, M) :-
   jsonld_metadata(M, Jsonld1),
   atom_string(S1, S2),
   Jsonld2 = Jsonld1.put(_{'@id': S2}),
-  (debugging(washing_machine(low)) -> json_write_dict(user_output, Jsonld2) ; true),
+  (debugging(wm(low)) -> json_write_dict(user_output, Jsonld2) ; true),
   forall(jsonld_tuple(Jsonld2, rdf(S,P,O)), (
-    (debugging(washing_machine(low)) -> with_output_to(user_output, rdf_print(S, P, O, _)) ; true),
+    (debugging(wm(low)) -> with_output_to(user_output, rdf_print(S, P, O, _)) ; true),
     with_output_to(State.meta, gen_ntriple(S, P, O))
   )).

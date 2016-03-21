@@ -73,7 +73,7 @@ ldocs_mediatype(get, text/html) :-
   reply_html_page(cliopatria(default),
     [title(Title),\html_requires(dataTables)],
     [
-      h1(Title),
+      h1("Documents"),
       \tuple_counter,
       table([class=display,id=table_id],
         thead(
@@ -93,7 +93,8 @@ $(document).ready( function () {
     $('#table_id').DataTable({ data: data });
   })
 });
-      |})
+      |}),
+      \washing_machines
     ]
   ).
 ldocs_mediatype(post, application/json) :- !,
@@ -105,7 +106,15 @@ ldocs_mediatype(post, application/json) :- !,
   ;   reply_json_dict(_{}, [status(404)])
   ).
 
-
+washing_machines -->
+  {aggregate_all(set([Alias,Status]), current_wm(Alias, Status), Rows)},
+  html([
+    h1("Washing Machines"),
+    \bs_table(
+      \bs_table_header(["Washing Machine","Status"]),
+      \html_maplist(bs_table_row, Rows)
+    )
+  ]).
 
 
 
