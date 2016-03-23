@@ -5,10 +5,10 @@
     ldir_hash/2, % ?Dir, ?Hash
     ldir_ldoc/2, % ?Dir, ?Doc
     ldoc/1,      % ?Doc
-    ldoc_file/3, % +Doc, +Kind, -File
+    ldoc_file/4, % +Doc, +Name, +Kind, -File
     ldoc_hash/2, % ?Doc, ?Hash
     ldoc_lmod/2, % +Doc, -LastModified
-    ldoc_load/2  % +Doc, +Kind
+    ldoc_load/2  % +Doc, +Name
   ]
 ).
 
@@ -31,7 +31,7 @@ ldir -- ldoc
 :- rdf_meta
    ldir_ldoc(?, r),
    ldoc(r),
-   ldoc_file(r, +, -),
+   ldoc_file(r, +, +, -),
    ldoc_hash(r, ?),
    ldoc_lmod(r, -),
    ldoc_load(r, +).
@@ -103,14 +103,18 @@ ldoc(Doc) :-
 
 
 
-%! ldoc_file(+Doc, +Kind, -File) is det.
+%! ldoc_file(+Doc, +Name, +Kind, -File) is det.
 % Kind is either `data', `hdt', `meta' or `msg'.
 
-ldoc_file(Doc, Kind, File) :-
+ldoc_file(Doc, Name, Kind, File) :-
   ldir_ldoc(Dir, Doc),
-  (Kind == hdt -> Exts = [hdt] ; Exts = [nq,gz]),
-  atomic_list_concat([Kind|Exts], ., Local),
+  kind_exts(Kind, Exts),
+  atomic_list_concat([Name|Exts], ., Local),
   directory_file_path(Dir, Local, File).
+
+kind_exts(hdt,      [hdt]).
+kind_exts(nquads,   [nq,gz]).
+kind_exts(ntriples, [nt,gz]).
 
 
 
@@ -130,11 +134,10 @@ ldoc_lmod(Doc, Mod) :-
 
 
 
-%! ldoc_load(+Doc, +Kind) is det.
-% @tbd Graph name for `data' and `msg' file.
+%! ldoc_load(+Doc, +Name) is det.
 
-ldoc_load(Doc, Kind) :-
-  ldoc_file(Doc, Kind, File),
+ldoc_load(Doc, Name) :-
+  ldoc_file(Doc, Name, nquads, File),
   access_file(File, read),
   rdf_load_file(File, [graph(Doc)]).
 

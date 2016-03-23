@@ -45,6 +45,7 @@
 :- use_module(library(zlib)).
 
 :- use_module(cpack('LOD-Laundromat'/laundromat_fs)).
+:- use_module(cpack('LOD-Laundromat'/laundromat_hdt)).
 :- use_module(cpack('LOD-Laundromat'/seedlist)).
 
 prolog_stack:stack_guard('C').
@@ -100,7 +101,7 @@ clean :-
 
 clean(Hash) :-
   ldoc_hash(Doc, Hash),
-  ldoc_file(Doc, data, File),
+  ldoc_file(Doc, data, nquads, File),
   exists_file(File), !,
   msg_notification("Already cleaned document ~a", [Doc]).
 clean(Hash) :-
@@ -120,7 +121,9 @@ clean_seed0(Hash, Iri) :-
   ldir_hash(Dir, Hash),
   ldoc_hash(Doc, Hash),
   with_mutex(wm, make_directory_path(Dir)),
-  maplist(ldoc_file(Doc), [data,meta,warn], [DataFile,MetaFile,WarnFile]),
+  ldoc_file(Doc, data, nquads, DataFile),
+  ldoc_file(Doc, meta, nquads, MetaFile),
+  ldoc_file(Doc, warn, nquads, WarnFile),
   setup_call_cleanup(
     (
       gzopen(MetaFile, write, MetaSink, [format(gzip)]),
@@ -140,7 +143,8 @@ clean_seed0(Hash, Iri) :-
       close(MetaSink)
     )
   ),
-  ldoc_load(Doc, meta).
+  ldoc_load(Doc, meta),
+  hdt_build(Doc).
   %absolute_file_name('dirty.gz', DirtyTo, Opts),
   %call_collect_messages(rdf_download_to_file(Iri, DirtyTo, [compress(gzip)])).
 
