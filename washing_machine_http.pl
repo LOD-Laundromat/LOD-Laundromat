@@ -70,7 +70,7 @@ data_mediatype(get, text/html, Doc) :-
   ldoc_hash(Doc, Hash),
   string_list_concat(["Washing Machine","Data",Hash], " - ", Title),
   reply_html_page(cliopatria(default), title(Title),
-    \hdt_data_table(_, _, _, Doc, _{page: 1})
+    \lhdt_data_table(_, _, _, Doc, _{page: 1})
   ).
 
 meta_mediatype(get, application/nquads, Doc) :- !,

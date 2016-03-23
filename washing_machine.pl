@@ -144,9 +144,10 @@ clean_seed0(Hash, Iri) :-
     )
   ),
   ldoc_load(Doc, meta),
-  hdt_build(Doc).
+  %lhdt_build(Doc),
   %absolute_file_name('dirty.gz', DirtyTo, Opts),
-  %call_collect_messages(rdf_download_to_file(Iri, DirtyTo, [compress(gzip)])).
+  %call_collect_messages(rdf_download_to_file(Iri, DirtyTo, [compress(gzip)])),
+  true.
 
 currently_debugging(Hash) :-
   currently_debugging0(Hash), !,
@@ -208,6 +209,15 @@ load_all_metadata :-
 
 
 
+monitor_wms :-
+  current_wm(Alias),
+  thread_statistics(Alias, stack, Stack),
+  Stack >= 10^9, !,
+  ansi_format(user_output, [fg(red)], "Thread ~a is running out of memory!~n").
+monitor_wms.
+
+
+
 %! number_of_wms(-N) is det.
 
 number_of_wms(N) :-
@@ -228,6 +238,7 @@ start_wm0 :-
   wm0(_{idle: 0}).
 
 wm0(State) :-
+  monitor_wms,
   clean,
   wm0(State).
 wm0(State) :-
