@@ -122,7 +122,9 @@ kind_exts(ntriples, [nt,gz]).
 %! ldoc_hash(-Doc, +Hash) is det.
 
 ldoc_hash(Doc, Hash) :-
-  rdf_global_id(data:Hash, Doc).
+  rdf_global_id(data:Hash, Doc), !.
+ldoc_hash(Doc, Hash) :-
+  rdf_global_id(meta:Hash, Doc).
 
 
 

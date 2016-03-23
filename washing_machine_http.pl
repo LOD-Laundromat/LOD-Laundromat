@@ -42,40 +42,55 @@
 :- use_module(cpack('LOD-Laundromat'/washing_machine)).
 
 :- rdf_register_prefix(data, 'http://cliopatria.lod.labs.vu.nl/data/').
+:- rdf_register_prefix(meta, 'http://cliopatria.lod.labs.vu.nl/meta/').
 
 :- http_handler(root(data), data, [prefix]).
+:- http_handler(root(meta), meta, [prefix]).
 
-data(Req) :- rest_handler(Req, data, ldoc, ldoc, ldocs).
-ldoc(Method, MTs, Doc) :- rest_mediatype(Method, MTs, Doc, ldoc_mediatype).
-ldocs(Method, MTs) :- rest_mediatype(Method, MTs, ldocs_mediatype).
+data(Req) :- rest_handler(Req, data, ldoc, data, datas).
+data(Method, MTs, Doc) :- rest_mediatype(Method, MTs, Doc, data_mediatype).
+datas(Method, MTs) :- rest_mediatype(Method, MTs, datas_mediatype).
 
-ldoc_mediatype(get, application/'vnd.hdt', Doc) :- !,
+meta(Req) :- rest_handler(Req, meta, ldoc, meta, metas).
+meta(Method, MTs, Doc) :- rest_mediatype(Method, MTs, Doc, meta_mediatype).
+metas(Method, MTs) :- rest_mediatype(Method, MTs, metas_mediatype).
+
+data_mediatype(get, application/'vnd.hdt', Doc) :- !,
   ldoc_file(Doc, data, hdt, File),
   access_file(File, read),
   http_reply_file(File).
-ldoc_mediatype(delete, application/json, Doc) :- !,
+data_mediatype(delete, application/json, Doc) :- !,
   ldoc_reset(Doc),
   reply_json_dict(_{}, [status(200)]).
-ldoc_mediatype(get, application/nquads, Doc) :- !,
+data_mediatype(get, application/nquads, Doc) :- !,
   ldoc_file(Doc, data, nquads, File),
   access_file(File, read),
   http_reply_file(File).
-ldoc_mediatype(get, text/html, Doc) :-
+data_mediatype(get, text/html, Doc) :-
+  ldoc_hash(Doc, Hash),
+  string_list_concat(["Washing Machine","Data",Hash], " - ", Title),
+  reply_html_page(cliopatria(default), title(Title),
+    \hdt_data_table(_, _, _, Doc, _{page: 1})
+  ).
+
+meta_mediatype(get, application/nquads, Doc) :- !,
+  ldoc_file(Doc, data, nquads, File),
+  access_file(File, read),
+  http_reply_file(File).
+meta_mediatype(get, text/html, Doc) :-
   ldoc_load(Doc, meta),
   ldoc_hash(Doc, Hash),
-  string_list_concat(["Washing Machine",Hash], " - ", Title),
+  string_list_concat(["Washing Machine","Metadata",Hash], " - ", Title),
   reply_html_page(cliopatria(default), title(Title), [
     \rdfh_grid(Doc),
-    \(cpa_browse:list_triples(_, Doc, _, _)),
-    h1("WOW!DATA"),
-    \hdt_data_table(_, _, _, Doc, _{page: 1})
+    \(cpa_browse:list_triples(_, Doc, _, _))
   ]).
 
-ldocs_mediatype(get, application/json) :-
+datas_mediatype(get, application/json) :-
   desc_ldocs(Pairs),
   findall(Row, (member(Pair, Pairs), pair_row0(Pair, Row)), Rows),
   reply_json_dict(Rows, [status(200)]).
-ldocs_mediatype(get, text/html) :-
+datas_mediatype(get, text/html) :-
   string_list_concat(["LOD Laundromat","Documents"], " - ", Title),
   reply_html_page(cliopatria(default),
     [title(Title),\html_requires(dataTables)],
@@ -105,13 +120,18 @@ $(document).ready( function () {
       \washing_machines
     ]
   ).
-ldocs_mediatype(post, application/json) :- !,
+datas_mediatype(post, application/json) :- !,
   http_read_json_dict(Data),
   atom_string(Hash, Data.seed),
   (   seed(Hash)
   ->  detached_thread(clean(Hash)),
       reply_json_dict(_{}, [status(201)])
   ;   reply_json_dict(_{}, [status(404)])
+  ).
+
+metas_mediatype(get, text/html) :-
+  reply_html_page(cliopatria(default), title("LOD Laundromat - Metadata"),
+    p("test")
   ).
 
 washing_machines -->
