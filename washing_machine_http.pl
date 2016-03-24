@@ -22,6 +22,7 @@
 :- use_module(library(html/html_bs)).
 :- use_module(library(html/html_date_time)).
 :- use_module(library(html/html_ext)).
+:- use_module(library(html/rdfh)).
 :- use_module(library(html/rdfh_grid)).
 :- use_module(library(http/html_write)).
 :- use_module(library(http/http_dispatch)).
@@ -47,47 +48,48 @@
 :- http_handler(root(data), data, [prefix]).
 :- http_handler(root(meta), meta, [prefix]).
 
-data(Req) :- rest_handler(Req, data, ldoc, data, datas).
+data(Req) :- rest_handler(Req, data, ldoc(data), data, datas).
 data(Method, MTs, Doc) :- rest_mediatype(Method, MTs, Doc, data_mediatype).
 datas(Method, MTs) :- rest_mediatype(Method, MTs, datas_mediatype).
 
-meta(Req) :- rest_handler(Req, meta, ldoc, meta, metas).
+meta(Req) :- rest_handler(Req, meta, ldoc(meta), meta, metas).
 meta(Method, MTs, Doc) :- rest_mediatype(Method, MTs, Doc, meta_mediatype).
 metas(Method, MTs) :- rest_mediatype(Method, MTs, metas_mediatype).
 
 data_mediatype(get, application/'vnd.hdt', Doc) :- !,
-  ldoc_file(Doc, data, hdt, File),
+  ldoc_lfile(Doc, hdt, File),
   access_file(File, read),
   http_reply_file(File).
 data_mediatype(delete, application/json, Doc) :- !,
-  ldoc_reset(Doc),
+  ldoc_lhash(Doc, Hash),
+  reset(Hash),
   reply_json_dict(_{}, [status(200)]).
 data_mediatype(get, application/nquads, Doc) :- !,
-  ldoc_file(Doc, data, nquads, File),
+  ldoc_lfile(Doc, nquads, File),
   access_file(File, read),
   http_reply_file(File).
 data_mediatype(get, text/html, Doc) :-
-  ldoc_hash(Doc, Hash),
+  ldoc_lhash(Doc, Hash),
   string_list_concat(["Washing Machine","Data",Hash], " - ", Title),
   reply_html_page(cliopatria(default), title(Title),
     \lhdt_data_table(_, _, _, Doc, _{page: 1})
   ).
 
 meta_mediatype(get, application/nquads, Doc) :- !,
-  ldoc_file(Doc, data, nquads, File),
+  ldoc_lfile(Doc, nquads, File),
   access_file(File, read),
   http_reply_file(File).
 meta_mediatype(get, text/html, Doc) :-
-  ldoc_load(Doc, meta),
-  ldoc_hash(Doc, Hash),
+  ldoc_lhash(Doc, Name, Hash),
+  lrdf_load(Hash, Name),
   string_list_concat(["Washing Machine","Metadata",Hash], " - ", Title),
   reply_html_page(cliopatria(default), title(Title), [
     \rdfh_grid(Doc),
-    \(cpa_browse:list_triples(_, Doc, _, _))
+    \rdfh_triple_table(_, _, _, Doc)
   ]).
 
 datas_mediatype(get, application/json) :-
-  desc_ldocs(Pairs),
+  desc_ldocs(data, hdt, Pairs),
   findall(Row, (member(Pair, Pairs), pair_row0(Pair, Row)), Rows),
   reply_json_dict(Rows, [status(200)]).
 datas_mediatype(get, text/html) :-
@@ -137,10 +139,11 @@ metas_mediatype(get, text/html) :-
 washing_machines -->
   {
     aggregate_all(
-      set([Alias,Status,Stack]),
+      set([Alias,Global,Local]),
       (
-        current_wm(Alias, Status),
-        thread_statistics(Alias, localused, Stack)
+        current_wm(Alias),
+        thread_statistics(Alias, global, Global),
+        thread_statistics(Alias, local, Local)
       ),
       Rows
     )
@@ -148,17 +151,30 @@ washing_machines -->
   html([
     h1("Washing Machines"),
     \bs_table(
-      \bs_table_header(["Washing Machine","Status","Stack"]),
+      \bs_table_header(["Washing Machine","Global","Local"]),
       \html_maplist(bs_table_row, Rows)
     )
   ]).
 
 
 
+
+
 % HELPERS %
 
-desc_ldocs(SortedPairs) :-
-  findall(Mod-Doc, (ldoc(Doc), ldoc_lmod(Doc, Mod)), Pairs),
+%! desc_ldocs(+Name, +Kind, -Pairs) is det.
+
+desc_ldocs(Name, Kind, SortedPairs) :-
+  findall(
+    Mod-Doc,
+    (
+      lhash(Hash),
+      ldoc_lhash(Doc, Name, Hash),
+      lfile_lhash(File, Name, Kind, Hash),
+      time_file(File, Mod)
+    ),
+    Pairs
+  ),
   desc_pairs(Pairs, SortedPairs).
 
 

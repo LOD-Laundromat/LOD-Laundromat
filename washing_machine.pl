@@ -2,15 +2,13 @@
   washing_machine,
   [
     add_wm/0,
-    add_wm/1,            % +N
-    clean/1,             % +Hash
-    clean_iri/1,         % +Iri
-    current_wm/1,        % ?Alias
-    current_wm/2,        % ?Alias, -Status
-    ldoc_reset/1,        % +Doc
-    load_all_metadata/0,
-    number_of_wms/1,     % -N
-    reset_and_clean/1    % +Hash
+    add_wms/1,        % +N
+    clean/1,          % +Hash
+    clean_iri/1,      % +Iri
+    current_wm/1,     % ?Alias
+    number_of_wms/1,  % -N
+    reset/1,          % +Hash
+    reset_and_clean/1 % +Hash
   ]
 ).
 
@@ -25,6 +23,7 @@
 :- use_module(library(atom_ext)).
 :- use_module(library(debug_ext)).
 :- use_module(library(dict_ext)).
+:- use_module(library(error)).
 :- use_module(library(filesex)).
 :- use_module(library(gen/gen_ntuples)).
 :- use_module(library(hash_ext)).
@@ -60,31 +59,32 @@ prolog_stack:stack_guard(none).
 :- dynamic
     currently_debugging0/1.
 
-%currently_debugging0('0064ae0dd911eced3d034cce085d1ee7').
-
-:- rdf_meta
-   ldoc_reset(r).
+% Seems to have been cleaned multiple times.  Maybe archived entries?
+currently_debugging0('07ecaef4979684bfa4507ecc28b54461').
 
 
 
 
 
 %! add_wm is det.
-%! add_wm(+N) is det.
 % Add a LOD Laundromat thread.
 
 add_wm :-
-  add_wm(1).
+  add_wms(1).
 
-add_wm(M) :-
-  M =< 0, !.
-add_wm(M1) :-
+
+
+%! add_wms(+N) is det.
+
+add_wms(0) :- !.
+add_wms(M1) :-
+  must_be(positive_integer, M1),
   number_of_wms(N1),
   N2 is N1 + 1,
   atom_concat(wm, N2, Alias),
   thread_create(start_wm0, _, [alias(Alias),detached(false)]),
   M2 is M1 - 1,
-  add_wm(M2).
+  add_wms(M2).
 
 
 
@@ -102,10 +102,9 @@ clean :-
 % @throws existence_error If the seed is not in the seedlist.
 
 clean(Hash) :-
-  ldoc_hash(Doc, Hash),
-  ldoc_file(Doc, data, nquads, File),
+  lfile_lhash(File, data, nquads, Hash),
   exists_file(File), !,
-  msg_notification("Already cleaned document ~a", [Doc]).
+  msg_notification("Already cleaned ~a", [Hash]).
 clean(Hash) :-
   clean_seed(Hash, _).
 
@@ -120,12 +119,11 @@ clean_seed(Hash, Iri) :-
   end_seed(Hash).
 
 clean_seed0(Hash, Iri) :-
-  ldir_hash(Dir, Hash),
-  ldoc_hash(Doc, Hash),
+  ldir_lhash(Dir, Hash),
   with_mutex(wm, make_directory_path(Dir)),
-  ldoc_file(Doc, data, nquads, DataFile),
-  ldoc_file(Doc, meta, nquads, MetaFile),
-  ldoc_file(Doc, warn, nquads, WarnFile),
+  ldir_lfile(Dir, data, nquads, DataFile),
+  ldir_lfile(Dir, meta, nquads, MetaFile),
+  ldir_lfile(Dir, warn, nquads, WarnFile),
   setup_call_cleanup(
     (
       gzopen(MetaFile, write, MetaSink, [format(gzip)]),
@@ -144,12 +142,11 @@ clean_seed0(Hash, Iri) :-
       close(WarnSink),
       close(MetaSink)
     )
-  ),
-  ldoc_load(Doc, meta),
+  ).
+  %lrdf_load(Hash, meta),
   %lhdt_build(Doc),
   %absolute_file_name('dirty.gz', DirtyTo, Opts),
   %call_collect_messages(rdf_download_to_file(Iri, DirtyTo, [compress(gzip)])),
-  true.
 
 currently_debugging(Hash) :-
   currently_debugging0(Hash), !,
@@ -164,59 +161,18 @@ currently_debugging(_).
 
 clean_iri(I1) :-
   iri_normalized(I1, I2),
-  md5(I2, H),
-  clean_seed(H, I2).
+  md5(I2, Hash),
+  clean_seed(Hash, I2).
 
 
 
 %! current_wm(+Alias) is semidet.
 %! current_wm(-Alias) is nondet.
-%! current_wm(+Alias, -Status) is semidet.
-%! current_wm(-Alias, -Status) is nondet.
 
 current_wm(Alias) :-
-  current_wm(Alias, _).
-
-
-current_wm(Alias, Status) :-
   thread_property(Id, alias(Alias)),
   atom_prefix(wm, Alias),
-  thread_property(Id, status(Status)).
-
-
-
-%! ldoc_reset(+Doc) is det.
-
-ldoc_reset(Doc) :-
-  % Step 1: Unload the RDF metadata from memory.
-  rdf_unload_graph(Doc),
-
-  % Step 2: Remove the data and metadata files from disk.
-  ldir_ldoc(Dir, Doc),
-  with_mutex(wm, (
-    (exists_directory(Dir) -> delete_directory_and_contents(Dir) ; true)
-  )),
-
-  % Step 3: Reset the seed in the seedlist.
-  ldoc_hash(Doc, Hash),
-  reset_seed(Hash).
-
-
-
-%! load_all_metadata is det.
-% Loads the metadata of all cleaned documents into ClioPatria.
-
-load_all_metadata :-
-  forall(ldoc(Doc), ldoc_load(Doc, meta)).
-
-
-
-monitor_wms :-
-  current_wm(Alias),
-  thread_statistics(Alias, stack, Stack),
-  Stack >= 10^9, !,
-  ansi_format(user_output, [fg(red)], "Thread ~a is running out of memory!~n").
-monitor_wms.
+  thread_property(Id, status(running)).
 
 
 
@@ -227,11 +183,27 @@ number_of_wms(N) :-
 
 
 
+%! reset(+Hash) is det.
+
+reset(Hash) :-
+  % Step 1: Unload the RDF data and metadata from memory.
+  lrdf_unload(Hash),
+
+  % Step 2: Remove the data and metadata files from disk.
+  ldir_lhash(Dir, Hash),
+  with_mutex(wm, (
+    (exists_directory(Dir) -> delete_directory_and_contents(Dir) ; true)
+  )),
+
+  % Step 3: Reset the seed in the seedlist.
+  reset_seed(Hash).
+
+
+
 %! reset_and_clean(+Hash) is det.
 
 reset_and_clean(Hash) :-
-  ldoc_hash(Doc, Hash),
-  ldoc_reset(Doc),
+  reset(Hash),
   clean(Hash).
 
 
@@ -240,7 +212,6 @@ start_wm0 :-
   wm0(_{idle: 0}).
 
 wm0(State) :-
-  monitor_wms,
   clean,
   wm0(State).
 wm0(State) :-
