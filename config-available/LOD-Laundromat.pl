@@ -32,5 +32,4 @@ cliopatria:menu_item(700=places/data, 'Data').
 %:- debug(rdf(grid)).
 %:- debug(seedlist(_)).
 %:- debug(sparql(_)).
-:- debug(washing_machine(high)).
-:- debug(washing_machine(thread)).
+:- debug(wm(thread)).

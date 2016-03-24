@@ -76,13 +76,15 @@ prolog_stack:stack_guard(none).
 add_wm :-
   add_wm(1).
 
-add_wm(N) :-
-  N =< 0, !.
-add_wm(N1) :-
-  atom_concat(wm, N1, Alias),
+add_wm(M) :-
+  M =< 0, !.
+add_wm(M1) :-
+  number_of_wms(N1),
+  N2 is N1 + 1,
+  atom_concat(wm, N2, Alias),
   thread_create(start_wm0, _, [alias(Alias),detached(false)]),
-  N2 is N1 - 1,
-  add_wm(N2).
+  M2 is M1 - 1,
+  add_wm(M2).
 
 
 

@@ -135,11 +135,20 @@ metas_mediatype(get, text/html) :-
   ).
 
 washing_machines -->
-  {aggregate_all(set([Alias,Status]), current_wm(Alias, Status), Rows)},
+  {
+    aggregate_all(
+      set([Alias,Status,Stack]),
+      (
+        current_wm(Alias, Status),
+        thread_statistics(Alias, localused, Stack)
+      ),
+      Rows
+    )
+  },
   html([
     h1("Washing Machines"),
     \bs_table(
-      \bs_table_header(["Washing Machine","Status"]),
+      \bs_table_header(["Washing Machine","Status","Stack"]),
       \html_maplist(bs_table_row, Rows)
     )
   ]).
