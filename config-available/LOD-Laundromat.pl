@@ -17,7 +17,8 @@
 user:file_search_path(web, cpack('LOD-Laundromat'/web)).
 user:file_search_path(img, web(img)).
 
-:- use_module(cpack('LOD-Laundromat'/laundromat_hdt)).
+:- reexport(cpack('LOD-Laundromat'/laundromat_fs)).
+:- reexport(cpack('LOD-Laundromat'/laundromat_hdt)).
 :- use_module(cpack('LOD-Laundromat'/seedlist_http)).
 :- use_module(cpack('LOD-Laundromat'/washing_machine_http)).
 

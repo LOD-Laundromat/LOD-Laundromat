@@ -10,6 +10,7 @@
     ldoc_lhash/2,  % +Doc, -Hash
     ldoc_lhash/3,  % ?Doc, ?Name, ?Hash
     lfile/3,       % ?Name, ?Kind, ?File
+    lfile_lhash/2, % +File, -Hash
     lfile_lhash/4, % ?File, ?Name, ?Kind, ?Hash
     lhash/1,       % ?Hash
     lrdf_load/2,   % +Hash, +Name
@@ -153,7 +154,13 @@ lfile(Name, Kind, File) :-
 lfile(Name, Kind, File) :-
   ldir_lfile(Dir, Name, Kind, File),
   ldir(Dir).
-  
+
+
+
+%! lfile_lhash(+File, -Hash) is det.
+
+lfile_lhash(File, Hash) :-
+  lfile_lhash(File, _, _, Hash).
 
 
 %! lfile_lhash(+File, -Name, -Kind, -Hash) is det.

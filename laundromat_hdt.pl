@@ -1,12 +1,14 @@
 :- module(
   laundromat_hdt,
   [
-    lhdt/3,            % ?S, ?P, ?O
-    lhdt/4,            % ?S, ?P, ?O, ?Hash
-    lhdt_build/2,      % +Hash, +Name
-    lhdt_build/3,      % +Hash, +Name, ?BaseIri
-    lhdt_header/4,     % ?S, ?P, ?O, ?Hash
-    lhdt_data_table//5 % ?S, ?P, ?O, ?Hash, +Opts
+    lhdt/3,             % ?S, ?P, ?O
+    lhdt/4,             % ?S, ?P, ?O, ?Hash
+    lhdt_build/2,       % +Hash, +Name
+    lhdt_build/3,       % +Hash, +Name, ?BaseIri
+    lhdt_data_table//5, % ?S, ?P, ?O, ?Hash, +Opts
+    lhdt_delete/1,      % +Hash
+    lhdt_delete/2,      % +Hash, +Name
+    lhdt_header/4       % ?S, ?P, ?O, ?Hash
   ]
 ).
 
@@ -73,9 +75,10 @@ lhdt_build(Hash, Name, BaseIri) :-
   ;   lfile_lhash(NQuadsFile, Name, nquads, Hash),
       access_file(NQuadsFile, read)
   ->  ldir_lhash(Dir, Hash),
+      (var(BaseIri) -> Opts = [] ; Opts = [base_uri(BaseIri)]),
       setup_call_cleanup(
         ensure_ntriples(Dir, NQuadsFile, NTriplesFile),
-        hdt_create_from_file(HdtFile, NTriplesFile, [base_uri(BaseIri)]),
+        hdt_create_from_file(HdtFile, NTriplesFile, Opts),
         delete_file(NTriplesFile)
       )
   ;   msg_warning("Data file for ~a is missing.", [Hash])
@@ -105,6 +108,19 @@ lhdt_data_table(S, P, O, Hash, Opts1) -->
   },
   rdfh_triple_table(Triples),
   bs_pagination(NumPages, 3).
+
+
+
+%! lhdt_delete(+Hash) is det.
+%! lhdt_delete(+Hash, +Name) is det.
+
+lhdt_delete(Hash) :-
+  forall(laundromat_fs:lname(Name), lhdt_delete(Hash, Name)).
+
+
+lhdt_delete(Hash, Name) :-
+  lfile_lhash(File, Name, hdt, Hash),
+  (exists_file(File) -> delete_file(File) ; true).
 
 
 
