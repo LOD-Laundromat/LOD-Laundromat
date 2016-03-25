@@ -7,7 +7,8 @@
     lhdt_data_table//5, % ?S, ?P, ?O, ?Doc, +Opts
     lhdt_delete/1,      % +Hash
     lhdt_delete/2,      % +Hash, +Name
-    lhdt_header/4       % ?S, ?P, ?O, ?Doc
+    lhdt_header/4,      % ?S, ?P, ?O, ?Doc
+    lhdt_print/4        % ?S, ?P, ?O, ?Doc
   ]
 ).
 
@@ -26,6 +27,7 @@
 :- use_module(library(html/rdfh)).
 :- use_module(library(print_ext)).
 :- use_module(library(rdf/rdf_load)).
+:- use_module(library(rdf/rdf_print)).
 :- use_module(library(semweb/rdf11)).
 
 :- use_module(cpack('LOD-Laundromat'/lfs)).
@@ -38,7 +40,8 @@
    lhdt(r, r, o, r),
    lhdt_build(+, +, r),
    lhdt_header(r, r, o, r),
-   lhdt_data_table(r, r, o, r, +, ?, ?).
+   lhdt_data_table(r, r, o, r, +, ?, ?),
+   lhdt_print(r, r, o, r).
 
 
 
@@ -141,6 +144,15 @@ lhdt_header(S, P, O) :-
 lhdt_header(S, P, O, Doc) :-
   lhdt_setup_call_cleanup(Doc, hdt_header0(S, P, O)).
 hdt_header0(S, P, O, Hdt) :- hdt_header(Hdt, S, P, O).
+
+
+
+%! lhdt_print(?S, ?P, ?O, ?Doc) is nondet.
+
+lhdt_print(S, P, O, Doc) :-
+  % NONDET
+  findnsols(10, rdf(S,P,O), lhdt(S, P, O, Doc), Triples),
+  rdf_print_triples(Triples).
 
 
 

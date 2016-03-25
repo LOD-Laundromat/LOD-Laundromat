@@ -2,9 +2,8 @@
   lcli,
   [
     ll/0,
-    ll/1, % +Search
-    ll/2, % +Search, +Name
-    ll/5  % +Search, +Name, ?S, ?P, ?O
+    ll/1, % +Prefix
+    ll/2  % +Prefix, +Name
   ]
 ).
 
@@ -20,113 +19,49 @@
 :- use_module(library(lists)).
 :- use_module(library(os/dir_ext)).
 :- use_module(library(print_ext)).
-:- use_module(library(rdf/rdf_print)).
 :- use_module(library(semweb/rdf11)).
 
 :- use_module(cpack('LOD-Laundromat'/lfs)).
 :- use_module(cpack('LOD-Laundromat'/lhdt)).
 
 :- meta_predicate
-    lcli_call(1, +).
-
-:- rdf_meta
-   ll(+, +, r, r, o).
+    ll_call(+, 1).
 
 
 
 
 
 %! ll is det.
-%! ll(+Search) is det.
-%! ll(+Search, +Name) is det.
-%! ll(+Search, +Name, ?S, ?P, ?O) is nondet.
+%! ll(+Prefix) is det.
+%! ll(+Prefix, +Name) is det.
 
 ll :-
   lroot(Dir),
-  lls(Dir).
-
-
-ll(Search) :-
-  lcli_call(lls, Search).
-
-
-ll(Search, Name) :-
-  ll(Search, Name, _, _, _).
-
-
-ll(Search, Name, S, P, O) :-
-  must_be(lname, Name),
-  lcli_call(lq(Name, S, P, O), Search).
-
-
-%! lls(+Dir) is det.
-
-lls(Dir) :-
-  ldir_lhash(Dir, Hash),
-  lcli_print("The contents for '~a':~n", [Hash]),
   ls(Dir).
 
 
-%! lq(+Name, ?S, ?P, ?O, +Dir) is nondet.
+ll(Prefix) :-
+  ll_call(Prefix, ll1(Prefix)).
 
-lq(Name, S, P, O, Dir) :-
+ll1(Prefix, Dir) :-
+  lcli_print("The contents for "),
+  lcli_print_hash(Prefix, Dir),
+  nl,
+  ls(Dir).
+
+
+ll(Prefix, Name) :-
+  ll_call(Prefix, ll2(Name)).
+
+ll2(Name, Dir) :-
   ldir_ldoc(Dir, Name, Doc),
-  % NONDET
-  findnsols(10, rdf(S,P,O), lhdt(S, P, O, Doc), Triples),
-  rdf_print_triples(Triples).
+  lhdt_print(_, _, _, Doc).
 
 
 
 
 
 % HELPERS %
-
-%! lcli_call(:Goal_1, +Search) is det.
-
-lcli_call(Goal_1, Search) :-
-  atom_length(Search, N),
-  (   N =:= 2
-  ->  Dir1 = Search,
-      Dirs = [Dir1],
-      Prefix = ''
-  ;   N > 2
-  ->  atom_codes(Search, [H1,H2|T1]),
-      atom_codes(Dir1, [H1,H2]),
-      append(T1, [0'*], T2),
-      atom_codes(Dir2, T2),
-      Dirs = [Dir1,Dir2],
-      atom_codes(Prefix, T1)
-  ),
-  lroot(Root),
-  append_dirs([Root|Dirs], Wildcard),
-  expand_file_name(Wildcard, L),
-  (L = [H] -> call(Goal_1, H) ; lcli_match(Dir1, Prefix, L)).
-
-
-
-% lcli_match(+Dir1, +Dir2, +Matches) is det.
-% Print a list of LOD Laundromat directoy matches.
-
-lcli_match(Dir1, Dir2, []) :- !,
-  lcli_print("% Nothing matches '~a/~a'~n", [Dir1,Dir2]).
-lcli_match(Dir1, Dir2, L) :-
-  lcli_print("% Multiple candidates match '~a/~a':~n", [Dir1,Dir2]),
-  lcli_match0(Dir1, Dir2, L).
-
-lcli_match0(_, _, []) :- !.
-lcli_match0(Dir1, Dir2, [H]) :- !,
-  lcli_print("%  - "),
-  lcli_print_hash(Dir1, Dir2, H),
-  nl.
-lcli_match0(Dir1, Dir2, [H1,H2|T]) :-
-  lcli_print("%  - "),
-  lcli_print_hash(Dir1, Dir2, H1),
-  lcli_print("  - "),
-  lcli_print_hash(Dir1, Dir2, H2),
-  nl,
-  lcli_match0(Dir1, Dir2, T).
-
-
 
 %! lcli_print(+Format) is det.
 %! lcli_print(+Format, +Args) is det.
@@ -140,9 +75,77 @@ lcli_print(Format, Args) :-
 
 
 
-%! lcli_print_hash(+Dir1, +Dir2, +Path) is det.
+%! lcli_print_hash(+Prefix, +Path) is det.
 
-lcli_print_hash(Dir1, Dir2, Path) :-
+lcli_print_hash(Prefix, Path) :-
+  lhash_prefix_parts(Prefix, Dir1, Dir2),
   directory_file_path(_, File, Path),
   atom_concat(Dir2, Rest, File),
   lcli_print("~a/~a|~a", [Dir1,Dir2,Rest]).
+
+
+
+%! lcli_print_hash_prefix(+Prefix) is det.
+
+lcli_print_hash_prefix(Prefix) :-
+  lhash_prefix_parts(Prefix, Dir1, Dir2),
+  lcli_print("'~a/~a'", [Dir1,Dir2]).
+
+
+
+% lfind_results(+Prefix, +Dirs) is det.
+% Print a list of LOD Laundromat directoy matches.
+
+lfind_results(Prefix, []) :- !,
+  lcli_print("% Nothing matches "),
+  lcli_print_hash_prefix(Prefix),
+  lcli_print(":"),
+  nl.
+lfind_results(Prefix, L) :-
+  lcli_print("% Multiple candidates match "),
+  lcli_print_hash_prefix(Prefix),
+  lcli_print(":"),
+  nl,
+  lfind_results0(Prefix, L).
+
+lfind_results0(_, []) :- !.
+lfind_results0(Prefix, [H]) :- !,
+  lcli_print("%  - "),
+  lcli_print_hash(Prefix, H),
+  nl.
+lfind_results0(Prefix, [H1,H2|T]) :-
+  lcli_print("%  - "),
+  lcli_print_hash(Prefix, H1),
+  lcli_print("  - "),
+  lcli_print_hash(Prefix, H2),
+  nl,
+  lfind_results0(Prefix, T).
+
+
+
+%! lhash_prefix_parts(+Prefix, -Dir1, -Dir2) is det.
+
+lhash_prefix_parts(Prefix, Dir1, Dir2) :-
+  sub_atom(Prefix, 0, 2, _, Dir1),
+  sub_atom(Prefix, 2, _, 0, Dir2).
+
+
+
+%! ll_call(+Prefix, :Goal_1) is det.
+
+ll_call(Prefix, Goal_1) :-
+  atom_length(Prefix, N),
+  (   N =:= 2
+  ->  Dir1 = Prefix,
+      Dirs1 = [Dir1]
+  ;   N > 2
+  ->  atom_codes(Prefix, [H1,H2|T1]),
+      atom_codes(Dir1, [H1,H2]),
+      append(T1, [0'*], T2),
+      atom_codes(Dir2, T2),
+      Dirs1 = [Dir1,Dir2]
+  ),
+  lroot(Root),
+  append_dirs([Root|Dirs1], Wildcard),
+  expand_file_name(Wildcard, Dirs2),
+  (Dirs2 = [Dir] -> call(Goal_1, Dir) ; lfind_results(Prefix, Dirs2)).
