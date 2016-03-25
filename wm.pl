@@ -38,6 +38,7 @@
 :- use_module(library(rdf/rdf_clean)).
 :- use_module(library(rdf/rdf_ext)).
 :- use_module(library(rdf/rdf_load)).
+:- use_module(library(rdf/rdf_print)).
 :- use_module(library(semweb/rdf11)). % Operators.
 :- use_module(library(string_ext)).
 :- use_module(library(uri/uri_ext)).
@@ -268,6 +269,6 @@ rdf_store_metadata(State, S1, M) :-
   Jsonld2 = Jsonld1.put(_{'@id': S2}),
   (debugging(wm(low)) -> json_write_dict(user_output, Jsonld2) ; true),
   forall(jsonld_tuple(Jsonld2, rdf(S,P,O)), (
-    (debugging(wm(low)) -> with_output_to(user_output, rdf_print(S, P, O, _)) ; true),
+    (debugging(wm(low)) -> with_output_to(user_output, rdf_print_triple(S, P, O)) ; true),
     with_output_to(State.meta, gen_ntriple(S, P, O))
   )).

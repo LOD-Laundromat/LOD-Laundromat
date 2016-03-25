@@ -16,10 +16,12 @@
 
 :- use_module(library(apply)).
 :- use_module(library(error)).
+:- use_module(library(gen/gen_ntuples)).
 :- use_module(library(lists)).
 :- use_module(library(os/dir_ext)).
 :- use_module(library(print_ext)).
-:- use_module(library(rdf/rdf_ext)).
+:- use_module(library(rdf/rdf_print)).
+:- use_module(library(semweb/rdf11)).
 
 :- use_module(cpack('LOD-Laundromat'/lfs)).
 :- use_module(cpack('LOD-Laundromat'/lhdt)).
@@ -71,7 +73,7 @@ lq(Name, S, P, O, Dir) :-
   ldir_ldoc(Dir, Name, Doc),
   % NONDET
   findnsols(10, rdf(S,P,O), lhdt(S, P, O, Doc), Triples),
-  maplist(rdf_print, Triples).
+  rdf_print_triples(Triples).
 
 
 

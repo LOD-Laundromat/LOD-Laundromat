@@ -57,6 +57,13 @@ hdt_search0(S, P, O, Hdt) :- hdt_search(Hdt, S, P, O).
 
 
 
+%! lhdt_build(+Doc) is det.
+
+lhdt_build(Doc) :-
+  ldoc_lhash(Doc, Name, Hash),
+  lhdt_build(Hash, Name).
+
+
 %! lhdt_build(+Hash, +Name) is det.
 
 lhdt_build(Hash, meta) :- !,
@@ -158,11 +165,15 @@ ensure_ntriples(Dir, From, To) :-
 
 lhdt_setup_call_cleanup(Doc, Goal_1) :-
   ldoc_lfile(Doc, hdt, File),
-  access_file(File, read),
-  setup_call_cleanup(
-    hdt_open(Hdt, File),
-    call(Goal_1, Hdt),
-    hdt_close(Hdt)
+  (   exists_file(File)
+  ->  access_file(File, read),
+      setup_call_cleanup(
+        hdt_open(Hdt, File),
+        call(Goal_1, Hdt),
+        hdt_close(Hdt)
+      )
+  ;   lhdt_build(Doc),
+      lhdt_setup_call_cleanup(Doc, Goal_1)
   ).
 
 

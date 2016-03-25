@@ -25,41 +25,41 @@
 
 
 debug_cleaning:-
-  cleaning(Document),
-  print_document_overview(Document).
+  cleaning(Doc),
+  print_document_overview(Doc).
 
 debug_pending:-
-  pending(Document, Download),
+  pending(Doc, Download),
   format("Dirty:\t~a\n", [Download]),
-  print_document_overview(Document).
+  print_document_overview(Doc).
 
 debug_unpacked:-
-  unpacked(_, _, Document, Size),
+  unpacked(_, _, Doc, Size),
   format("Size:\t~D~n", [Size]),
-  print_document_overview(Document).
+  print_document_overview(Doc).
 
 debug_unpacking:-
-  unpacking(Document),
-  print_document_overview(Document).
+  unpacking(Doc),
+  print_document_overview(Doc).
 
 
-print_document_overview(Document):-
+print_document_overview(Doc):-
   forall(
-    document_archive_entry(Document, EntryPath),
+    document_archive_entry(Doc, EntryPath),
     format("Entry path:\t~a~n", [EntryPath])
   ),
 
-  (   document_content_type(Document, ContentType)
+  (   document_content_type(Doc, ContentType)
   ->  format("Content-Type:\t~a~n", [ContentType])
   ;   true
   ),
 
-  rdf_print_describe(Document),
+  rdf_print_triples(_, _, _, Doc),
 
-  (   document_file_extension(Document, Ext)
+  (   document_file_extension(Doc, Ext)
   ->  format("File extension:\t~a~n", [Ext])
   ;   true
   ),
 
-  document_source(Document, Source),
+  document_source(Doc, Source),
   format("Source:\t~a~n", [Source]).
