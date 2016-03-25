@@ -8,7 +8,8 @@
     lhdt_delete/1,      % +Hash
     lhdt_delete/2,      % +Hash, +Name
     lhdt_header/4,      % ?S, ?P, ?O, ?Doc
-    lhdt_print/4        % ?S, ?P, ?O, ?Doc
+    lhdt_print/4,       % ?S, ?P, ?O, ?Doc
+    lhdt_print/5        % ?S, ?P, ?O, ?Doc, +Opts
   ]
 ).
 
@@ -99,26 +100,16 @@ lhdt_build0(Hash, Name, BaseIri) :-
 
 %! lhdt_data_table(?S, ?P, ?O, ?Doc, +Opts)// is det.
 % The following options are supported:
-%   - page(+nonneg)
-%     Default is 1.
 %   - page_size(+nonneg)
 %     Default is 100.
+%   - start_page(+nonneg)
+%     Default is 1.
 
-lhdt_data_table(S, P, O, Doc, Opts1) -->
-  {
-    mod_dict(page_size, Opts1, 100, PageSize, Opts2),
-    lhdt_triples(Doc, NumTriples),
-    NumPages is ceil(NumTriples / PageSize),
-    mod_dict(page, Opts2, 1, Page, Opts3),
-    put_dict(page0, Opts3, 0, Opts4),
-    % NONDET
-    findnsols(PageSize, rdf(S,P,O), lhdt(S, P, O, Doc), Triples),
-    dict_inc(page0, Opts4),
-    (Opts4.page0 =:= Page -> !, true ; false)
-  },
-  rdfh_triple_table(Triples),
-  bs_pagination(NumPages, 3).
-
+lhdt_data_table(S, P, O, Doc, Opts) -->
+  {lhdt_page(S, P, O, Doc, Opts, Result)},
+  rdfh_triple_table(Result.triples),
+  bs_pagination(Result.number_of_pages, Result.page).
+  
 
 
 %! lhdt_delete(+Hash) is det.
@@ -148,11 +139,18 @@ hdt_header0(S, P, O, Hdt) :- hdt_header(Hdt, S, P, O).
 
 
 %! lhdt_print(?S, ?P, ?O, ?Doc) is nondet.
+%! lhdt_print(?S, ?P, ?O, ?Doc, +Opts) is nondet.
+% The following keys are defined for Opts:
+%   - page_size
+%   - start_page
 
 lhdt_print(S, P, O, Doc) :-
-  % NONDET
-  findnsols(10, rdf(S,P,O), lhdt(S, P, O, Doc), Triples),
-  rdf_print_triples(Triples).
+  lhdt_print(S, P, O, Doc, _{}).
+
+
+lhdt_print(S, P, O, Doc, Opts) :-
+  lhdt_page(S, P, O, Doc, Opts, Result),
+  rdf_print_triples(Result.triples).
 
 
 
@@ -169,6 +167,38 @@ ensure_ntriples(Dir, From, To) :-
     with_output_to(Sink, rdf_call_on_tuples(From, gen_nquad)),
     close(Sink)
   ).
+
+
+
+%! lhdt_page(?S, ?P, ?O, ?Doc, +Opts, -Result) is nondet.
+% The following keys are defined for Opts:
+%   - page_size
+%   - start_page
+%
+% The following keys are defined for Results:
+%   - number_of_pages
+%   - number_of_triples
+%   - number_of_triples_on_page
+%   - page
+%   - triples
+
+lhdt_page(S, P, O, Doc, Opts1, Result) :-
+  mod_dict(page_size, Opts1, 100, PageSize, Opts2),
+  lhdt_triples(Doc, NumTriples),
+  NumPages is ceil(NumTriples / PageSize),
+  mod_dict(start_page, Opts2, 1, StartPage, Opts3),
+  put_dict(page0, Opts3, 0, Opts4),
+  % NONDET
+  findnsols(PageSize, rdf(S,P,O), lhdt(S, P, O, Doc), Triples),
+  dict_inc(page0, Opts4),
+  (Opts4.page0 >= StartPage -> true ; false),
+  Result = _{
+    all_pages: NumPages,
+    all_triples: NumTriples,
+    page: Opts4.page0,
+    page_triples: PageSize,
+    triples: Triples
+  }.
 
 
 

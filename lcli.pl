@@ -3,7 +3,8 @@
   [
     ll/0,
     ll/1, % +Prefix
-    ll/2  % +Prefix, +Name
+    ll/2, % +Prefix, +Name
+    ll/3  % +Prefix, +Name, +Opts
   ]
 ).
 
@@ -34,6 +35,7 @@
 %! ll is det.
 %! ll(+Prefix) is det.
 %! ll(+Prefix, +Name) is det.
+%! ll(+Prefix, +Name, +Opts) is det.
 
 ll :-
   lroot(Dir),
@@ -51,11 +53,15 @@ ll1(Prefix, Dir) :-
 
 
 ll(Prefix, Name) :-
-  ll_call(Prefix, ll2(Name)).
+  ll(Prefix, Name, _{}).
 
-ll2(Name, Dir) :-
+
+ll(Prefix, Name, Opts) :-
+  ll_call(Prefix, ll2(Name, Opts)).
+
+ll2(Name, Opts, Dir) :-
   ldir_ldoc(Dir, Name, Doc),
-  lhdt_print(_, _, _, Doc).
+  lhdt_print(_, _, _, Doc, Opts).
 
 
 
