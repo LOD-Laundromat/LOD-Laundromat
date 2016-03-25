@@ -1,14 +1,13 @@
 :- module(
-  laundromat_hdt,
+  lhdt,
   [
     lhdt/3,             % ?S, ?P, ?O
-    lhdt/4,             % ?S, ?P, ?O, ?Hash
+    lhdt/4,             % ?S, ?P, ?O, ?Doc
     lhdt_build/2,       % +Hash, +Name
-    lhdt_build/3,       % +Hash, +Name, ?BaseIri
-    lhdt_data_table//5, % ?S, ?P, ?O, ?Hash, +Opts
+    lhdt_data_table//5, % ?S, ?P, ?O, ?Doc, +Opts
     lhdt_delete/1,      % +Hash
     lhdt_delete/2,      % +Hash, +Name
-    lhdt_header/4       % ?S, ?P, ?O, ?Hash
+    lhdt_header/4       % ?S, ?P, ?O, ?Doc
   ]
 ).
 
@@ -29,49 +28,51 @@
 :- use_module(library(rdf/rdf_load)).
 :- use_module(library(semweb/rdf11)).
 
-:- use_module(cpack('LOD-Laundromat'/laundromat_fs)).
+:- use_module(cpack('LOD-Laundromat'/lfs)).
 
 :- meta_predicate
     lhdt_setup_call_cleanup(+, 1).
 
 :- rdf_meta
    lhdt(r, r, o),
-   lhdt(r, r, o, ?),
+   lhdt(r, r, o, r),
    lhdt_build(+, +, r),
-   lhdt_header(r, r, o, ?),
-   lhdt_data_table(r, r, o, ?).
+   lhdt_header(r, r, o, r),
+   lhdt_data_table(r, r, o, r, +, ?, ?).
 
 
 
 
 
 %! lhdt(?S, ?P, ?O) is nondet.
-%! lhdt(?S, ?P, ?O, ?Hash) is nondet.
+%! lhdt(?S, ?P, ?O, ?Doc) is nondet.
 
 lhdt(S, P, O) :-
   lhdt(S, P, O, _).
 
 
-lhdt(S, P, O, Hash) :-
-  lhdt_setup_call_cleanup(Hash, hdt_search0(S, P, O)).
+lhdt(S, P, O, Doc) :-
+  lhdt_setup_call_cleanup(Doc, hdt_search0(S, P, O)).
 hdt_search0(S, P, O, Hdt) :- hdt_search(Hdt, S, P, O).
 
 
 
 %! lhdt_build(+Hash, +Name) is det.
-%! lhdt_build(+Hash, +Name, +BaseIri) is det.
 
+lhdt_build(Hash, meta) :- !,
+  lhdt_build0(Hash, meta, _).
 lhdt_build(Hash, Name) :-
-  lhdt_build(Hash, meta, _),
-  lfile_lhash(File, meta, hdt, Hash),
-  lhdt(_, llo:base_iri, BaseIri^^xsd:anyURI, File),
-  lhdt_build(Hash, Name, BaseIri).
+  % Make sure the metadata is converted to HDT.
+  lhdt_build(Hash, meta),
+  ldoc_lhash(Doc, meta, Hash),
+  once(lhdt(_, llo:base_iri, BaseIri^^xsd:anyURI, Doc)),
+  lhdt_build0(Hash, Name, BaseIri).
 
 
-lhdt_build(Hash, Name, BaseIri) :-
+lhdt_build0(Hash, Name, BaseIri) :-
   lfile_lhash(HdtFile, Name, hdt, Hash),
   (   exists_file(HdtFile)
-  ->  true
+  ->  msg_notification("File ~a already exists.~n", [HdtFile])
   ;   lfile_lhash(NQuadsFile, Name, nquads, Hash),
       access_file(NQuadsFile, read)
   ->  ldir_lhash(Dir, Hash),
@@ -86,21 +87,20 @@ lhdt_build(Hash, Name, BaseIri) :-
 
 
 
-%! lhdt_data_table(?S, ?P, ?O, ?Hash, +Opts)// is det.
+%! lhdt_data_table(?S, ?P, ?O, ?Doc, +Opts)// is det.
 % The following options are supported:
 %   - page(+nonneg)
 %     Default is 1.
 %   - page_size(+nonneg)
 %     Default is 100.
 
-lhdt_data_table(S, P, O, Hash, Opts1) -->
+lhdt_data_table(S, P, O, Doc, Opts1) -->
   {
     mod_dict(page_size, Opts1, 100, PageSize, Opts2),
-    lhdt_triples(Hash, NumTriples),
+    lhdt_triples(Doc, NumTriples),
     NumPages is ceil(NumTriples / PageSize),
     mod_dict(page, Opts2, 1, Page, Opts3),
     put_dict(page0, Opts3, 0, Opts4),
-    ldoc_lhash(Doc, data, Hash),
     % NONDET
     findnsols(PageSize, rdf(S,P,O), lhdt(S, P, O, Doc), Triples),
     dict_inc(page0, Opts4),
@@ -115,7 +115,7 @@ lhdt_data_table(S, P, O, Hash, Opts1) -->
 %! lhdt_delete(+Hash, +Name) is det.
 
 lhdt_delete(Hash) :-
-  forall(laundromat_fs:lname(Name), lhdt_delete(Hash, Name)).
+  forall(lname(Name), lhdt_delete(Hash, Name)).
 
 
 lhdt_delete(Hash, Name) :-
@@ -125,14 +125,14 @@ lhdt_delete(Hash, Name) :-
 
 
 %! lhdt_header(?S, ?P, ?O) is nondet.
-%! lhdt_header(?S, ?P, ?O, ?Hash) is nondet.
+%! lhdt_header(?S, ?P, ?O, ?Doc) is nondet.
 
 lhdt_header(S, P, O) :-
   lhdt_header(S, P, O, _).
 
 
-lhdt_header(S, P, O, Hash) :-
-  lhdt_setup_call_cleanup(Hash, hdt_header0(S, P, O)).
+lhdt_header(S, P, O, Doc) :-
+  lhdt_setup_call_cleanup(Doc, hdt_header0(S, P, O)).
 hdt_header0(S, P, O, Hdt) :- hdt_header(Hdt, S, P, O).
 
 
@@ -153,11 +153,11 @@ ensure_ntriples(Dir, From, To) :-
 
 
 
-%! lhdt_setup_call_cleanup(+Hash, :Goal_1) is det.
-%! lhdt_setup_call_cleanup(-Hash, :Goal_1) is nondet.
+%! lhdt_setup_call_cleanup(+Doc, :Goal_1) is det.
+%! lhdt_setup_call_cleanup(-Doc, :Goal_1) is nondet.
 
-lhdt_setup_call_cleanup(Hash, Goal_1) :-
-  lfile_lhash(File, data, hdt, Hash),
+lhdt_setup_call_cleanup(Doc, Goal_1) :-
+  ldoc_lfile(Doc, hdt, File),
   access_file(File, read),
   setup_call_cleanup(
     hdt_open(Hdt, File),
@@ -167,12 +167,9 @@ lhdt_setup_call_cleanup(Hash, Goal_1) :-
 
 
 
-%! lhdt_triples(+Hash, -NumTriples) is det.
+%! lhdt_triples(+Doc, -NumTriples) is det.
 
-lhdt_triples(Hash, NumTriples) :-
-  lhdt_header(
-    _,
-    '<http://rdfs.org/ns/void#triples>',
-    NumTriples^^xsd:integer,
-    Hash
+lhdt_triples(Doc, N) :-
+  once(
+    lhdt_header(_, '<http://rdfs.org/ns/void#triples>', N^^xsd:integer, Doc)
   ).

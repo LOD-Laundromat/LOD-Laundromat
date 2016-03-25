@@ -1,4 +1,4 @@
-:- module(washing_machine_http, []).
+:- module(wm_http, []).
 
 /** <module> HTTP API on top of the Washing Machine
 
@@ -37,10 +37,10 @@
 :- use_module(library(string_ext)).
 :- use_module(library(uri/uri_ext)).
 
+:- use_module(cpack('LOD-Laundromat'/lfs)).
+:- use_module(cpack('LOD-Laundromat'/lhdt)).
 :- use_module(cpack('LOD-Laundromat'/seedlist)).
-:- use_module(cpack('LOD-Laundromat'/laundromat_fs)).
-:- use_module(cpack('LOD-Laundromat'/laundromat_hdt)).
-:- use_module(cpack('LOD-Laundromat'/washing_machine)).
+:- use_module(cpack('LOD-Laundromat'/wm)).
 
 :- rdf_register_prefix(data, 'http://cliopatria.lod.labs.vu.nl/data/').
 :- rdf_register_prefix(meta, 'http://cliopatria.lod.labs.vu.nl/meta/').
@@ -119,7 +119,7 @@ $(document).ready( function () {
   })
 });
       |}),
-      \washing_machines
+      \wm_table
     ]
   ).
 datas_mediatype(post, application/json) :- !,
@@ -136,7 +136,7 @@ metas_mediatype(get, text/html) :-
     p("test")
   ).
 
-washing_machines -->
+wm_table -->
   {
     aggregate_all(
       set([Alias,Global,Local]),

@@ -1,5 +1,5 @@
 :- module(
-  washing_machine,
+  wm,
   [
     add_wm/0,
     add_wms/1,        % +N
@@ -43,8 +43,8 @@
 :- use_module(library(uri/uri_ext)).
 :- use_module(library(zlib)).
 
-:- use_module(cpack('LOD-Laundromat'/laundromat_fs)).
-:- use_module(cpack('LOD-Laundromat'/laundromat_hdt)).
+:- use_module(cpack('LOD-Laundromat'/lfs)).
+:- use_module(cpack('LOD-Laundromat'/lhdt)).
 :- use_module(cpack('LOD-Laundromat'/seedlist)).
 
 prolog_stack:stack_guard('C').
