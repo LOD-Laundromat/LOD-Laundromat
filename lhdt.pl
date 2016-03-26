@@ -150,7 +150,7 @@ lhdt_print(S, P, O, Doc) :-
 
 lhdt_print(S, P, O, Doc, Opts) :-
   lhdt_page(S, P, O, Doc, Opts, Result),
-  rdf_print_triples(Result.triples).
+  rdf_print_triples(Result.triples, Opts).
 
 
 
@@ -178,7 +178,7 @@ ensure_ntriples(Dir, From, To) :-
 % The following keys are defined for Results:
 %   - number_of_pages
 %   - number_of_triples
-%   - number_of_triples_on_page
+%   - number_of_triples_per_page
 %   - page
 %   - triples
 
@@ -193,10 +193,10 @@ lhdt_page(S, P, O, Doc, Opts1, Result) :-
   dict_inc(page0, Opts4),
   (Opts4.page0 >= StartPage -> true ; false),
   Result = _{
-    all_pages: NumPages,
-    all_triples: NumTriples,
+    number_of_pages: NumPages,
+    number_of_triples: NumTriples,
+    number_of_triples_per_page: PageSize,
     page: Opts4.page0,
-    page_triples: PageSize,
     triples: Triples
   }.
 
