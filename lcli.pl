@@ -4,7 +4,9 @@
     ll/0,
     ll/1, % +Prefix
     ll/2, % +Prefix, +Name
-    ll/3  % +Prefix, +Name, +Opts
+    ll/3, % +Prefix, +Name, +Opts
+    ll/5, % +Prefix, +Name, ?S, ?P, ?O
+    ll/6  % +Prefix, +Name, ?S, ?P, ?O, +Opts
   ]
 ).
 
@@ -20,6 +22,7 @@
 :- use_module(library(lists)).
 :- use_module(library(os/dir_ext)).
 :- use_module(library(print_ext)).
+:- use_module(library(rdf/rdf_print)).
 :- use_module(library(semweb/rdf11)).
 
 :- use_module(cpack('LOD-Laundromat'/lfs)).
@@ -28,6 +31,10 @@
 :- meta_predicate
     ll_call(+, 1).
 
+:- rdf_meta
+   ll(+, +, r, r, o),
+   ll(+, +, r, r, o, +).
+
 
 
 
@@ -35,7 +42,8 @@
 %! ll is det.
 %! ll(+Prefix) is det.
 %! ll(+Prefix, +Name) is det.
-%! ll(+Prefix, +Name, +Opts) is det.
+%! ll(+Prefix, +Name, ?S, ?P, ?O) is nondet.
+%! ll(+Prefix, +Name, ?S, ?P, ?O, +Opts) is nondet.
 
 ll :-
   lroot(Dir),
@@ -45,6 +53,23 @@ ll :-
 ll(Prefix) :-
   ll_call(Prefix, ll1(Prefix)).
 
+
+ll(Prefix, Name) :-
+  ll(Prefix, Name, _{}).
+
+
+ll(Prefix, Name, Opts) :-
+  ll(Prefix, Name, _, _, _, Opts).
+
+
+ll(Prefix, Name, S, P, O) :-
+  ll(Prefix, Name, S, P, O, _{}).
+
+
+ll(Prefix, Name, S, P, O, Opts) :-
+  ll_call(Prefix, ll2(Name, S, P, O, Opts)).
+
+
 ll1(Prefix, Dir) :-
   lcli_print("The contents for "),
   lcli_print_hash(Prefix, Dir),
@@ -52,16 +77,18 @@ ll1(Prefix, Dir) :-
   ls(Dir).
 
 
-ll(Prefix, Name) :-
-  ll(Prefix, Name, _{}).
-
-
-ll(Prefix, Name, Opts) :-
-  ll_call(Prefix, ll2(Name, Opts)).
-
-ll2(Name, Opts, Dir) :-
+ll2(Name, S, P, O, Opts, Dir) :-
   ldir_ldoc(Dir, Name, Doc),
-  lhdt_print(_, _, _, Doc, Opts).
+  lhdt_page(S, P, O, Doc, Opts, Result),
+  rdf_print_triples(Result.triples, Opts),
+  nl,
+  (   maplist(var, [S,P,O])
+  ->  I2 is Result.page * Result.number_of_triples_per_page,
+      I1 is I2 - Result.number_of_triples_per_page + 1,
+      I0 is Result.number_of_triples,
+      lcli_print("Showing triples ~D--~D (total ~D)~n", [I1,I2,I0])
+  ;   true
+  ).
 
 
 

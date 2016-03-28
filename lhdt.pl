@@ -4,12 +4,14 @@
     lhdt/3,             % ?S, ?P, ?O
     lhdt/4,             % ?S, ?P, ?O, ?Doc
     lhdt_build/2,       % +Hash, +Name
+    lhdt_cost/5,        % ?S, ?P, ?O, +Doc, -Cost
     lhdt_data_table//5, % ?S, ?P, ?O, ?Doc, +Opts
     lhdt_delete/1,      % +Hash
     lhdt_delete/2,      % +Hash, +Name
     lhdt_header/4,      % ?S, ?P, ?O, ?Doc
-    lhdt_print/4,       % ?S, ?P, ?O, ?Doc
-    lhdt_print/5        % ?S, ?P, ?O, ?Doc, +Opts
+    lhdt_page/6,        % ?S, ?P, ?O, +Doc, +Opts, -Result
+    lhdt_print/4,       % ?S, ?P, ?O, +Doc
+    lhdt_print/5        % ?S, ?P, ?O, +Doc, +Opts
   ]
 ).
 
@@ -40,6 +42,7 @@
    lhdt(r, r, o),
    lhdt(r, r, o, r),
    lhdt_build(+, +, r),
+   lhdt_cost(r, r, o, r, -),
    lhdt_header(r, r, o, r),
    lhdt_data_table(r, r, o, r, +, ?, ?),
    lhdt_print(r, r, o, r).
@@ -98,6 +101,14 @@ lhdt_build0(Hash, Name, BaseIri) :-
 
 
 
+%! lhdt_cost(?S, ?P, ?O, +Doc, -Cost) is det.
+
+lhdt_cost(S, P, O, Doc, Cost) :-
+  lhdt_setup_call_cleanup(Doc, hdt_search_cost0(S, P, O, Cost)).
+hdt_search_cost0(S, P, O, Cost, Hdt) :- hdt_search_cost(Hdt, S, P, O, Cost).
+
+
+
 %! lhdt_data_table(?S, ?P, ?O, ?Doc, +Opts)// is det.
 % The following options are supported:
 %   - page_size(+nonneg)
@@ -138,44 +149,13 @@ hdt_header0(S, P, O, Hdt) :- hdt_header(Hdt, S, P, O).
 
 
 
-%! lhdt_print(?S, ?P, ?O, ?Doc) is nondet.
-%! lhdt_print(?S, ?P, ?O, ?Doc, +Opts) is nondet.
-% The following keys are defined for Opts:
-%   - page_size
-%   - start_page
-
-lhdt_print(S, P, O, Doc) :-
-  lhdt_print(S, P, O, Doc, _{}).
-
-
-lhdt_print(S, P, O, Doc, Opts) :-
-  lhdt_page(S, P, O, Doc, Opts, Result),
-  rdf_print_triples(Result.triples, Opts).
-
-
-
-
-
-% HELPERS %
-
-%! ensure_ntriples(+Dir, +From, -To) is det.
-
-ensure_ntriples(Dir, From, To) :-
-  directory_file_path(Dir, 'data.nt', To),
-  setup_call_cleanup(
-    open(To, write, Sink),
-    with_output_to(Sink, rdf_call_on_tuples(From, gen_nquad)),
-    close(Sink)
-  ).
-
-
-
-%! lhdt_page(?S, ?P, ?O, ?Doc, +Opts, -Result) is nondet.
+%! lhdt_page(?S, ?P, ?O, +Doc, +Opts, -Result) is nondet.
 % The following keys are defined for Opts:
 %   - page_size
 %   - start_page
 %
 % The following keys are defined for Results:
+%   - number_for_pattern
 %   - number_of_pages
 %   - number_of_triples
 %   - number_of_triples_per_page
@@ -199,6 +179,37 @@ lhdt_page(S, P, O, Doc, Opts1, Result) :-
     page: Opts4.page0,
     triples: Triples
   }.
+
+
+
+%! lhdt_print(?S, ?P, ?O, +Doc) is nondet.
+%! lhdt_print(?S, ?P, ?O, +Doc, +Opts) is nondet.
+% The following keys are defined for Opts:
+%   - page_size
+%   - start_page
+
+lhdt_print(S, P, O, Doc) :-
+  lhdt_print(S, P, O, Doc, _{}).
+
+
+lhdt_print(S, P, O, Doc, Opts) :-
+  lhdt_page(S, P, O, Doc, Opts, Result),
+  rdf_print_triples(Result.triples, Opts).
+
+
+
+
+% HELPERS %
+
+%! ensure_ntriples(+Dir, +From, -To) is det.
+
+ensure_ntriples(Dir, From, To) :-
+  directory_file_path(Dir, 'data.nt', To),
+  setup_call_cleanup(
+    open(To, write, Sink),
+    with_output_to(Sink, rdf_call_on_tuples(From, gen_nquad)),
+    close(Sink)
+  ).
 
 
 
