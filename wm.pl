@@ -7,6 +7,7 @@
     clean_iri/1,      % +Iri
     current_wm/1,     % ?Alias
     number_of_wms/1,  % -N
+    reset/0,
     reset/1,          % +Hash
     reset_and_clean/1 % +Hash
   ]
@@ -30,7 +31,9 @@
 :- use_module(library(http/json)).
 :- use_module(library(jsonld/jsonld_metadata)).
 :- use_module(library(jsonld/jsonld_read)).
+:- use_module(library(os/dir_ext)).
 :- use_module(library(os/open_any2)).
+:- use_module(library(os/process_ext)).
 :- use_module(library(os/thread_ext)).
 :- use_module(library(pl/pl_term)).
 :- use_module(library(print_ext)).
@@ -182,6 +185,17 @@ current_wm(Alias) :-
 number_of_wms(N) :-
   aggregate_all(count, current_wm(_), N).
 
+
+
+%! reset is det.
+% Reset the LOD Laundromat.  This removes all data files and resets the
+% seedlist.
+
+reset :-
+  lroot(Root),
+  forall(direct_subdir(Root, Subdir), delete_directory_and_contents(Subdir)),
+  absolute_file_name(cpack('LOD-Laundromat'), Dir, [file_type(directory)]),
+  run_process(git, ['checkout','seedlist.db'], [cwd(Dir)]).
 
 
 %! reset(+Hash) is det.
