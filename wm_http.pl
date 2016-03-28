@@ -37,6 +37,7 @@
 :- use_module(library(string_ext)).
 :- use_module(library(uri/uri_ext)).
 
+:- use_module(cpack('LOD-Laundromat'/lclean)).
 :- use_module(cpack('LOD-Laundromat'/lfs)).
 :- use_module(cpack('LOD-Laundromat'/lhdt)).
 :- use_module(cpack('LOD-Laundromat'/seedlist)).
