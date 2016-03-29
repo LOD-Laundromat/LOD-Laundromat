@@ -4,7 +4,7 @@
     ll/0,
     ll/1, % +Prefix
     ll/2, % +Prefix, +Name
-    ll/3, % +Prefix, +Name, +Opts
+    ll/3, % +Prefix, +Name,             +Opts
     ll/5, % +Prefix, +Name, ?S, ?P, ?O
     ll/6  % +Prefix, +Name, ?S, ?P, ?O, +Opts
   ]

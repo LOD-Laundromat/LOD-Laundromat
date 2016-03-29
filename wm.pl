@@ -118,15 +118,14 @@ start_wm0 :-
   wm0(_{idle: 0}).
 
 wm0(State) :-
+  % Clean one -- arbitrarily chosen -- seed.
+  clean, !,
   number_of_wms(N),
   debug(wm(thread), "~D washing machines are currently active.", [N]),
-  (   % Clean one -- arbitrarily chosen -- seed.
-      clean
-  ->  M = 1,
-      sleep(M),
-      thread_name(Alias),
-      dict_inc(idle, State, N),
-      S is M * N,
-      debug(wm(idle), "ZZZZ Thread ~w idle ~D sec.", [Alias,S])
-  ),
+  wm0(State).
+wm0(State) :-
+  sleep(1),
+  dict_inc(idle, State, N),
+  thread_name(Alias),
+  debug(wm(idle), "ZZZZ Thread ~w idle ~D sec.", [Alias,N]),
   wm0(State).

@@ -130,7 +130,7 @@ currently_debugging(Hash, Iri) :-
   currently_debugging0(Hash), !,
   ansi_format(user_output, [bold], "~a ~a", [Hash,Iri]),
   gtrace. %DEB
-currently_debugging(_).
+currently_debugging(_, _).
 
 
 
