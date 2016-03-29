@@ -97,31 +97,7 @@ datas_mediatype(get, text/html) :-
   string_list_concat(["LOD Laundromat","Documents"], " - ", Title),
   reply_html_page(cliopatria(default),
     [title(Title),\html_requires(dataTables)],
-    [
-      h1("Documents"),
-      \tuple_counter,
-      table([class=display,id=table_id],
-        thead(
-          tr([
-            th("Document"),
-            th("Last modified"),
-            th("End status"),
-            th("Tuples"),
-            th("Number of warnings"),
-            th("HTTP status"),
-            th("RDF format")
-          ])
-        )
-      ),
-      \js_script({|javascript(_)||
-$(document).ready( function () {
-  $.ajax({"contentType": "application/json", "dataType": "json", "type": "GET", "url": "data"}).then(function(data) {
-    $('#table_id').DataTable({ data: data });
-  })
-});
-      |}),
-      \wm_table
-    ]
+    [\wm_table]
   ).
 datas_mediatype(post, application/json) :- !,
   http_read_json_dict(Data),
@@ -137,22 +113,52 @@ metas_mediatype(get, text/html) :-
     p("test")
   ).
 
+
+
+ldoc_table -->
+  html([
+    h1("Documents"),
+    \tuple_counter,
+    table([class=display,id=table_id],
+      thead(
+        tr([
+          th("Document"),
+          th("Last modified"),
+          th("End status"),
+          th("Tuples"),
+          th("Number of warnings"),
+          th("HTTP status"),
+          th("RDF format")
+        ])
+      )
+    ),
+    \js_script({|javascript(_)||
+$(document).ready( function () {
+  $.ajax({"contentType": "application/json", "dataType": "json", "type": "GET", "url": "data"}).then(function(data) {
+    $('#table_id').DataTable({ data: data });
+  })
+});
+    |})
+  ]).
+
+
+
 wm_table -->
   {
-    aggregate_all(
-      set([Alias,Global,Local]),
+    findall(
+      Global-[Alias,Global,Hash],
       (
-        current_wm(Alias),
-        thread_statistics(Alias, global, Global),
-        thread_statistics(Alias, local, Local)
+        current_wm(Alias, Hash),
+        thread_statistics(Alias, global, Global)
       ),
-      Rows
-    )
+      Pairs
+    ),
+    desc_pairs_values(Pairs, Rows)
   },
   html([
     h1("Washing Machines"),
     \bs_table(
-      \bs_table_header(["Washing Machine","Global","Local"]),
+      \bs_table_header(["Washing Machine","Global","Hash"]),
       \html_maplist(bs_table_row, Rows)
     )
   ]).

@@ -56,8 +56,8 @@
     currently_debugging0/1.
 
 % Seems to have been cleaned multiple times.  Maybe archived entries?
+currently_debugging0('020635c9a458946c8f4a5591de5f69c7').
 currently_debugging0('07ecaef4979684bfa4507ecc28b54461').
-
 
 
 
@@ -83,7 +83,7 @@ clean_seed(Hash, Iri) :-
 clean_seed0(Hash, Iri) :-
   ldir_lhash(Dir, Hash),
   ldoc_lhash(Doc, data, Hash),
-  with_mutex(wm, make_directory_path(Dir)),
+  with_mutex(lfs, make_directory_path(Dir)),
   ldir_lfile(Dir, data, nquads, DataFile),
   ldir_lfile(Dir, meta, nquads, MetaFile),
   ldir_lfile(Dir, warn, nquads, WarnFile),
@@ -95,10 +95,10 @@ clean_seed0(Hash, Iri) :-
     (
       State = _{meta: MetaSink, warn: WarnSink, warns: 0},
       CleanOpts = [compress(gzip),metadata(M1),relative_to(Dir),sort_dir(Dir),warn(WarnSink)],
-      currently_debugging(Hash),
+      currently_debugging(Hash, Iri),
       rdf_store_messages(State, Doc, rdf_clean(Iri, DataFile, CleanOpts), M2),
       (var(M1) -> M = M2 ; M = M1),
-      (var(M) -> format(user_output, "~w~n", [Hash]) ; true),
+      (var(M) -> format(user_output, "~w~n", [Hash]) ; true), %DEB?
       rdf_store_metadata(State, Doc, M)
     ),
     (
@@ -110,8 +110,9 @@ clean_seed0(Hash, Iri) :-
   %absolute_file_name('dirty.gz', DirtyTo, Opts),
   %call_collect_messages(rdf_download_to_file(Iri, DirtyTo, [compress(gzip)])),
 
-currently_debugging(Hash) :-
+currently_debugging(Hash, Iri) :-
   currently_debugging0(Hash), !,
+  ansi_format(user_output, [bold], "~a ~a", [Hash,Iri]),
   gtrace. %DEB
 currently_debugging(_).
 
@@ -136,7 +137,7 @@ reset(Hash) :-
 
   % Step 2: Remove the data and metadata files from disk.
   ldir_lhash(Dir, Hash),
-  with_mutex(wm, (
+  with_mutex(lfs, (
     (exists_directory(Dir) -> delete_directory_and_contents(Dir) ; true)
   )),
 
