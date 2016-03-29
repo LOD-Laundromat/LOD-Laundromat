@@ -1,10 +1,12 @@
 :- module(
   lclean,
   [
-    clean/1,          % +Hash
-    clean_iri/1,      % +Iri
-    reset/1,          % +Hash
-    reset_and_clean/1 % +Hash
+    clean/0,
+    clean/1,           % +Hash
+    clean_iri/1,       % +Iri
+    reset/1,           % +Hash
+    reset_and_clean/1, % +Hash
+    thread_seed/2      % ?Alias, ?Hash
   ]
 ).
 
@@ -53,12 +55,20 @@
    rdf_store_messages(+, r, :, -).
 
 :- dynamic
-    currently_debugging0/1.
+    currently_debugging0/1,
+    thread_seed0/2.
 
-% Seems to have been cleaned multiple times.  Maybe archived entries?
-currently_debugging0('020635c9a458946c8f4a5591de5f69c7').
-currently_debugging0('07ecaef4979684bfa4507ecc28b54461').
+%%%%currently_debugging0('07ecaef4979684bfa4507ecc28b54461').
 
+
+
+
+
+%! clean is det.
+% Clean an -- arbitrarily chosen - seed.
+
+clean :-
+  clean(_, _).
 
 
 %! clean(+Hash) is det.
@@ -72,15 +82,21 @@ clean(Hash) :-
   exists_file(File), !,
   msg_notification("Already cleaned ~a", [Hash]).
 clean(Hash) :-
-  clean_seed(Hash, _).
+  clean(Hash, _).
 
 
-clean_seed(Hash, Iri) :-
+%! clean(?Hash, ?Iri) is det.
+
+clean(Hash, Iri) :-
   begin_seed(Hash, Iri),
-  clean_seed0(Hash, Iri),
+  thread_name(Alias),
+  thread_seed_update(Alias, Hash),
+  debug(lclean, "~a is cleaning ~a ~a", [Alias,Hash,Iri]),
+  clean_inner(Hash, Iri),
+  debug(lclean, "~a has cleaned ~a ~a", [Alias,Hash,Iri]),
   end_seed(Hash).
 
-clean_seed0(Hash, Iri) :-
+clean_inner(Hash, Iri) :-
   ldir_lhash(Dir, Hash),
   ldoc_lhash(Doc, data, Hash),
   with_mutex(lfs, make_directory_path(Dir)),
@@ -125,7 +141,7 @@ currently_debugging(_).
 clean_iri(I1) :-
   iri_normalized(I1, I2),
   md5(I2, Hash),
-  clean_seed(Hash, I2).
+  clean(Hash, I2).
 
 
 
@@ -151,6 +167,29 @@ reset(Hash) :-
 reset_and_clean(Hash) :-
   reset(Hash),
   clean(Hash).
+
+
+
+%! thread_seed(?Alias, ?Hash) is nondet.
+
+thread_seed(Alias, Hash) :-
+  thread_seed0(Alias, Hash).
+
+
+
+%! thread_seed_update(+Hash) is det.
+%! thread_seed_update(+Alias, +Hash) is det.
+
+thread_seed_update(Hash) :-
+  thread_name(Alias),
+  thread_seed_update(Alias, Hash).
+
+
+thread_seed_update(Alias, Hash) :-
+  with_mutex(thread_seed, (
+    retractall(thread_seed0(Alias, _)),
+    assert(thread_seed0(Alias, Hash))
+  )).
 
 
 

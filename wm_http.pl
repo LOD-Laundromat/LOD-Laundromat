@@ -148,8 +148,9 @@ wm_table -->
     findall(
       Global-[Alias,Global,Hash],
       (
-        current_wm(Alias, Hash),
-        thread_statistics(Alias, global, Global)
+        current_wm(Alias),
+        thread_statistics(Alias, global, Global),
+        thread_seed(Alias, Hash)
       ),
       Pairs
     ),

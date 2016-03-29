@@ -4,7 +4,6 @@
     add_wm/0,
     add_wms/1,       % +N
     current_wm/1,    % ?Alias
-    current_wm/2,    % ?Alias, ?Hash
     number_of_wms/1, % -N
     reset/0,
     single_wm/0
@@ -53,9 +52,6 @@
 prolog_stack:stack_guard('C').
 prolog_stack:stack_guard(none).
 
-:- dynamic
-    wm_hash0/2.
-
 
 
 
@@ -86,19 +82,9 @@ add_wms(M1) :-
 %! current_wm(-Alias) is nondet.
 
 current_wm(Alias) :-
-  current_wm(Alias, _).
-
-
-%! current_wm(+Alias, +Hash) is semidet.
-%! current_wm(+Alias, -Hash) is det.
-%! current_wm(-Alias, +Hash) is semidet.
-%! current_wm(-Alias, -Hash) is nondet.
-
-current_wm(Alias, Hash) :-
   thread_property(Id, alias(Alias)),
   atom_prefix(wm, Alias),
-  thread_property(Id, status(running)),
-  ignore(wm_hash0(Alias, Hash)).
+  thread_property(Id, status(running)).
 
 
 
@@ -132,32 +118,15 @@ start_wm0 :-
   wm0(_{idle: 0}).
 
 wm0(State) :-
-  % Clean one arbitrary seed.
-  begin_seed(Hash, Iri),
-  thread_name(Alias),
-  wm_hash_update(Alias, Hash),
-  number_of_wms(N1),
-  debug(wm(thread), "---- [~a,~D] Cleaning ~a", [Alias,N1,Hash]),
-  lclean:clean_seed0(Hash, Iri),
-  number_of_wms(N2),
-  debug(wm(thread), "---- [~a,~D] Cleaned ~a", [Alias,N2,Hash]),
-  end_seed(Hash),
+  number_of_wms(N),
+  debug(wm(thread), "~D washing machines are currently active.", [N]),
+  (   % Clean one -- arbitrarily chosen -- seed.
+      clean
+  ->  M = 1,
+      sleep(M),
+      thread_name(Alias),
+      dict_inc(idle, State, N),
+      S is M * N,
+      debug(wm(idle), "ZZZZ Thread ~w idle ~D sec.", [Alias,S])
+  ),
   wm0(State).
-wm0(State) :-
-  M = 100,
-  sleep(M),
-  thread_name(Alias),
-  dict_inc(idle, State, N),
-  S is M * N,
-  debug(wm(idle), "==== Thread ~w idle ~D sec.", [Alias,S]),
-  wm0(State).
-
-
-
-%! wm_hash_update(+Alias, +Hash) is det.
-
-wm_hash_update(Alias, Hash) :-
-  with_mutex(wm_hash, (
-    retractall(wm_hash0(Alias, _)),
-    assert(wm_hash0(Alias, Hash))
-  )).
