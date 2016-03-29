@@ -201,6 +201,7 @@ thread_seed_update(Alias, Hash) :-
 % Run Goal, unify Result with `true`, `false` or `exception(Error)`
 % and messages with a list of generated error and warning messages.
 % Each message is a term `message(Term,Kind,Lines)`.
+%01099004558fe84d4998ea67453cf435
 
 rdf_store_messages(State, S, Goal_0, M) :-
   setup_call_cleanup(
@@ -209,7 +210,10 @@ rdf_store_messages(State, S, Goal_0, M) :-
         user:thread_message_hook(Term,Kind,_) :-
           error_kind(Kind),
           format(State.warn, "~w~n", [Term]),
-          dict_inc(warns, State)
+          %debug(lclean(warn), "[[[[~w", [State]),
+          dict_inc(warns, State),
+          %debug(lclean(warn), "~w]]]]", [State]),
+          true
       ))
     ),
     (

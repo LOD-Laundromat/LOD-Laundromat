@@ -4,9 +4,12 @@
     ll/0,
     ll/1, % +Prefix
     ll/2, % +Prefix, +Name
-    ll/3, % +Prefix, +Name,             +Opts
+    ll/3, % +Prefix, +Name,                   +Opts
     ll/5, % +Prefix, +Name, ?S, ?P, ?O
-    ll/6  % +Prefix, +Name, ?S, ?P, ?O, +Opts
+    ll/6, % +Prefix, +Name, ?S, ?P, ?O,       +Opts
+    lm/3, %                 ?S, ?P, ?O
+    lm/4, %                 ?S, ?P, ?O, ?Doc
+    number_of_warnings/2 % ?Hash, ?N
   ]
 ).
 
@@ -21,6 +24,7 @@
 :- use_module(library(gen/gen_ntuples)).
 :- use_module(library(lists)).
 :- use_module(library(os/dir_ext)).
+:- use_module(library(os/gnu_wc)).
 :- use_module(library(print_ext)).
 :- use_module(library(rdf/rdf_print)).
 :- use_module(library(semweb/rdf11)).
@@ -33,7 +37,9 @@
 
 :- rdf_meta
    ll(+, +, r, r, o),
-   ll(+, +, r, r, o, +).
+   ll(+, +, r, r, o, +),
+   lm(r, r, o),
+   lm(r, r, o, r).
 
 
 
@@ -80,15 +86,20 @@ ll1(Prefix, Dir) :-
 ll2(Name, S, P, O, Opts, Dir) :-
   ldir_ldoc(Dir, Name, Doc),
   lhdt_page(S, P, O, Doc, Opts, Result),
-  rdf_print_triples(Result.triples, Opts),
-  nl,
-  (   maplist(var, [S,P,O])
-  ->  I2 is Result.page * Result.number_of_triples_per_page,
-      I1 is I2 - Result.number_of_triples_per_page + 1,
-      I0 is Result.number_of_triples,
-      lcli_print("Showing triples ~D--~D (total ~D)~n", [I1,I2,I0])
-  ;   true
-  ).
+  lcli_print_result(S, P, O, Result, Opts).
+
+
+
+%! lm(?S, ?P, ?O) is nondet.
+%! lm(?S, ?P, ?O, ?Doc) is nondet.
+
+lm(S, P, O) :-
+  lm(S, P, O, _).
+
+
+lm(S, P, O, Doc) :-
+  ldoc(meta, Doc),
+  lhdt(S, P, O, Doc).
 
 
 
@@ -123,6 +134,21 @@ lcli_print_hash(Prefix, Path) :-
 lcli_print_hash_prefix(Prefix) :-
   lhash_prefix_parts(Prefix, Dir1, Dir2),
   lcli_print("'~a/~a'", [Dir1,Dir2]).
+
+
+
+%! lcli_print_result(?S, ?P, ?O, +Result, +Opts) is det.
+
+lcli_print_result(S, P, O, Result, Opts) :-
+  rdf_print_triples(Result.triples, Opts),
+  nl,
+  (   maplist(var, [S,P,O])
+  ->  I2 is Result.page * Result.number_of_triples_per_page,
+      I1 is I2 - Result.number_of_triples_per_page + 1,
+      I0 is Result.number_of_triples,
+      lcli_print("Showing triples ~D--~D (total ~D)~n", [I1,I2,I0])
+  ;   true
+  ).
 
 
 
@@ -182,3 +208,12 @@ ll_call(Prefix, Goal_1) :-
   append_dirs([Root|Dirs1], Wildcard),
   expand_file_name(Wildcard, Dirs2),
   (Dirs2 = [Dir] -> call(Goal_1, Dir) ; lfind_results(Prefix, Dirs2)).
+
+
+
+%! number_of_warnings(?Hash, ?N) is nondet.
+
+number_of_warnings(Hash, N) :-
+  lfile(warn, _, File),
+  lfile_lhash(File, Hash),
+  file_lines(File, N).
