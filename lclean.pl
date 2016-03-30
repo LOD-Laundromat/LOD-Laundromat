@@ -29,6 +29,8 @@
 :- use_module(library(jsonld/jsonld_metadata)).
 :- use_module(library(jsonld/jsonld_read)).
 :- use_module(library(os/dir_ext)).
+:- use_module(library(os/file_ext)).
+:- use_module(library(os/gnu_wc)).
 :- use_module(library(os/open_any2)).
 :- use_module(library(os/process_ext)).
 :- use_module(library(os/thread_ext)).
@@ -38,6 +40,7 @@
 :- use_module(library(rdf/rdf_clean)).
 :- use_module(library(rdf/rdf_ext)).
 :- use_module(library(rdf/rdf_load)).
+:- use_module(library(rdf/rdf_prefix)).
 :- use_module(library(rdf/rdf_print)).
 :- use_module(library(semweb/rdf11)). % Operators.
 :- use_module(library(string_ext)).
@@ -101,8 +104,8 @@ clean_inner(Hash, Iri) :-
   ldoc_lhash(Doc, data, Hash),
   with_mutex(lfs, make_directory_path(Dir)),
   ldir_lfile(Dir, data, nquads, DataFile),
-  ldir_lfile(Dir, meta, nquads, MetaFile),
-  ldir_lfile(Dir, warn, nquads, WarnFile),
+  ldir_lfile(Dir, meta, ntriples, MetaFile),
+  ldir_lfile(Dir, warn, ntriples, WarnFile),
   setup_call_cleanup(
     (
       gzopen(MetaFile, write, MetaSink, [format(gzip)]),
@@ -119,6 +122,9 @@ clean_inner(Hash, Iri) :-
     ),
     (
       close(WarnSink),
+      file_lines(WarnFile, NumWarns),
+      with_output_to(MetaSink,
+        gen_ntriple(Doc, llo:number_of_warnings, NumWarns^^xsd:nonNegativeInteger)),
       close(MetaSink)
     )
   ).
@@ -197,53 +203,173 @@ thread_seed_update(Alias, Hash) :-
 
 % HELPERS %
 
-%! rdf_store_messages(+State, +S, :Goal_0, -Metadata) is det.
+%! rdf_store_messages(+State, +Doc, :Goal_0, -Metadata) is det.
 % Run Goal, unify Result with `true`, `false` or `exception(Error)`
 % and messages with a list of generated error and warning messages.
 % Each message is a term `message(Term,Kind,Lines)`.
-%01099004558fe84d4998ea67453cf435
 
-rdf_store_messages(State, S, Goal_0, M) :-
-  setup_call_cleanup(
-    (
-      asserta((
-        user:thread_message_hook(Term,Kind,_) :-
-          error_kind(Kind),
-          format(State.warn, "~w~n", [Term]),
-          %debug(lclean(warn), "[[[[~w", [State]),
-          dict_inc(warns, State),
-          %debug(lclean(warn), "~w]]]]", [State]),
-          true
-      ))
-    ),
-    (
-      catch(Goal_0, E, true),
-      (   var(E)
-      ->  End0 = true
-      ;   E = error(existence_error(open_any2,M),_)
-      ->  End0 = "No stream"
-      ;   End0 = E,
-          msg_warning("[FAILED] ~w~n", [End0]),
-	  M = _{}
-      ),
-      with_output_to(string(End), write_term(End0)),
-      with_output_to(State.meta, gen_ntriple(S, llo:end, End^^xsd:string))
-    ),
-    with_output_to(State.meta, gen_ntriple(S, llo:number_of_warnings, State.warns^^xsd:nonNegativeInteger))
-  ).
+rdf_store_messages(State, Doc, Goal_0, M) :-
+  asserta((
+    user:thread_message_hook(Term,Kind,_) :-
+      error_kind(Kind),
+      rdf_store_warning(State.warn, Doc, Term)
+  )),
+  catch(Goal_0, E, true),
+  (   var(E)
+  ->  End0 = true
+  ;   E = error(existence_error(open_any2,M),_)
+  ->  End0 = "No stream"
+  ;   End0 = E,
+      msg_warning("[FAILED] ~w~n", [End0]),
+      M = _{}
+  ),
+  with_output_to(string(End), write_term(End0)),
+  with_output_to(State.meta, gen_ntriple(Doc, llo:end, End^^xsd:string)).
+
 
 error_kind(warning).
 error_kind(error).
 
 
-%! rdf_store_metadata(+State, +S, +M) is det.
+rdf_store(Out, S, P, O) :-
+  with_output_to(Out, gen_ntriple(S, P, O)).
 
-rdf_store_metadata(State, S1, M) :-
+
+% Archive error
+rdf_store_warning(Out, Dom, error(archive_error(Code,_),_)) :-
+  (   Code == 2
+  ->  Name = missing_type_keyword_in_mtree_spec
+  ;   Code == 25
+  ->  Name = invalid_central_directory_signature
+  ), !,
+  rdf_global_id(llo:Name, O),
+  rdf_store(Out, Dom, llo:arhive_error, O).
+% Encoding: character
+rdf_store_warning(Out, Doc, error(type_error(character,Char),context(_,_))) :- !,
+  rdf_store(Out, Doc, llo:character_encoding_error, Char^^xsd:integer).
+% Existence: directory
+rdf_store_warning(Out, Doc, error(existence_error(directory,Dir),context(_,'File exists'))) :- !,
+  uri_file_name(Uri, Dir),
+  rdf_store(Out, Doc, llo:directory_existence_error, Uri^^xsd:anyURI).
+% Existence: file
+rdf_store_warning(Out, Doc, error(existence_error(file,File),context(_,Msg))) :-
+  (   Msg == 'Directory not empty'
+  ->  Name = directory_not_empty
+  ;   Msg == 'No such file or directory'
+  ->  Name = file_existence_error
+  ), !,
+  rdf_global_id(llo:Name, P),
+  uri_file_name(Uri, File),
+  rdf_store(Out, Doc, P, Uri^^xsd:anyURI).
+% Existence: source sink?
+rdf_store_warning(Out, Doc, error(existence_error(source_sink,Path),context(_,'Is a directory'))) :- !,
+  uri_file_name(Uri, Path),
+  rdf_store(Out, Doc, llo:is_a_directory_error, Uri^^xsd:anyURI).
+% HTTP status
+rdf_store_warning(Out, Doc, error(http_status(Status),_)) :-
+  (between(400, 499, Status) ; between(500, 599, Status)), !,
+  rdf_store(Out, Doc, llo:http_error, Status^^xsd:positiveInteger).
+% IO: read
+rdf_store_warning(Out, Doc, error(io_error(read,_),context(_,Msg))) :-
+  (   Msg == 'Connection reset by peer'
+  ->  Name = connection_reset_by_peer
+  ;   Msg == 'Inappropriate ioctl for device'
+  ->  Name = not_a_typewriter
+  ;   Msg = 'Is a directory'
+  ->  Name = is_a_directory
+  ), !,
+  rdf_global_id(llo:Name, O),
+  rdf_store(Out, Doc, llo:io_read_error, O).
+% IO: write
+rdf_store_warning(Out, Doc, error(io_error(write,_),context(_,'Encoding cannot represent character'))) :- !,
+  rdf_store(Out, Doc, llo:io_write_error, llo:encoding_error).
+% IO warning
+rdf_store_warning(Out, Doc, io_warning(_,Msg)) :-
+  (   Msg == 'Illegal UTF-8 continuation'
+  ->  Name = illegal_utf8_continuation
+  ;   Msg == 'Illegal UTF-8 start'
+  ->  Name = illegal_utf8_start
+  ),
+  rdf_global_id(llo:Name, O),
+  rdf_store(Out, Doc, llo:io_warning, O).
+% Malformed URL
+rdf_store_warning(Out, Doc, error(domain_error(url,Url),_)) :- !,
+  rdf_store(Out, Doc, llo:malformed_url, Url^^xsd:anyURI).
+% No RDF
+rdf_store_warning(Out, Doc, error(no_rdf(_))) :- !,
+  rdf_store(Out, Doc, llo:rdf_serialization_format, llo:unrecognized_format).
+% Permission: redirect
+rdf_store_warning(Out, Doc, error(permission_error(redirect,http,Object),context(_,Msg1))) :- !,
+  atom_truncate(Msg1, 500, Msg2),
+  format(string(String), "[~a] ~a", [Object,Msg2]),
+  rdf_store(Out, Doc, llo:http_redirect_permission_error, String^^xsd:string).
+% SGML parser
+rdf_store_warning(Out, Doc, sgml(sgml_parser(_),_,Line,Msg1)) :- !,
+  atom_truncate(Msg1, 500, Msg2),
+  format(string(String), "[~w] ~a", [Line,Msg2]),
+  rdf_store(Out, Doc, llo:sgml_parser_error, String^^xsd:string).
+% Socket error
+rdf_store_warning(Out, Doc, error(socket_error(Msg),_)) :-
+  (   Msg == 'Connection timed out'
+  ->  Name = connection_timed_out
+  ;   Msg == 'Connection refused'
+  ->  Name = connection_refused
+  ;   Msg == 'No Data'
+  ->  Name = no_data
+  ;   Msg == 'No route to host'
+  ->  Name = no_route_to_host
+  ;   Msg == 'Host not found'
+  ->  Name = host_not_found
+  ;   Msg == 'Try Again'
+  ->  Name = try_again
+  ), !,
+  rdf_global_id(llo:Name, O),
+  rdf_store(Out, Doc, llo:socket_error, O).
+% SSL: SSL verify
+rdf_store_warning(Out, Doc, error(ssl_error(ssl_verify),_)) :- !,
+  rdf_store(Out, Doc, llo:ssl_error, llo:ssl_verify).
+% Syntax error
+rdf_store_warning(Out, Doc, error(syntax_error(Msg1),stream(_,Line,Col,Char))) :- !,
+  atom_truncate(Msg1, 500, Msg2),
+  format(string(String), "[~w:~w:~w] ~a", [Line,Col,Char,Msg2]),
+  rdf_store(Out, Doc, llo:syntax_error, String^^xsd:string).
+% Timeout: read
+rdf_store_warning(Out, Doc, error(timeout_error(read,_),context(_,_))) :- !,
+  rdf_store(Out, Doc, llo:timeout_error, llo:read).
+% Turtle: undefined prefix
+rdf_store_warning(Out, Doc, error(existence_error(turtle_prefix,Prefix), stream(_,Line,Col,Char))) :- !,
+  format(string(String), "[~w:~w:~w] ~a", [Line,Col,Char,Prefix]),
+  rdf_store(Out, Doc, llo:missing_turtle_prefix_defintion, String^^xsd:string).
+% RDF/XML: multiple definitions
+rdf_store_warning(Out, Doc, rdf(redefined_id(Uri))) :- !,
+  rdf_store(Out, Doc, llo:redefined_rdf_id, Uri^^xsd:anyURI).
+% RDF/XML: name
+rdf_store_warning(Out, Doc, rdf(not_a_name(XmlName))) :- !,
+  rdf_store(Out, Doc, llo:xml_name_error, XmlName^^xsd:string).
+% RDF/XML: unparsable
+rdf_store_warning(Out, Doc, rdf(unparsed(Dom))) :- !,
+  rdf11:in_xml_literal(xml, Dom, A1),
+  atom_truncate(A1, 500, A2),
+  rdf_store(Out, Doc, llo:rdf_xml_parser_error, A2^^xsd:string).
+% Non-canonical lexical form.
+rdf_store_warning(Out, Doc, non_canonical_lexical_form(D1,Lex)) :- !,
+  abbr_iri(D1, D2),
+  atom_concat(noncanonical_, D2, Name),
+  rdf_global_id(llo:Name, P),
+  rdf_store(Out, Doc, P, Lex^^xsd:string).
+% Unhandled error term.
+rdf_store_warning(Out, _, Term) :-
+  format(Out, "~w~n", [Term]).
+
+
+%! rdf_store_metadata(+State, +Doc, +M) is det.
+
+rdf_store_metadata(State, Doc1, M) :-
   jsonld_metadata(M, Jsonld1),
-  atom_string(S1, S2),
-  Jsonld2 = Jsonld1.put(_{'@id': S2}),
+  atom_string(Doc1, Doc2),
+  Jsonld2 = Jsonld1.put(_{'@id': Doc2}),
   (debugging(wm(low)) -> json_write_dict(user_output, Jsonld2) ; true),
-  forall(jsonld_tuple(Jsonld2, rdf(S,P,O)), (
-    (debugging(wm(low)) -> with_output_to(user_output, rdf_print_triple(S, P, O)) ; true),
-    with_output_to(State.meta, gen_ntriple(S, P, O))
+  forall(jsonld_tuple(Jsonld2, rdf(Doc,P,O)), (
+    (debugging(wm(low)) -> with_output_to(user_output, rdf_print_triple(Doc, P, O)) ; true),
+    with_output_to(State.meta, gen_ntriple(Doc, P, O))
   )).

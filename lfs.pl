@@ -254,7 +254,8 @@ lrdf_load(Hash, Name) :-
   (   rdf_graph(Doc)
   ->  true
   ;   ldir_lhash(Dir, Hash),
-      ldir_lfile(Dir, Name, nquads, File),
+      ldir_lfile(Dir, Name, Kind, File),
+      lkind_rdf(Kind),
       access_file(File, read),
       rdf_load_file(File, [graph(Doc)])
   ).
@@ -299,3 +300,9 @@ lkind(Kind) :-
 lkind(hdt,      [hdt]).
 lkind(nquads,   [nq,gz]).
 lkind(ntriples, [nt,gz]).
+
+
+%! lkind_rdf(+Kind) is semidet.
+
+lkind_rdf(nquads).
+lkind_rdf(ntriples).

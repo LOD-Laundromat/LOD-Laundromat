@@ -85,15 +85,21 @@ lhdt_build(Hash, Name) :-
 
 lhdt_build0(Hash, Name, BaseIri) :-
   lfile_lhash(HdtFile, Name, hdt, Hash),
-  (   exists_file(HdtFile)
+  (   % HDT file exits.
+      exists_file(HdtFile)
   ->  msg_notification("File ~a already exists.~n", [HdtFile])
-  ;   lfile_lhash(NQuadsFile, Name, nquads, Hash),
+  ;   % N-Triples file exists.
+      lfile_lhash(NTriplesFile, Name, ntriples, Hash),
+      access_file(NTriplesFile, read)
+  ->  (var(BaseIri) -> Opts = [] ; Opts = [base_uri(BaseIri)]),
+      hdt_create_from_file(HdtFile, NTriplesFile, Opts)
+  ;   % N-Quads file exists.
+      lfile_lhash(NQuadsFile, Name, nquads, Hash),
       access_file(NQuadsFile, read)
   ->  ldir_lhash(Dir, Hash),
-      (var(BaseIri) -> Opts = [] ; Opts = [base_uri(BaseIri)]),
       setup_call_cleanup(
         ensure_ntriples(Dir, NQuadsFile, NTriplesFile),
-        hdt_create_from_file(HdtFile, NTriplesFile, Opts),
+        lhdt_build0(Hash, Name, _),
         delete_file(NTriplesFile)
       )
   ;   msg_warning("Data file for ~a is missing.", [Hash])
