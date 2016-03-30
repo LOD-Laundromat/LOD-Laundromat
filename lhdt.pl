@@ -22,12 +22,12 @@
 */
 
 :- use_module(library(apply)).
-:- use_module(library(dict_ext)).
 :- use_module(library(error)).
 :- use_module(library(gen/gen_ntuples)).
 :- use_module(library(hdt)).
 :- use_module(library(html/html_bs)).
 :- use_module(library(html/rdfh)).
+:- use_module(library(page)).
 :- use_module(library(print_ext)).
 :- use_module(library(rdf/rdf_load)).
 :- use_module(library(rdf/rdf_print)).
@@ -116,11 +116,6 @@ hdt_search_cost0(S, P, O, Cost, Hdt) :- hdt_search_cost(Hdt, S, P, O, Cost).
 
 
 %! lhdt_data_table(?S, ?P, ?O, ?Doc, +Opts)// is det.
-% The following options are supported:
-%   - page_size(+nonneg)
-%     Default is 100.
-%   - start_page(+nonneg)
-%     Default is 1.
 
 lhdt_data_table(S, P, O, Doc, Opts) -->
   {lhdt_page(S, P, O, Doc, Opts, Result)},
@@ -156,35 +151,18 @@ hdt_header0(S, P, O, Hdt) :- hdt_header(Hdt, S, P, O).
 
 
 %! lhdt_page(?S, ?P, ?O, +Doc, +Opts, -Result) is nondet.
-% The following keys are defined for Opts:
-%   - page_size
-%   - start_page
-%
 % The following keys are defined for Results:
-%   - number_for_pattern
-%   - number_of_pages
-%   - number_of_triples
-%   - number_of_triples_per_page
-%   - page
-%   - triples
+%   - total_number_of_pages
+%   - total_number_of_results
 
 lhdt_page(S, P, O, Doc, Opts1, Result) :-
-  mod_dict(page_size, Opts1, 100, PageSize, Opts2),
-  lhdt_triples(Doc, NumTriples),
-  NumPages is ceil(NumTriples / PageSize),
-  mod_dict(start_page, Opts2, 1, StartPage, Opts3),
-  put_dict(page0, Opts3, 0, Opts4),
-  % NONDET
-  findnsols(PageSize, rdf(S,P,O), lhdt(S, P, O, Doc), Triples),
-  dict_inc(page0, Opts4),
-  (Opts4.page0 >= StartPage -> true ; false),
-  Result = _{
-    number_of_pages: NumPages,
-    number_of_triples: NumTriples,
-    number_of_triples_per_page: PageSize,
-    page: Opts4.page0,
-    triples: Triples
-  }.
+  page(rdf(S,P,O), lhdt(S, P, O, Doc), Opts, Result).
+  %lhdt_triples(Doc, NumTriples),
+  %NumPages is ceil(NumTriples / PageSize),
+  %Result = _{
+  %  totla_number_of_pages: NumPages,
+  %  total_number_of_results: NumTriples
+  %}.
 
 
 

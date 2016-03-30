@@ -97,16 +97,11 @@ ld(S, P, O) :-
 
 
 ld(S, P, O, HashPrefix) :-
-  ld(S, P, O, HashPrefix, _{}).
-
-
-ld(S, P, O, HashPrefix, Opts) :-
-  call_on_dirs(HashPrefix, ldmw0(data, S, P, O, Opts)).
-
+  call_on_dirs(HashPrefix, ldmw0(data, S, P, O)).
 
 ldmw0(Name, S, P, O, Opts, Dir) :-
-  ldir_ldoc(Dir, Name, Doc),
-  lhdt_page(S, P, O, Doc, Opts, Result),
+  ldir_lfile(Dir, Name, Kind, File),
+  page(S, P, O, Doc, Opts, Result),
   lcli_print_result(S, P, O, Result, Opts).
 
 
