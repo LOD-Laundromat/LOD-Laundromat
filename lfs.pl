@@ -2,6 +2,7 @@
   lfs,
   [
     ldir/1,        % ?Dir
+    ldir/2,        % +HashPrefix, -Dir
     ldir_ldoc/2,   % ?Dir, ?Doc
     ldir_ldoc/3,   % ?Dir, ?Name, ?Doc
     ldir_lfile/4,  % ?Dir, ?Name, ?Kind, ?File
@@ -70,8 +71,31 @@ error:has_type(lname, Name) :-
 
 ldir(Dir3) :-
   lroot(Dir1),
-  direct_subdir(Dir1, Dir2),
-  direct_subdir(Dir2, Dir3).
+  dir_file(Dir1, Dir2),
+  dir_file(Dir2, Dir3).
+
+
+%! ldir(+HashPrefix, -Dir) is nondet.
+
+ldir('', Dir) :- !,
+  ldir(Dir).
+ldir(HashPrefix, Dir2) :-
+  atom_length(HashPrefix, N),
+  lroot(Root),
+  (   N =< 2
+  ->  atom_concat(HashPrefix, *, Wildcard0),
+      append_dirs(Root, Wildcard0, Wildcard),
+      expand_file_name(Wildcard, Dirs),
+      member(Dir1, Dirs),
+      dir_file(Dir1, Dir2)
+  ;   atom_codes(HashPrefix, [H1,H2|T1]),
+      atom_codes(Dir1, [H1,H2]),
+      append(T1, [0'*], T2),
+      atom_codes(Wildcard0, T2),
+      append_dirs([Root,Dir1,Wildcard0], Wildcard),
+      expand_file_name(Wildcard, Dirs2),
+      member(Dir2, Dirs2)
+  ).
 
 
 

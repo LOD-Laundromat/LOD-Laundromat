@@ -236,14 +236,14 @@ rdf_store(Out, S, P, O) :-
 
 
 % Archive error
-rdf_store_warning(Out, Dom, error(archive_error(Code,_),_)) :-
+rdf_store_warning(Out, Doc, error(archive_error(Code,_),_)) :-
   (   Code == 2
   ->  Name = missing_type_keyword_in_mtree_spec
   ;   Code == 25
   ->  Name = invalid_central_directory_signature
   ), !,
   rdf_global_id(llo:Name, O),
-  rdf_store(Out, Dom, llo:arhive_error, O).
+  rdf_store(Out, Doc, llo:arhive_error, O).
 % Encoding: character
 rdf_store_warning(Out, Doc, error(type_error(character,Char),context(_,_))) :- !,
   rdf_store(Out, Doc, llo:character_encoding_error, Char^^xsd:integer).

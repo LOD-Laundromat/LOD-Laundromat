@@ -101,7 +101,7 @@ number_of_wms(N) :-
 
 reset :-
   lroot(Root),
-  forall(direct_subdir(Root, Subdir), delete_directory_and_contents(Subdir)),
+  forall(dir_file(Root, Subdir), delete_directory_and_contents(Subdir)),
   absolute_file_name(cpack('LOD-Laundromat'), Dir, [file_type(directory)]),
   run_process(git, ['checkout','seedlist.db'], [cwd(Dir)]),
   retractall(wm_hash0(_,_)).
