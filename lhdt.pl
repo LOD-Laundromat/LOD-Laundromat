@@ -3,7 +3,7 @@
   [
     lhdt/3,             % ?S, ?P, ?O
     lhdt/4,             % ?S, ?P, ?O, ?File
-    lhdt_build/2,       % +Hash, +Name
+    lhdt_build/1,       %             +File
     lhdt_cost/5,        % ?S, ?P, ?O, +File, -Cost
     lhdt_data_table//5, % ?S, ?P, ?O, ?File, +Opts
     lhdt_header/4,      % ?S, ?P, ?O, ?File
@@ -38,7 +38,6 @@
 :- rdf_meta
    lhdt(r, r, o),
    lhdt(r, r, o, r),
-   lhdt_build(+, +, r),
    lhdt_cost(r, r, o, r, -),
    lhdt_header(r, r, o, r),
    lhdt_data_table(r, r, o, r, +, ?, ?),
@@ -65,37 +64,37 @@ hdt_search0(S, P, O, Hdt) :- hdt_search(Hdt, S, P, O).
 
 lhdt_build(File) :-
   lfile_lhash(File, Name, _, Hash),
-  lhdt_build(Hash, Name).
+  lhdt_build0(Hash, Name).
 
-
-%! lhdt_build(+Hash, +Name) is det.
-
-lhdt_build(Hash, meta) :- !,
+lhdt_build0(Hash, meta) :- !,
   lhdt_build0(Hash, meta, _).
-lhdt_build(Hash, Name) :-
+lhdt_build0(Hash, Name) :-
   % Make sure the metadata is converted to HDT.
-  lhdt_build(Hash, meta),
+  lhdt_build0(Hash, meta),
   lfile_lhash(File, meta, hdt, Hash),
   once(lhdt(_, llo:base_iri, BaseIri^^xsd:anyURI, File)),
   lhdt_build0(Hash, Name, BaseIri).
 
-
 lhdt_build0(Hash, Name, BaseIri) :-
   lfile_lhash(HdtFile, Name, hdt, Hash),
+  (var(BaseIri) -> Opts = [] ; Opts = [base_uri(BaseIri)]),
   (   % HDT file exits.
       exists_file(HdtFile)
   ->  msg_notification("File ~a already exists.~n", [HdtFile])
+  ;   % N-Triples files exists.
+      lfile_lhash(NTriplesFile, Name, ntriples, Hash),
+      access_file(NTriplesFile, read)
+  ->  hdt_create_from_file(HdtFile, NTriplesFile, Opts)
   ;   % N-Quads file exists.
       lfile_lhash(NQuadsFile, Name, nquads, Hash),
       access_file(NQuadsFile, read)
   ->  ldir_lhash(Dir, Hash),
-      (var(BaseIri) -> Opts = [] ; Opts = [base_uri(BaseIri)]),
       setup_call_cleanup(
         ensure_ntriples(Dir, NQuadsFile, NTriplesFile),
         hdt_create_from_file(HdtFile, NTriplesFile, Opts),
         delete_file(NTriplesFile)
       )
-  ;   existence_error(lfile(Name), [Hash])
+  ;   existence_error(lfile(Name), Hash)
   ).
 
 

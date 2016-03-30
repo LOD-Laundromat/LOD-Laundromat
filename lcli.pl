@@ -219,9 +219,8 @@ pp_files(Dir) :-
 
 pp_hash_path(HashPrefix, Path) :-
   pp("  "),
-  directory_file_path(_, File, Path),
-  lhash_prefix_parts(HashPrefix, _, Dir2),
-  atom_concat(Dir2, Rest, File),
+  ldir_lhash(Path, Hash),
+  atom_concat(HashPrefix, Rest, Hash),
   pp("~a|~a:  ", [HashPrefix,Rest]),
   pp_files(Path),
   nl.

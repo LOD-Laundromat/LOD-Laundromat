@@ -55,6 +55,7 @@
     rdf_store_messages(+, +, 0, -).
 
 :- rdf_meta
+   rdf_store(+, r, r, o),
    rdf_store_messages(+, r, :, -).
 
 :- dynamic
@@ -123,12 +124,10 @@ clean_inner(Hash, Iri) :-
     (
       close(WarnSink),
       file_lines(WarnFile, NumWarns),
-      with_output_to(MetaSink,
-        gen_ntriple(Doc, llo:number_of_warnings, NumWarns^^xsd:nonNegativeInteger)),
+      rdf_store(MetaSink, Doc, llo:number_of_warnings, NumWarns^^xsd:nonNegativeInteger),
       close(MetaSink)
     )
   ).
-  %lhdt_build(Doc),
   %absolute_file_name('dirty.gz', DirtyTo, Opts),
   %call_collect_messages(rdf_download_to_file(Iri, DirtyTo, [compress(gzip)])),
 
@@ -224,15 +223,13 @@ rdf_store_messages(State, Doc, Goal_0, M) :-
       M = _{}
   ),
   with_output_to(string(End), write_term(End0)),
-  with_output_to(State.meta, gen_ntriple(Doc, llo:end, End^^xsd:string)).
+  % @bug RDF prefix expansion does not work for `llo:end’ here.
+  rdf_equal(llo:end, P),
+  rdf_store(State.meta, Doc, P, End^^xsd:string).
 
 
 error_kind(warning).
 error_kind(error).
-
-
-rdf_store(Out, S, P, O) :-
-  with_output_to(Out, gen_ntriple(S, P, O)).
 
 
 % Archive error
@@ -371,5 +368,11 @@ rdf_store_metadata(State, Doc1, M) :-
   (debugging(wm(low)) -> json_write_dict(user_output, Jsonld2) ; true),
   forall(jsonld_tuple(Jsonld2, rdf(Doc,P,O)), (
     (debugging(wm(low)) -> with_output_to(user_output, rdf_print_triple(Doc, P, O)) ; true),
-    with_output_to(State.meta, gen_ntriple(Doc, P, O))
+    rdf_store(State.meta, Doc, P, O)
   )).
+
+
+%! rdf_store(+Out, +S, +P, +O) is det.
+
+rdf_store(Out, S, P, O) :-
+  with_output_to(Out, gen_ntriple(S, P, O)).
