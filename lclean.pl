@@ -28,6 +28,7 @@
 :- use_module(library(http/json)).
 :- use_module(library(jsonld/jsonld_metadata)).
 :- use_module(library(jsonld/jsonld_read)).
+:- use_module(library(os/compress_ext)).
 :- use_module(library(os/dir_ext)).
 :- use_module(library(os/file_ext)).
 :- use_module(library(os/gnu_wc)).
@@ -110,7 +111,7 @@ clean_inner(Hash, Iri) :-
   setup_call_cleanup(
     (
       gzopen(MetaFile, write, MetaSink, [format(gzip)]),
-      gzopen(WarnFile, write, WarnSink, [format(gzip)])
+      open(WarnFile, write, WarnSink)
     ),
     (
       State = _{meta: MetaSink, warn: WarnSink, warns: 0},
@@ -124,6 +125,7 @@ clean_inner(Hash, Iri) :-
     (
       close(WarnSink),
       file_lines(WarnFile, NumWarns),
+      compress_file(WarnFile),
       rdf_store(MetaSink, Doc, llo:number_of_warnings, NumWarns^^xsd:nonNegativeInteger),
       close(MetaSink)
     )
