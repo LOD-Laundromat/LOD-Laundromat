@@ -24,7 +24,7 @@
 :- use_module(library(hdt)).
 :- use_module(library(html/html_bs)).
 :- use_module(library(html/rdfh)).
-:- use_module(library(page)).
+:- use_module(library(pagination)).
 :- use_module(library(print_ext)).
 :- use_module(library(rdf/rdf_load)).
 :- use_module(library(rdf/rdf_print)).
@@ -167,7 +167,7 @@ ensure_ntriples(Dir, From, To) :-
 %   - total_number_of_results
       
 lhdt_page(S, P, O, File, Opts, Result2) :-
-  page(rdf(S,P,O), lhdt(S, P, O, File), Opts, Result1),
+  pagination(rdf(S,P,O), lhdt(S, P, O, File), Opts, Result1),
   (   maplist(var, [S,P,O])
   ->  lhdt_triples(File, NumTriples),
       NumPages is ceil(NumTriples / Result1.page_size),

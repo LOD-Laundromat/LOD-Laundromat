@@ -33,7 +33,7 @@
 :- use_module(library(gen/gen_ntuples)).
 :- use_module(library(lists)).
 :- use_module(library(os/dir_ext)).
-:- use_module(library(page)).
+:- use_module(library(pagination)).
 :- use_module(library(print_ext)).
 :- use_module(library(rdf/rdf_print)).
 :- use_module(library(semweb/rdf11)).
@@ -66,8 +66,8 @@ lf(HashPrefix) :-
 
 
 lf(HashPrefix, Opts) :-
-  page(Dir, ldir(HashPrefix, Dir), Opts, Result),
-  page_print_result(HashPrefix, Result, pp_hash_paths(HashPrefix)).
+  pagination(Dir, ldir(HashPrefix, Dir), Opts, Result),
+  pagination_result(HashPrefix, Result, pp_hash_paths(HashPrefix)).
 
 
 
@@ -85,7 +85,7 @@ ld(HashPrefix) :-
 
 
 ld(HashPrefix, Opts) :-
-  ldmw_page0(HashPrefix, Opts, data).
+  ldmw_pagination0(HashPrefix, Opts, data).
 
 
 ld(S, P, O) :-
@@ -111,7 +111,7 @@ lm(HashPrefix) :-
 
 
 lm(HashPrefix, Opts) :-
-  ldmw_page0(HashPrefix, Opts, meta).
+  ldmw_pagination0(HashPrefix, Opts, meta).
 
 
 lm(S, P, O) :-
@@ -137,7 +137,7 @@ lw(HashPrefix) :-
 
 
 lw(HashPrefix, Opts) :-
-  ldmw_page0(HashPrefix, Opts, warn).
+  ldmw_pagination0(HashPrefix, Opts, warn).
 
 
 lw(S, P, O) :-
@@ -172,9 +172,14 @@ ldmw0(S, P, O, Hash, HashPrefix, Name) :-
 
 
 
-ldmw_page0(HashPrefix, Opts, Name) :-
-  page(rdf(S,P,O,Hash), ldmw0(S, P, O, Hash, HashPrefix, Name), Opts, Result),
-  page_print_result(HashPrefix, Result, rdf_print_quads0(Opts)).
+ldmw_pagination0(HashPrefix, Opts, Name) :-
+  pagination(
+    rdf(S,P,O,Hash),
+    ldmw0(S, P, O, Hash, HashPrefix, Name),
+    Opts,
+    Result
+  ),
+  pagination_result(HashPrefix, Result, rdf_print_quads0(Opts)).
 rdf_print_quads0(Opts, Results) :- rdf_print_quads(Results, Opts).
 
 

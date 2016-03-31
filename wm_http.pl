@@ -90,14 +90,24 @@ meta_mediatype(get, text/html, Doc) :-
   ]).
 
 datas_mediatype(get, application/json) :-
-  desc_ldocs(data, hdt, Pairs),
-  findall(Row, (member(Pair, Pairs), pair_row0(Pair, Row)), Rows),
+  findall(
+    Mod-Hash,
+    (
+      lhash(Hash),
+      lfile_lhash(File, data, nquads, Hash),
+      access_file(File, read),
+      time_file(File, Mod)
+    ),
+    Pairs
+  ),
+  desc_pairs(Pairs, SortedPairs),
+  findall(Row, (member(Pair, SortedPairs), pair_row0(Pair, Row)), Rows),
   reply_json_dict(Rows, [status(200)]).
 datas_mediatype(get, text/html) :-
   string_list_concat(["LOD Laundromat","Documents"], " - ", Title),
   reply_html_page(cliopatria(default),
     [title(Title),\html_requires(dataTables)],
-    [\wm_table]
+    [\data_table,\wm_table]
   ).
 datas_mediatype(post, application/json) :- !,
   http_read_json_dict(Data),
@@ -115,18 +125,18 @@ metas_mediatype(get, text/html) :-
 
 
 
-ldoc_table -->
+data_table -->
   html([
-    h1("Documents"),
+    h1("Data documents"),
     \tuple_counter,
     table([class=display,id=table_id],
       thead(
         tr([
-          th("Document"),
+          th("Hash"),
           th("Last modified"),
           th("End status"),
-          th("Tuples"),
-          th("Number of warnings"),
+          th("#Tuples"),
+          th("#Warnings"),
           th("HTTP status"),
           th("RDF format")
         ])
@@ -170,29 +180,13 @@ wm_table -->
 
 % HELPERS %
 
-%! desc_ldocs(+Name, +Kind, -Pairs) is det.
-
-desc_ldocs(Name, Kind, SortedPairs) :-
-  findall(
-    Mod-Doc,
-    (
-      lhash(Hash),
-      ldoc_lhash(Doc, Name, Hash),
-      lfile_lhash(File, Name, Kind, Hash),
-      time_file(File, Mod)
-    ),
-    Pairs
-  ),
-  desc_pairs(Pairs, SortedPairs).
-
-
-pair_row0(Mod0-Doc, [Doc,Mod,End,Tuples,Warnings,Status,Format]) :-
+pair_row0(Mod0-Hash, [Hash,Mod,End,Tuples,Warnings,Status,Format]) :-
   format_time(atom(Mod), "%FT%T%:z", Mod0),
-  (rdf_has(Doc, llo:processed_tuples, Tuples^^xsd:nonNegativeInteger) -> true ; Tuples = 0),
-  (rdf_has(Doc, llo:number_of_warnings, Warnings^^xsd:nonNegativeInteger) -> true ; Warnings = 0),
-  (rdf_has(Doc, llo:status_code, Status^^xsd:integer) -> true ; Status = "∅"),
-  (rdf_has(Doc, llo:end, End^^xsd:string) -> true ; End = '∅'),
-  (rdf_has(Doc, llo:rdf_format, Format^^xsd:string) -> true ; Format = '∅').
+  (lm(_, llo:processed_tuples, Tuples^^xsd:nonNegativeInteger, Hash) -> true ; Tuples = 0),
+  (lm(_, llo:number_of_warnings, Warnings^^xsd:nonNegativeInteger, Hash) -> true ; Warnings = 0),
+  (lm(_, llo:status_code, Status^^xsd:integer, Hash) -> true ; Status = "∅"),
+  (lm(_, llo:end, End^^xsd:string, Hash) -> true ; End = '∅'),
+  (lm(_, llo:rdf_format, Format^^xsd:string, Hash) -> true ; Format = '∅').
 
 
 tuple_counter -->
