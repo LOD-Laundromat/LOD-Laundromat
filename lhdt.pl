@@ -5,24 +5,26 @@
     lhdt/4,             % ?S, ?P, ?O, ?File
     lhdt_build/1,       %             +File
     lhdt_cost/5,        % ?S, ?P, ?O, +File, -Cost
-    lhdt_data_table//5, % ?S, ?P, ?O, ?File, +Opts
     lhdt_header/4,      % ?S, ?P, ?O, ?File
+    lhdt_pagination//1, %             +Hash
+    lhdt_pagination//2, %             +Hash, +Opts
+    lhdt_pagination//5, % ?S, ?P, ?O, +Hash, +Opts
     lhdt_print/4,       % ?S, ?P, ?O, +File
     lhdt_print/5        % ?S, ?P, ?O, +File, +Opts
   ]
 ).
 
-/** <module> HDT build
+/** <module> LOD Laundromat HDT
 
 @author Wouter Beek
-@version 2016/03
+@version 2016/03-2016/04
 */
 
 :- use_module(library(apply)).
 :- use_module(library(error)).
 :- use_module(library(gen/gen_ntuples)).
 :- use_module(library(hdt)).
-:- use_module(library(html/html_bs)).
+:- use_module(library(html/html_ext)).
 :- use_module(library(html/rdfh)).
 :- use_module(library(pagination)).
 :- use_module(library(print_ext)).
@@ -40,7 +42,7 @@
    lhdt(r, r, o, r),
    lhdt_cost(r, r, o, r, -),
    lhdt_header(r, r, o, r),
-   lhdt_data_table(r, r, o, r, +, ?, ?),
+   lhdt_pagination(r, r, o, +, +, ?, ?),
    lhdt_print(r, r, o, r).
 
 
@@ -107,17 +109,6 @@ hdt_search_cost0(S, P, O, Cost, Hdt) :- hdt_search_cost(Hdt, S, P, O, Cost).
 
 
 
-%! lhdt_data_table(?S, ?P, ?O, ?File, +Opts)// is det.
-
-lhdt_data_table(S, P, O, File, Opts) -->
-  {lhdt_page(S, P, O, File, Opts, Result)},
-  rdfh_triple_table(Result.triples),
-  bs_pagination(Result.number_of_pages, Result.page).
-  %High is Result.page * Result.page_size,
-  %Low is High - Result.page_size + 1,
-
-
-
 %! lhdt_header(?S, ?P, ?O) is nondet.
 %! lhdt_header(?S, ?P, ?O, ?File) is nondet.
 
@@ -131,6 +122,32 @@ hdt_header0(S, P, O, Hdt) :- hdt_header(Hdt, S, P, O).
 
 
 
+%! lhdt_pagination(+Hash)// is det.
+%! lhdt_pagination(+Hash, +Opts)// is det.
+%! lhdt_pagination(?S, ?P, ?O, +Hash, +Opts)// is det.
+
+lhdt_pagination(Hash) -->
+  lhdt_pagination(Hash, _{}).
+
+
+lhdt_pagination(Hash, Opts) -->
+  {
+    ignore(get_dict(subject, Opts, S)),
+    ignore(get_dict(predicate, Opts, P)),
+    ignore(get_dict(object, Opts, O))
+  },
+  lhdt_pagination(S, P, O, Hash, Opts).
+
+
+lhdt_pagination(S, P, O, Hash, Opts) -->
+  {
+    lfile_lhash(File, data, hdt, Hash),
+    pagination(rdf(S,P,O), lhdt(S, P, O, File), Opts, Result)
+  },
+  pagination_result(Result, rdfh_triple_table(_{query: [hash=Hash]}), Opts).
+
+
+
 %! lhdt_print(?S, ?P, ?O, +File) is nondet.
 %! lhdt_print(?S, ?P, ?O, +File, +Opts) is nondet.
 
@@ -139,10 +156,8 @@ lhdt_print(S, P, O, File) :-
 
 
 lhdt_print(S, P, O, File, Opts) :-
-  lhdt_page(S, P, O, File, Opts, Result),
+  pagination(rdf(S,P,O), lhdt(S, P, O, File), Opts, Result),
   rdf_print_triples(Result.results, Opts).
-  %High is Result.page * Result.page_size,
-  %Low is High - Result.page_size + 1,
 
 
 
@@ -157,25 +172,6 @@ ensure_ntriples(Dir, From, To) :-
     open(To, write, Sink),
     with_output_to(Sink, rdf_call_on_tuples(From, gen_nquad)),
     close(Sink)
-  ).
-
-
-
-%! lhdt_page(?S, ?P, ?O, +File, +Opts, -Result) is nondet.
-% The following keys are defined for Results:
-%   - number_of_pages
-%   - total_number_of_results
-      
-lhdt_page(S, P, O, File, Opts, Result2) :-
-  pagination(rdf(S,P,O), lhdt(S, P, O, File), Opts, Result1),
-  (   maplist(var, [S,P,O])
-  ->  lhdt_triples(File, NumTriples),
-      NumPages is ceil(NumTriples / Result1.page_size),
-      Result2 = Result1.put({
-       number_of_pages: NumPages,
-       total_number_of_results: NumTriples
-      })
-  ;   Result2 = Result1
   ).
 
 

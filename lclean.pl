@@ -45,7 +45,7 @@
 :- use_module(library(rdf/rdf_print)).
 :- use_module(library(semweb/rdf11)). % Operators.
 :- use_module(library(string_ext)).
-:- use_module(library(uri/uri_ext)).
+:- use_module(library(uri)).
 :- use_module(library(zlib)).
 
 :- use_module(cpack('LOD-Laundromat'/lfs)).

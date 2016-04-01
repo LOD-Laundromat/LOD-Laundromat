@@ -35,7 +35,6 @@
 :- use_module(library(rdf/rdf_ext)).
 :- use_module(library(rdf/rdf_load)).
 :- use_module(library(string_ext)).
-:- use_module(library(uri/uri_ext)).
 
 :- use_module(cpack('LOD-Laundromat'/lclean)).
 :- use_module(cpack('LOD-Laundromat'/lfs)).
@@ -73,7 +72,7 @@ data_mediatype(get, text/html, Doc) :-
   ldoc_lhash(Doc, Hash),
   string_list_concat(["Washing Machine","Data",Hash], " - ", Title),
   reply_html_page(cliopatria(default), title(Title),
-    \lhdt_data_table(_, _, _, Doc, _{page: 1})
+    \lhdt_pagination(Hash, _{page: 1})
   ).
 
 meta_mediatype(get, application/nquads, Doc) :- !,
