@@ -2,23 +2,26 @@
   lcli,
   [
     lf/0,
-    lf/1, %             +HashPrefix
-    lf/2, %             +HashPrefix, +Opts
+    lf/1, %                    +HashPrefix
+    lf/2, %                    +HashPrefix, +Opts
     ld/0,
-    ld/1, %             ?HashPrefix
-    ld/2, %             ?HashPrefix, +Opts
+    ld/1, %                    ?HashPrefix
+    ld/2, %                    ?HashPrefix, +Opts
     ld/3, % ?S, ?P, ?O
-    ld/4, % ?S, ?P, ?O, ?HashPrefix
+    ld/4, % ?S, ?P, ?O, ?Hash
+    ld/5, % ?S, ?P, ?O, ?Hash, ?HashPrefix
     lm/0,
-    lm/1, %             ?HashPrefix
-    lm/2, %             ?HashPrefix, +Opts
+    lm/1, %                    ?HashPrefix
+    lm/2, %                    ?HashPrefix, +Opts
     lm/3, % ?S, ?P, ?O
-    lm/4, % ?S, ?P, ?O, ?HashPrefix
+    lm/4, % ?S, ?P, ?O, ?Hash
+    lm/5, % ?S, ?P, ?O, ?Hash, ?HashPrefix
     lw/0,
-    lw/1, %             ?HashPrefix
-    lw/2, %             ?HashPrefix, +Opts
+    lw/1, %                    ?HashPrefix
+    lw/2, %                    ?HashPrefix, +Opts
     lw/3, % ?S, ?P, ?O
-    lw/4  % ?S, ?P, ?O, ?HashPrefix
+    lw/4, % ?S, ?P, ?O, ?Hash
+    lw/5  % ?S, ?P, ?O, ?Hash, ?HashPrefix
   ]
 ).
 
@@ -43,11 +46,14 @@
 
 :- rdf_meta
    ld(r, r, o),
-   ld(r, r, o, +),
+   ld(r, r, o, ?),
+   ld(r, r, o, ?, +),
    lm(r, r, o),
-   lm(r, r, o, +),
+   lm(r, r, o, ?),
+   lm(r, r, o, ?, +),
    lw(r, r, o),
-   lw(r, r, o, +).
+   lw(r, r, o, ?),
+   lw(r, r, o, ?, +).
 
 
 
@@ -71,11 +77,12 @@ lf(HashPrefix, Opts) :-
 
 
 
-%! ld                                 is det.
-%! ld(            +HashPrefix       ) is det.
-%! ld(            +HashPrefix, +Opts) is det.
-%! ld(?S, ?P, ?O                    ) is det.
-%! ld(?S, ?P, ?O, +HashPrefix       ) is det.
+%! ld                                        is det.
+%! ld(                   +HashPrefix       ) is det.
+%! ld(                   +HashPrefix, +Opts) is det.
+%! ld(?S, ?P, ?O                           ) is det.
+%! ld(?S, ?P, ?O, ?Hash                    ) is det.
+%! ld(?S, ?P, ?O, ?Hash, +HashPrefix       ) is det.
 
 ld :-
   ld('').
@@ -92,15 +99,21 @@ ld(S, P, O) :-
   ld(S, P, O, _).
 
 
-ld(S, P, O, HashPrefix) :-
-  ldmw0(S, P, O, HashPrefix, data).
+ld(S, P, O, Hash) :-
+  ld(S, P, O, Hash, '').
+
+
+ld(S, P, O, Hash, HashPrefix) :-
+  ldmw0(S, P, O, Hash, HashPrefix, data).
 
 
 
-%! lm                          is det.
-%! lm(            +HashPrefix) is det.
-%! lm(?S, ?P, ?O             ) is det.
-%! lm(?S, ?P, ?O, +HashPrefix) is det.
+%! lm                                        is det.
+%! lm(                   +HashPrefix       ) is det.
+%! lm(                   +HashPrefix, +Opts) is det.
+%! lm(?S, ?P, ?O                           ) is det.
+%! lm(?S, ?P, ?O, ?Hash                    ) is det.
+%! lm(?S, ?P, ?O, ?Hash, +HashPrefix       ) is det.
 
 lm :-
   lm('').
@@ -118,15 +131,21 @@ lm(S, P, O) :-
   lm(S, P, O, _).
 
 
-lm(S, P, O, HashPrefix) :-
-  ldmw0(S, P, O, HashPrefix, meta).
+lm(S, P, O, Hash) :-
+  lm(S, P, O, Hash, '').
+
+
+lm(S, P, O, Hash, HashPrefix) :-
+  ldmw0(S, P, O, Hash, HashPrefix, meta).
 
 
 
-%! lw                          is det.
-%! lw(            +HashPrefix) is det.
-%! lw(?S, ?P, ?O             ) is det.
-%! lw(?S, ?P, ?O, +HashPrefix) is det.
+%! lw                                        is det.
+%! lw(                   +HashPrefix       ) is det.
+%! lw(                   +HashPrefix, +Opts) is det.
+%! lw(?S, ?P, ?O                           ) is det.
+%! lw(?S, ?P, ?O, ?Hash                    ) is det.
+%! lw(?S, ?P, ?O, ?Hash, +HashPrefix       ) is det.
 
 lw :-
   lw('').
@@ -144,18 +163,18 @@ lw(S, P, O) :-
   lw(S, P, O, _).
 
 
-lw(S, P, O, HashPrefix) :-
-  ldmw0(S, P, O, HashPrefix, warn).
+lw(S, P, O, Hash) :-
+  lw(S, P, O, Hash, '').
+
+
+lw(S, P, O, Hash, HashPrefix) :-
+  ldmw0(S, P, O, Hash, HashPrefix, warn).
 
 
 
 
 
 % HELPERS %
-
-ldmw0(S, P, O, HashPrefix, Name) :-
-  ldmw0(S, P, O, _, HashPrefix, Name).
-
 
 ldmw0(S, P, O, Hash, HashPrefix, Name) :-
   ldir(HashPrefix, Dir),

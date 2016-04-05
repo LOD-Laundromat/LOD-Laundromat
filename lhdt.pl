@@ -4,6 +4,7 @@
     lhdt/3,             % ?S, ?P, ?O
     lhdt/4,             % ?S, ?P, ?O, ?File
     lhdt_build/1,       %             +File
+    lhdt_build/2,       %             +Hash, +Name
     lhdt_cost/5,        % ?S, ?P, ?O, +File, -Cost
     lhdt_header/4,      % ?S, ?P, ?O, ?File
     lhdt_pagination//1, %             +Hash
@@ -63,21 +64,22 @@ hdt_search0(S, P, O, Hdt) :- hdt_search(Hdt, S, P, O).
 
 
 %! lhdt_build(+File) is det.
+%! lhdt_build(+Hash, +Name) is det.
 
 lhdt_build(File) :-
   lfile_lhash(File, Name, _, Hash),
-  lhdt_build0(Hash, Name).
+  lhdt_build(Hash, Name).
 
-lhdt_build0(Hash, meta) :- !,
-  lhdt_build0(Hash, meta, _).
-lhdt_build0(Hash, Name) :-
+lhdt_build(Hash, meta) :- !,
+  lhdt_build(Hash, meta, _).
+lhdt_build(Hash, Name) :-
   % Make sure the metadata is converted to HDT.
-  lhdt_build0(Hash, meta),
+  lhdt_build(Hash, meta),
   lfile_lhash(File, meta, hdt, Hash),
   once(lhdt(_, llo:base_iri, BaseIri^^xsd:anyURI, File)),
-  lhdt_build0(Hash, Name, BaseIri).
+  lhdt_build(Hash, Name, BaseIri).
 
-lhdt_build0(Hash, Name, BaseIri) :-
+lhdt_build(Hash, Name, BaseIri) :-
   lfile_lhash(HdtFile, Name, hdt, Hash),
   (var(BaseIri) -> Opts = [] ; Opts = [base_uri(BaseIri)]),
   (   % HDT file exits.
