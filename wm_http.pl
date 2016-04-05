@@ -32,8 +32,8 @@
 :- use_module(library(http/rest)).
 :- use_module(library(os/thread_ext)).
 :- use_module(library(pair_ext)).
-:- use_module(library(rdf/rdf_ext)).
 :- use_module(library(rdf/rdf_load)).
+:- use_module(library(semweb/rdf11)).
 :- use_module(library(string_ext)).
 
 :- use_module(cpack('LOD-Laundromat'/lclean)).
