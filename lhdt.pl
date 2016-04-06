@@ -87,7 +87,7 @@ lhdt_build(Hash, Name, BaseIri) :-
   (var(BaseIri) -> Opts = [] ; Opts = [base_uri(BaseIri)]),
   (   % HDT file exits.
       exists_file(HdtFile)
-  ->  msg_notification("File ~a already exists.~n", [HdtFile])
+  ->  msg_notification("File ~a|~a already exists.~n", [Hash,Name])
   ;   % N-Triples files exists.
       lfile_lhash(NTriplesFile, Name, ntriples, Hash),
       access_file(NTriplesFile, read)
@@ -101,7 +101,7 @@ lhdt_build(Hash, Name, BaseIri) :-
         hdt_create_from_file(HdtFile, NTriplesFile, Opts),
         delete_file(NTriplesFile)
       )
-  ;   existence_error(lfile(Name), Hash)
+  ;   msg_notification("File ~a|~a does not exist.~n", [Hash,Name])
   ).
 
 
@@ -191,7 +191,7 @@ ensure_ntriples(Dir, From, To) :-
   directory_file_path(Dir, 'data.nt', To),
   setup_call_cleanup(
     open(To, write, Sink),
-    with_output_to(Sink, rdf_call_on_tuples(From, gen_nquad)),
+    with_output_to(Sink, rdf_call_on_tuples(From, gen_ntriple)),
     close(Sink)
   ).
 
