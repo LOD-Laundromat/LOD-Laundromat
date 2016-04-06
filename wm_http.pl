@@ -48,11 +48,11 @@
 :- http_handler(root(data), data, [prefix]).
 :- http_handler(root(meta), meta, [prefix]).
 
-data(Req) :- rest_handler(Req, data, ldoc(data), data, datas).
+data(Req) :- rest_handler(Req, data, lready_doc, data, datas).
 data(Method, MTs, Doc) :- rest_mediatype(Method, MTs, Doc, data_mediatype).
 datas(Method, MTs) :- rest_mediatype(Method, MTs, datas_mediatype).
 
-meta(Req) :- rest_handler(Req, meta, ldoc(meta), meta, metas).
+meta(Req) :- rest_handler(Req, meta, lready_doc, meta, metas).
 meta(Method, MTs, Doc) :- rest_mediatype(Method, MTs, Doc, meta_mediatype).
 metas(Method, MTs) :- rest_mediatype(Method, MTs, metas_mediatype).
 
@@ -92,7 +92,7 @@ datas_mediatype(get, application/json) :-
   findall(
     Mod-Hash,
     (
-      lhash(Hash),
+      lready_hash(Hash),
       lfile_lhash(File, data, nquads, Hash),
       access_file(File, read),
       time_file(File, Mod)
@@ -181,6 +181,7 @@ wm_table -->
 
 pair_row0(Mod0-Hash, [Hash,Mod,End,Tuples,Warnings,Status,Format]) :-
   format_time(atom(Mod), "%FT%T%:z", Mod0),
+  % @tbd Yet another context in which RDF prefix expansion does not work.
   (lm(_, llo:processed_tuples, Tuples^^xsd:nonNegativeInteger, Hash) -> true ; Tuples = 0),
   (lm(_, llo:number_of_warnings, Warnings^^xsd:nonNegativeInteger, Hash) -> true ; Warnings = 0),
   (lm(_, llo:status_code, Status^^xsd:integer, Hash) -> true ; Status = "∅"),

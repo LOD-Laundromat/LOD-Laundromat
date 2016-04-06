@@ -29,7 +29,6 @@ cliopatria:menu_item(700=places/data, 'Data').
 
 :- use_module(library(debug)).
 
-:- debug(lclean).
-:- debug(lclean(warn)).
+%:- debug(lclean).
 :- debug(wm(idle)).
-:- debug(wm(thread)).
+%:- debug(wm(thread)).

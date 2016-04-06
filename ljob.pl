@@ -3,13 +3,17 @@
   [
     ctuples/1, % -N
     lf_warm/0,
-    lf_warm/1, % +HashPrefix
+    lf_warm/1, % ?Hash
+    lf_warm/2, % ?Hash, +HashPrefix
     ld_warm/0,
-    ld_warm/1, % +HashPrefix
+    ld_warm/1, % ?Hash
+    ld_warm/2, % ?Hash, +HashPrefix
     lm_warm/0,
-    lm_warm/1, % +HashPrefix
+    lm_warm/1, % ?Hash
+    lm_warm/2, % ?Hash, +HashPrefix
     lw_warm/0,
-    lw_warm/1  % +HashPrefix    
+    lw_warm/1, % ?Hash
+    lw_warm/2  % ?Hash, +HashPrefix    
   ]
 ).
 
@@ -34,40 +38,54 @@ ctuples(N) :-
 
 
 lf_warm :-
-  lf_warm('').
+  lf_warm(_).
 
 
-lf_warm(HashPrefix) :-
-  ld_warm(HashPrefix),
-  lm_warm(HashPrefix),
-  lw_warm(HashPrefix).
+lf_warm(Hash) :-
+  lf_warm(Hash, '').
+
+
+lf_warm(Hash, HashPrefix) :-
+  ldmw_warm0(Hash, HashPrefix, _).
 
 
 
 ld_warm :-
-  ld_warm('').
+  ld_warm(_).
 
 
-ld_warm(HashPrefix) :-
-  ldmw_warm0(HashPrefix, data).
+ld_warm(Hash) :-
+  ld_warm(Hash, '').
+
+
+ld_warm(Hash, HashPrefix) :-
+  ldmw_warm0(Hash, HashPrefix, data).
 
 
 
 lm_warm :-
-  lm_warm('').
+  lm_warm(_).
 
 
-lm_warm(HashPrefix) :-
-  ldmw_warm0(HashPrefix, meta).
+lm_warm(Hash) :-
+  lm_warm(Hash, '').
+
+
+lm_warm(Hash, HashPrefix) :-
+  ldmw_warm0(Hash, HashPrefix, meta).
 
 
 
 lw_warm :-
-  lw_warm('').
+  lw_warm(_).
 
 
-lw_warm(HashPrefix) :-
-  ldmw_warm0(HashPrefix, warn).
+lw_warm(Hash) :-
+  lw_warm(Hash, '').
+
+
+lw_warm(Hash, HashPrefix) :-
+  ldmw_warm0(Hash, HashPrefix, warn).
 
 
 
@@ -75,7 +93,9 @@ lw_warm(HashPrefix) :-
 
 % HELPERS %
 
-ldmw_warm0(HashPrefix, Name) :-
-  ldir(HashPrefix, Dir),
-  ldir_lhash(Dir, Hash),
+%! lmdw_warn0(?Hash, +HashPrefix, ?Name) is nondet.
+
+ldmw_warm0(Hash, HashPrefix, Name) :-
+  lready_hash(HashPrefix, Hash),
+  lname(Name),
   lhdt_build(Hash, Name).

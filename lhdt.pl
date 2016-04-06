@@ -2,16 +2,18 @@
   lhdt,
   [
     lhdt/3,             % ?S, ?P, ?O
-    lhdt/4,             % ?S, ?P, ?O, ?File
-    lhdt_build/1,       %             +File
-    lhdt_build/2,       %             +Hash, +Name
+    lhdt/4,             % ?S, ?P, ?O, +File
+    lhdt_build/1,       %             +Hash
+    lhdt_build/2,       %             +Hash, ?Name
     lhdt_cost/5,        % ?S, ?P, ?O, +File, -Cost
-    lhdt_header/4,      % ?S, ?P, ?O, ?File
+    lhdt_header/4,      % ?S, ?P, ?O, +File
     lhdt_pagination//1, %             +Hash
     lhdt_pagination//2, %             +Hash, +Opts
     lhdt_pagination//5, % ?S, ?P, ?O, +Hash, +Opts
     lhdt_print/4,       % ?S, ?P, ?O, +File
-    lhdt_print/5        % ?S, ?P, ?O, +File, +Opts
+    lhdt_print/5,       % ?S, ?P, ?O, +File, +Opts
+    lhdt_remove/1,      %             +Hash
+    lhdt_remove/2       %             +Hash, ?Name
   ]
 ).
 
@@ -51,7 +53,7 @@
 
 
 %! lhdt(?S, ?P, ?O) is nondet.
-%! lhdt(?S, ?P, ?O, ?File) is nondet.
+%! lhdt(?S, ?P, ?O, +File) is nondet.
 
 lhdt(S, P, O) :-
   lhdt(S, P, O, _).
@@ -63,12 +65,13 @@ hdt_search0(S, P, O, Hdt) :- hdt_search(Hdt, S, P, O).
 
 
 
-%! lhdt_build(+File) is det.
-%! lhdt_build(+Hash, +Name) is det.
+%! lhdt_build(+Hash) is det.
 
-lhdt_build(File) :-
-  lfile_lhash(File, Name, _, Hash),
-  lhdt_build(Hash, Name).
+lhdt_build(Hash) :-
+  forall(lname(Name), lhdt_build(Hash, Name)).
+
+
+%! lhdt_build(+Hash, +Name) is det.
 
 lhdt_build(Hash, meta) :- !,
   lhdt_build(Hash, meta, _).
@@ -112,7 +115,7 @@ hdt_search_cost0(S, P, O, Cost, Hdt) :- hdt_search_cost(Hdt, S, P, O, Cost).
 
 
 %! lhdt_header(?S, ?P, ?O) is nondet.
-%! lhdt_header(?S, ?P, ?O, ?File) is nondet.
+%! lhdt_header(?S, ?P, ?O, +File) is nondet.
 
 lhdt_header(S, P, O) :-
   lhdt_header(S, P, O, _).
@@ -163,6 +166,22 @@ lhdt_print(S, P, O, File, Opts) :-
 
 
 
+%! lhdt_remove(+Hash) is det.
+%! lhdt_remove(+Hash, +Name) is det.
+
+lhdt_remove(Hash) :-
+  forall(lname(Name), lhdt_remove(Hash, Name)).
+
+
+lhdt_remove(Hash, Name) :-
+  lfile_lhash(HdtFile, Name, hdt, Hash),
+  (exists_file(HdtFile) -> delete_file(HdtFile) ; true),
+  atomic_list_concat([HdtFile,index], ., IndexFile),
+  (exists_file(IndexFile) -> delete_file(IndexFile) ; true).
+
+
+
+
 
 % HELPERS %
 
@@ -179,19 +198,19 @@ ensure_ntriples(Dir, From, To) :-
 
 
 %! lhdt_setup_call_cleanup(+File, :Goal_1) is det.
-%! lhdt_setup_call_cleanup(-File, :Goal_1) is nondet.
 
 lhdt_setup_call_cleanup(File, Goal_1) :-
-  (   exists_file(File)
-  ->  access_file(File, read),
-      setup_call_cleanup(
-        hdt_open(Hdt, File),
-        call(Goal_1, Hdt),
-        hdt_close(Hdt)
-      )
-  ;   lhdt_build(File),
-      lhdt_setup_call_cleanup(File, Goal_1)
+  exists_file(File), !,
+  access_file(File, read),
+  setup_call_cleanup(
+    hdt_open(Hdt, File),
+    call(Goal_1, Hdt),
+    hdt_close(Hdt)
   ).
+lhdt_setup_call_cleanup(File, Goal_1) :-
+  lfile_lhash(File, Name, _, Hash),
+  lhdt_build(Hash, Name),
+  lhdt_setup_call_cleanup(File, Goal_1).
 
 
 

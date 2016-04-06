@@ -4,7 +4,7 @@
     add_iri/1,         % +Iri
     add_iri/2,         % +Iri, -Hash
     begin_seed/2,      % -Hash, -Iri
-    current_seed/1,    % -Seed
+    current_seed/1,    %        -Seed
     current_seed/2,    % +Hash, -Seed
     end_seed/1,        % +Hash
     remove_seed/1,     % +Hash
@@ -50,24 +50,24 @@
 %
 % @throws existence_error if IRI is already in the seedlist.
 
-add_iri(I) :-
-  add_iri(I, _).
+add_iri(Iri) :-
+  add_iri(Iri, _).
 
-add_iri(I1, H) :-
-  iri_normalized(I1, I2),
-  with_mutex(seedlist, add_iri_with_check0(I2, H)),
-  debug(seedlist, "Added to seedlist: ~a (~a)", [I1,H]).
+add_iri(Iri1, Hash) :-
+  iri_normalized(Iri1, Iri2),
+  with_mutex(seedlist, add_iri_with_check0(Iri2, Hash)),
+  debug(seedlist, "Added to seedlist: ~a (~a)", [Iri1,Hash]).
 
-add_iri_with_check0(I, _) :-
-  seed(_, I, _, _, _), !,
-  existence_error(seed, I).
-add_iri_with_check0(I, H) :-
-  md5(I, H),
-  add_iri_without_check0(I, H).
+add_iri_with_check0(Iri, _) :-
+  seed(_, Iri, _, _, _), !,
+  existence_error(seed, Iri).
+add_iri_with_check0(Iri, Hash) :-
+  md5(Iri, Hash),
+  add_iri_without_check0(Iri, Hash).
 
-add_iri_without_check0(I, H) :-
-  get_time(A),
-  assert_seed(H, I, A, 0.0, 0.0).
+add_iri_without_check0(Iri, Hash) :-
+  get_time(Now),
+  assert_seed(Hash, Iri, Now, 0.0, 0.0).
 
 
 

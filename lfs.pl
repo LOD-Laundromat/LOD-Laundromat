@@ -3,23 +3,26 @@
   [
     ldir/1,        % ?Dir
     ldir/2,        % +HashPrefix, -Dir
-    ldir_ldoc/2,   % ?Dir, ?Doc
+    ldir_ldoc/2,   % ?Dir,        ?Doc
     ldir_ldoc/3,   % ?Dir, ?Name, ?Doc
     ldir_lfile/4,  % ?Dir, ?Name, ?Kind, ?File
     ldir_lhash/2,  % ?Dir, ?Hash
     ldoc/2,        % ?Name, ?Doc
-    ldoc_lfile/2,  % ?Doc, ?File
+    ldoc_lfile/2,  % ?Doc,        ?File
     ldoc_lfile/3,  % ?Doc, ?Kind, ?File
-    ldoc_lhash/2,  % ?Doc, ?Hash
+    ldoc_lhash/2,  % ?Doc,        ?Hash
     ldoc_lhash/3,  % ?Doc, ?Name, ?Hash
     lfile/3,       % ?Name, ?Kind, ?File
-    lfile_lhash/2, % ?File, ?Hash
+    lfile_lhash/2, % ?File,               ?Hash
     lfile_lhash/4, % ?File, ?Name, ?Kind, ?Hash
     lhash/1,       % ?Hash
     lname/1,       % ?Name
     lrdf_load/2,   % +Hash, ?Name
     lrdf_unload/1, % +Hash
     lrdf_unload/2, % +Hash, +Name
+    lready_doc/1,  % +Doc
+    lready_hash/1, %              ?Hash
+    lready_hash/2, % +HashPrefix, ?Hash
     lroot/1        % -Dir
   ]
 ).
@@ -32,7 +35,7 @@ hash --- doc
 dir ---- file
 
 @author Wouter Beek
-@version 2016/02-2016/03
+@version 2016/02-2016/04
 */
 
 :- use_module(library(error)).
@@ -41,6 +44,8 @@ dir ---- file
 :- use_module(library(rdf/rdf_load)).
 :- use_module(library(semweb/rdf11)).
 :- use_module(library(settings)).
+
+:- use_module(cpack('LOD-Laundromat'/lclean)).
 
 :- multifile
     error:has_type/2.
@@ -56,7 +61,8 @@ error:has_type(lname, Name) :-
    ldoc(r),
    ldoc_file(r, +, +, -),
    ldoc_hash(r, ?),
-   ldoc_load(r, +).
+   ldoc_load(r, +),
+   lready_doc(r).
 
 :- setting(data_dir, atom, '/scratch/lodlab/crawls/13/',
      'Directory where LOD Laundromat stores the cleaned data.'
@@ -297,6 +303,30 @@ lrdf_unload(Hash) :-
 lrdf_unload(Hash, Name) :-
   ldoc_lhash(Doc, Name, Hash),
   rdf_unload_graph(Doc).
+
+
+
+%! lready_doc(+Doc) is semidet.
+
+lready_doc(Doc) :-
+  ldoc_lhash(Doc, Hash),
+  lready_hash(Hash).
+
+
+
+%! lready_hash(+Hash) is semidet.
+%! lready_hash(-Hash) is nondet.
+
+lready_hash(Hash) :-
+  lhash(Hash),
+  \+ thread_seed(_, Hash).
+
+
+%! lready_hash(+HashPrefix, -Hash) is nondet.
+
+lready_hash(HashPrefix, Hash) :-
+  ldir(HashPrefix, Dir),
+  ldir_lhash(Dir, Hash).
 
 
 

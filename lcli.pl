@@ -176,10 +176,12 @@ lw(S, P, O, Hash, HashPrefix) :-
 
 % HELPERS %
 
-ldmw0(S, P, O, Hash, HashPrefix, Name) :-
-  ldir(HashPrefix, Dir),
-  ldir_lhash(Dir, Hash),
-  ldir_lfile(Dir, Name, hdt, File),
+%! ldmw0(?S, ?P, ?O, ?Hash, +HashPrefix, +Name) is nondet.
+
+ldmw0(S0, P0, O0, Hash, HashPrefix, Name) :-
+  maplist(fix_rdf_prefix_expansion, [S0,P0,O0], [S,P,O]),
+  (ground(Hash) -> lready_hash(Hash) ; lready_hash(HashPrefix, Hash)),
+  lfile_lhash(File, Name, hdt, Hash),
   catch(
     lhdt(S, P, O, File),
     E,
@@ -188,6 +190,9 @@ ldmw0(S, P, O, Hash, HashPrefix, Name) :-
       fail
     )
   ).
+
+fix_rdf_prefix_expansion(X, X) :- var(X), !.
+fix_rdf_prefix_expansion(X, Y) :- rdf_global_id(X, Y).
 
 
 
@@ -239,7 +244,6 @@ pp_files(Dir) :-
 
 
 %! pp_hash_path(+HashPrefix, +Path) is det.
-% Print the 
 
 pp_hash_path(HashPrefix, Path) :-
   pp("  "),
@@ -248,6 +252,7 @@ pp_hash_path(HashPrefix, Path) :-
   pp("~a|~a:  ", [HashPrefix,Rest]),
   pp_files(Path),
   nl.
+
 
 
 pp_hash_paths(HashPrefix, Paths) :-

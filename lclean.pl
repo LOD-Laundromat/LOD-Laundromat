@@ -83,8 +83,7 @@ clean :-
 % @throws existence_error If the seed is not in the seedlist.
 
 clean(Hash) :-
-  lfile_lhash(File, data, nquads, Hash),
-  exists_file(File), !,
+  lready_hash(Hash), !,
   msg_notification("Already cleaned ~a", [Hash]).
 clean(Hash) :-
   clean(Hash, _).
@@ -100,6 +99,7 @@ clean(Hash, Iri) :-
   clean_inner(Hash, Iri),
   debug(lclean, "~a has cleaned ~a ~a", [Alias,Hash,Iri]),
   end_seed(Hash).
+
 
 clean_inner(Hash, Iri) :-
   ldir_lhash(Dir, Hash),
@@ -131,7 +131,8 @@ clean_inner(Hash, Iri) :-
     )
   ).
   %absolute_file_name('dirty.gz', DirtyTo, Opts),
-  %call_collect_messages(rdf_download_to_file(Iri, DirtyTo, [compress(gzip)])),
+  %call_collect_messages(rdf_download_to_file(Iri, DirtyTo, [compress(gzip)])).
+
 
 currently_debugging(Hash, Iri) :-
   currently_debugging0(Hash), !,
@@ -155,6 +156,9 @@ clean_iri(I1) :-
 %! reset(+Hash) is det.
 
 reset(Hash) :-
+  % Step 0: Make sure that Hash is ready.
+  (lready_hash(Hash) -> true ; existence_error(lhash, Hash)),
+  
   % Step 1: Unload the RDF data and metadata from memory.
   lrdf_unload(Hash),
 
