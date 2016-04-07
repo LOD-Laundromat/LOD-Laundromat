@@ -10,10 +10,10 @@
   ]
 ).
 
-/* <module> LOD Laundromat washing machine
+/* <module> LOD Laundromat: Washing machine
 
 @author Wouter Beek
-@version 2016/01-2016/03
+@version 2016/01-2016/04
 */
 
 :- use_module(library(aggregate)).
@@ -28,6 +28,8 @@
 :- use_module(library(http/json)).
 :- use_module(library(jsonld/jsonld_metadata)).
 :- use_module(library(jsonld/jsonld_read)).
+:- use_module(library(lodcli/lodfs)).
+:- use_module(library(lodcli/lodhdt)).
 :- use_module(library(os/dir_ext)).
 :- use_module(library(os/open_any2)).
 :- use_module(library(os/process_ext)).
@@ -44,8 +46,6 @@
 :- use_module(library(zlib)).
 
 :- use_module(cpack('LOD-Laundromat'/lclean)).
-:- use_module(cpack('LOD-Laundromat'/lfs)).
-:- use_module(cpack('LOD-Laundromat'/lhdt)).
 :- use_module(cpack('LOD-Laundromat'/seedlist)).
 
 prolog_stack:stack_guard('C').

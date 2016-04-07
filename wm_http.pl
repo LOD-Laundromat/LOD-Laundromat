@@ -14,7 +14,7 @@
 
 @author Wouter Beek
 @tbd Authorization for DELETE and POST request.
-@version 2016/02-2016/03
+@version 2016/02-2016/04
 */
 
 :- use_module(library(aggregate)).
@@ -30,6 +30,9 @@
 :- use_module(library(http/http_wrapper)).
 :- use_module(library(http/http_json)).
 :- use_module(library(http/rest)).
+:- use_module(library(lodcli/lodcli)).
+:- use_module(library(lodcli/lodfs)).
+:- use_module(library(lodcli/lodhdt)).
 :- use_module(library(os/thread_ext)).
 :- use_module(library(pair_ext)).
 :- use_module(library(rdf/rdf_load)).
@@ -37,8 +40,6 @@
 :- use_module(library(string_ext)).
 
 :- use_module(cpack('LOD-Laundromat'/lclean)).
-:- use_module(cpack('LOD-Laundromat'/lfs)).
-:- use_module(cpack('LOD-Laundromat'/lhdt)).
 :- use_module(cpack('LOD-Laundromat'/seedlist)).
 :- use_module(cpack('LOD-Laundromat'/wm)).
 

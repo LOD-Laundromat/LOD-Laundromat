@@ -28,6 +28,8 @@
 :- use_module(library(http/json)).
 :- use_module(library(jsonld/jsonld_metadata)).
 :- use_module(library(jsonld/jsonld_read)).
+:- use_module(library(lodcli/lodfs)).
+:- use_module(library(lodcli/lodhdt)).
 :- use_module(library(os/compress_ext)).
 :- use_module(library(os/dir_ext)).
 :- use_module(library(os/file_ext)).
@@ -48,8 +50,6 @@
 :- use_module(library(uri)).
 :- use_module(library(zlib)).
 
-:- use_module(cpack('LOD-Laundromat'/lfs)).
-:- use_module(cpack('LOD-Laundromat'/lhdt)).
 :- use_module(cpack('LOD-Laundromat'/seedlist)).
 
 :- meta_predicate
@@ -104,7 +104,7 @@ clean(Hash, Iri) :-
 clean_inner(Hash, Iri) :-
   ldir_lhash(Dir, Hash),
   ldoc_lhash(Doc, data, Hash),
-  with_mutex(lfs, make_directory_path(Dir)),
+  with_mutex(lclean, make_directory_path(Dir)),
   ldir_lfile(Dir, data, nquads, DataFile),
   ldir_lfile(Dir, meta, ntriples, MetaFile),
   ldir_lfile(Dir, warn, ntriples, WarnFile),
@@ -165,7 +165,7 @@ reset(Hash) :-
 
   % Step 2: Remove the data and metadata files from disk.
   ldir_lhash(Dir, Hash),
-  with_mutex(lfs, (
+  with_mutex(lclean, (
     (exists_directory(Dir) -> delete_directory_and_contents(Dir) ; true)
   )),
 
