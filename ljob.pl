@@ -77,7 +77,9 @@ lm_warm(Hash, HashPrefix) :-
 
 
 lw_warm :-
-  lw_warm(_).
+  lw_warm(_),
+  fail.
+lw_warm.
 
 
 lw_warm(Hash) :-

@@ -129,7 +129,8 @@ clean_inner(Hash, Iri) :-
       rdf_store(MetaSink, Doc, llo:number_of_warnings, NumWarns^^xsd:nonNegativeInteger),
       close(MetaSink)
     )
-  ).
+  ),
+  lhdt_build(Hash).
   %absolute_file_name('dirty.gz', DirtyTo, Opts),
   %call_collect_messages(rdf_download_to_file(Iri, DirtyTo, [compress(gzip)])).
 

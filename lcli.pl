@@ -182,6 +182,7 @@ ldmw0(S0, P0, O0, Hash, HashPrefix, Name) :-
   maplist(fix_rdf_prefix_expansion, [S0,P0,O0], [S,P,O]),
   (ground(Hash) -> lready_hash(Hash) ; lready_hash(HashPrefix, Hash)),
   lfile_lhash(File, Name, hdt, Hash),
+  exists_file(File),
   catch(
     lhdt(S, P, O, File),
     E,

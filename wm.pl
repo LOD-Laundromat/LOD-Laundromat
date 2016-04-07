@@ -68,7 +68,7 @@ add_wm :-
 add_wms(0) :- !.
 add_wms(M1) :-
   must_be(positive_integer, M1),
-  number_of_wms(N1),
+  max_wm(N1),
   N2 is N1 + 1,
   atom_concat(wm, N2, Alias),
   thread_create(start_wm0, _, [alias(Alias),detached(false)]),
@@ -84,6 +84,21 @@ current_wm(Alias) :-
   thread_property(Id, alias(Alias)),
   atom_prefix(wm, Alias),
   thread_property(Id, status(running)).
+
+
+
+%! max_wm(-N) is det.
+
+max_wm(N) :-
+  aggregate_all(
+    max(N),
+    (
+      current_wm(Alias),
+      atom_concat(wm, N0, Alias),
+      atom_number(N0, N)
+    ),
+    N
+  ).
 
 
 

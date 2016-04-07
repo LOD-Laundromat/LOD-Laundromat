@@ -4,7 +4,7 @@
     lhdt/3,             % ?S, ?P, ?O
     lhdt/4,             % ?S, ?P, ?O, +File
     lhdt_build/1,       %             +Hash
-    lhdt_build/2,       %             +Hash, ?Name
+    lhdt_build/2,       %             +Hash, +Name
     lhdt_cost/5,        % ?S, ?P, ?O, +File, -Cost
     lhdt_header/4,      % ?S, ?P, ?O, +File
     lhdt_pagination//1, %             +Hash
@@ -13,7 +13,7 @@
     lhdt_print/4,       % ?S, ?P, ?O, +File
     lhdt_print/5,       % ?S, ?P, ?O, +File, +Opts
     lhdt_remove/1,      %             +Hash
-    lhdt_remove/2       %             +Hash, ?Name
+    lhdt_remove/2       %             +Hash, +Name
   ]
 ).
 
@@ -68,7 +68,9 @@ hdt_search0(S, P, O, Hdt) :- hdt_search(Hdt, S, P, O).
 %! lhdt_build(+Hash) is det.
 
 lhdt_build(Hash) :-
-  forall(lname(Name), lhdt_build(Hash, Name)).
+  lhdt_build(Hash, meta),
+  lhdt_build(Hash, warn),
+  lhdt_build(Hash, data).
 
 
 %! lhdt_build(+Hash, +Name) is det.
@@ -87,7 +89,7 @@ lhdt_build(Hash, Name, BaseIri) :-
   (var(BaseIri) -> Opts = [] ; Opts = [base_uri(BaseIri)]),
   (   % HDT file exits.
       exists_file(HdtFile)
-  ->  msg_notification("File ~a|~a already exists.~n", [Hash,Name])
+  ->  true
   ;   % N-Triples files exists.
       lfile_lhash(NTriplesFile, Name, ntriples, Hash),
       access_file(NTriplesFile, read)
@@ -207,10 +209,8 @@ lhdt_setup_call_cleanup(File, Goal_1) :-
     call(Goal_1, Hdt),
     hdt_close(Hdt)
   ).
-lhdt_setup_call_cleanup(File, Goal_1) :-
-  lfile_lhash(File, Name, _, Hash),
-  lhdt_build(Hash, Name),
-  lhdt_setup_call_cleanup(File, Goal_1).
+lhdt_setup_call_cleanup(File, _) :-
+  msg_warning("File ~a does not exist.~n", [File]).
 
 
 
