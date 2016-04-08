@@ -2,11 +2,13 @@
   wm,
   [
     add_wm/0,
-    add_wms/1,       % +N
-    current_wm/1,    % ?Alias
-    number_of_wms/1, % -N
+    add_wms/1,              % +N
+    current_wm/1,           % ?Alias
+    number_of_seedpoints/1, % -N
+    number_of_wms/1,        % -N
     reset/0,
-    single_wm/0
+    single_wm/0,
+    wm_status/0
   ]
 ).
 
@@ -102,6 +104,13 @@ max_wm(N) :-
 
 
 
+%! number_of_seedpoints(-N) is det.
+
+number_of_seedpoints(N) :-
+  aggregate_all(count, lunready_hash(_), N).
+
+
+
 %! number_of_wms(-N) is det.
 
 number_of_wms(N) :-
@@ -143,3 +152,13 @@ wm0(State) :-
   thread_name(Alias),
   debug(wm(idle), "ZZZZ Thread ~w idle ~D sec.", [Alias,N]),
   wm0(State).
+
+
+
+wm_status :-
+  number_of_wms(N1),
+  number_of_seedpoints(N2),
+  msg_notification(
+    "~D washing machines are cleaning ~D seedpoints.~n",
+    [N1,N2]
+  ).
