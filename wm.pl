@@ -3,6 +3,8 @@
   [
     add_wm/0,
     add_wms/1,              % +N
+    buggy_seedpoint/1,      % ?Hash
+    current_seedpoint/1,    % ?Hash
     current_wm/1,           % ?Alias
     number_of_seedpoints/1, % -N
     number_of_wms/1,        % -N
@@ -79,6 +81,23 @@ add_wms(M1) :-
 
 
 
+%! buggy_seedpoint(+Hash) is semidet.
+%! buggy_seedpoint(-Hash) is nondet.
+
+buggy_seedpoint(Hash) :-
+  lunready_hash(Hash),
+  \+ current_seedpoint(Hash).
+
+
+
+%! current_seedpoint(+Hash) is semidet.
+%! current_seedpoint(-Hash) is nondet.
+
+current_seedpoint(Hash) :-
+  thread_self(_, Hash).
+
+
+
 %! current_wm(+Alias) is semidet.
 %! current_wm(-Alias) is nondet.
 
@@ -100,7 +119,8 @@ max_wm(N) :-
       atom_number(N0, N)
     ),
     N
-  ).
+  ), !.
+max_wm(0).
 
 
 
