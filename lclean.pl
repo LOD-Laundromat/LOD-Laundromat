@@ -13,7 +13,7 @@
 /** <module> LOD Laundromat cleaning
 
 @author Wouter Beek
-@version 2016/03
+@version 2016/03-2016/04
 */
 
 :- use_module(library(aggregate)).
@@ -130,9 +130,11 @@ clean_inner(Hash, Iri) :-
       close(MetaSink)
     )
   ),
-  lhdt_build(Hash).
+  lhdt_build(Hash),
   %absolute_file_name('dirty.gz', DirtyTo, Opts),
-  %call_collect_messages(rdf_download_to_file(Iri, DirtyTo, [compress(gzip)])).
+  %call_collect_messages(rdf_download_to_file(Iri, DirtyTo, [compress(gzip)])),
+  directory_file_path(Dir, done, Done),
+  touch(Done).
 
 
 currently_debugging(Hash, Iri) :-

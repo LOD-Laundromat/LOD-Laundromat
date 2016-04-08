@@ -94,7 +94,7 @@ buggy_seedpoint(Hash) :-
 %! current_seedpoint(-Hash) is nondet.
 
 current_seedpoint(Hash) :-
-  thread_self(_, Hash).
+  thread_seed(_, Hash).
 
 
 
