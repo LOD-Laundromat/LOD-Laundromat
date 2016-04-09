@@ -2,11 +2,10 @@
   lclean,
   [
     clean/0,
-    clean/1,           % +Hash
-    clean_iri/1,       % +Iri
-    reset/1,           % +Hash
-    reset_and_clean/1, % +Hash
-    thread_seed/2      % ?Alias, ?Hash
+    clean/1,      % +Hash
+    clean_iri/1,  % +Iri
+    reset/1,      % +Hash
+    thread_seed/2 % ?Alias, ?Hash
   ]
 ).
 
@@ -159,28 +158,13 @@ clean_iri(I1) :-
 %! reset(+Hash) is det.
 
 reset(Hash) :-
-  % Step 0: Make sure that Hash is ready.
-  (lready_hash(Hash) -> true ; existence_error(lhash, Hash)),
-  
-  % Step 1: Unload the RDF data and metadata from memory.
-  lrdf_unload(Hash),
-
-  % Step 2: Remove the data and metadata files from disk.
+  % Remove directory and contents from disk.
   ldir_lhash(Dir, Hash),
   with_mutex(lclean, (
     (exists_directory(Dir) -> delete_directory_and_contents(Dir) ; true)
   )),
-
-  % Step 3: Reset the seed in the seedlist.
+  % Reset the seedpoint in the seedlist.
   reset_seed(Hash).
-
-
-
-%! reset_and_clean(+Hash) is det.
-
-reset_and_clean(Hash) :-
-  reset(Hash),
-  clean(Hash).
 
 
 

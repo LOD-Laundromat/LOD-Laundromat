@@ -10,6 +10,8 @@
     number_of_wms/1,        % -N
     reset/0,
     single_wm/0,
+    wm_reset/1,             % +Hash
+    wm_reset_and_clean/1,   % +Hash
     wm_status/0
   ]
 ).
@@ -138,11 +140,18 @@ number_of_wms(N) :-
 
 
 
-%! reset is det.
-% Reset the LOD Laundromat.  This removes all data files and resets the
-% seedlist.
+%! single_wm is det.
 
-reset :-
+single_wm :-
+  start_wm0.
+
+
+
+%! wm_reset is det.
+% Reset the LOD Laundromat.
+% This removes all data files and resets the seedlist.
+
+wm_reset :-
   lroot(Root),
   forall(dir_file(Root, Subdir), delete_directory_and_contents(Subdir)),
   absolute_file_name(cpack('LOD-Laundromat'), Dir, [file_type(directory)]),
@@ -150,15 +159,41 @@ reset :-
   retractall(wm_hash0(_,_)).
 
 
+%! wm_reset(+Hash) is det.
 
-%! single_wm is det.
+wm_reset(Hash) :-
+  % Do not reset seedpoints that are currently being processed by
+  % a washing machine.
+  \+ current_seedpoint(Hash),
+  reset(Hash).
 
-single_wm :-
-  start_wm0.
 
+
+%! wm_reset_and_clean(+Hash) is det.
+
+wm_reset_and_clean(Hash) :-
+  reset(Hash),
+  clean(Hash).
+
+
+
+wm_status :-
+  number_of_wms(N1),
+  number_of_seedpoints(N2),
+  msg_notification(
+    "~D washing machines are cleaning ~D seedpoints.~n",
+    [N1,N2]
+  ).
+
+
+
+
+
+% HELPERS %
 
 start_wm0 :-
   wm0(_{idle: 0}).
+
 
 wm0(State) :-
   % Clean one -- arbitrarily chosen -- seed.
@@ -172,13 +207,3 @@ wm0(State) :-
   thread_name(Alias),
   debug(wm(idle), "ZZZZ Thread ~w idle ~D sec.", [Alias,N]),
   wm0(State).
-
-
-
-wm_status :-
-  number_of_wms(N1),
-  number_of_seedpoints(N2),
-  msg_notification(
-    "~D washing machines are cleaning ~D seedpoints.~n",
-    [N1,N2]
-  ).

@@ -33,6 +33,7 @@
 :- use_module(library(lodcli/lodcli)).
 :- use_module(library(lodcli/lodfs)).
 :- use_module(library(lodcli/lodhdt)).
+:- use_module(library(lodcli/lodrdf11)).
 :- use_module(library(os/thread_ext)).
 :- use_module(library(pair_ext)).
 :- use_module(library(rdf/rdf_load)).
@@ -63,7 +64,7 @@ data_mediatype(get, application/'vnd.hdt', Doc) :- !,
   http_reply_file(File).
 data_mediatype(delete, application/json, Doc) :- !,
   ldoc_lhash(Doc, Hash),
-  reset(Hash),
+  wm_reset(Hash),
   reply_json_dict(_{}, [status(200)]).
 data_mediatype(get, application/nquads, Doc) :- !,
   ldoc_lfile(Doc, nquads, File),
