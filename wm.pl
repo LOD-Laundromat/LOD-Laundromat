@@ -8,10 +8,10 @@
     current_wm/1,           % ?Alias
     number_of_seedpoints/1, % -N
     number_of_wms/1,        % -N
-    reset/0,
     single_wm/0,
     wm_reset/1,             % +Hash
     wm_reset_and_clean/1,   % +Hash
+    wm_restore/0,
     wm_status/0
   ]
 ).
@@ -49,6 +49,7 @@
 :- use_module(library(rdf/rdf_print)).
 :- use_module(library(semweb/rdf11)). % Operators.
 :- use_module(library(string_ext)).
+:- use_module(library(thread)).
 :- use_module(library(zlib)).
 
 :- use_module(cpack('LOD-Laundromat'/lclean)).
@@ -172,10 +173,20 @@ wm_reset(Hash) :-
 %! wm_reset_and_clean(+Hash) is det.
 
 wm_reset_and_clean(Hash) :-
-  reset(Hash),
+  wm_reset(Hash),
   clean(Hash).
 
 
+
+%! wm_restore is det.
+
+wm_restore :-
+  findall(Hash, lunready_hash(Hash), Hashs),
+  concurrent_maplist(wm_reset_and_clean, Hashs).
+
+
+
+%! wm_status is det.
 
 wm_status :-
   number_of_wms(N1),
