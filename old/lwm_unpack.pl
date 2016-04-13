@@ -84,8 +84,7 @@ lwm_unpack(Doc, Origin):-
   % DEBUG: Allow the debugger to pop up for specific MD5s.
   if_debug(lwm(unpack), (
     document_name(Doc, Md5),
-    debug:debug_md5(Md5, unpack),
-    gtrace
+    debug:debug_md5(Md5, unpack)
   )),
 
   % DEBUG: mention that downloading+unpacking has started.
