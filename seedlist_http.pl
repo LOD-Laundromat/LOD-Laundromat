@@ -47,9 +47,7 @@ A POST request adds a new seed to the list (201) if it is not already there
 :- use_module(library(true)).
 :- use_module(library(uri)).
 
-:- use_module(cliopatria(components/basics)). % HTML tables.
-
-:- use_module(cpack('LOD-Laundromat'/seedlist)).
+:- use_module(seedlist).
 
 :- http_handler(root(seedlist), seedlist, [prefix]).
 

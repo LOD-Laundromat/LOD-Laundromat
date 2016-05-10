@@ -19,7 +19,7 @@
 /* <module> LOD Laundromat: Washing machine
 
 @author Wouter Beek
-@version 2016/01-2016/04
+@version 2016/01-2016/05
 */
 
 :- use_module(library(aggregate)).
@@ -52,8 +52,8 @@
 :- use_module(library(thread)).
 :- use_module(library(zlib)).
 
-:- use_module(cpack('LOD-Laundromat'/lclean)).
-:- use_module(cpack('LOD-Laundromat'/seedlist)).
+:- use_module(lclean).
+:- use_module(seedlist).
 
 prolog_stack:stack_guard('C').
 prolog_stack:stack_guard(none).
@@ -63,14 +63,12 @@ prolog_stack:stack_guard(none).
 
 
 %! add_wm is det.
+%! add_wms(+N) is det.
 % Add a LOD Laundromat thread.
 
 add_wm :-
   add_wms(1).
 
-
-
-%! add_wms(+N) is det.
 
 add_wms(0) :- !.
 add_wms(M1) :-

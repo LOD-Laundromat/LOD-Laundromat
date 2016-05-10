@@ -16,7 +16,7 @@
 :- use_module(library(sparql/sparql_db)).
 :- use_module(library(sparql/sparql_query)).
 
-:- use_module(cpack('LOD-Laundromat/seedlist')).
+:- use_module(seedlist).
 
 :- sparql_register_endpoint(
      lod_laundromat,

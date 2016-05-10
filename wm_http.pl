@@ -14,7 +14,7 @@
 
 @author Wouter Beek
 @tbd Authorization for DELETE and POST request.
-@version 2016/02-2016/04
+@version 2016/02-2016/05
 */
 
 :- use_module(library(aggregate)).
@@ -40,9 +40,9 @@
 :- use_module(library(semweb/rdf11)).
 :- use_module(library(string_ext)).
 
-:- use_module(cpack('LOD-Laundromat'/lclean)).
-:- use_module(cpack('LOD-Laundromat'/seedlist)).
-:- use_module(cpack('LOD-Laundromat'/wm)).
+:- use_module(lclean).
+:- use_module(seedlist).
+:- use_module(wm).
 
 :- rdf_register_prefix(data, 'http://cliopatria.lod.labs.vu.nl/data/').
 :- rdf_register_prefix(meta, 'http://cliopatria.lod.labs.vu.nl/meta/').

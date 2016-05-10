@@ -16,7 +16,7 @@
 /** <module> Seedlist
 
 @author Wouter Beek
-@version 2016/01-2016/02
+@version 2016/01-2016/02, 2016/05
 */
 
 :- use_module(library(apply)).
@@ -32,11 +32,7 @@
    seed(hash:atom, from:atom, added:float, started:float, ended:float).
 
 :- initialization((
-     absolute_file_name(
-       cpack('LOD-Laundromat/seedlist.db'),
-       File,
-       [access(read)]
-     ),
+     absolute_file_name('seedlist.db', File, [access(read)]),
      db_attach(File, [sync(flush)])
    )).
 
