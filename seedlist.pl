@@ -1,15 +1,15 @@
 :- module(
   seedlist,
   [
-    add_iri/1,         % +Iri
-    add_iri/2,         % +Iri, -Hash
-    begin_seed/2,      % -Hash, -Iri
-    current_seed/1,    %        -Seed
-    current_seed/2,    % +Hash, -Seed
-    end_seed/1,        % +Hash
-    remove_seed/1,     % +Hash
-    reset_seed/1,      % +Hash
-    seed/1             % ?Hash
+    add_iri/1,      % +Iri
+    add_iri/2,      % +Iri, -Hash
+    begin_seed/2,   % -Hash, -Iri
+    current_seed/1, %        -Seed
+    current_seed/2, % +Hash, -Seed
+    end_seed/1,     % +Hash
+    remove_seed/1,  % +Hash
+    reset_seed/1,   % +Hash
+    seed/1          % ?Hash
   ]
 ).
 

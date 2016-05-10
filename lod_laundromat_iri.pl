@@ -6,6 +6,12 @@
   ]
 ).
 
+/** <module> LOD Laundromat IRIs (LIRIs)
+
+@author Wouter Beek
+@version 2016/05
+*/
+
 :- use_module(library(uri)).
 
 iri_liri(AbsoluteIri, Liri) :-
