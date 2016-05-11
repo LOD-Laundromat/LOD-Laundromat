@@ -24,19 +24,44 @@
 :- use_module(library(error)).
 :- use_module(library(hash_ext)).
 :- use_module(library(list_ext)).
+:- use_module(library(os/file_ext)).
+:- use_module(library(os/gnu_sort)).
 :- use_module(library(pair_ext)).
 :- use_module(library(persistency)).
+:- use_module(library(sparql/sparql_query)).
 :- use_module(library(thread)).
 
 :- persistent
    seed(hash:atom, from:atom, added:float, started:float, ended:float).
 
-:- initialization((
-     absolute_file_name('seedlist.db', File, [access(read)]),
-     db_attach(File, [sync(flush)])
-   )).
+:- initialization(init_seedlist).
 
+init_seedlist :-
+  init_seedlist('seedlist.db').
 
+init_seedlist(File) :-
+  access_file(File, read), !,
+  db_attach(File, [sync(flush)]).
+init_seedlist(File) :-
+  touch(File),
+  db_attach(File, [sync(flush)]),
+  % Extract all seeds from the old LOD Laundromat server and store them locally
+  % as a seedlist.  This is intended for debugging purposes only.
+  Q = '\c
+PREFIX llo: <http://lodlaundromat.org/ontology/>\n\c
+SELECT ?url\n\c
+WHERE {\n\c
+  ?doc llo:url ?url\n\c
+}\n',
+  setup_call_cleanup(
+    open(File, write, Write),
+    forall(
+      sparql_select('http://sparql.backend.lodlaundromat.org', Q, Rows),
+      forall(member([Iri], Rows), add_iri(Iri))
+    ),
+    close(Write)
+  ),
+  sort_file(File).
 
 
 
