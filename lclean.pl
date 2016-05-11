@@ -2,17 +2,17 @@
   lclean,
   [
     clean/0,
-    clean/1,             % +Hash
-    clean_iri/1,         % +Iri
-    reset/1,             % +Hash
-    thread_seed/2        % ?Alias, ?Hash
+    clean/1,      % +Hash
+    clean_iri/1,  % +Iri
+    reset/1,      % +Hash
+    thread_seed/2 % ?Alias, ?Hash
   ]
 ).
 
 /** <module> LOD Laundromat cleaning
 
 @author Wouter Beek
-@version 2016/03-2016/04
+@version 2016/03-2016/05
 */
 
 :- use_module(library(aggregate)).
@@ -219,14 +219,6 @@ rdf_store_messages(State, Doc, Goal_0, M) :-
   % @bug RDF prefix expansion does not work for `llo:end’ here.
   rdf_equal(llo:end, P),
   rdf_store(State.meta, Doc, P, End^^xsd:string).
-
-
-
-%! error_kind(+Kind) is semidet.
-%! error_kind(-Kind) is multi.
-
-error_kind(warning).
-error_kind(error).
 
 
 
