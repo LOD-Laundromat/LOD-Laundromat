@@ -197,7 +197,7 @@ add_iri_http(Iri) :-
 
 iri_seed0(Iri) :-
   iri_to_hash(Iri, Hash),
-  seed(Hash).
+  current_seed(Hash, _).
 
 
 

@@ -4,11 +4,11 @@
     add_wm/0,
     add_wms/1,              % +N
     buggy_seedpoint/1,      % ?Hash
-    current_seedpoint/1,    % ?Hash
     current_wm/1,           % ?Alias
     number_of_seedpoints/1, % -N
     number_of_wms/1,        % -N
     single_wm/0,
+    washing_seed/1,         % ?Hash
     wm_reset/1,             % +Hash
     wm_reset_and_clean/1,   % +Hash
     wm_restore/0,
@@ -87,15 +87,7 @@ add_wms(M1) :-
 
 buggy_seedpoint(Hash) :-
   lunready_hash(Hash),
-  \+ current_seedpoint(Hash).
-
-
-
-%! current_seedpoint(+Hash) is semidet.
-%! current_seedpoint(-Hash) is nondet.
-
-current_seedpoint(Hash) :-
-  thread_seed(_, Hash).
+  \+ washing_seed(Hash).
 
 
 
@@ -146,6 +138,14 @@ single_wm :-
 
 
 
+%! washing_seed(+Hash) is semidet.
+%! washing_seed(-Hash) is nondet.
+
+washing_seed(Hash) :-
+  thread_seed(_, Hash).
+
+
+
 %! wm_reset is det.
 % Reset the LOD Laundromat.
 % This removes all data files and resets the seedlist.
@@ -163,7 +163,7 @@ wm_reset :-
 wm_reset(Hash) :-
   % Do not reset seedpoints that are currently being processed by
   % a washing machine.
-  \+ current_seedpoint(Hash),
+  \+ washing_seed(Hash),
   reset(Hash).
 
 

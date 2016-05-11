@@ -1,15 +1,14 @@
 :- module(
   seedlist,
   [
-    add_iri/1,      % +Iri
-    add_iri/2,      % +Iri, -Hash
-    begin_seed/2,   % -Hash, -Iri
-    current_seed/1, %        -Seed
-    current_seed/2, % +Hash, -Seed
-    end_seed/1,     % +Hash
-    remove_seed/1,  % +Hash
-    reset_seed/1,   % +Hash
-    seed/1          % ?Hash
+    add_iri/1,               % +Iri
+    add_iri/2,               % +Iri, -Hash
+    begin_processing_seed/2, % -Hash, -Iri
+    current_seed/1,          %        -Seed
+    current_seed/2,          % +Hash, -Seed
+    end_processing_seed/1,   % +Hash
+    remove_seed/1,           % +Hash
+    reset_seed/1             % +Hash
   ]
 ).
 
@@ -74,6 +73,7 @@ WHERE {\n\c
 add_iri(Iri) :-
   add_iri(Iri, _).
 
+
 add_iri(Iri1, Hash) :-
   iri_normalized(Iri1, Iri2),
   with_mutex(seedlist, add_iri_with_check0(Iri2, Hash)),
@@ -92,21 +92,21 @@ add_iri_without_check0(Iri, Hash) :-
 
 
 
-%! begin_seed(+Hash, -Iri) is det.
-%! begin_seed(-Hash, -Iri) is det.
+%! begin_processing_seed(+Hash, -Iri) is det.
+%! begin_processing_seed(-Hash, -Iri) is det.
 % Pop a dirty seed off the seedlist.
 %
 % @throws existence_error If the seed is not in the seedlist.
 
-begin_seed(H, I) :-
-  with_mutex(seedlist, begin_seed0(H, I)),
+begin_processing_seed(H, I) :-
+  with_mutex(seedlist, begin_processing_seed0(H, I)),
   debug(seedlist(begin), "Started cleaning seed ~a (~a)", [H,I]).
 
-begin_seed0(H, _) :-
+begin_processing_seed0(H, _) :-
   nonvar(H),
   \+ seed(H, _, _, _, _), !,
   existence_error(seed, H).
-begin_seed0(H, I) :-
+begin_processing_seed0(H, I) :-
   retract_seed(H, I, A, 0.0, 0.0),
   get_time(S),
   assert_seed(H, I, A, S, 0.0).
@@ -127,9 +127,9 @@ current_seed(H, seed(H,I,A,S,E)) :-
 
 
 
-%! end_seed(+Hash) is det.
+%! end_processing_seed(+Hash) is det.
 
-end_seed(H) :-
+end_processing_seed(H) :-
   get_time(E),
   with_mutex(seedlist, (
     retract_seed(H, I, A, S, 0.0),
@@ -155,14 +155,3 @@ reset_seed(H) :-
     add_iri_without_check0(I, H)
   )),
   debug(seedlist(reset), "Reset seed ~a (~a)", [H,I]).
-
-
-
-%! seed(+Hash) is semidet.
-%! seed(-Hash) is nondet.
-
-seed(H) :-
-  ground(H), !,
-  once(current_seed(H, _)).
-seed(H) :-
-  current_seed(seed(H,_,_,_,_)).

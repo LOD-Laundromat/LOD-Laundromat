@@ -91,13 +91,13 @@ clean(Hash) :-
 %! clean(?Hash, ?Iri) is det.
 
 clean(Hash, Iri) :-
-  begin_seed(Hash, Iri),
+  begin_processing_seed(Hash, Iri),
   thread_name(Alias),
   thread_seed_update(Alias, Hash),
   debug(lclean, "~a is cleaning ~a ~a", [Alias,Hash,Iri]),
   clean_inner(Hash, Iri),
   debug(lclean, "~a has cleaned ~a ~a", [Alias,Hash,Iri]),
-  end_seed(Hash).
+  end_processing_seed(Hash).
 
 
 clean_inner(Hash, Iri) :-
