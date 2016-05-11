@@ -56,24 +56,25 @@ seed(Method, MTs, Seed) :- rest_mediatype(Method, MTs, Seed, seed_mediatype).
 seeds(Method, MTs) :- rest_mediatype(Method, MTs, seeds_mediatype).
 
 seed_mediatype(delete, application/json, Iri) :- !,
-  iri_to_hash(Iri, Hash),
+  hash_iri(Hash, Iri),
   remove_seed(Hash),
   reply_json_dict(_{}, [status(200)]).
 seed_mediatype(get, application/json, Iri) :- !,
-  iri_to_hash(Iri, Hash),
-  current_seed(Hash, Seed),
-  seed_to_dict0(Seed, Dict),
-  reply_json_dict(Dict, [status(200)]).
+  hash_iri(Hash, Iri),
+  seed_dict(Hash, D),
+  reply_json_dict(D, [status(200)]).
 seed_mediatype(get, text/html, Iri) :-
-  iri_to_hash(Iri, Hash),
-  current_seed(Hash, Seed),
+  hash_iri(H, Iri),
+  current_seed(seed(H,I,A,S,E)),
   string_list_concat(["LOD Laundromat","Seed",Hash], " - ", Title),
-  reply_html_page(cliopatria(default), title(Title), \html_seed(Seed)).
+  reply_html_page(cliopatria(default),
+    title(Title),
+    \html_seed(seed(H,I,A,S,E))
+  ).
 
 seeds_mediatype(get, application/json) :- !,
-  findall(D, (current_seed(Seed), seed_to_dict0(Seed, D)), Ds),
-  length(Ds, N),
-  reply_json_dict(_{seeds:Ds,size:N}, [status(200)]).
+  seeds_dicts(D),
+  reply_json_dict(D, [status(200)]).
 seeds_mediatype(get, text/html) :- !,
   findall(A-seed(H,I,A,S,E), current_seed(seed(H,I,A,S,E)), Seeds0),
   partition(seed_status0, Seeds0, Cleaned0, Cleaning0, ToBeCleaned0),
@@ -96,7 +97,7 @@ seeds_mediatype(get, text/html) :- !,
 seeds_mediatype(post, application/json) :-
   http_read_json_dict(Data),
   add_iri(Data.seed, Hash),
-  hash_to_iri0(Hash, Iri),
+  hash_iri(Hash, Iri),
   reply_json_dict(_{hash: Iri}, [status(201)]).
 
 
@@ -145,11 +146,11 @@ function startSeed(hash) {
 seed_row(seed(H,I1,A,S,E)) -->
   {
     atom_truncate(I1, 40, I2),
-    hash_to_iri0(H, Uri)
+    hash_iri(H, Iri)
   },
   html(
     tr([
-      td([div(\external_link(I1, I2)),\internal_link(Uri, H)]),
+      td([div(\external_link(I1, I2)),\internal_link(Iri, H)]),
       td(\seed_actions(seed(H,I1,A,S,E))),
       td(\seed_date_time0(A)),
       td(\seed_date_time0(S)),
@@ -196,16 +197,24 @@ add_iri_http(Iri) :-
 % Succeeds if the given IRI denotes a seed point in the seedlist.
 
 iri_seed0(Iri) :-
-  iri_to_hash(Iri, Hash),
-  current_seed(Hash, _).
+  hash_iri(Hash, Iri),
+  current_seed(seed(Hash,_,_,_,_)).
 
 
 
-%! hash_to_iri0(+Hash:atom, -Iri:atom) is det.
-% Translate from a seedlist hash to a seedlist HTTP IRI.
+%! hash_iri(+Hash, -Iri) is det.
+%! hash_iri(-Hash, +Iri) is det.
+% Translate between seedlist hashes and seedlist HTTP IRIs.
 
-hash_to_iri0(Hash, Uri) :-
-  http_link_to_id(seedlist, path_postfix(Hash), Uri).
+hash_iri(Hash, Iri) :-
+  ground(Hash), !,
+  http_link_to_id(seedlist, path_postfix(Hash), Iri).
+hash_iri(Hash, Iri) :-
+  ground(Iri), !,
+  uri_components(Iri, uri_components(_,_,Path,_,_)),
+  atomic_list_concat(['',seedlist,Hash], /, Path).
+hash_iri(_, _) :-
+  instantiation_error(_).
 
 
 
@@ -221,15 +230,6 @@ html_seed(seed(H,I,A,S,E)) -->
       tr([th("Ended"),td(\seed_date_time0(E))])
     ])
   ]).
-
-
-
-%! iri_to_hash(+Iri, -Hash) is det.
-% Translate from a seedlist HTTP IRI to a seedlist hash.
-
-iri_to_hash(Uri, Hash) :-
-  uri_components(Uri, uri_components(_,_,Path,_,_)),
-  atomic_list_concat(['',seedlist,Hash], /, Path).
 
 
 
@@ -260,29 +260,9 @@ seed_date_time0(DT) -->
 %! seed_status0(+Pair, -Order:oneof([<,=,>]))is det.
 % Partition the seeds into ‘done’ (<), ‘doing’ (=) and ‘todo’ (>).
 
-seed_status0(_-seed(_,_,_,0.0,0.0), >) :- !.
-seed_status0(_-seed(_,_,_,_  ,0.0), =) :- !.
-seed_status0(_                    , <).
+seed_status0(_-Seed, Order) :-
+  seed_order0(Seed, Order).
 
-
-
-%! seed_to_dict0(+Seed, -Dict) is det.
-% Prolog term conversion that make formulating a JSON response very easy.
-
-seed_to_dict0(
-  seed(Hash,Iri,Added,Started1,Ended1),
-  _{added:Added, ended:Ended2, hash:Hash, seed:Iri, started:Started2}
-):-
-  maplist(var_to_null0, [Started1,Ended1], [Started2,Ended2]).
-
-
-
-%! var_to_null0(+Term, -NullifiedTerm) is det.
-% Maps Prolog terms to themselves unless they are variables,
-% in which case they are mapped to the atom `null`.
-%
-% The is used for exporting seedpoints, where Prolog variables
-% have no equivalent in JSON.
-
-var_to_null0(X, null) :- var(X), !.
-var_to_null0(X, X).
+seed_order0(seed(_,_,_,0.0,0.0), >) :- !.
+seed_order0(seed(_,_,_,_  ,0.0), =) :- !.
+seed_order0(_                  , <).

@@ -5,10 +5,13 @@
     add_iri/2,               % +Iri, -Hash
     begin_processing_seed/2, % -Hash, -Iri
     current_seed/1,          %        -Seed
-    current_seed/2,          % +Hash, -Seed
     end_processing_seed/1,   % +Hash
+    print_seed/1,            % +Hash
+    print_seeds/0,
     remove_seed/1,           % +Hash
-    reset_seed/1             % +Hash
+    reset_seed/1,            % +Hash
+    seed_dict/2,             % +Seed, -D
+    seeds_dict/1             %        -D
   ]
 ).
 
@@ -22,11 +25,13 @@
 :- use_module(library(debug_ext)).
 :- use_module(library(error)).
 :- use_module(library(hash_ext)).
+:- use_module(library(json_ext)).
 :- use_module(library(list_ext)).
 :- use_module(library(os/file_ext)).
 :- use_module(library(os/gnu_sort)).
 :- use_module(library(pair_ext)).
 :- use_module(library(persistency)).
+:- use_module(library(print_ext)).
 :- use_module(library(sparql/sparql_query)).
 :- use_module(library(thread)).
 
@@ -120,12 +125,6 @@ current_seed(seed(H,I,A,S,E)) :-
   seed(H, I, A, S, E).
 
 
-%! current_seed(+Hash, -Seed) is det.
-
-current_seed(H, seed(H,I,A,S,E)) :-
-  seed(H, I, A, S, E).
-
-
 
 %! end_processing_seed(+Hash) is det.
 
@@ -136,6 +135,21 @@ end_processing_seed(H) :-
     assert_seed(H, I, A, S, E)
   )),
   debug(seedlist(end), "Ended cleaning seed ~a (~a)", [H,I]).
+
+
+
+%! print_seed(+Hash) is det.
+
+print_seed(Hash) :-
+  seed_dict(Hash, D),
+  print_dict(D).
+
+
+
+%! print_seeds is det.
+
+print_seeds :-
+  forall(seed_dict(_, D), print_dict(D)).
 
 
 
@@ -155,3 +169,23 @@ reset_seed(H) :-
     add_iri_without_check0(I, H)
   )),
   debug(seedlist(reset), "Reset seed ~a (~a)", [H,I]).
+
+
+
+%! seed_dict(+Seed, -D) is det.
+%! seed_dict(-Seed, -D) is nondet.
+% Prolog term conversion that make formulating a JSON response very easy.
+
+seed_dict(Hash, D) :-
+  current_seed(seed(Hash,Iri,Added,Started1,Ended1)),
+  maplist(json_var_to_null, [Started1,Ended1], [Started2,Ended2]),
+  D = _{added:Added,ended:Ended2,hash:Hash,seed:Iri,started:Started2}.
+
+
+
+%! seeds_dict(-D) is det.
+
+seeds_dict(D) :-
+  findall(D, (current_seed(seed(Hash,_,_,_,_)), seed_dict(Hash, D)), Ds),
+  length(Ds, N),
+  D = _{seeds:Ds,size:N}.
