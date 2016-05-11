@@ -114,7 +114,14 @@ clean_inner(Hash, Iri) :-
     ),
     (
       State = _{meta: MetaSink, warn: WarnSink, warns: 0},
-      CleanOpts = [compress(gzip),metadata(M1),relative_to(Dir),sort_dir(Dir),warn(WarnSink)],
+      CleanOpts = [
+        compress(gzip),
+        metadata(M1),
+        parse_headers(true),
+        relative_to(Dir),
+        sort_dir(Dir),
+        warn(WarnSink)
+      ],
       currently_debugging(Hash, Iri),
       rdf_store_messages(State, Doc, rdf_clean(Iri, DataFile, CleanOpts), M2),
       (var(M1) -> M = M2 ; M = M1),
@@ -134,6 +141,7 @@ clean_inner(Hash, Iri) :-
   %call_collect_messages(rdf_download_to_file(Iri, DirtyTo, [compress(gzip)])),
   directory_file_path(Dir, done, Done),
   touch(Done).
+
 
 
 currently_debugging(Hash, Iri) :-
