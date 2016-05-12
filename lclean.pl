@@ -237,7 +237,6 @@ rdf_store_metadata(State, Doc1, M) :-
   atom_string(Doc1, Doc2),
   Jsonld2 = Jsonld1.put(_{'@id': Doc2}),
   (debugging(wm(low)) -> json_write_dict(user_output, Jsonld2) ; true),
-  forall(jsonld_tuple(Jsonld2, rdf(Doc,P,O)), (
-    (debugging(wm(low)) -> with_output_to(user_output, rdf_print_triple(Doc, P, O)) ; true),
-    rdf_store(State.meta, Doc, P, O)
-  )).
+  findall(Triple, jsonld_tuple(Jsonld2, Triple), Triples),
+  if_debug(wm(low), rdf_print_triples(Triples)),
+  maplist(rdf_store(State.meta), Triples).

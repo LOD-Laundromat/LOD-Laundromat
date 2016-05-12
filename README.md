@@ -34,6 +34,9 @@ Washing Machine HTTP API
 TODO
 ----
 
+  - Count file lines of gzipped files.
+  - JSON-LD apply type coersion.
+
   - Minimally encoded IRIs (LOD Laundromat IRIs, LIRIs).
   - Calculate data MD5 in the read stream.
   - RocksDB API generator.
