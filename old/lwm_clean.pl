@@ -19,6 +19,7 @@ The cleaning process performed by the LOD Washing Machine.
 :- use_module(library(apply)).
 :- use_module(library(debug)).
 :- use_module(library(option)).
+:- use_module(library(os/open_any2)).
 :- use_module(library(rdf/rdf_load)).
 :- use_module(library(zlib)).
 
@@ -283,7 +284,7 @@ clean_datastream(
 
   % Sort file.
   rdf_clean:sort_file(CleaningFile, '/ssd/lodlaundromat/tmp'),
-  file_lines(CleaningFile, NumberOfUniqueTriples),
+  source_numlines(CleaningFile, NumberOfUniqueTriples),
 
   % Compress file.
   rdf_clean:compress_file(Dir, Ext, CleaningFile),

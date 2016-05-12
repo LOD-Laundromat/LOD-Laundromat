@@ -96,7 +96,7 @@ buggy_seedpoint(Hash) :-
 
 current_wm(Alias) :-
   thread_property(Id, alias(Alias)),
-  atom_prefix(wm, Alias),
+  atom_prefix(Alias, wm),
   thread_property(Id, status(running)).
 
 

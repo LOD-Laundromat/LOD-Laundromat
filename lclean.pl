@@ -62,7 +62,7 @@
     currently_debugging0/1,
     thread_seed0/2.
 
-%%%%currently_debugging0('07ecaef4979684bfa4507ecc28b54461').
+%%%%currently_debugging0('9f251a7f61cff3fd85550a1b5c2f4efd').
 
 
 
@@ -130,7 +130,7 @@ clean_inner(Hash, Iri) :-
     ),
     (
       close(WarnSink),
-      file_lines(WarnFile, NumWarns),
+      source_numlines(WarnFile, NumWarns),
       compress_file(WarnFile),
       rdf_store(MetaSink, Doc, llo:number_of_warnings, NumWarns^^xsd:nonNegativeInteger),
       close(MetaSink)
@@ -220,7 +220,7 @@ rdf_store_messages(State, Doc, Goal_0, M) :-
   ;   E = error(existence_error(open_any2,M),_)
   ->  End0 = "No stream"
   ;   End0 = E,
-      msg_warning("[FAILED] ~w~n", [End0]),
+      msg_warning("[FAILED] ~w ~w~n", [End0,Doc]),
       M = _{}
   ),
   with_output_to(string(End), write_term(End0)),

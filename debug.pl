@@ -2,7 +2,7 @@
 
 %:- debug(lclean).
 :- debug(wm(idle)).
-:- debug(wm(low)).
+%:- debug(wm(low)).
 %:- debug(wm(thread)).
 
 :- [load].
