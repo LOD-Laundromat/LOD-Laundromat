@@ -6,6 +6,7 @@ Cleaning Other People's Dirty Data
 
 This is where we put dirty Linked Data in a washing machine, add some detergent... let the thing run for a while... and get out clean data.
 
+
 Seedlist HTTP API
 -----------------
 
@@ -28,3 +29,12 @@ Washing Machine HTTP API
 | `/laundry/MD5` | `DELETE` |                      |                |
 | `/laundry/MD5` | `GET`    | `application/nquads` | 200            |
 | `/laundry/MD5` | `GET`    | `text/html`          | 200            |
+
+
+TODO
+----
+
+  - Minimally encoded IRIs (LOD Laundromat IRIs, LIRIs).
+  - Calculate data MD5 in the read stream.
+  - RocksDB API generator.
+  - Build new Web site on HDT and RocksDB.

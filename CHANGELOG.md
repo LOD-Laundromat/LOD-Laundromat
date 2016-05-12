@@ -6,12 +6,26 @@ This is the version on (2015/11/20).
 Major features
 --------------
 
+  - **1,000 times faster**: While data cleaning has always be quite
+    fast (i.e., one billion statements a day), reading the cleaned
+    data has always been slow because it used HTTP-based APIs.  For
+    bulk processing we can now run jobs 1,000 times faster.
+  - **New stains**: LOD Laundromat now cleans more stains: (1) For
+    every literals it checks whether the datatype IRI is defined, and
+    if so whether the lexical form belongs to the datatype's lexical
+    space, and if so whether it is the canonical lexical form for the
+    value it denotes.
+  - **Store stains**: LOD Lanundromat now stores all stains it finds
+    as Linked Data.  For this it uses the same format (N-Triples and
+    HDT) that is used to efficiently store the data in.
+  - **Store metadata**: LOD Laundromat now stores extensive metadata
+    about each cleaned document in separate (N-Triples and HDT) files.
+  - **Dynamic number of washing machines**: It is now possible to add
+    washing machines at any point.  TODO: Remove washing machines at
+    any point.
   - **LOD-Laundromat-CLI**: Allows the LOD Washing Machine to be run
-    locally, from your command prompt.  This requires installing
+    locally, from the command prompt.  This requires installing
     SWI-Prolog.
-  - **New stains**: The following data stains are now recorded in
-    the metadata.  (1) invalidCentralDirectorySignature (archive error),
-    (2) HTTP status codes in the 4xx- and 5xx-range.
 
 
 Deployment
