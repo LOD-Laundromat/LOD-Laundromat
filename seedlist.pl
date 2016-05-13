@@ -11,7 +11,10 @@
     remove_seed/1,           % +Hash
     reset_seed/1,            % +Hash
     seed_dict/2,             % +Seed, -D
-    seeds_dict/1             %        -D
+    seed_status/2,           % +Seed, -Status:oneof([done,doing,todo])
+    seeds_dict/1,            %        -D
+    seeds_status/3,          %        -Done, -Doing, -Todo
+    seeds_status/4           % -All,  -Done, -Doing, -Todo
   ]
 ).
 
@@ -22,11 +25,14 @@
 */
 
 :- use_module(library(apply)).
+:- use_module(library(dcg/dcg_ext)).
+:- use_module(library(dcg/dcg_pl)).
 :- use_module(library(debug_ext)).
 :- use_module(library(error)).
 :- use_module(library(hash_ext)).
 :- use_module(library(json_ext)).
 :- use_module(library(list_ext)).
+:- use_module(library(math/math_ext)).
 :- use_module(library(os/file_ext)).
 :- use_module(library(os/gnu_sort)).
 :- use_module(library(pair_ext)).
@@ -34,6 +40,7 @@
 :- use_module(library(print_ext)).
 :- use_module(library(sparql/sparql_query)).
 :- use_module(library(thread)).
+:- use_module(library(yall)).
 
 :- persistent
    seed(hash:atom, from:atom, added:float, started:float, ended:float).
@@ -149,7 +156,23 @@ print_seed(Hash) :-
 %! print_seeds is det.
 
 print_seeds :-
-  forall(seed_dict(_, D), print_dict(D)).
+  seeds_status(All, Done, Doing, Todo),
+  maplist(length, [All,Done,Doing,Todo], [NumAll,NumDone,NumDoing,NumTodo]),
+  maplist(
+    {NumAll}/[Part,Perc]>>float_div_zero(Part, NumAll, Perc),
+    [NumDone,NumDoing,NumTodo],
+    [PercDone,PercDoing,PercTodo]
+  ),
+  DataRows = [
+    ["All",           NumAll,   perc(1.0)    ],
+    ["To be cleaned", NumTodo,  perc(PercTodo) ],
+    ["Cleaning",      NumDoing, perc(PercDoing)],
+    ["Cleaned",       NumDone,  perc(PercDone) ]
+  ],
+  print_table([head(["Category","Size","Percentage"])|DataRows], [cell(term0)]).
+
+term0(perc(Perc)) --> !, perc_fixed(Perc).
+term0(T) --> term(T).
 
 
 
@@ -183,9 +206,43 @@ seed_dict(Hash, D) :-
 
 
 
+%! seed_status(+Seed, -Status:oneof([done,doing,todo])) is det.
+
+seed_status(seed(_,_,_,0.0,0.0), todo ) :- !.
+seed_status(seed(_,_,_,_  ,0.0), doing) :- !.
+seed_status(_                  , done ).
+
+
+
 %! seeds_dict(-D) is det.
 
 seeds_dict(D) :-
   findall(D, (current_seed(seed(Hash,_,_,_,_)), seed_dict(Hash, D)), Ds),
   length(Ds, N),
   D = _{seeds:Ds,size:N}.
+
+
+
+%! seeds_status(-Done, -Doing, -Todo) is det.
+%! seeds_status(-All, -Done, -Doing, -Todo) is det.
+
+seeds_status(Done, Doing, Todo) :-
+  seeds_status(_, Done, Doing, Todo).
+
+
+seeds_status(All, Done, Doing, Todo) :-
+  findall(A-seed(H,I,A,S,E), current_seed(seed(H,I,A,S,E)), AllPairs),
+  partition(seed_order0, AllPairs, DonePairs, DoingPairs, TodoPairs),
+  concurrent_maplist(
+    desc_pairs_values,
+    [AllPairs,DonePairs,DoingPairs,TodoPairs],
+    [All,Done,Doing,Todo]
+  ).
+
+seed_order0(_-Seed, Order) :-
+  seed_status(Seed, Status),
+  status_order(Status, Order).
+
+status_order(todo,  >).
+status_order(doing, =).
+status_order(done,  <).

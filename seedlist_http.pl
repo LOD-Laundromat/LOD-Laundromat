@@ -76,22 +76,16 @@ seeds_mediatype(get, application/json) :- !,
   seeds_dicts(D),
   reply_json_dict(D, [status(200)]).
 seeds_mediatype(get, text/html) :- !,
-  findall(A-seed(H,I,A,S,E), current_seed(seed(H,I,A,S,E)), Seeds0),
-  partition(seed_status0, Seeds0, Cleaned0, Cleaning0, ToBeCleaned0),
-  concurrent_maplist(
-    desc_pairs_values,
-    [Cleaned0,Cleaning0,ToBeCleaned0],
-    [Cleaned,Cleaning,ToBeCleaned]
-  ),
-  list_truncate(Cleaned, 10, CleanedPage1),
-  list_truncate(Cleaning, 10, CleaningPage1),
-  list_truncate(ToBeCleaned, 10, ToBeCleanedPage1),
+  seeds_status(Done, Doing, Todo),
+  list_truncate(Done, 10, DonePage1),
+  list_truncate(Doing, 10, DoingPage1),
+  list_truncate(Todo, 10, TodoPage1),
   reply_html_page(cliopatria(default), title("LOD Laundromat - Seedlist"), [
     h1("Seedlist"),
     \bs_panels(seeds_table, [
-      'Cleaned'-CleanedPage1,
-      'Cleaning'-CleaningPage1,
-      'To be cleaned'-ToBeCleanedPage1
+      'Cleaned'-DonePage1,
+      'Cleaning'-DoingPage1,
+      'To be cleaned'-TodoPage1
     ])
   ]).
 seeds_mediatype(post, application/json) :-
@@ -254,15 +248,3 @@ seed_date_time0(DT) -->
 seed_date_time0(DT) -->
   {current_ltag(LTag)},
   html_date_time(DT, _{ltag: LTag, masks: [offset], month_abbr: true}).
-
-
-
-%! seed_status0(+Pair, -Order:oneof([<,=,>]))is det.
-% Partition the seeds into ‘done’ (<), ‘doing’ (=) and ‘todo’ (>).
-
-seed_status0(_-Seed, Order) :-
-  seed_order0(Seed, Order).
-
-seed_order0(seed(_,_,_,0.0,0.0), >) :- !.
-seed_order0(seed(_,_,_,_  ,0.0), =) :- !.
-seed_order0(_                  , <).
