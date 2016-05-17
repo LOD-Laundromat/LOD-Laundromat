@@ -34,6 +34,7 @@ Washing Machine HTTP API
 TODO
 ----
 
+  - 46f1ccde4aba4a8511a652c415ee189a
   - Minimally encoded IRIs (LOD Laundromat IRIs, LIRIs).
   - Calculate data MD5 in the read stream.
   - RocksDB API generator.
