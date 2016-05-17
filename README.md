@@ -34,6 +34,7 @@ Washing Machine HTTP API
 TODO
 ----
 
+  - error(io_error(read,<STREAM>),context(rdf_ntriples:read_ntriple/2,'Invalid argument'))
   - Minimally encoded IRIs (LOD Laundromat IRIs, LIRIs).
   - Calculate data MD5 in the read stream.
   - RocksDB API generator.
