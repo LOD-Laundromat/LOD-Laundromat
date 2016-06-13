@@ -12,7 +12,8 @@
     wm_reset/1,             % +Hash
     wm_reset_and_clean/1,   % +Hash
     wm_restore/0,
-    wm_status/0
+    wm_status/0,
+    wm_table/0
   ]
 ).
 
@@ -26,6 +27,8 @@
 :- use_module(library(apply)).
 :- use_module(library(atom_ext)).
 :- use_module(library(debug_ext)).
+:- use_module(library(dcg/dcg_ext)).
+:- use_module(library(dcg/dcg_table)).
 :- use_module(library(dict_ext)).
 :- use_module(library(error)).
 :- use_module(library(filesex)).
@@ -40,6 +43,7 @@
 :- use_module(library(os/open_any2)).
 :- use_module(library(os/process_ext)).
 :- use_module(library(os/thread_ext)).
+:- use_module(library(pair_ext)).
 :- use_module(library(pl_term)).
 :- use_module(library(print_ext)).
 :- use_module(library(prolog_stack)).
@@ -193,6 +197,21 @@ wm_status :-
     "~D washing machines are cleaning ~D seedpoints.~n",
     [N1,N2]
   ).
+
+
+
+wm_table :-
+  findall(
+    Global-[Alias,Global,Hash],
+    (
+      current_wm(Alias),
+      thread_statistics(Alias, global, Global),
+      thread_seed(Alias, Hash)
+    ),
+    Pairs
+  ),
+  desc_pairs_values(Pairs, Rows),
+  dcg_with_output_to(user_output, dcg_table(Rows)).
 
 
 
