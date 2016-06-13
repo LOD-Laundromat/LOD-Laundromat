@@ -36,7 +36,7 @@
 :- use_module(library(lodcli/lodrdf11)).
 :- use_module(library(os/thread_ext)).
 :- use_module(library(pair_ext)).
-:- use_module(library(rdf/rdf_load)).
+:- use_module(library(rdf/rdfio)).
 :- use_module(library(semweb/rdf11)).
 :- use_module(library(string_ext)).
 

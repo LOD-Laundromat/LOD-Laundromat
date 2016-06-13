@@ -4,7 +4,7 @@
     store_archive_entry/4, % +Parent:atom
                            % +Entry:atom
                            % +EntryPath:atom
-                           % +EntryProperties:list(nvpair)
+                           % +EntryProperties
     store_archive_filters/2, % +Doc
                              % +ArchiveFilters:list(atom)
     store_end_clean/2, % +Md5
@@ -70,7 +70,7 @@ store_added(Doc) :-
 %!   +Parent:atom,
 %!   +Entry:atom,
 %!   +EntryPath:atom,
-%!   +EntryProperties:list(nvpair)
+%!   +EntryProperties
 %! ) is det.
 
 store_archive_entry(Parent, Entry, EntryPath, EntryProperties0) :-

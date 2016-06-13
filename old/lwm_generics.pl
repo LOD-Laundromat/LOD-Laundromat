@@ -1,8 +1,7 @@
 :- module(
   lwm_generics,
   [
-    lwm_document_dir/2 % +Document:iri
-                       % -Directory:atom
+    lwm_document_dir/2 % +Doc, -Dir
   ]
 ).
 

@@ -20,7 +20,7 @@ Unpacks files for the LOD Washing Machine to clean.
 :- use_module(library(http/http_ext)).
 :- use_module(library(lists)).
 :- use_module(library(lodapi/lodapi_generics)).
-:- use_module(library(rdf/rdf_load)).
+:- use_module(library(rdf/rdfio)).
 
 :- use_module(lwm_debug_message).
 :- use_module(lwm_store_triple).
@@ -207,7 +207,7 @@ unpack_file(Dir, Doc, ArchiveFile):-
 %!   +ParentMd5:atom,
 %!   +ParentMd5Dir:atom,
 %!   +Document:atom,
-%!   -EntryPair:pair(atom,list(nvpair))
+%!   -EntryPair:pair(atom,list(pair))
 %! ) is det.
 
 process_entry_pair(_, _, _, _-EntryProperties):-

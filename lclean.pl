@@ -36,15 +36,15 @@
 :- use_module(library(os/open_any2)).
 :- use_module(library(os/process_ext)).
 :- use_module(library(os/thread_ext)).
-:- use_module(library(pl/pl_term)).
+:- use_module(library(pl_term)).
 :- use_module(library(print_ext)).
 :- use_module(library(prolog_stack)).
 :- use_module(library(rdf/rdf_clean)).
 :- use_module(library(rdf/rdf_error)).
 :- use_module(library(rdf/rdf_ext)).
-:- use_module(library(rdf/rdf_load)).
 :- use_module(library(rdf/rdf_prefix)).
 :- use_module(library(rdf/rdf_print)).
+:- use_module(library(rdf/rdfio)).
 :- use_module(library(semweb/rdf11)). % Operators.
 :- use_module(library(string_ext)).
 :- use_module(library(uri)).
@@ -237,6 +237,6 @@ rdf_store_metadata(State, Doc1, M) :-
   atom_string(Doc1, Doc2),
   Jsonld2 = Jsonld1.put(_{'@id': Doc2}),
   (debugging(wm(low)) -> json_write_dict(user_output, Jsonld2) ; true),
-  findall(Triple, jsonld_tuple(Jsonld2, Triple), Triples),
+  jsonld_tuples(Jsonld2, Triples),
   if_debug(wm(low), rdf_print_triples(Triples)),
   maplist(rdf_store(State.meta), Triples).

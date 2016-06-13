@@ -15,17 +15,7 @@ Restart the LOD Washing Machine during debugging.
 
 :- use_module(library(debug)).
 :- use_module(library(thread)).
-
-:- use_module(plc(generics/meta_ext)).
-
-:- use_module(plUri(uri_query)).
-
-:- use_module(plHttp(http_goal)).
-
-:- use_module(plSparql(sparql_db)).
-:- use_module(plSparql(update/sparql_update_api)).
-
-:- use_module(lwm(lwm_settings)).
+:- use_module(library(iri/iri_ext)).
 
 
 
@@ -59,7 +49,7 @@ restart_store(virtuoso):-
   % (3) Required SILENT keyword.
   sparql_endpoint_location(virtuoso_update, update, Uri0),
   format(atom(Query), 'DROP SILENT GRAPH <~a>', [Graph]),
-  uri_query_add_nvpair(Uri0, query, Query, Uri),
+  iri_add_query_comp(Uri0, query=Query, Uri),
   http_goal(Uri, true, [fail_on_status([404]),status(Status)]), !,
   (   between(200, 299, Status)
   ->  true

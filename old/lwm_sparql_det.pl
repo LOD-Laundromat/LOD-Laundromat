@@ -190,10 +190,11 @@ document_original_location(Doc, Download):-
 
 
 %! document_source(+Document:iri, -Source:atom) is det.
+%
 % Returns the original source of the given datadocument.
 %
-% This is either an IRI simpliciter,
-% or an IRI suffixed by an archive entry path.
+% This is either an IRI simpliciter, or an IRI suffixed by an archive
+% entry path.
 
 % The data document derives from an IRI.
 document_source(Doc, Source):-
