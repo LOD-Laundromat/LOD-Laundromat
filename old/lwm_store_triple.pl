@@ -117,7 +117,7 @@ store_archive_entry(Parent, Entry, EntryPath, EntryProperties0) :-
 
 store_archive_filters(_, []) :- !.
 store_archive_filters(Doc, ArchiveFilters) :-
-  rdf_create_bnode(B),
+  qb_bnode(B),
   store_triple(Doc, llo-archiveFilters, B),
   store_archive_filters0(B, ArchiveFilters).
 
@@ -126,7 +126,7 @@ store_archive_filters0(B, [H]) :- !,
   store_triple(B, rdf-rest, rdf-nil).
 store_archive_filters0(B1, [H|T]) :-
   store_triple(B1, rdf-first, literal(type(xsd-string,H))),
-  rdf_create_bnode(B2),
+  qb_bnode(B2),
   store_triple(B1, rdf-rest, B2),
   store_archive_filters0(B2, T).
 

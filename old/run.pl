@@ -19,10 +19,10 @@ for storing the metadata. See module [lwm_settings] for this.
 :- use_module(library(os/thread_ext)).
 :- use_module(library(semweb/rdf_db)).
 
-:- rdf_register_prefix(error, 'http://lodlaundromat.org/error/ontology/').
-:- rdf_register_prefix(httpo, 'http://lodlaundromat.org/http/ontology/').
-:- rdf_register_prefix(ll, 'http://lodlaundromat.org/resource/').
-:- rdf_register_prefix(llo, 'http://lodlaundromat.org/ontology/').
+:- qb_alias(error, 'http://lodlaundromat.org/error/ontology/').
+:- qb_alias(httpo, 'http://lodlaundromat.org/http/ontology/').
+:- qb_alias(ll, 'http://lodlaundromat.org/resource/').
+:- qb_alias(llo, 'http://lodlaundromat.org/ontology/').
 
 :- use_module('LOD-Laundromat'(debug/lwm_debug)).
 :- use_module('LOD-Laundromat'(lwm_clean)).

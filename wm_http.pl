@@ -44,8 +44,8 @@
 :- use_module(seedlist).
 :- use_module(wm).
 
-:- rdf_register_prefix(data, 'http://cliopatria.lod.labs.vu.nl/data/').
-:- rdf_register_prefix(meta, 'http://cliopatria.lod.labs.vu.nl/meta/').
+:- qb_alias(data, 'http://cliopatria.lod.labs.vu.nl/data/').
+:- qb_alias(meta, 'http://cliopatria.lod.labs.vu.nl/meta/').
 
 :- http_handler(root(data), data, [prefix]).
 :- http_handler(root(meta), meta, [prefix]).
