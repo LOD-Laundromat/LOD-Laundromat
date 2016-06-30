@@ -22,8 +22,8 @@
 :- use_module(library(html/html_bs)).
 :- use_module(library(html/html_date_time)).
 :- use_module(library(html/html_ext)).
-:- use_module(library(html/rdfh)).
 :- use_module(library(html/rdfh_grid)).
+:- use_module(library(html/zh)).
 :- use_module(library(http/html_write)).
 :- use_module(library(http/http_dispatch)).
 :- use_module(library(http/http_ext)).
@@ -87,7 +87,7 @@ meta_mediatype(get, text/html, Doc) :-
   string_list_concat(["Washing Machine","Metadata",Hash], " - ", Title),
   reply_html_page(cliopatria(default), title(Title), [
     \rdfh_grid(Doc),
-    \rdfh_triple_table(_, _, _, Doc)
+    \zh_triple_table(_, _, _, Doc)
   ]).
 
 datas_mediatype(get, application/json) :-

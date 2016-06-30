@@ -43,11 +43,11 @@
 :- use_module(library(rdf/rdf_error)).
 :- use_module(library(rdf/rdf_ext)).
 :- use_module(library(rdf/rdf_prefix)).
-:- use_module(library(rdf/rdf_print)).
 :- use_module(library(rdf/rdfio)).
 :- use_module(library(semweb/rdf11)). % Operators.
 :- use_module(library(string_ext)).
 :- use_module(library(uri)).
+:- use_module(library(z/z_print)).
 :- use_module(library(zlib)).
 
 :- use_module(seedlist).
@@ -237,5 +237,5 @@ rdf_store_metadata(State, Doc1, M) :-
   Jsonld2 = Jsonld1.put(_{'@id': Doc2}),
   (debugging(wm(low)) -> json_write_dict(user_output, Jsonld2) ; true),
   jsonld_tuples(Jsonld2, Triples),
-  if_debug(wm(low), rdf_print_triples(Triples)),
+  if_debug(wm(low), z_print_triples(Triples)),
   maplist(rdf_store(State.meta), Triples).

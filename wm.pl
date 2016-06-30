@@ -49,11 +49,11 @@
 :- use_module(library(prolog_stack)).
 :- use_module(library(rdf/rdf_clean)).
 :- use_module(library(rdf/rdf_ext)).
-:- use_module(library(rdf/rdf_print)).
 :- use_module(library(rdf/rdfio)).
 :- use_module(library(semweb/rdf11)). % Operators.
 :- use_module(library(string_ext)).
 :- use_module(library(thread)).
+:- use_module(library(z/z_print)).
 :- use_module(library(zlib)).
 
 :- use_module(lclean).

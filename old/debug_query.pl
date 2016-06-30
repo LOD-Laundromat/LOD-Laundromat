@@ -15,7 +15,7 @@
 */
 
 :- use_module(library(lists)).
-:- use_module(library(rdf/rdf_print)).
+:- use_module(library(z/z_print)).
 
 :- use_module('LOD-Laundromat'(query/lwm_sparql_det)).
 :- use_module('LOD-Laundromat'(query/lwm_sparql_nondet)).
@@ -54,7 +54,7 @@ print_document_overview(Doc):-
   ;   true
   ),
 
-  rdf_print_triples(_, _, _, Doc),
+  z_print_triples(_, _, _, Doc),
 
   (   document_file_extension(Doc, Ext)
   ->  format("File extension:\t~a~n", [Ext])
