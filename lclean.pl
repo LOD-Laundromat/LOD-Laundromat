@@ -22,7 +22,6 @@
 :- use_module(library(dict_ext)).
 :- use_module(library(error)).
 :- use_module(library(filesex)).
-:- use_module(library(gen/gen_ntuples)).
 :- use_module(library(hash_ext)).
 :- use_module(library(http/json)).
 :- use_module(library(jsonld/jsonld_metadata)).
@@ -33,7 +32,7 @@
 :- use_module(library(os/dir_ext)).
 :- use_module(library(os/file_ext)).
 :- use_module(library(os/gnu_wc)).
-:- use_module(library(os/open_any2)).
+:- use_module(library(os/io)).
 :- use_module(library(os/process_ext)).
 :- use_module(library(os/thread_ext)).
 :- use_module(library(pl_term)).
@@ -41,7 +40,6 @@
 :- use_module(library(prolog_stack)).
 :- use_module(library(rdf/rdf_clean)).
 :- use_module(library(rdf/rdf_error)).
-:- use_module(library(rdf/rdf_ext)).
 :- use_module(library(rdf/rdf_prefix)).
 :- use_module(library(rdf/rdfio)).
 :- use_module(library(semweb/rdf11)). % Operators.
@@ -67,6 +65,7 @@ currently_debugging0('1cbe5a4bd869c2f5e64ce08480996a97').
 
 
 
+
 %! clean is det.
 % Clean an -- arbitrarily chosen - seed.
 
@@ -75,8 +74,9 @@ clean :-
 
 
 %! clean(+Hash) is det.
-% Clean a specific seed from the seedlist.
-% Does not re-clean documents.
+%
+% Clean a specific seed from the seedlist.  Does not re-clean
+% documents.
 %
 % @throws existence_error If the seed is not in the seedlist.
 
@@ -106,41 +106,30 @@ clean_inner(Hash, Iri) :-
   ldir_lfile(Dir, data, nquads, DataFile),
   ldir_lfile(Dir, meta, ntriples, MetaFile),
   ldir_lfile(Dir, warn, ntriples, WarnFile),
-  setup_call_cleanup(
-    (
-      gzopen(MetaFile, write, MetaSink, [format(gzip)]),
-      open(WarnFile, write, WarnSink)
-    ),
-    (
-      State = _{meta: MetaSink, warn: WarnSink, warns: 0},
-      CleanOpts = [
-        compress(gzip),
-        metadata(M1),
-        parse_headers(true),
-        relative_to(Dir),
-        sort_dir(Dir),
-        warn(WarnSink)
-      ],
-      currently_debugging(Hash, Iri),
-      rdf_store_messages(State, Doc, rdf_clean(Iri, DataFile, CleanOpts), M2),
-      (var(M1) -> M = M2 ; M = M1),
-      (var(M) -> format(user_output, "~w~n", [Hash]) ; true), %DEB?
-      rdf_store_metadata(State, Doc, M)
-    ),
-    (
-      close(WarnSink),
-      source_numlines(WarnFile, NumWarns),
-      compress_file(WarnFile),
-      rdf_store(MetaSink, Doc, llo:number_of_warnings, NumWarns^^xsd:nonNegativeInteger),
-      close(MetaSink)
-    )
-  ),
+  call_to_streams(MetaFile, WarnFile, clean_inner0),
+  count_numlines(WarnFile, NumWarns),
   lhdt_build(Hash),
   %absolute_file_name('dirty.gz', DirtyTo, Opts),
   %call_collect_messages(rdf_download_to_file(Iri, DirtyTo, [compress(gzip)])),
   directory_file_path(Dir, done, Done),
   touch(Done).
 
+
+clean_inner0(MetaOut, WarnOut) :-
+  State = _{meta: MetaOut, warn: WarnOut, warns: 0},
+  CleanOpts = [
+    compress(gzip),
+    metadata(Meta1),
+    parse_headers(true),
+    relative_to(Dir),
+    sort_dir(Dir),
+    warn(WarnOut)
+  ],
+  currently_debugging(Hash, Iri),
+  rdf_store_messages(State, Doc, rdf_clean(Iri, DataFile, CleanOpts), Meta2),
+  (var(Meta1) -> Meta = Meta2 ; Meta = Meta1),
+  (var(Meta) -> format(user_output, "~w~n", [Hash]) ; true),
+  rdf_store_metadata(State, Doc, Meta).
 
 
 currently_debugging(Hash, Iri) :-
@@ -202,12 +191,13 @@ thread_seed_update(Alias, Hash) :-
 
 % HELPERS %
 
-%! rdf_store_messages(+State, +Doc, :Goal_0, -Metadata) is det.
+%! rdf_store_messages(+State, +Doc, :Goal_0, -Meta) is det.
+%
 % Run Goal, unify Result with `true`, `false` or `exception(Error)`
 % and messages with a list of generated error and warning messages.
-% Each message is a term `message(Term,Kind,Lines)`.
+% Each message is a term `message(Term, Kind, Lines)`.
 
-rdf_store_messages(State, Doc, Goal_0, M) :-
+rdf_store_messages(State, Doc, Goal_0, Meta) :-
   asserta((
     user:thread_message_hook(Term,Kind,_) :-
       error_kind(Kind),
@@ -216,11 +206,11 @@ rdf_store_messages(State, Doc, Goal_0, M) :-
   (catch(Goal_0, E, true) -> true ; E = fail),
   (   var(E)
   ->  End0 = true
-  ;   E = error(existence_error(open_any2,M),_)
+  ;   E = error(existence_error(http_open, Meta),_)
   ->  End0 = "No stream"
   ;   End0 = E,
       msg_warning("[FAILED] ~w ~w~n", [End0,Doc]),
-      M = _{}
+      Meta = _{}
   ),
   with_output_to(string(End), write_term(End0)),
   % @bug RDF prefix expansion does not work for `llo:end’ here.

@@ -32,7 +32,6 @@
 :- use_module(library(dict_ext)).
 :- use_module(library(error)).
 :- use_module(library(filesex)).
-:- use_module(library(gen/gen_ntuples)).
 :- use_module(library(hash_ext)).
 :- use_module(library(http/json)).
 :- use_module(library(jsonld/jsonld_metadata)).
@@ -40,7 +39,6 @@
 :- use_module(library(lodcli/lodfs)).
 :- use_module(library(lodcli/lodhdt)).
 :- use_module(library(os/dir_ext)).
-:- use_module(library(os/open_any2)).
 :- use_module(library(os/process_ext)).
 :- use_module(library(os/thread_ext)).
 :- use_module(library(pair_ext)).
@@ -48,7 +46,6 @@
 :- use_module(library(print_ext)).
 :- use_module(library(prolog_stack)).
 :- use_module(library(rdf/rdf_clean)).
-:- use_module(library(rdf/rdf_ext)).
 :- use_module(library(rdf/rdfio)).
 :- use_module(library(semweb/rdf11)). % Operators.
 :- use_module(library(string_ext)).

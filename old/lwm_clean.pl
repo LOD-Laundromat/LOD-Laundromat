@@ -19,7 +19,7 @@ The cleaning process performed by the LOD Washing Machine.
 :- use_module(library(apply)).
 :- use_module(library(debug)).
 :- use_module(library(option)).
-:- use_module(library(os/open_any2)).
+:- use_module(library(os/io)).
 :- use_module(library(rdf/rdfio)).
 :- use_module(library(zlib)).
 
@@ -29,6 +29,7 @@ The cleaning process performed by the LOD Washing Machine.
 
 :- dynamic
     debug:debug_md5/2.
+
 :- multifile
     debug:debug_md5/2.
 
@@ -152,35 +153,29 @@ clean_md5(Category, Md5, Datadoc, DirtyFile):-
   )),
 
   % Clean the data document in an RDF transaction.
-  setup_call_cleanup(
-    open(DirtyFile, read, DirtyIn),
-    (
-      rdf_transaction(
+  call_on_stream(
+    DirtyFile,
+    {Category,Md5,Datadoc,DirtyFile,ContentType,VoidUris}/[In,Meta,Meta]>>(
+      q_snap(
         clean_datastream(
           Category,
           Md5,
           Datadoc,
           DirtyFile,
-          DirtyIn,
+          In,
           ContentType,
           VoidUris
-        ),
-        _,
-        [snapshot(true)]
+        )
       ),
       store_stream(Datadoc, DirtyIn)
-    ),
-    close(DirtyIn)
+    )
   ),
 
   % Add the new VoID URIs to the LOD Basket.
   list_script(
     store_seedpoint,
     VoidUris,
-    [
-      message('LWM Seedpoint'),
-      with_mutex(lwm_endpoint_access)
-    ]
+    [message("LWM Seedpoint"),with_mutex(lwm_endpoint_access)]
   ).
 
 %! clean_datastream(
@@ -234,11 +229,7 @@ clean_datastream(
   ->  rdf_load(stream(DirtyIn), Options2),
 
       % Save the data in a cleaned format.
-      setup_call_cleanup(
-        open(CleaningFile, write, UnsortedOut),
-        ctriples_write_graph(UnsortedOut, _NoGraph, Options3),
-        close(UnsortedOut)
-      ),
+      call_to_stream(CleaningFile, ctriples_write_graph(_NoGraph, Options3)),
 
       % Make sure any VoID datadumps are added to the LOD Basket.
       forall(
@@ -247,17 +238,15 @@ clean_datastream(
       )
   ;   setup_call_cleanup(
         ctriples_write_begin(State, BNodePrefix, Options3),
-        setup_call_cleanup(
-          open(CleaningFile, write, UnsortedOut),
+        call_to_stream(
+	  CleaningFile,
           rdf_clean:clean_triples(
             Format,
             DirtyIn,
-            UnsortedOut,
             State,
             BNodePrefix,
             Options2
-          ),
-          close(UnsortedOut)
+          )
         ),
         ctriples_write_end(State, Options3)
       )
