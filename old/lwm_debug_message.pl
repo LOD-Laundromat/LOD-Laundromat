@@ -26,7 +26,7 @@ Prints debug messages for the LOD Washing Machine.
 :- use_module(library(apply)).
 :- use_module(library(counter)).
 :- use_module(library(dcg/basics)).
-:- use_module(library(dcg/dcg_atom)).
+:- use_module(library(dcg/dcg_ext)).
 :- use_module(library(dcg/dcg_cardinal)).
 :- use_module(library(dcg/dcg_content)).
 :- use_module(library(dcg/dcg_pl)).

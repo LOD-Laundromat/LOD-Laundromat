@@ -20,7 +20,7 @@ Unpacks files for the LOD Washing Machine to clean.
 :- use_module(library(http/http_ext)).
 :- use_module(library(lists)).
 :- use_module(library(lodapi/lodapi_generics)).
-:- use_module(library(rdf/rdfio)).
+:- use_module(library(rdf/rdf__io)).
 
 :- use_module(lwm_debug_message).
 :- use_module(lwm_store_triple).
@@ -132,7 +132,7 @@ unpack_datadoc(Doc, Uri, File):-
   directory_file_path(Dir, Base, File),
 
   % Download the dirty file of the document.
-  rdf_download_to_file(Uri, File, [freshness_lifetime(0.0),metadata(M)]),
+  rdf_download_to_file(Uri, File, [freshness_lifetime(0.0),metadata(M)], []),
   
   % Store the file size of the dirty file.
   size_file(File, Size),
@@ -191,7 +191,7 @@ unpack_file(Dir, Doc, ArchiveFile):-
       %         containing a number of entries.
 
       % Create the archive entries
-      % and copy the entry files to their own MD5 dirs.
+      % and copy the entry files to their own MD5 directories.
       list_script(
         process_entry_pair(Md5, Dir, Doc),
         EntryPairs,

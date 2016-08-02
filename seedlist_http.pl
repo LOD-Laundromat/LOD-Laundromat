@@ -127,7 +127,7 @@ function startSeed(hash) {
 }
     |}),
     \bs_table(
-      \bs_table_header(["Seed","Actions","Added","Started","Ended"]),
+      \html_table_header_row(["Seed","Actions","Added","Started","Ended"]),
       \html_maplist(seed_row, Seeds)
     )
   ]).

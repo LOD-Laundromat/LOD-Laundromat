@@ -36,7 +36,7 @@
 :- use_module(library(lodcli/lodrdf11)).
 :- use_module(library(os/thread_ext)).
 :- use_module(library(pair_ext)).
-:- use_module(library(rdf/rdfio)).
+:- use_module(library(rdf/rdf__io)).
 :- use_module(library(semweb/rdf11)).
 :- use_module(library(string_ext)).
 
@@ -170,8 +170,8 @@ wm_table -->
   html([
     h1("Washing Machines"),
     \bs_table(
-      \bs_table_header(["Washing Machine","Global","Hash"]),
-      \html_maplist(bs_table_row, Rows)
+      \html_table_header_row(["Washing Machine","Global","Hash"]),
+      \html_maplist(html_table_data_row, Rows)
     )
   ]).
 

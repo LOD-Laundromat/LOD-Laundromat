@@ -38,19 +38,19 @@
 :- use_module(library(jsonld/jsonld_read)).
 :- use_module(library(lodcli/lodfs)).
 :- use_module(library(lodcli/lodhdt)).
-:- use_module(library(os/dir_ext)).
+:- use_module(library(os/directory_ext)).
 :- use_module(library(os/process_ext)).
 :- use_module(library(os/thread_ext)).
 :- use_module(library(pair_ext)).
 :- use_module(library(pl_term)).
 :- use_module(library(print_ext)).
 :- use_module(library(prolog_stack)).
+:- use_module(library(q/q_print)).
 :- use_module(library(rdf/rdf_clean)).
-:- use_module(library(rdf/rdfio)).
+:- use_module(library(rdf/rdf__io)).
 :- use_module(library(semweb/rdf11)). % Operators.
 :- use_module(library(string_ext)).
 :- use_module(library(thread)).
-:- use_module(library(z/z_print)).
 :- use_module(library(zlib)).
 
 :- use_module(lclean).
@@ -153,7 +153,10 @@ washing_seed(Hash) :-
 
 wm_reset :-
   lroot(Root),
-  forall(dir_file(Root, Subdir), delete_directory_and_contents(Subdir)),
+  forall(
+    directory_path(Root, Subdir),
+    delete_directory_and_contents(Subdir)
+  ),
   absolute_file_name(cpack('LOD-Laundromat'), Dir, [file_type(directory)]),
   run_process(git, ['checkout','seedlist.db'], [cwd(Dir)]),
   retractall(wm_hash0(_,_)).

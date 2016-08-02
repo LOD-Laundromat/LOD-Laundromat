@@ -29,7 +29,7 @@
 :- use_module(library(lodcli/lodfs)).
 :- use_module(library(lodcli/lodhdt)).
 :- use_module(library(os/compress_ext)).
-:- use_module(library(os/dir_ext)).
+:- use_module(library(os/directory_ext)).
 :- use_module(library(os/file_ext)).
 :- use_module(library(os/gnu_wc)).
 :- use_module(library(os/io)).
@@ -38,14 +38,14 @@
 :- use_module(library(pl_term)).
 :- use_module(library(print_ext)).
 :- use_module(library(prolog_stack)).
+:- use_module(library(q/q_print)).
 :- use_module(library(rdf/rdf_clean)).
 :- use_module(library(rdf/rdf_error)).
 :- use_module(library(rdf/rdf_prefix)).
-:- use_module(library(rdf/rdfio)).
+:- use_module(library(rdf/rdf__io)).
 :- use_module(library(semweb/rdf11)). % Operators.
 :- use_module(library(string_ext)).
 :- use_module(library(uri)).
-:- use_module(library(z/z_print)).
 :- use_module(library(zlib)).
 
 :- use_module(seedlist).
@@ -110,7 +110,7 @@ clean_inner(Hash, Iri) :-
   count_numlines(WarnFile, NumWarns),
   lhdt_build(Hash),
   %absolute_file_name('dirty.gz', DirtyTo, Opts),
-  %call_collect_messages(rdf_download_to_file(Iri, DirtyTo, [compress(gzip)])),
+  %call_collect_messages(rdf_download_to_file(Iri, DirtyTo)),
   directory_file_path(Dir, done, Done),
   touch(Done).
 
@@ -224,8 +224,8 @@ rdf_store_messages(State, Doc, Goal_0, Meta) :-
 rdf_store_metadata(State, Doc1, M) :-
   jsonld_metadata(M, Jsonld1),
   atom_string(Doc1, Doc2),
-  Jsonld2 = Jsonld1.put(_{'@id': Doc2}),
+  put_dict('@id', Jsonld1, Doc2, Jsonld1),
   (debugging(wm(low)) -> json_write_dict(user_output, Jsonld2) ; true),
   jsonld_tuples(Jsonld2, Triples),
-  if_debug(wm(low), z_print_triples(Triples)),
+  if_debug(wm(low), q_print_triples(Triples)),
   maplist(rdf_store(State.meta), Triples).

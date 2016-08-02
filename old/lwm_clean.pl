@@ -20,7 +20,7 @@ The cleaning process performed by the LOD Washing Machine.
 :- use_module(library(debug)).
 :- use_module(library(option)).
 :- use_module(library(os/io)).
-:- use_module(library(rdf/rdfio)).
+:- use_module(library(rdf/rdf__io)).
 :- use_module(library(zlib)).
 
 :- use_module(lwm_debug_message).
