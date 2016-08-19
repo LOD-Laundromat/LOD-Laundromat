@@ -20,7 +20,7 @@
 /* <module> LOD Laundromat: Washing machine
 
 @author Wouter Beek
-@version 2016/01-2016/05
+@version 2016/01-2016/05, 2016/08
 */
 
 :- use_module(library(aggregate)).

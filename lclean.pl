@@ -12,7 +12,7 @@
 /** <module> LOD Laundromat cleaning
 
 @author Wouter Beek
-@version 2016/03-2016/05
+@version 2016/03-2016/05, 2016/08
 */
 
 :- use_module(library(aggregate)).
@@ -26,8 +26,6 @@
 :- use_module(library(http/json)).
 :- use_module(library(jsonld/jsonld_metadata)).
 :- use_module(library(jsonld/jsonld_read)).
-:- use_module(library(lodcli/lodfs)).
-:- use_module(library(lodcli/lodhdt)).
 :- use_module(library(os/compress_ext)).
 :- use_module(library(os/directory_ext)).
 :- use_module(library(os/file_ext)).
@@ -41,7 +39,6 @@
 :- use_module(library(q/q_print)).
 :- use_module(library(rdf/rdf_clean)).
 :- use_module(library(rdf/rdf_error)).
-:- use_module(library(rdf/rdf_prefix)).
 :- use_module(library(rdf/rdf__io)).
 :- use_module(library(semweb/rdf11)). % Operators.
 :- use_module(library(string_ext)).
@@ -81,7 +78,8 @@ clean :-
 % @throws existence_error If the seed is not in the seedlist.
 
 clean(Hash) :-
-  lready_hash(Hash), !,
+  q_file_hash(File, data, ntriples, Hash),
+  q_file_is_ready(File), !,
   msg_notification("Already cleaned ~a", [Hash]).
 clean(Hash) :-
   clean(Hash, _).
@@ -100,12 +98,12 @@ clean(Hash, Iri) :-
 
 
 clean_inner(Hash, Iri) :-
-  ldir_lhash(Dir, Hash),
-  ldoc_lhash(Doc, data, Hash),
+  q_dir_hash(Dir, Hash),
+  q_graph_hash(G, data, Hash),
   with_mutex(lclean, make_directory_path(Dir)),
-  ldir_lfile(Dir, data, nquads, DataFile),
-  ldir_lfile(Dir, meta, ntriples, MetaFile),
-  ldir_lfile(Dir, warn, ntriples, WarnFile),
+  q_dir_file(Dir, data, nquads, DataFile),
+  q_dir_file(Dir, meta, ntriples, MetaFile),
+  q_dir_file(Dir, warn, ntriples, WarnFile),
   call_to_streams(MetaFile, WarnFile, clean_inner0),
   count_numlines(WarnFile, NumWarns),
   lhdt_build(Hash),
@@ -126,10 +124,10 @@ clean_inner0(MetaOut, WarnOut) :-
     warn(WarnOut)
   ],
   currently_debugging(Hash, Iri),
-  rdf_store_messages(State, Doc, rdf_clean(Iri, DataFile, CleanOpts), Meta2),
+  rdf_store_messages(State, G, rdf_clean(Iri, DataFile, CleanOpts), Meta2),
   (var(Meta1) -> Meta = Meta2 ; Meta = Meta1),
   (var(Meta) -> format(user_output, "~w~n", [Hash]) ; true),
-  rdf_store_metadata(State, Doc, Meta).
+  rdf_store_metadata(State, G, Meta).
 
 
 currently_debugging(Hash, Iri) :-
@@ -141,6 +139,7 @@ currently_debugging(_, _).
 
 
 %! clean_iri(+Iri) is det.
+%
 % Clean a specific IRI, achieved by circumvents the seedlist.
 % For debugging purposes only.
 
@@ -155,10 +154,8 @@ clean_iri(I1) :-
 
 reset(Hash) :-
   % Remove directory and contents from disk.
-  ldir_lhash(Dir, Hash),
-  with_mutex(lclean, (
-    (exists_directory(Dir) -> delete_directory_and_contents(Dir) ; true)
-  )),
+  q_dir_hash(Dir, Hash),
+  with_mutex(lclean, delete_directory_and_contents_msg(Dir)),
   % Reset the seedpoint in the seedlist.
   reset_seed(Hash).
 
@@ -191,17 +188,17 @@ thread_seed_update(Alias, Hash) :-
 
 % HELPERS %
 
-%! rdf_store_messages(+State, +Doc, :Goal_0, -Meta) is det.
+%! rdf_store_messages(+State, +G, :Goal_0, -Meta) is det.
 %
 % Run Goal, unify Result with `true`, `false` or `exception(Error)`
 % and messages with a list of generated error and warning messages.
 % Each message is a term `message(Term, Kind, Lines)`.
 
-rdf_store_messages(State, Doc, Goal_0, Meta) :-
+rdf_store_messages(State, G, Goal_0, Meta) :-
   asserta((
     user:thread_message_hook(Term,Kind,_) :-
       error_kind(Kind),
-      rdf_store_warning(State.warn, Doc, Term)
+      rdf_store_warning(State.warn, G, Term)
   )),
   (catch(Goal_0, E, true) -> true ; E = fail),
   (   var(E)
@@ -209,22 +206,22 @@ rdf_store_messages(State, Doc, Goal_0, Meta) :-
   ;   E = error(existence_error(http_open, Meta),_)
   ->  End0 = "No stream"
   ;   End0 = E,
-      msg_warning("[FAILED] ~w ~w~n", [End0,Doc]),
+      msg_warning("[FAILED] ~w ~w~n", [End0,G]),
       Meta = _{}
   ),
   with_output_to(string(End), write_term(End0)),
   % @bug RDF prefix expansion does not work for `llo:end’ here.
   rdf_equal(llo:end, P),
-  rdf_store(State.meta, Doc, P, End^^xsd:string).
+  rdf_store(State.meta, G, P, End^^xsd:string).
 
 
 
-%! rdf_store_metadata(+State, +Doc, +M) is det.
+%! rdf_store_metadata(+State, +G, +M) is det.
 
-rdf_store_metadata(State, Doc1, M) :-
+rdf_store_metadata(State, G1, M) :-
   jsonld_metadata(M, Jsonld1),
-  atom_string(Doc1, Doc2),
-  put_dict('@id', Jsonld1, Doc2, Jsonld1),
+  atom_string(G1, G2),
+  put_dict('@id', Jsonld1, G2, Jsonld1),
   (debugging(wm(low)) -> json_write_dict(user_output, Jsonld2) ; true),
   jsonld_tuples(Jsonld2, Triples),
   if_debug(wm(low), q_print_triples(Triples)),
