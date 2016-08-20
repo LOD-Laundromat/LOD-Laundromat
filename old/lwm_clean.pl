@@ -239,8 +239,8 @@ clean_datastream(
   ;   setup_call_cleanup(
         ctriples_write_begin(State, BNodePrefix, Options3),
         call_to_stream(
-	  CleaningFile,
-          rdf_clean:clean_triples(
+          CleaningFile,
+          clean_triples(
             Format,
             DirtyIn,
             State,
@@ -272,11 +272,11 @@ clean_datastream(
   ),
 
   % Sort file.
-  rdf_clean:sort_file(CleaningFile, '/ssd/lodlaundromat/tmp'),
+  sort_file(CleaningFile, '/ssd/lodlaundromat/tmp'),
   source_numlines(CleaningFile, NumberOfUniqueTriples),
 
   % Compress file.
-  rdf_clean:compress_file(Dir, Ext, CleaningFile),
+  compress_file(Dir, CleaningFile),
   delete_file(CleaningFile),
 
   % Store statistics about the number of (duplicate) triples.
