@@ -30,22 +30,10 @@ Generic predicates for the LOD Washing Machine.
 user:prolog_file_type(conf, configuration).
 
 :- setting(
-     endpoint,
-     oneof([both,cliopatria,virtuoso]),
-     both,
-     'The endpoint that is used to store the crawling metadata in.'
-   ).
-:- setting(
      keep_old_datadoc,
      boolean,
      true,
      'Whether the original data document is stored or not.'
-   ).
-:- setting(
-     max_number_of_warnings,
-     nonneg,
-     100,
-     'The maximum number of warnings that is stored per data document.'
    ).
 :- setting(
      number_of_large_cleaning_threads,
@@ -179,4 +167,3 @@ init_lwm_settings(Port) :-
   sparql_db:assert(
     sparql_endpoint_option0(virtuoso_http, path_suffix(http), '')
   ).
-

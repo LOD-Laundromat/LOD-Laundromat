@@ -28,55 +28,64 @@ iri_liri(AbsoluteIri, Liri) :-
   uri_authority_components(Authority2, uri_authority(User2,Password2,Host2,Port2)),
   uri_components(Liri, uri_components(Scheme2,Authority2,Path2,Query2,Fragment2)).
 
+
 iri_liri(BaseIri, RelativeIri, Liri) :-
   uri_resolve(RelativeIri, BaseIri, AbsoluteIri),
   iri_liri(AbsoluteIri, Liri).
 
+
 % scheme = ALPHA *( ALPHA / DIGIT / "+" / "-" / "." )
-scheme,  [C]   --> 'ALPHA',    scheme0.
-scheme0, [C]   --> 'ALPHA', !, scheme0.
-scheme0, [C]   --> 'DIGIT', !, scheme0.
-scheme0, [0'+] --> "+",     !, scheme0.
-scheme0, [0'-] --> "-",     !, scheme0.
-scheme0, [0'.] --> ".",     !, scheme0.
-scheme0        --> "".
+scheme,  [C]   --> 'ALPHA'(C),       scheme0.
+scheme0, [C]   --> 'ALPHA'(C),    !, scheme0.
+scheme0, [C]   --> 'DIGIT'(_, C), !, scheme0.
+scheme0, [0'+] --> "+",           !, scheme0.
+scheme0, [0'-] --> "-",           !, scheme0.
+scheme0, [0'.] --> ".",           !, scheme0.
+scheme0        --> [].
+
 
 % iuserinfo = *( iunreserved / pct-encoded / sub-delims / ":" )
-user, [C]   --> iunreserved, !, user.
-user, [C]   --> sub_delims,  !, user.
-user, [0':] --> ":",         !, user.
-user, [C]   --> pct_encoded, !, user.
-user        --> "".
+user, [C]   --> iunreserved(C), !, user.
+user, [C]   --> sub_delims(C),  !, user.
+user, [0':] --> ":",            !, user.
+user, [C]   --> pct_encoded(C), !, user.
+user        --> [].
+
 
 % ihost = IP-literal / IPv4address / ireg-name
 %ihost --> ip_literal.
 %ihost --> ipv4address.
 ihost --> ireg_name.
 
+
 % ipath-abempty = *( "/" isegment )
 ipath_abempty, [0'/] --> "/", !, isegment, ipath_abempty.
-ipath_abempty        --> "".
+ipath_abempty        --> [].
+
 
 % ipath-absolute = "/" [ isegment-nz *( "/" isegment ) ]
 ipath_absolute, [0'/]  --> "/", (isegment_nz -> isegments ; "").
 
+
 % ipath-empty = 0<ipchar>
-ipath_empty --> "".
+ipath_empty --> [].
+
 
 % ipath-rootless = isegment-nz *( "/" isegment )
-ipath_rootless -->
-  isegment_nz,
-  isegments.
+ipath_rootless --> isegment_nz, isegments.
+
 
 % ireg-name = *( iunreserved / pct-encoded / sub-delims )
-ireg_name --> iunreserved, !, ireg_name.
-ireg_name --> sub_delims,  !, ireg_name.
-ireg_name --> pct_encoded, !, ireg_name.
-ireg_name --> "".
+ireg_name, [C] --> iunreserved(C), !, ireg_name.
+ireg_name, [C] --> sub_delims(C),  !, ireg_name.
+ireg_name, [C] --> pct_encoded(C), !, ireg_name.
+ireg_name --> [].
+
 
 % port = *DIGIT
 port, [C] --> 'DIGIT'(_, C), !, port.
-port      --> "".
+port      --> [].
+
 
 liri_phrase(_, X, X) :- var(X), !.
 liri_phrase(Dcg_1, X, Z) :-
@@ -86,16 +95,27 @@ liri_phrase(Dcg_1, X, Z) :-
   phrase(Dcg_0, Ys, Zs),
   atom_codes(Z, Zs).
 
-deescape, [C] --> "%", 'HEXDIG'(H1), 'HEXDIG'(H2), !, {C is H1 * 16 + H2}, deescape.
-deescape, [C] --> [C], !, deescape.
-deescape      --> "".
+
+deescape, [C] -->
+  "%",
+  'HEXDIG'(H1),
+  'HEXDIG'(H2), !,
+  {C is H1 * 16 + H2},
+  deescape.
+deescape, [C] -->
+  [C], !,
+  deescape.
+deescape --> [].
+
 
 % ALPHA = %x41-5A / %x61-7A   ; A-Z / a-z
 'ALPHA', [C] --> [C], {between(0x41, 0x5A, C)}.
 'ALPHA', [C] --> [C], {between(0x61, 0x7A, C)}.
 
+
 % DIGIT = %x30-39   ; 0-9
 'DIGIT'(N, C) --> [C], {between(0x30, 0x39, C), N is C - 48}.
+
 
 % HEXDIG =  DIGIT / "A" / "B" / "C" / "D" / "E" / "F"
 'HEXDIG'(N,  C    ) --> 'DIGIT'(N, C).
@@ -106,6 +126,7 @@ deescape      --> "".
 'HEXDIG'(14, [0'E]) --> "E".
 'HEXDIG'(15, [0'F]) --> "F".
 
+
 % iunreserved = ALPHA / DIGIT / "-" / "." / "_" / "~" / ucschar
 iunreserved,       --> 'ALPHA'.
 iunreserved, [C]   --> 'DIGIT'(_, C).
@@ -114,6 +135,7 @@ iunreserved, [0'.] --> ".".
 iunreserved, [0'_] --> "_".
 iunreserved, [0'~] --> "~".
 iunreserved        --> ucschar.
+
 
 % ucschar = %xA0-D7FF / %xF900-FDCF / %xFDF0-FFEF
 %         / %x10000-1FFFD / %x20000-2FFFD / %x30000-3FFFD
@@ -139,10 +161,12 @@ ucschar, [C] --> [C], {between(0xC0000, 0xCFFFD, C)}.
 ucschar, [C] --> [C], {between(0xD0000, 0xDFFFD, C)}.
 ucschar, [C] --> [C], {between(0xE1000, 0xEFFFD, C)}.
 
+
 % pct-encoded = "%" HEXDIG HEXDIG
 pct_encoded, [0'%,C,D] -->
   {must_be(between(0, 255), C), X is C // 16, Y is C mod 16},
   "%", 'HEXDIG'(X, C), 'HEXDIG'(Y, D).
+
 
 % sub-delims = "!" / "$" / "&" / "'" / "(" / ")" / "*" / "+" / "," / ";" / "="
 sub_delims, [0'!] --> "!".
@@ -157,17 +181,21 @@ sub_delims, [0',] --> ",".
 sub_delims, [0';] --> ";".
 sub_delims, [0'=] --> "=".
 
+
 isegments, [0'/] --> "/", !, isegment.
-isegments        --> "".
+isegments --> [].
+
 
 % isegment = *ipchar
 isegment([H|T]) --> ipchar(H), !, isegment(T).
-isegment([])    --> "".
+isegment([])    --> [].
+
 
 % isegment-nz = 1*ipchar
 isegment_nz, [C] --> ipchar, isegment_nz0.
 isegment_nz0     --> ipchar, isegment_nz0.
-isegment_nz0     --> "".
+isegment_nz0     --> [].
+
 
 % ipchar = iunreserved / pct-encoded / sub-delims / ":" / "@"
 ipchar, [C]   --> iunreserved, !, ipchar.

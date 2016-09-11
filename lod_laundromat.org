@@ -1,22 +1,20 @@
-# TODO
+#+TITLE TODO
 
-* Bugs
 * Libraries
-** Downloading URIs with the FTP scheme
-*** TODO Ask SWI mailinglist
-* LOD Laundromat
-** Query HDT directly
-*** TODO Try using the C++ library
-** Keep track of non-IRIs
-*** TODO Unexpanded IRIs in prefix notation.
-*** TODO IRI normalization HOWTO?
-** Keep track of malformed literals.
-*** TODO ~message(error(syntax_error(xml_date(2013-10-31+02:00)),_G75881),warning,[Syntax error: ,~w-[xml_date(2013-10-31+02:00)]])~
 
-# Notes
+** Downloading URIs with the FTP scheme
+
+*** TODO Ask SWI mailinglist
+
+* LOD Laundromat
+
+** Keep track of non-IRIs
+
+*** TODO Unexpanded IRIs in prefix notation.
+
+*** TODO IRI normalization HOWTO?
 
 * Problematic MD5s
+
 ** TODO 2570ea2d41d6f3c2ce902ec233e51a68
 Contains Illegal UTF-8 start (183:0).
-* How to run LOD Laundromat
-~swipl run.pl --debug --dir=/scratch/lodlaundromat/crawls/12/ --mode=continue~
