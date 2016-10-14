@@ -18,6 +18,7 @@ for storing the metadata. See module [lwm_settings] for this.
 :- use_module(library(optparse)).
 :- use_module(library(os/thread_ext)).
 :- use_module(library(semweb/rdf_db)).
+:- use_module(library(uri)).
 
 :- qb_alias(error, 'http://lodlaundromat.org/error/ontology/').
 :- qb_alias(httpo, 'http://lodlaundromat.org/http/ontology/').
@@ -109,7 +110,7 @@ init(Opts):-
   ).
 
 ensure_datadoc(Datadoc, Datadoc):-
-  is_uri(Datadoc), !.
+  uri_is_global(Datadoc), !.
 ensure_datadoc(Md5, Datadoc):-
   rdf_global_id(ll:Md5, Datadoc).
 
