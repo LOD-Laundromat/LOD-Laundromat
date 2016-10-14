@@ -1,6 +1,6 @@
-:- module(llw_seedlist, []).
+:- module(seedlist_endpoint, []).
 
-/** <module> LOD Laundromat seedlist: HTTP API
+/** <module> LOD Laundromat: Seedlist endpoint
 
 | *Path*             | *Method* | *Media type*        | *Status codes* |
 |:-------------------|:---------|:--------------------|:---------------|
@@ -16,7 +16,7 @@ there (409).  The HTTP body is expected to be `{"from": $IRI$}`.
 
 @author Wouter Beek
 @tbd Add authorization for DELETE and POST requests.
-@version 2016/02-2016/03, 2016/08-2016/09
+@version 2016/02-2016/03, 2016/08-2016/10
 */
 
 :- use_module(library(apply)).
@@ -43,42 +43,42 @@ there (409).  The HTTP body is expected to be `{"from": $IRI$}`.
 :- use_module(library(true)).
 :- use_module(library(uri)).
 
-:- use_module(llw(seedlist)).
-:- use_module(llw(html/llw_html)).
+:- use_module(q(api/seedlist_api)).
+:- use_module(q(html/llw_html)).
 
-:- http_handler(llw(seed), seed_handler, [prefix]).
-
-
+:- http_handler(llw(seed), seedlist_handler, [prefix]).
 
 
 
-seed_handler(Req) :-
-  rest_method(Req, [delete,get,post], seed_handler).
 
 
-seed_handler(Req, delete, MTs) :-
+seedlist_handler(Req) :-
+  rest_method(Req, [delete,get,post], seedlist_handler_method).
+
+
+seedlist_handler_method(Req, delete, MTs) :-
   http_relative_iri(Req, Iri),
-  rest_media_type(Req, delete, MTs, seed_media_type(Iri)).
-seed_handler(Req, get, MTs) :-
+  rest_media_type(Req, delete, MTs, seedlist_media_type(Iri)).
+seedlist_handler_method(Req, get, MTs) :-
   http_relative_iri(Req, Iri),
-  rest_media_type(Req, get, MTs, seed_media_type(Iri)).
-seed_handler(Req, post, MTs) :-
+  rest_media_type(Req, get, MTs, seedlist_media_type(Iri)).
+seedlist_handler_method(Req, post, MTs) :-
   http_read_json_dict(Data),
   add_seed(Data.from, Iri),
-  rest_media_type(Req, post, MTs, seed_media_type(Iri)).
+  rest_media_type(Req, post, MTs, seedlist_media_type(Iri)).
 
 
-seed_media_type(delete, application/json, Iri) :-
+seedlist_media_type(delete, application/json, Iri) :-
   iri_to_hash(Iri, Hash),
   remove_seed(Hash),
   reply_json_dict(_{}, [status(200)]).
-seed_media_type(get, application/json, Iri) :-
+seedlist_media_type(get, application/json, Iri) :-
   (   iri_to_hash(Iri, Hash)
   ->  pagination(Dict, seed_by_hash(Hash, Dict), Result)
   ;   pagination(Dict, seed(Dict), Result)
   ),
   reply_json_dict(Result.results, [status(200)]).
-seed_media_type(get, text/html, Iri) :-
+seedlist_media_type(get, text/html, Iri) :-
   (   iri_to_hash(Iri, Hash)
   ->  seed_by_hash(Hash, Dict),
       reply_html_page(
@@ -87,8 +87,6 @@ seed_media_type(get, text/html, Iri) :-
         \html_seed(Dict)
       )
   ;   N = 3,
-      % @bug Cannot send requests to ElasticSearch before generating
-      %      an HTML page?
       findnsols(N, Seed1, seed_by_status(ended, Seed1), L1),
       findnsols(N, Seed2, seed_by_status(started, Seed2), L2),
       findnsols(N, Seed3, seed_by_status(added, Seed3), L3),
@@ -105,7 +103,7 @@ seed_media_type(get, text/html, Iri) :-
         ]
       )
   ).
-seed_media_type(post, application/json, Iri) :-
+seedlist_media_type(post, application/json, Iri) :-
   reply_json_dict(_{seed: Iri}, [status(201)]).
 
 
@@ -115,7 +113,7 @@ seed_media_type(post, application/json, Iri) :-
 % Generates an HTML table representing the given seeds.
 
 seeds_table(Seeds) -->
-  {http_link_to_id(seed_handler, Iri)},
+  {http_link_to_id(seedlist_handler, Iri)},
   html([
     \js_script({|javascript(Iri)||
 function deleteData(about) {

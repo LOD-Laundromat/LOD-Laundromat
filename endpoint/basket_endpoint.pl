@@ -1,17 +1,16 @@
-:- module(llw_basket, []).
+:- module(basket_endpoint, []).
 
-/** <module> LOD Laundromat Web: Basket page
+/** <module> LOD Laundromat: Basket endpoint
 
 @author Wouter Beek
-@version 2016/02, 2016/08-2016/09
+@version 2016/02, 2016/08-2016/10
 */
 
 :- use_module(library(html/html_ext)).
 :- use_module(library(http/html_write)).
 :- use_module(library(http/http_ext)).
 
-:- use_module(llw(html/llw_html)).
-
+:- use_module(q(html/llw_html)).
 
 :- http_handler(llw(basket), basket_handler, [prefix]).
 
@@ -22,15 +21,17 @@
 basket_handler(_) :-
   reply_html_page(
     llw([]),
-    % @tbd <meta name="description" content="Contains the URLs of dirty datasets that are waiting to be cleaned by the LOD Washing Machine.">
-    title("LOD Laundromat - Laundry Basket"),
+    [
+      \q_title("Laundry Basket"),
+      \meta_description("Contains the URLs of dirty datasets that are
+      waiting to be cleaned by the LOD Washing Machine.")
+    ],
     article([
       \basket_header,
       %\basket_dropbox,
       \basket_form
     ])
   ).
-
 
 basket_header -->
   html(
@@ -45,7 +46,6 @@ basket_header -->
     )
   ).
 
-
 /*
 basket_dropbox -->
   html(
@@ -59,7 +59,6 @@ basket_dropbox -->
   ).
 */
 
-
 note -->
   html(
     div(
@@ -67,7 +66,6 @@ note -->
       "Note that this file will become publicly available!"
     )
   ).
-
 
 basket_form -->
   html(
@@ -89,7 +87,6 @@ basket_form -->
       )
     ])
   ).
-
 
 /*
 basket_contents -->

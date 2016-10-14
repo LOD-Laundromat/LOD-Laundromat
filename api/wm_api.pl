@@ -1,5 +1,5 @@
 :- module(
-  wm,
+  wm_api,
   [
     add_wm/0,
     add_wms/1,              % +NumWms
@@ -17,10 +17,10 @@
   ]
 ).
 
-/* <module> LOD Laundromat: Washing machine
+/* <module> LOD Laundromat: Washing machine API
 
 @author Wouter Beek
-@version 2016/01-2016/05, 2016/08, 2016/11
+@version 2016/01-2016/05, 2016/08, 2016/10
 */
 
 :- use_module(library(aggregate)).

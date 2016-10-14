@@ -1,5 +1,5 @@
 :- module(
-  seedlist,
+  seedlist_api,
   [
     add_seed/1,       % +From
     add_seed/2,       % +From, -Hash
@@ -16,7 +16,7 @@
   ]
 ).
 
-/** <module> LOD Laundromat seedlist
+/** <module> LOD Laundromat: Seedlist API
 
 Three stages for seeds:
 
@@ -27,7 +27,7 @@ Three stages for seeds:
   3. ended
 
 @author Wouter Beek
-@version 2016/01-2016/02, 2016/05, 2016/08-2016/09
+@version 2016/01-2016/02, 2016/05, 2016/08-2016/10
 */
 
 :- use_module(library(apply)).

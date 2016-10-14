@@ -1,6 +1,6 @@
-:- module(llw_about, []).
+:- module(about_endpoint, []).
 
-/** <module> LOD Laundromat Web: About page
+/** <module> LOD Laundromat: About page
 
 @author Wouter Beek
 @version 2016/02, 2016/08
@@ -12,7 +12,7 @@
 :- use_module(library(http/http_dispatch)).
 :- use_module(library(http/http_ext)).
 
-:- use_module(llw(html/llw_html)).
+:- use_module(q(html/llw_html)).
 
 :- http_handler(llw(about), about_handler, [prefix]).
 

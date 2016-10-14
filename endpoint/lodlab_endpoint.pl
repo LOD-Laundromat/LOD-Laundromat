@@ -1,9 +1,9 @@
-:- module(llw_lodlab, []).
+:- module(lodlab_endpoint, []).
 
-/** <module> LOD Laundromat Web: LOD Lab page
+/** <module> LOD Laundromat: LOD Lab page
 
 @author Wouter Beek
-@version 2016/02-2016/03, 2016/08-2016/09
+@version 2016/02-2016/03, 2016/08-2016/10
 */
 
 :- use_module(library(html/html_ext)).
@@ -14,7 +14,7 @@
 :- use_module(library(semweb/rdf11)).
 :- use_module(library(settings)).
 
-:- use_module(llw(html/llw_html)).
+:- use_module(q(html/llw_html)).
 
 :- http_handler(llw(lodlab), lodlab_handler, [prefix]).
 
@@ -27,8 +27,10 @@ lodlab_handler(_) :-
   rdf_default_graph(G),
   reply_html_page(
     llw(false),
-    % @tbd <meta name="description" content="SPARQL endpoint of the LOD Laundromat">
-    \title(["LOD Laundromat","LOD Lab"]),
+    [
+      \meta_description("SPARQL endpoint of the LOD Laundromat"),
+      \q_title(["LOD Lab"])
+    ],
     article([
       \lodlab_header,
       \lodlab_desc,
@@ -38,7 +40,6 @@ lodlab_handler(_) :-
     ])
   ).
 
-
 lodlab_header -->
   html(
     header([
@@ -47,7 +48,6 @@ lodlab_header -->
       p("Learn how to scale your Linked Data evaluations and applications to hundreds of thousands of datasets.")
     ])
   ).
-
 
 lodlab_desc -->
   html(
@@ -64,7 +64,6 @@ lodlab_desc -->
       ])
     ])
   ).
-
 
 lodlab_program -->
   html(
@@ -93,7 +92,6 @@ lodlab_program -->
     ])
   ).
 
-
 lodlab_technologies -->
   {findall(T, technology(T), L)},
   html(
@@ -119,7 +117,6 @@ technology0(hdt, header_dictionary_triples, "Queryable compression format for Li
 
 technology(technology(Img, Link, Desc)) -->
   card(\llw_image(Img), [h2(\llw_link(Link)),p(Desc)]).
-
 
 lodlab_organizers(M, G) -->
   html(

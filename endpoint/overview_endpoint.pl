@@ -1,9 +1,9 @@
-:- module(llw_overview, []).
+:- module(overview_endpoint, []).
 
-/** <module> LOD Laundromat Web: Overview page
+/** <module> LOD Laundromat: Overview page
 
 @author Wouter Beek
-@version 2016/02-2016/03, 2016/08-2016/11
+@version 2016/02-2016/03, 2016/08-2016/10
 */
 
 :- use_module(library(html/html_ext)).
@@ -12,10 +12,10 @@
 :- use_module(library(http/http_ext)).
 :- use_module(library(http/js_write)).
 
-:- use_module(llw(page/llw_about)).
-:- use_module(llw(page/llw_basket)).
-:- use_module(llw(page/llw_wardrobe)).
-:- use_module(llw(html/llw_html)).
+:- use_module(q(endpoint/about_endpoint)).
+:- use_module(q(endpoint/basket_endpoint)).
+:- use_module(q(endpoint/wardrobe_endpoint)).
+:- use_module(q(html/llw_html)).
 
 :- http_handler(llw(overview), overview_handler,  [prefix,priority(1)]).
 
@@ -44,7 +44,6 @@ $(".labelsLink").click(function() { window.location = "/sparql"; });
     ]
   ).
 
-
 laundromat_intro -->
   llw_image_content(
     logo,
@@ -58,7 +57,6 @@ laundromat_intro -->
     ]
   ).
 
-
 basket_intro -->
   llw_content_image(
     [
@@ -69,7 +67,6 @@ basket_intro -->
     ],
     laundry_basket
   ).
-
 
 wardrobe_intro -->
   llw_image_content(
@@ -83,7 +80,6 @@ wardrobe_intro -->
          detected, including wrong HTTP headers, syntax errors, etc.")
     ]
   ).
-
 
 analytics_intro -->
   llw_content_image(
@@ -100,13 +96,11 @@ analytics_intro -->
     analytics
   ).
 
-
 %metadata_intro -->
 %  llw_image_content(labels, [
 %    h1(["SPARQL endpoint", \endpoint_link(metadata_handler)]),
 %    p("For an in-depth overview of the data cleaned by the LOD Laundromat, we provide a live SPARQL endpoint in which all metadata can be queried.")
 %  ], false).
-
 
 about_intro -->
   llw_image_content(

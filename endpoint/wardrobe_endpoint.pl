@@ -1,11 +1,11 @@
-:- module(llw_wardrobe, []).
+:- module(wardrobe_endpoint, []).
 
-/** <module> LOD Laundromat: Wardrobe page
+/** <module> LOD Laundromat: Wardrobe endpoint
 
 The page where cleaned data documents are displayed.
 
 @author Wouter Beek
-@version 2016/09-2016/11
+@version 2016/09-2016/10
 */
 
 :- use_module(library(apply)).
@@ -25,10 +25,9 @@ The page where cleaned data documents are displayed.
 :- use_module(library(service/es_api)).
 :- use_module(library(settings)).
 
+:- use_module(q(api/seedlist_api)).
 :- use_module(q(db/http_param_db), []).
-
-:- use_module(llw(seedlist)).
-:- use_module(llw(html/llw_html)).
+:- use_module(q(html/llw_html)).
 
 :- http_handler(llw(doc), wardrobe_handler, [prefix]).
 
@@ -57,10 +56,10 @@ http_param(pattern).
 
 
 wardrobe_handler(Req) :-
-  rest_method(Req, [get], wardrobe_handler).
+  rest_method(Req, [get], wardrobe_method).
 
 
-wardrobe_handler(Req, get, MTs) :-
+wardrobe_method(Req, get, MTs) :-
   http_parameters(
     Req,
     [page(Page),page_size(PageSize),pattern(Pattern)],
@@ -92,10 +91,10 @@ wardrobe_handler(Req, get, MTs) :-
       Pagination
     )
   ),
-  rest_media_type(Req, get, MTs, wardrobe_result(Pagination)).
+  rest_media_type(Req, get, MTs, wardrobe_media_type(Pagination)).
 
 
-wardrobe_result(Pagination, get, text/html) :-
+wardrobe_media_type(Pagination, get, text/html) :-
   reply_html_page(
     llw([]),
     [

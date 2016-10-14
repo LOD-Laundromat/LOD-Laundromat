@@ -8,7 +8,7 @@
   ]
 ).
 
-/** <module> LOD Laundromat Web site: Style
+/** <module> LOD Laundromat: HTML generics
 
 @author Wouter Beek
 @author Laurens Rietveld

@@ -1,9 +1,9 @@
-:- module(llw_meta, []).
+:- module(meta_endpoint, []).
 
-/** <module> LOD Laundromat: Meta page
+/** <module> LOD Laundromat: Metadata endpoit
 
 @author Wouter Beek
-@version 2016/09
+@version 2016/09-2016/10
 */
 
 :- use_module(library(apply)).
@@ -26,8 +26,7 @@
 :- use_module(library(settings)).
 
 :- use_module(q(db/http_param_db), []).
-
-:- use_module(llw(html/llw_html)).
+:- use_module(q(html/llw_html)).
 
 :- http_handler(llw(meta), meta_handler, [prefix]).
 
@@ -55,14 +54,20 @@ http_param(page_size).
 
 
 meta_handler(Req) :-
-  rest_method(Req, [get], meta_plural, meta_handler, meta_singular).
+  rest_method(
+    Req,
+    [get],
+    meta_plural_method,
+    meta_handler,
+    meta_singular_method
+  ).
 
 
-meta_plural(Req, get, MTs) :-
+meta_plural_method(Req, get, MTs) :-
   http_parameters(
     Req,
     [page(Page),page_size(PageSize)],
-    [attribute_declarations(http_param(llw_meta))]
+    [attribute_declarations(http_param(meta_endpoint))]
   ),
   http_location_iri(Req, Iri),
   PageOpts = _{iri: Iri, page: Page, page_size: PageSize},
@@ -80,7 +85,7 @@ meta_plural_media_type(Pagination, get, text/html) :-
   ).
 
 
-meta_singular(Res, Req, get, MTs) :-
+meta_singular_method(Res, Req, get, MTs) :-
   rdf_global_id(meta:Hash, Res),
   (   q_graph(Hash, meta, G)
   ->  rest_media_type(Req, get, MTs, meta_singular_media_type(G, Hash))
@@ -95,7 +100,6 @@ meta_singular_media_type(G, Hash, get, text/html) :-
     \q_title(["Metadata browser",Hash]),
     \panels([\overall_panel(G),\entry_panels(G, Path)])
   ).
-
 
 overall_panel(G) -->
   {
@@ -118,7 +122,6 @@ overall_panel(G) -->
     ])
   ).
 
-
 llw_badge(Alert, P0, G) -->
   {
     atomic_list_concat([alert,Alert], -, Class),
@@ -139,10 +142,8 @@ llw_badge(Alert, P0, G) -->
     ])
   ).
 
-
 entry_panels(G, Path) -->
   entry_panels(G, 1, Path).
-
 
 entry_panels(_, _, []) --> !, [].
 entry_panels(G, N1, [H|T]) -->
@@ -151,17 +152,13 @@ entry_panels(G, N1, [H|T]) -->
   {N2 is N1 + 1},
   entry_panels(G, N2, T).
 
-
 entry_panel(G, Entry) -->
   qh_describe(hdt, Entry, G).
-
 
 meta_table([])   --> !, [].
 meta_table(Rows) --> table(tr(th("Hash")), \html_maplist(meta_row, Rows)).
 
-
 meta_row(Cells) --> html(tr(\html_maplist(meta_cell, Cells))).
-
 
 meta_cell(Hash) -->
   {http_link_to_id(meta_handler, path_postfix(Hash), Iri)},
