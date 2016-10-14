@@ -1,0 +1,19 @@
+<svg viewBox="0 -20.5 329 41" width="329" height="41"  xmlns="http://www.w3.org/2000/svg">
+  <style type="text/css">
+ellipse, polyline { stroke-width: 1; stroke: black; }
+ellipse { fill: white; }
+polyline { fill: none; }
+text { fill: black; text-anchor: middle; font-family: Helvetica, sans-serif; }
+  </style>
+  <g transform="translate(55 0)">
+    <ellipse rx="54" ry="20"/><text y="5" font-size="16">Subject</text>
+  </g>
+  <g transform="translate(274 0)">
+    <ellipse rx="54" ry="20"/><text y="5" font-size="16">Object</text>
+  </g>
+  <g transform="translate(109 0)">
+    <text x="52" y="-5" font-size="16">Predicate</text>
+    <polyline points="0,0 109,0"/>
+    <polyline points="98,-5 110,0 98,5"/>
+  </g>
+</svg>
