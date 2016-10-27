@@ -1,5 +1,5 @@
 :- use_module(library(lists)).
-:- use_module(library(sparql/sparql_query)).
+:- use_module(library(sparql/sparql_query_client)).
 
 :- use_module(llw(seedlist)).
 

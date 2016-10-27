@@ -9,10 +9,10 @@
   ]
 ).
 
-/** <module> LOD Laundromat cleaning
+/** <module> LOD Laundromat: Data cleaning
 
 @author Wouter Beek
-@version 2016/03-2016/05, 2016/08-2016/11
+@version 2016/03-2016/05, 2016/08-2016/10
 */
 
 :- use_module(library(apply)).
@@ -29,7 +29,7 @@
 :- use_module(library(os/gnu_sort)).
 :- use_module(library(os/io)).
 :- use_module(library(os/thread_ext)).
-:- use_module(library(pl_term)).
+:- use_module(library(pl_ext)).
 :- use_module(library(print_ext)).
 :- use_module(library(q/qb)).
 :- use_module(library(q/q_fs)).
@@ -97,7 +97,6 @@ clean_seed(Seed) :-
   debug(lclean, "Thread ~a has cleaned ~a ~a", [Alias,Hash,Seed.from]),
   end_seed(Seed).
 
-
 clean_seed(Seed, Hash) :-
   currently_debugging(Hash),
   q_dir_hash(Dir, Hash),
@@ -110,7 +109,6 @@ clean_seed(Seed, Hash) :-
     )
   ),
   (Done == true -> true ; Done == false -> clean_seed_dir(Seed, Hash, Dir)).
-
 
 clean_seed_dir(Seed, Hash, Dir) :-
   q_dir_file(Dir, meta, ntriples, MetaFile),
@@ -155,11 +153,9 @@ clean_seed_dir(Seed, Hash, Dir) :-
   ;   true
   ),
   (var(CleanFile) -> true ; q_file_touch_ready(CleanFile)),
-  rocks_merge(llw, number_of_documents, 1),
+  rocks_merge(llw, number_of_documents, 1).
   %%%%absolute_file_name('dirty.gz', DirtyTo, Opts),
-  %%%%call_collect_messages(rdf_download_to_file(From, DirtyTo)),
-  true.
-
+  %%%%call_collect_messages(rdf_download_to_file(From, DirtyTo)).
 
 clean_streams0(Dir, Hash, From, CleanFile, MetaOut, WarnOut) :-
   State = _{meta: MetaOut, warn: WarnOut, warns: 0},
@@ -170,7 +166,6 @@ clean_streams0(Dir, Hash, From, CleanFile, MetaOut, WarnOut) :-
     rdf_clean0(Dir, From, CleanFile, InOpts, InPath, OutEntry)
   ),
   rdf_store_metadata(State, Hash, InPath, OutEntry, CleanFile).
-
 
 rdf_clean0(Dir, From, CleanFile, InOpts1, InPath, OutEntry2) :-
   merge_options(InOpts1, [compression(false),metadata(InPath)], InOpts2),
@@ -202,14 +197,11 @@ rdf_clean0(Dir, From, CleanFile, InOpts1, InPath, OutEntry2) :-
   ),
   delete_file(TmpFile).
 
-
 dummy1(From, InOpts, State, Out) :-
   rdf_call_on_tuples(From, dummy2(State, Out), InOpts).
 
-
 dummy2(State, Out, _, S, P, O, G) :-
   gen_ntuple(S, P, O, G, State, Out).
-
 
 currently_debugging(Hash) :-
   currently_debugging0(Hash), !,

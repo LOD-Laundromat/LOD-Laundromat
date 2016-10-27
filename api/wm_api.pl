@@ -40,7 +40,7 @@
 :- use_module(library(os/process_ext)).
 :- use_module(library(os/thread_ext)).
 :- use_module(library(pair_ext)).
-:- use_module(library(pl_term)).
+:- use_module(library(pl_ext)).
 :- use_module(library(print_ext)).
 :- use_module(library(prolog_stack)).
 :- use_module(library(q/q_print)).
