@@ -1,83 +1,62 @@
+:- use_module(library(iri/iri_ext)).
+:- set_setting(iri:data_auth, 'lodlaundromat.org').
+:- set_setting(iri:data_scheme, http).
+
+:- use_module(library(q/q_iri)).
+:- q_init_ns.
+
 :- use_module(library(http/http_dispatch)).
 :- use_module(library(http/http_host), []).
-:- use_module(library(nlp/nlp_lang), []).
-:- use_module(library(q/q_io)).
-:- use_module(library(q/q_iri)).
 :- use_module(library(settings)).
 
+:- use_module(cp(applications/admin)).
+:- use_module(cp(hooks)).
+
 :- dynamic
-    http:location/3,
     user:file_search_path/2.
 
 :- multifile
-    http:location/3,
     user:file_search_path/2.
 
-user:file_search_path(q, cpack('LOD-Laundromat')).
+user:file_search_path(ll, cpack('LOD-Laundromat')).
+  user:file_search_path(resource, ll(resource)).
 
-http:location(llw, q, []).
+cp:logo(lod_washing_machine).
 
-:- set_setting(http:public_host, 'cliopatria.lod.labs.vu.nl:3020').
-:- set_setting(http:public_scheme, http).
-:- set_setting(http_io:user_agent, "LOD-Laundromat/2.0.0").
-:- set_setting(iri:data_auth, 'lodlaundromat.org').
-:- set_setting(iri:data_scheme, http).
-:- set_setting(nlp:lrange, [nl,'en-US']).
-:- set_setting(q:custom_brand, true).
-:- set_setting(q:subtitle, "Cleaning Other People's Dirty Data").
-:- set_setting(q:title, "LOD Laundromat").
-:- set_setting(q_io:source_dir, '/scratch/wbeek/source/'),
-:- set_setting(q_io:store_dir, '/scratch/wbeek/crawls/13/store/'),
-:- set_setting(qh:handle_id, sgp_handler).
+:- use_module(cp(api/alias)).
+:- use_module(cp(api/class)).
+:- use_module(cp(api/dataset)).
+:- use_module(cp(api/documentation)).
+:- use_module(cp(api/download)).
+:- use_module(cp(api/geo_proximity)).
+:- use_module(cp(api/graph)).
+:- use_module(cp(api/predicate)).
+:- use_module(cp(api/simple_graph_pattern)).
+:- use_module(cp(api/sparql_query)).
+:- use_module(cp(api/term)).
+:- use_module(cp(api/triple)).
 
-:- use_module(q(endpoint/graph/sgp_endpoint)).
-:- use_module(q(endpoint/llw_about)).
-:- use_module(q(endpoint/llw_basket)).
-:- use_module(q(endpoint/llw_meta)).
-:- use_module(q(endpoint/llw_overview)).
-:- use_module(q(endpoint/llw_seedlist)).
-:- use_module(q(endpoint/llw_wardrobe)).
+:- set_setting(q_io:source_dir, '/scratch/wbeek/crawls/source/').
+:- set_setting(q_io:store_dir,  '/scratch/wbeek/crawls/store/' ).
 
-:- http_handler(/, http_redirect(moved, location_by_id(overview_handler)), []).
+:- http_handler(/, root, []).
 
-:- setting(
-     llw_index,
-     atom,
-     '/scratch/wbeek/crawls/13/llw/',
-     "Directory for the LOD Laundromat RocksDB index."
-   ).
+root(Req) :-
+  redirect_create_admin(Req),
+  http_redirect(moved, location_by_id(dataset_handler), Req).
 
-:- initialization(init_rocksdb).
+html:menu_item(10, dataset_handler, "Dataset").
+html:menu_item(20, browse, "Browse").
+  html:menu_item(browse, 10, alias_handler, "Alias").
+  html:menu_item(browse, 20, graph_handler, "Graph").
+  html:menu_item(browse, 30, class_handler, "Class").
+  html:menu_item(browse, 40, predicate_handler, "Predicate").
+  html:menu_item(browse, 50, triple_handler, "Triple").
+html:menu_item(30, geo_proximity_handler, "Geo").
+html:menu_item(40, query, "Query").
+  html:menu_item(query, 10, sgp_handler, "SGP").
+  html:menu_item(query, 20, sparql_query_handler, "SPARQL").
+html:menu_item(50, doc_handler, "Docs").
 
-init_rocksdb :-
-  setting(llw_index, Dir),
-  rocks_open(
-    Dir,
-    _,
-    [alias(llw),key(atom),merge(rocks_merge_sum),value(int64)]
-  ),
-  rocks_merge(llw, number_of_documents, 0),
-  rocks_merge(llw, number_of_tuples, 0).
-
-:- [llw(debug)].
-
-:- q_init_ns.
-
-html:menu_item(110, wardrobe_handler, "Wardrobe").
-html:menu_item(120, basket_handler, "Basket").
-html:menu_item(130, about_handler, "About").
-html:menu_item(210, sgp_handler, "Graph").
-%html:menu_item(195, stat_handler, "Stats").
-%html:menu_item(196, lodlab_handler, "LOD Lab").
-%html:menu_item(197, rdf11_handler, "RDF 1.1").
-%html:menu_item(198, lotus_handler, "LOTUS").
-%html:menu_item(199, article, "Articles") :-
-%html:menu_item(210, seed_handler, "Seedlist").
-
-% Datasets
-:- rdf_load_file(ttl('llw.ttl')).
-
-:- at_halt(rocks_close(llw)).
-
-:- use_module(llw(seedlist)).
-:- use_module(llw(wm)).
+:- [ll(debug)].
+:- [ll(local)].
