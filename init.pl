@@ -7,6 +7,7 @@
 
 :- use_module(library(http/http_dispatch)).
 :- use_module(library(http/http_host), []).
+:- use_module(library(q/q_io)).
 :- use_module(library(settings)).
 
 :- use_module(cp(applications/admin)).
@@ -36,14 +37,16 @@ cp:logo(washing_machine_round).
 :- use_module(cp(api/term)).
 :- use_module(cp(api/triple)).
 
-:- set_setting(q_io:source_dir, '/scratch/wbeek/crawls/source/').
-:- set_setting(q_io:store_dir,  '/scratch/wbeek/crawls/store/' ).
+:- use_module(ll(api/ll_overview)).
+
+%:- set_setting(q_io:source_dir, '/scratch/wbeek/crawls/source/').
+%:- set_setting(q_io:store_dir,  '/scratch/wbeek/crawls/store/' ).
 
 :- http_handler(/, root, []).
 
 root(Req) :-
   redirect_create_admin(Req),
-  http_redirect(moved, location_by_id(dataset_handler), Req).
+  http_redirect(moved, location_by_id(ll_overview_handler), Req).
 
 html:menu_item(10, dataset_handler, "Dataset").
 html:menu_item(20, browse, "Browse").

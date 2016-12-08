@@ -84,7 +84,7 @@ there (409).  The HTTP body is expected to be `{"from": $IRI$}`.
 
 :- use_module(ll(style/ll_style)).
 
-:- http_handler(llw(seed), seedlist_handler, [prefix]).
+:- http_handler(ll(seed), seedlist_handler, [prefix]).
 
 :- multifile
     http_param/1,
@@ -244,10 +244,10 @@ seed_actions0(Dict) -->
       button(DFunc, "Delete")
   ;   % No buttons for ‘cleaning’.
       {Dict.ended =:= 0.0}
-  ->  llw_reset_button(Hash)
+  ->  ll_reset_button(Hash)
   ;   % Show results for ‘cleaned’.
       link_button(Hash, "Data"),
-      llw_reset_button(Hash)
+      ll_reset_button(Hash)
   ).
 
 
@@ -282,7 +282,7 @@ add_seed(From1, Hash) :-
   md5(From2, Hash),
   get_time(Now),
   es_create_pp(
-    [llw,seedlist,Hash],
+    [ll,seedlist,Hash],
     _{added: Now, ended: 0.0, from: From2, number_of_tuples: 0, started: 0.0}
   ),
   debug(seedlist, "Added to seedlist: ~a (~a)", [From2,Hash]).
@@ -296,7 +296,7 @@ add_seed(From1, Hash) :-
 begin_seed(Seed) :-
   dict_tag(Seed, Hash),
   get_time(Started),
-  es_update_pp([llw,seedlist,Hash], _{doc: _{started: Started}}),
+  es_update_pp([ll,seedlist,Hash], _{doc: _{started: Started}}),
   debug(seedlist(begin), "Started cleaning seed ~a", [Hash]).
 
 
@@ -306,7 +306,7 @@ begin_seed(Seed) :-
 end_seed(Seed) :-
   dict_tag(Seed, Hash),
   get_time(Ended),
-  es_update_pp([llw,seedlist,Hash], _{doc: _{ended: Ended}}),
+  es_update_pp([ll,seedlist,Hash], _{doc: _{ended: Ended}}),
   debug(seedlist(end), "Ended cleaning seed ~a", [Hash]).
 
 
@@ -336,7 +336,7 @@ print_seeds :-
 %! remove_seed(+Hash) is det.
 
 remove_seed(Hash) :-
-  es_rm_pp([llw,seedlist,Hash]),
+  es_rm_pp([ll,seedlist,Hash]),
   debug(seedlist(remove), "Removed seed ~a", [Hash]).
 
 
@@ -346,7 +346,7 @@ remove_seed(Hash) :-
 reset_seed(Hash) :-
   get_time(Now),
   es_update_pp(
-    [llw,seedlist,Hash],
+    [ll,seedlist,Hash],
     _{doc: _{added: Now, started: 0.0, ended: 0.0}}
   ),
   debug(seedlist(reset), "Reset seed ~a", [Hash]).
@@ -364,7 +364,7 @@ seed(Dict) :-
 %! seed_by_hash(+Hash, -Dict) is nondet.
 
 seed_by_hash(Hash, Dict) :-
-  es_get([llw,seedlist,Hash], Dict).
+  es_get([ll,seedlist,Hash], Dict).
 
 
 
@@ -392,7 +392,7 @@ seed_status(ended).
 seeds_by_status(Status, Pagination) :-
   dict_pairs(Range, [Status-_{gt: 0.0}]),
   es_search(
-    [llw,seedlist],
+    [ll,seedlist],
     _{query: _{filtered: _{filter: _{range: Range}}}},
     _{},
     Pagination
@@ -433,9 +433,9 @@ iri_to_hash(Type, Path, Hash) :-
 
 
 
-%! llw_reset_button(+Iri)// is det.
+%! ll_reset_button(+Iri)// is det.
 
-llw_reset_button(Iri) -->
+ll_reset_button(Iri) -->
   {format(atom(Func), 'deleteData("~a");', [Iri])},
   button(Func, "Reset").
 

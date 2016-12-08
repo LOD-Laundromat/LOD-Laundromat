@@ -124,17 +124,17 @@ overall_panel(G) -->
     "Overall",
     html([
       div([
-        \llw_badge(success, nsdef:numberOfTuples, G),
+        \ll_badge(success, nsdef:numberOfTuples, G),
         " composed of ",
-        \llw_badge(success, nsdef:numberOfTriples, G),
+        \ll_badge(success, nsdef:numberOfTriples, G),
         " and ",
-        \llw_badge(success, nsdef:numberOfQuads, G)
+        \ll_badge(success, nsdef:numberOfQuads, G)
       ]),
-      \llw_badge(Alert, nsdef:numberOfWarnings, G)
+      \ll_badge(Alert, nsdef:numberOfWarnings, G)
     ])
   ).
 
-llw_badge(Alert, P0, G) -->
+ll_badge(Alert, P0, G) -->
   {
     atomic_list_concat([alert,Alert], -, Class),
     % @tbd RDF prefix expansion does not work.

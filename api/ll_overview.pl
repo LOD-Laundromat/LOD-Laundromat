@@ -18,24 +18,24 @@
 :- use_module(ll(api/wardrobe)).
 :- use_module(ll(style/ll_style)).
 
-:- http_handler(ll(overview), overview_handler,  [prefix,priority(1)]).
+:- http_handler(ll(overview), ll_overview_handler,  [prefix,priority(1)]).
 
 
 
 
 
-overview_handler(Req) :-
-  rest_method(Req, [get], overview_handler).
+ll_overview_handler(Req) :-
+  rest_method(Req, [get], ll_overview_handler).
 
 
-overview_handler(Req, Method, MTs) :-
+ll_overview_handler(Req, Method, MTs) :-
   http_is_get(Method),
-  rest_media_type(Req, Method, MTs, overview_media_type).
+  rest_media_type(Req, Method, MTs, ll_overview_media_type).
 
 
-overview_media_type(Method, text/html) :-
+ll_overview_media_type(Method, text/html) :-
   reply_html_page(
-    Method
+    Method,
     ll([]),
     \q_title(["Overview"]),
     [
@@ -56,7 +56,7 @@ $(".labelsLink").click(function() { window.location = "/sparql"; });
   ).
 
 laundromat_intro -->
-  llw_image_content(
+  ll_image_content(
     logo,
     [
       h1("LOD Laundromat 2"),
@@ -69,7 +69,7 @@ laundromat_intro -->
   ).
 
 basket_intro -->
-  llw_content_image(
+  ll_content_image(
     [
       h1(["LOD Laundry Basket", \endpoint_link(basket_handler)]),
       p("The LOD Laundry Basket contains the URLs of dirty datasets
@@ -80,7 +80,7 @@ basket_intro -->
   ).
 
 wardrobe_intro -->
-  llw_image_content(
+  ll_image_content(
     wardrobe,
     [
       h1(["Wardrobe", \endpoint_link(wardrobe_handler)]),
@@ -93,7 +93,7 @@ wardrobe_intro -->
   ).
 
 analytics_intro -->
-  llw_content_image(
+  ll_content_image(
     [
       h1(["Analytics", \endpoint_link(wardrobe_handler)]),
       p([
@@ -108,16 +108,16 @@ analytics_intro -->
   ).
 
 %metadata_intro -->
-%  llw_image_content(labels, [
+%  ll_image_content(labels, [
 %    h1(["SPARQL endpoint", \endpoint_link(metadata_handler)]),
 %    p("For an in-depth overview of the data cleaned by the LOD Laundromat, we provide a live SPARQL endpoint in which all metadata can be queried.")
 %  ], false).
 
 about_intro -->
-  llw_image_content(
+  ll_image_content(
     laundry_line,
     [
-      h1(["About", \endpoint_link(about_handler)]),
+      h1(["About", \endpoint_link(ll_about_handler)]),
       p("This is great!  I think...  But what do you exactly do?  How
          can I use it?")
     ]

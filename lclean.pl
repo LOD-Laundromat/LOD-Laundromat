@@ -39,6 +39,7 @@
 :- use_module(library(semweb/rdf11)).
 :- use_module(library(semweb/rdf11_containers)).
 :- use_module(library(service/es_api)).
+:- use_module(library(service/rocksdb_ext)).
 
 :- use_module(seedlist).
 
@@ -144,16 +145,16 @@ clean_seed_dir(Seed, Hash, Dir) :-
         )
       ),
       NumTuples >= 1,
-      rocks_merge(llw, number_of_tuples, NumTuples)
+      rocks_merge(ll, number_of_tuples, NumTuples)
   ->  hdt_prepare(CleanFile, HdtCleanFile),
       q_dir_file(Dir, data, hdt, HdtDataFile),
       create_file_link(HdtDataFile, HdtCleanFile),
       q_file_touch_ready(HdtCleanFile),
-      es_update_pp([llw,seedlist,Hash], _{doc: _{number_of_tuples: NumTuples}})
+      es_update_pp([ll,seedlist,Hash], _{doc: _{number_of_tuples: NumTuples}})
   ;   true
   ),
   (var(CleanFile) -> true ; q_file_touch_ready(CleanFile)),
-  rocks_merge(llw, number_of_documents, 1).
+  rocks_merge(ll, number_of_documents, 1).
   %%%%absolute_file_name('dirty.gz', DirtyTo, Opts),
   %%%%call_collect_messages(rdf_download_to_file(From, DirtyTo)).
 

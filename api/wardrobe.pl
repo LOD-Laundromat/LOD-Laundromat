@@ -20,10 +20,14 @@ The page where cleaned data documents are displayed.
 :- use_module(library(http/rest)).
 :- use_module(library(pagination)).
 :- use_module(library(q/q_fs)).
+:- use_module(library(q/q_io)).
 :- use_module(library(q/q_rdf)).
 :- use_module(library(semweb/rdf11)).
 :- use_module(library(service/es_api)).
 :- use_module(library(settings)).
+
+:- use_module(cp(http_param)).
+:- use_module(cp(style/cp_style)).
 
 :- use_module(ll(api/seedlist)).
 :- use_module(ll(style/ll_style)).
@@ -66,7 +70,7 @@ wardrobe_method(Req, Method, MTs) :-
   http_parameters(
     Req,
     [page(Page),page_size(PageSize),pattern(Pattern)],
-    [attribute_declarations(http_param(llw_wardrobe))]
+    [attribute_declarations(http_param(ll_wardrobe))]
   ),
   http_location_iri(Req, Iri),
   include(ground, [pattern(Pattern)], Query),
@@ -85,7 +89,7 @@ wardrobe_method(Req, Method, MTs) :-
   ),
   once(
     es_search(
-      [llw,seedlist],
+      [ll,seedlist],
       _{
         query: _{bool: _{filter: Filter, must: Must}},
         sort: [_{number_of_tuples: _{order: "desc"}}]
@@ -119,7 +123,7 @@ wardrobe_media_type(Result, Method, text/html) :-
 wardrobe_header -->
   html(
     header(
-      \llw_image_content(
+      \ll_image_content(
         wardrobe,
         [
           h1("Wardrobe"),
@@ -136,7 +140,7 @@ documents(Dicts) -->
 document(Dict) -->
   {
     dict_tag(Dict, Hash),
-    maplist(q_graph(Hash), [data,meta], [DataG,MetaG]),
+    maplist(q_store_graph(Hash), [data,meta], [DataG,MetaG]),
     http_link_to_id(sgp_handler, [graph=DataG], DataIri),
     http_link_to_id(sgp_handler, [graph=MetaG], MetaIri),
     q(hdt, _, nsdef:numberOfTuples, NumTuples^^xsd:nonNegativeInteger, MetaG),

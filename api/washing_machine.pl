@@ -158,9 +158,9 @@ washing_seed(Hash) :-
 wm_reset :-
   setting(q_io:store_dir, Dir1),
   delete_directory_and_contents_msg(Dir1),
-  setting('conf_LOD-Laundromat-Web':llw_index, Dir2),
+  setting(ll_index, Dir2),
   delete_directory_and_contents_msg(Dir2),
-  es_rm_pp([llw]).
+  es_rm_pp([ll]).
 
 
 

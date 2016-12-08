@@ -1,4 +1,4 @@
-:- module(llw_rdf11, []).
+:- module(ll_rdf11, []).
 
 /** <module> LOD Laundromat Web: RDF 1.1 page
 
@@ -11,9 +11,9 @@
 :- use_module(library(http/http_dispatch)).
 :- use_module(library(http/http_ext)).
 
-:- use_module(llw(html/llw_html)).
+:- use_module(ll(style/ll_style)).
 
-:- http_handler(llw(rdf11), rdf11_handler, []).
+:- http_handler(ll(rdf11), rdf11_handler, []).
 
 
 
@@ -21,7 +21,8 @@
 
 rdf11_handler(_) :-
   reply_html_page(
-    llw(false),
+    Method,
+    ll([]),
     \title(["RDF 1.1","SWI-Prolog's RDF library"]),
     article([
       \rdf11_header,
@@ -36,7 +37,7 @@ rdf11_handler(_) :-
 rdf11_header -->
   html(
     header(
-      \llw_image_content(
+      \ll_image_content(
         rdf_w3c,
         [
           h1("RDF 1.1 library"),

@@ -6,34 +6,34 @@
 @version 2016/02, 2016/08, 2016/12
 */
 
-:- use_module(library(bibtex/html_bibtex)).
+:- use_module(library(html/html_bibtex)).
 :- use_module(library(html/html_ext)).
 :- use_module(library(http/html_write)).
 :- use_module(library(http/http_dispatch)).
 :- use_module(library(http/http_ext)).
 
-:- use_module(q(html/llw_html)).
+:- use_module(ll(style/ll_style)).
 
-:- http_handler(llw(about), about_handler, [prefix]).
-
-
+:- http_handler(ll(about), ll_about_handler, [prefix]).
 
 
 
-about_handler(Req) :-
-  rest_method(Req, [get], about_handler).
 
 
-about_handler(Req, Method, MTs) :-
+ll_about_handler(Req) :-
+  rest_method(Req, [get], ll_about_handler).
+
+
+ll_about_handler(Req, Method, MTs) :-
   http_is_get(Method),
-  rest_media_type(Req, Method, MTs, about_media_type).
+  rest_media_type(Req, Method, MTs, ll_about_media_type).
 
 
-about_media_type(Method, text/html) :-
+ll_about_media_type(Method, text/html) :-
   reply_html_page(
     Method,
-    llw([]),
-    \q_title(["About"]),
+    ll([]),
+    \cp_title(["About"]),
     article([
       \about_header,
       \about_code,
@@ -45,7 +45,7 @@ about_media_type(Method, text/html) :-
 about_header -->
   html(
     header(
-      \llw_image_content(
+      \ll_image_content(
         laundry_line,
         [
           h1("About"),
@@ -118,21 +118,21 @@ about_faq -->
         dt("In which formats do you republish the data?"),
         dd([
           "Firstly, we publish the crawled and cleaned data files in the ",
-          \llw_link(wardrobe),
+          \ll_link(wardrobe),
           " as gzipped and sorted N-Quads.  Secondly, we publish every dataset in the ",
-          \llw_link(hdt),
+          \ll_link(hdt),
           " format which allows the data to be queried by using HDT software.  Thirdly, for every data we provide a ",
-          \llw_link(ldf),
+          \ll_link(ldf),
           " API."
         ]),
         dt("In which formats do you publish the crawling and cleaning metadata?"),
         dd([
           "The crawling and cleaning metadata is published by using the ",
-          \llw_link(prov),
+          \ll_link(prov),
           " and ",
-          \llw_link(void),
+          \ll_link(void),
           " vocabularies.  The metadata is accessible through our ",
-          \llw_link(sparql),
+          \ll_link(sparql),
           " as well as through file download."
         ]),
         dt("Why do you publish all Linked Open Data in one spot?  Should Linked Data not be distributed?"),
@@ -142,17 +142,17 @@ about_faq -->
         dt("How do I use LOD Laundromat data?"),
         dd([
           "You can query the LOD Laundromat Web Services.  But you can also use ",
-          \llw_link(frank),
+          \ll_link(frank),
           ", a command-line tool that allows Triple Pattern Queries to be performed over the entire LOD Laundromat data collection.  If you are programming in ",
-          \llw_link(java),
+          \ll_link(java),
           ", ",
-          \llw_link(nodejs),
+          \ll_link(nodejs),
           ", ",
-          \llw_link(javascript),
+          \ll_link(javascript),
           ", ",
-          \llw_link(python),
+          \ll_link(python),
           " or ",
-          \llw_link(swipl),
+          \ll_link(swipl),
           " then there are dedicated programming libraries that you can use."
         ])
       ])

@@ -11,9 +11,9 @@
 :- use_module(library(http/http_ext)).
 :- use_module(library(http/rest)).
 
-:- use_module(q(html/llw_html)).
+:- use_module(ll(style/ll_style)).
 
-:- http_handler(llw(basket), basket_handler, [prefix]).
+:- http_handler(ll(basket), basket_handler, [prefix]).
 
 
 
@@ -31,7 +31,7 @@ basket_handler(Req, Method, MTs) :-
 basket_media_type(Method, text/html) :-
   reply_html_page(
     Method,
-    llw([]),
+    ll([]),
     [
       \q_title("Laundry Basket"),
       \meta_description("Contains the URLs of dirty datasets that are
@@ -47,7 +47,7 @@ basket_media_type(Method, text/html) :-
 basket_header -->
   html(
     header(
-      \llw_image_content(
+      \ll_image_content(
         laundry_basket,
         [
           h1("Laundry Basket"),
