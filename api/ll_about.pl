@@ -1,9 +1,9 @@
-:- module(about_endpoint, []).
+:- module(ll_about, []).
 
 /** <module> LOD Laundromat: About page
 
 @author Wouter Beek
-@version 2016/02, 2016/08
+@version 2016/02, 2016/08, 2016/12
 */
 
 :- use_module(library(bibtex/html_bibtex)).
@@ -20,8 +20,18 @@
 
 
 
-about_handler(_) :-
+about_handler(Req) :-
+  rest_method(Req, [get], about_handler).
+
+
+about_handler(Req, Method, MTs) :-
+  http_is_get(Method),
+  rest_media_type(Req, Method, MTs, about_media_type).
+
+
+about_media_type(Method, text/html) :-
   reply_html_page(
+    Method,
     llw([]),
     \q_title(["About"]),
     article([

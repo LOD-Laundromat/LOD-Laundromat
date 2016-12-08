@@ -1,14 +1,15 @@
-:- module(basket_endpoint, []).
+:- module(basket, []).
 
-/** <module> LOD Laundromat: Basket endpoint
+/** <module> LOD Laundromat: Basket API
 
 @author Wouter Beek
-@version 2016/02, 2016/08-2016/10
+@version 2016/02, 2016/08-2016/10, 2016/12
 */
 
 :- use_module(library(html/html_ext)).
 :- use_module(library(http/html_write)).
 :- use_module(library(http/http_ext)).
+:- use_module(library(http/rest)).
 
 :- use_module(q(html/llw_html)).
 
@@ -18,8 +19,18 @@
 
 
 
-basket_handler(_) :-
+basket_handler(Req) :-
+  rest_method(Req, [get], basket_handler).
+
+
+basket_handler(Req, Method, MTs) :-
+  http_is_get(Method),
+  rest_media_type(Req, Method, MTs, basket_media_type).
+
+
+basket_media_type(Method, text/html) :-
   reply_html_page(
+    Method,
     llw([]),
     [
       \q_title("Laundry Basket"),

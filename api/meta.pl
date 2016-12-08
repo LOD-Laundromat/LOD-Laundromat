@@ -1,9 +1,9 @@
-:- module(meta_endpoint, []).
+:- module(meta, []).
 
-/** <module> LOD Laundromat: Metadata endpoit
+/** <module> LOD Laundromat: Metadata API
 
 @author Wouter Beek
-@version 2016/09-2016/10
+@version 2016/09-2016/10, 2016/12
 */
 
 :- use_module(library(apply)).
@@ -17,6 +17,7 @@
 :- use_module(library(http/http_json)).
 :- use_module(library(http/http_parameters)).
 :- use_module(library(http/rest)).
+:- use_module(library(json_ext)).
 :- use_module(library(pagination)).
 :- use_module(library(q/q_container)).
 :- use_module(library(q/q_fs)).
@@ -25,16 +26,19 @@
 :- use_module(library(q/q_term)).
 :- use_module(library(settings)).
 
-:- use_module(q(db/http_param_db), []).
-:- use_module(q(html/llw_html)).
+:- use_module(ll(style/ll_style)).
 
-:- http_handler(llw(meta), meta_handler, [prefix]).
+:- http_handler(ll(meta), meta_handler, [prefix]).
 
 :- multifile
-    http_param/1.
+    http_param/1,
+    media_type/1.
 
 http_param(page).
 http_param(page_size).
+
+media_type(application/json).
+media_type(text/html).
 
 :- setting(
      default_page_size,
@@ -63,7 +67,8 @@ meta_handler(Req) :-
   ).
 
 
-meta_plural_method(Req, get, MTs) :-
+meta_plural_method(Req, Method, MTs) :-
+  http_is_get(Method),
   http_parameters(
     Req,
     [page(Page),page_size(PageSize)],
@@ -71,32 +76,39 @@ meta_plural_method(Req, get, MTs) :-
   ),
   http_location_iri(Req, Iri),
   PageOpts = _{iri: Iri, page: Page, page_size: PageSize},
-  pagination([Hash], q_hash(Hash), PageOpts, Pagination),  
-  rest_media_type(Req, get, MTs, meta_plural_media_type(Pagination)).
+  pagination([Hash], q_hash(Hash), PageOpts, Result),  
+  rest_media_type(Req, Method, MTs, meta_plural_media_type(Result)).
 
 
-meta_plural_media_type(Pagination, get, application/json) :-
-  reply_json_dict(Pagination.results).
-meta_plural_media_type(Pagination, get, text/html) :-
-  reply_html_page(
-    llw([]),
-    \q_title(["Metadata browser"]),
-    \pagination_result(Pagination, meta_table)
-  ).
-
-
-meta_singular_method(Res, Req, get, MTs) :-
+meta_singular_method(Res, Req, Method, MTs) :-
   rdf_global_id(meta:Hash, Res),
   (   q_graph(Hash, meta, G)
-  ->  rest_media_type(Req, get, MTs, meta_singular_media_type(G, Hash))
+  ->  rest_media_type(Req, Method, MTs, meta_singular_media_type(G, Hash))
   ;   rest_exception(MTs, 404)
   ).
 
 
-meta_singular_media_type(G, Hash, get, text/html) :-
+meta_plural_media_type(Result, Method, text/html) :-
+  reply_html_page(
+    Method,
+    ll([]),
+    \q_title(["Metadata browser"]),
+    \pagination_result(Result, meta_table)
+  ).
+meta_plural_media_type(Result, Method, MT) :-
+  MT = application/json,
+  rest_reply(
+    Method,
+    reply_content_type(MT),
+    json_write_dict(Result.results)
+  ).
+
+
+meta_singular_media_type(G, Hash, Method, text/html) :-
   once(q_container(hdt, G, Path, G)),
   reply_html_page(
-    llw([]),
+    Method,
+    ll([]),
     \q_title(["Metadata browser",Hash]),
     \panels([\overall_panel(G),\entry_panels(G, Path)])
   ).

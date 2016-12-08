@@ -1,9 +1,9 @@
-:- module(overview_endpoint, []).
+:- module(ll_overview, []).
 
 /** <module> LOD Laundromat: Overview page
 
 @author Wouter Beek
-@version 2016/02-2016/03, 2016/08-2016/10
+@version 2016/02-2016/03, 2016/08-2016/10, 2016/12
 */
 
 :- use_module(library(html/html_ext)).
@@ -11,21 +11,32 @@
 :- use_module(library(http/http_dispatch)).
 :- use_module(library(http/http_ext)).
 :- use_module(library(http/js_write)).
+:- use_module(library(http/rest)).
 
-:- use_module(q(endpoint/about_endpoint)).
-:- use_module(q(endpoint/basket_endpoint)).
-:- use_module(q(endpoint/wardrobe_endpoint)).
-:- use_module(q(html/llw_html)).
+:- use_module(ll(api/basket)).
+:- use_module(ll(api/ll_about)).
+:- use_module(ll(api/wardrobe)).
+:- use_module(ll(style/ll_style)).
 
-:- http_handler(llw(overview), overview_handler,  [prefix,priority(1)]).
-
-
-
+:- http_handler(ll(overview), overview_handler,  [prefix,priority(1)]).
 
 
-overview_handler(_) :-
+
+
+
+overview_handler(Req) :-
+  rest_method(Req, [get], overview_handler).
+
+
+overview_handler(Req, Method, MTs) :-
+  http_is_get(Method),
+  rest_media_type(Req, Method, MTs, overview_media_type).
+
+
+overview_media_type(Method, text/html) :-
   reply_html_page(
-    llw([]),
+    Method
+    ll([]),
     \q_title(["Overview"]),
     [
       \laundromat_intro,

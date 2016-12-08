@@ -1,32 +1,50 @@
-:- module(lodlab_endpoint, []).
+:- module(lodlab, []).
 
 /** <module> LOD Laundromat: LOD Lab page
 
 @author Wouter Beek
-@version 2016/02-2016/03, 2016/08-2016/10
+@version 2016/02-2016/03, 2016/08-2016/10, 2016/12
 */
 
 :- use_module(library(html/html_ext)).
 :- use_module(library(http/html_write)).
 :- use_module(library(http/http_dispatch)).
 :- use_module(library(http/http_ext)).
+:- use_module(library(http/rest)).
 :- use_module(library(rdfa/rdfa_ext)).
 :- use_module(library(semweb/rdf11)).
 :- use_module(library(settings)).
 
-:- use_module(q(html/llw_html)).
+:- use_module(ll(style/ll_style)).
 
-:- http_handler(llw(lodlab), lodlab_handler, [prefix]).
+:- http_handler(ll(lodlab), lodlab_handler, [prefix]).
+
+:- setting(
+     backend,
+     oneof([hdt,trp]),
+     hdt,
+     "The default backend that powers the LOD Lab page."
+   ).
 
 
 
 
 
-lodlab_handler(_) :-
-  M = trp,
+lodlab_handler(Req) :-
+  setting(backend, M),
+  rest_method(Req, [get], lodlab_handler(M)).
+
+
+lodlab_handler(M, Req, Method, MTs) :-
+  http_is_get(Method),
+  rest_media_type(Method, MTs, lodlab_media_type(M)).
+
+
+lodlab_media_type(M, Method, text/html) :-
   rdf_default_graph(G),
   reply_html_page(
-    llw(false),
+    Method,
+    ll(false),
     [
       \meta_description("SPARQL endpoint of the LOD Laundromat"),
       \q_title(["LOD Lab"])

@@ -1,11 +1,11 @@
-:- module(wardrobe_endpoint, []).
+:- module(wardrobe, []).
 
-/** <module> LOD Laundromat: Wardrobe endpoint
+/** <module> LOD Laundromat: Wardrobe API
 
 The page where cleaned data documents are displayed.
 
 @author Wouter Beek
-@version 2016/09-2016/10
+@version 2016/09-2016/10, 2016/12
 */
 
 :- use_module(library(apply)).
@@ -25,18 +25,20 @@ The page where cleaned data documents are displayed.
 :- use_module(library(service/es_api)).
 :- use_module(library(settings)).
 
-:- use_module(q(api/seedlist_api)).
-:- use_module(q(db/http_param_db), []).
-:- use_module(q(html/llw_html)).
+:- use_module(ll(api/seedlist)).
+:- use_module(ll(style/ll_style)).
 
-:- http_handler(llw(doc), wardrobe_handler, [prefix]).
+:- http_handler(ll(doc), wardrobe_handler, [prefix]).
 
 :- multifile
-    http_param/1.
+    http_param/1,
+    media_type/1.
 
 http_param(page).
 http_param(page_size).
 http_param(pattern).
+
+media_type(text/html).
 
 :- setting(
      default_page_size,
@@ -59,7 +61,8 @@ wardrobe_handler(Req) :-
   rest_method(Req, [get], wardrobe_method).
 
 
-wardrobe_method(Req, get, MTs) :-
+wardrobe_method(Req, Method, MTs) :-
+  http_is_get(Method),
   http_parameters(
     Req,
     [page(Page),page_size(PageSize),pattern(Pattern)],
@@ -88,17 +91,18 @@ wardrobe_method(Req, get, MTs) :-
         sort: [_{number_of_tuples: _{order: "desc"}}]
       },
       PageOpts,
-      Pagination
+      Result
     )
   ),
-  rest_media_type(Req, get, MTs, wardrobe_media_type(Pagination)).
+  rest_media_type(Req, Method, MTs, wardrobe_media_type(Result)).
 
 
-wardrobe_media_type(Pagination, get, text/html) :-
+wardrobe_media_type(Result, Method, text/html) :-
   reply_html_page(
-    llw([]),
+    Method,
+    ll([]),
     [
-      \pagination_links(Pagination),
+      \pagination_links(Result),
       \q_title(["Wardrobe","Overview"])
     ],
     [
@@ -107,10 +111,9 @@ wardrobe_media_type(Pagination, get, text/html) :-
         [autocomplete=off,class='search-box'],
         link_to_id(wardrobe_handler)
       ),
-      \pagination_result(Pagination, documents)
+      \pagination_result(Result, documents)
     ]
   ).
-
 
 
 wardrobe_header -->
@@ -127,10 +130,8 @@ wardrobe_header -->
   ).
 
 
-
 documents(Dicts) -->
   grid(700, 650, document, Dicts).
-
 
 document(Dict) -->
   {

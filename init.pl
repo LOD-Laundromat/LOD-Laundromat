@@ -21,7 +21,7 @@
 user:file_search_path(ll, cpack('LOD-Laundromat')).
   user:file_search_path(resource, ll(resource)).
 
-cp:logo(lod_washing_machine).
+cp:logo(washing_machine_round).
 
 :- use_module(cp(api/alias)).
 :- use_module(cp(api/class)).

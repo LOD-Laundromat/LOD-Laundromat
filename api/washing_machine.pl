@@ -1,12 +1,12 @@
 :- module(
-  wm_api,
+  washing_machine,
   [
     add_wm/0,
-    add_wms/1,              % +NumWms
+    add_wms/1,              % +NumWashingMachines
     buggy_seedpoint/1,      % ?Hash
     current_wm/1,           % ?Alias
     number_of_seedpoints/1, % -NumSeeds
-    number_of_wms/1,        % -NumWms
+    number_of_wms/1,        % -NumWachingMachines
     single_wm/0,
     washing_seed/1,         % ?Hash
     wm_reset/0,
@@ -20,7 +20,7 @@
 /* <module> LOD Laundromat: Washing machine API
 
 @author Wouter Beek
-@version 2016/01-2016/05, 2016/08, 2016/10
+@version 2016/01-2016/05, 2016/08, 2016/10, 2016/12
 */
 
 :- use_module(library(aggregate)).
@@ -62,7 +62,8 @@ prolog_stack:stack_guard(none).
 
 
 %! add_wm is det.
-%! add_wms(+NumWms) is det.
+%! add_wms(+NumWashingMachines) is det.
+%
 % Add a LOD Laundromat thread.
 
 add_wm :-
@@ -127,10 +128,10 @@ number_of_seedpoints(NumSeeds) :-
 
 
 
-%! number_of_wms(-NumWms) is det.
+%! number_of_wms(-NumWashingMachines) is det.
 
-number_of_wms(NumWms) :-
-  aggregate_all(count, current_wm(_), NumWms).
+number_of_wms(NumWashingMachines) :-
+  aggregate_all(count, current_wm(_), NumWashingMachines).
 
 
 
@@ -186,11 +187,11 @@ wm_restore :-
 %! wm_status is det.
 
 wm_status :-
-  number_of_wms(NumWms),
+  number_of_wms(NumWashingMachines),
   number_of_seedpoints(NumSeeds),
   msg_notification(
     "~D washing machines are cleaning ~D seedpoints.~n",
-    [NumWms,NumSeeds]
+    [NumWashingMachines,NumSeeds]
   ).
 
 
@@ -221,12 +222,20 @@ start_wm0 :-
 wm0(State) :-
   % Clean one, arbitrarily chosen, seed.
   clean, !,
-  number_of_wms(NumWms),
-  debug(wm(thread), "~D washing machines are currently active.", [NumWms]),
+  number_of_wms(NumWashingMachines),
+  debug(
+    wm(thread),
+    "~D washing machines are currently active.",
+    [NumWashingMachines]
+  ),
   wm0(State).
 wm0(State) :-
   sleep(1),
-  dict_inc(idle, State, NumWms),
+  dict_inc(idle, State, NumWashingMachines),
   thread_name(Alias),
-  debug(wm(idle), "ZZZZ Thread ~w idle ~D sec.", [Alias,NumWms]),
+  debug(
+    wm(idle),
+    "ZZZ Thread ~w idle ~D sec.",
+    [Alias,NumWashingMachines]
+  ),
   wm0(State).
