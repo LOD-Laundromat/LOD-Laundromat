@@ -127,7 +127,13 @@ wardrobe_header -->
         wardrobe,
         [
           h1("Wardrobe"),
-          p("This is where the cleaned data is stored.  You can download both clean and dirty (i.e. the original) data.  Each data document contains a meta-data description that includes all the stains that were detected.  The LOD Laundry Basket contains the URLs of dirty datasets that are waiting to be cleaned by the LOD Laundromat.  You can also add your own URLs to the basket (see below).")
+          p("This is where the cleaned data is stored.  You can
+          download both clean and dirty (i.e. the original) data.
+          Each data document contains a meta-data description that
+          includes all the stains that were detected.  The LOD Laundry
+          Basket contains the URLs of dirty datasets that are waiting
+          to be cleaned by the LOD Laundromat.  You can also add your
+          own URLs to the basket (see below).")
         ]
       )
     )

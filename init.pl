@@ -47,8 +47,8 @@ cp:logo(washing_machine_round).
 :- initialization(set_data_dirs).
 set_data_dirs :-
   rdf_load_file(ttl('ll.ttl')),
-  set_setting(q_io:source_dir, '/scratch/wbeek/crawls/source/'),
-  set_setting(q_io:store_dir,  '/scratch/wbeek/crawls/store/' ),
+  set_setting(q_io:source_dir, '/scratch/wbeek/crawls/13/source/'),
+  set_setting(q_io:store_dir,  '/scratch/wbeek/crawls/13/store/' ),
   setting(washing_machine:ll_index, Dir),
   rocks_open(
     Dir,
