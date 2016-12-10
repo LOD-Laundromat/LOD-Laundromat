@@ -37,7 +37,7 @@ ll_overview_media_type(Method, text/html) :-
   reply_html_page(
     Method,
     ll([]),
-    \q_title(["Overview"]),
+    \cp_title(["Overview"]),
     [
       \laundromat_intro,
       \basket_intro,

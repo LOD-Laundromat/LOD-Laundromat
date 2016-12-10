@@ -15,6 +15,8 @@
 @version 2016/02-2016/04, 2016/08-2016/10, 2016/12
 */
 
+:- reexport(cp(style/cp_style)).
+
 :- use_module(library(html/html_ext)).
 :- use_module(library(http/html_head)).
 :- use_module(library(http/html_write)).
@@ -23,8 +25,6 @@
 :- use_module(library(pair_ext)).
 :- use_module(library(service/rocksdb_ext)).
 :- use_module(library(settings)).
-
-:- use_module(cp(style/cp_style)).
 
 :- use_module(ll(api/ll_overview)).
 
@@ -71,7 +71,7 @@ cp:body(ll(_), Content_0) -->
       \cp_navbar,
       \row_1([class=main], 12, Content_0),
       \cp_footer,
-      \html_post(q_navbar_right, \(ll_style:data_counter))
+      \html_post(cp_navbar_right, \(ll_style:data_counter))
     ])
   ).
 
@@ -171,8 +171,8 @@ ll_link0(wouter_beek, "Wouter Beek", 'http://www.wouterbeek.com').
 
 data_counter -->
   {
-    rocks_get(ll, number_of_documents, NumDocs),
-    rocks_get(ll, number_of_tuples, NumTuples)
+    rocks_get(ll_index, number_of_documents, NumDocs),
+    rocks_get(ll_index, number_of_tuples, NumTuples)
   },
   html(
     p(class='navbar-text', [

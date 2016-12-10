@@ -26,6 +26,8 @@
 :- use_module(library(q/q_term)).
 :- use_module(library(settings)).
 
+:- use_module(cp(http_param)).
+
 :- use_module(ll(style/ll_style)).
 
 :- http_handler(ll(meta), meta_handler, [prefix]).
@@ -72,7 +74,7 @@ meta_plural_method(Req, Method, MTs) :-
   http_parameters(
     Req,
     [page(Page),page_size(PageSize)],
-    [attribute_declarations(http_param(meta_endpoint))]
+    [attribute_declarations(http_param(meta))]
   ),
   http_location_iri(Req, Iri),
   PageOpts = _{iri: Iri, page: Page, page_size: PageSize},
@@ -82,7 +84,7 @@ meta_plural_method(Req, Method, MTs) :-
 
 meta_singular_method(Res, Req, Method, MTs) :-
   rdf_global_id(meta:Hash, Res),
-  (   q_graph(Hash, meta, G)
+  (   q_graph_hash(G, meta, Hash)
   ->  rest_media_type(Req, Method, MTs, meta_singular_media_type(G, Hash))
   ;   rest_exception(MTs, 404)
   ).
@@ -92,7 +94,7 @@ meta_plural_media_type(Result, Method, text/html) :-
   reply_html_page(
     Method,
     ll([]),
-    \q_title(["Metadata browser"]),
+    \cp_title(["Metadata browser"]),
     \pagination_result(Result, meta_table)
   ).
 meta_plural_media_type(Result, Method, MT) :-
@@ -109,7 +111,7 @@ meta_singular_media_type(G, Hash, Method, text/html) :-
   reply_html_page(
     Method,
     ll([]),
-    \q_title(["Metadata browser",Hash]),
+    \cp_title(["Metadata browser",Hash]),
     \panels([\overall_panel(G),\entry_panels(G, Path)])
   ).
 

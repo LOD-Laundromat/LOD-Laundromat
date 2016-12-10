@@ -1,4 +1,5 @@
-#+TITLE TODO
+#+TITLE: TODO list for LOD Laundromat
+#+AUTHOR: Wouter Beek
 
 * Libraries
 
@@ -17,4 +18,5 @@
 * Problematic MD5s
 
 ** TODO 2570ea2d41d6f3c2ce902ec233e51a68
+
 Contains Illegal UTF-8 start (183:0).

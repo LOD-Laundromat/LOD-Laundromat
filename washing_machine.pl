@@ -47,12 +47,20 @@
 :- use_module(library(rdf/rdf__io)).
 :- use_module(library(semweb/rdf11)).
 :- use_module(library(service/es_api)).
+:- use_module(library(settings)).
 :- use_module(library(string_ext)).
 :- use_module(library(thread)).
 :- use_module(library(zlib)).
 
-:- use_module(lclean).
-:- use_module(seedlist).
+:- use_module(ll(lclean)).
+:- use_module(ll(api/seedlist)).
+
+:- setting(
+     ll_index,
+     atom,
+     '/scratch/wbeek/crawls/13/index/',
+     "Directory for the LOD Laundromat RocksDB index."
+   ).
 
 prolog_stack:stack_guard('C').
 prolog_stack:stack_guard(none).

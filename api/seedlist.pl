@@ -140,29 +140,46 @@ seedlist_media_type(Iri, Method, text/html) :-
       reply_html_page(
         Method,
         ll([]),
-        \q_title(["Seed",Hash]),
+        \cp_title(["Seed",Hash]),
         \html_seed(Dict)
       )
-  ;   N = 3,
-      findnsols(N, Seed1, seed_by_status(ended, Seed1), L1),
-      findnsols(N, Seed2, seed_by_status(started, Seed2), L2),
-      findnsols(N, Seed3, seed_by_status(added, Seed3), L3),
+  ;   seeds_by_status(ended, Pagination1),
+      seeds_by_status(started, Pagination2),
+      seeds_by_status(added, Pagination3),
       reply_html_page(
         Method,
         ll([]),
-        \q_title(["Seedlist"]),
+        \cp_title(["Seedlist"]),
         [
           h1("Seedlist"),
           \panels([
-            \panel(1, "Cleaned", \seeds_table(L1)),
-            \panel(2, "Cleaning", \seeds_table(L2)),
-            \panel(3, "To be cleaned", \seeds_table(L3))
+            \seedlist_panel(1, "Cleaned", Pagination1),
+            \seedlist_panel(2, "Cleaning", Pagination2),
+            \seedlist_panel(3, "To be cleaned", Pagination3)
           ])
         ]
       )
   ).
+
 seedlist_media_type(Iri, post, application/json) :-
   reply_json_dict(_{seed: Iri}, [status(201)]).
+
+seedlist_panel(Id, Lbl, Pagination) -->
+  panel(
+    Id,
+    html([
+      Lbl,
+      " ",
+      \out_of(
+        Pagination.number_of_results,
+        Pagination.total_number_of_results
+      )
+    ]),
+    \seeds_table(Pagination.results)
+  ).
+
+out_of(M, N) -->
+  html(["(",\html_thousands(M),"/",\html_thousands(N),")"]).
 
 
 
@@ -372,8 +389,9 @@ seed_by_hash(Hash, Dict) :-
 
 seed_by_status(Status, Dict) :-
   seeds_by_status(Status, Pagination),
-  member(Dict, Pagination.results).
-
+  Results = Pagination.results,
+  member(Dict, Results).
+  
 
 
 %! seed_status(+Status) is semidet.
@@ -393,7 +411,7 @@ seeds_by_status(Status, Pagination) :-
   dict_pairs(Range, [Status-_{gt: 0.0}]),
   es_search(
     [ll,seedlist],
-    _{query: _{filtered: _{filter: _{range: Range}}}},
+    _{query: _{bool: _{filter: _{range: Range}}}},
     _{},
     Pagination
   ).

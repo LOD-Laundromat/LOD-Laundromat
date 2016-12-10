@@ -35,13 +35,12 @@
 :- use_module(library(q/q_fs)).
 :- use_module(library(rdf/rdf__io)).
 :- use_module(library(rdf/rdf_error)).
-:- use_module(library(rdf/rdf_file)).
 :- use_module(library(semweb/rdf11)).
 :- use_module(library(semweb/rdf11_containers)).
 :- use_module(library(service/es_api)).
 :- use_module(library(service/rocksdb_ext)).
 
-:- use_module(seedlist).
+:- use_module(ll(api/seedlist)).
 
 :- meta_predicate
     rdf_store_messages(+, +, 0).
@@ -65,7 +64,7 @@
 % Clean an arbitrarily chosen seedpoint.
 
 clean :-
-  seed_by_status(added, Seed),
+  once(seed_by_status(added, Seed)),
   clean_seed(Seed).
 
 
@@ -125,7 +124,7 @@ clean_seed_dir(Seed, Hash, Dir) :-
   q_dir_file(Dir, data, ntriples, DataFile),
   create_file_link(DataFile, CleanFile),
   (var(Path) -> NumWarns = 0 ; Path = [Entry|_], NumWarns = Entry.line_count),
-  hdt_prepare(MetaFile, HdtMetaFile),
+  hdt_prepare_file(MetaFile, HdtMetaFile),
   q_file_touch_ready(MetaFile),
   (   once(
         hdt_call_on_file(
@@ -134,7 +133,7 @@ clean_seed_dir(Seed, Hash, Dir) :-
         )
       ),
       NumWarns >= 1
-  ->  hdt_prepare(WarnFile)
+  ->  hdt_prepare_file(WarnFile)
   ;   true
   ),
   q_file_touch_ready(WarnFile),
@@ -145,8 +144,8 @@ clean_seed_dir(Seed, Hash, Dir) :-
         )
       ),
       NumTuples >= 1,
-      rocks_merge(ll, number_of_tuples, NumTuples)
-  ->  hdt_prepare(CleanFile, HdtCleanFile),
+      rocks_merge(ll_index, number_of_tuples, NumTuples)
+  ->  hdt_prepare_file(CleanFile, HdtCleanFile),
       q_dir_file(Dir, data, hdt, HdtDataFile),
       create_file_link(HdtDataFile, HdtCleanFile),
       q_file_touch_ready(HdtCleanFile),
@@ -154,7 +153,7 @@ clean_seed_dir(Seed, Hash, Dir) :-
   ;   true
   ),
   (var(CleanFile) -> true ; q_file_touch_ready(CleanFile)),
-  rocks_merge(ll, number_of_documents, 1).
+  rocks_merge(ll_index, number_of_documents, 1).
   %%%%absolute_file_name('dirty.gz', DirtyTo, Opts),
   %%%%call_collect_messages(rdf_download_to_file(From, DirtyTo)).
 
@@ -275,12 +274,11 @@ rdf_store_messages(State, Hash, Goal_0) :-
 
 %! rdf_store_metadata(+State, +Hash, +InPath, +OutEntry, +CleanFile) is det.
 
-rdf_store_metadata(State, Hash, InPath1, OutEntry, CleanFile) :-
-  reverse(InPath1, InPath2),
+rdf_store_metadata(State, Hash, InPath, OutEntry, CleanFile) :-
   q_file_graph(CleanFile, DataG),
   call_to_ntriples(
     State.meta,
-    rdf_store_metadata(State.warns, Hash, InPath2, OutEntry, DataG)
+    rdf_store_metadata(State.warns, Hash, InPath, OutEntry, DataG)
   ).
 
 
@@ -290,21 +288,21 @@ rdf_store_metadata(NumWarns, Hash, InPath, OutEntry, DataG, State, Out) :-
   qb(M, MetaG, nsdef:dataGraph, DataG),
   qb(M, MetaG, nsdef:numberOfWarnings, NumWarns^^xsd:nonNegativeInteger),
   InPath = [FirstInEntry|_],
-  NumBytes is OutEntry.byte_count - FirstInEntry.byte_count,
-  qb(M, MetaG, nsdef:numberOfBytes, NumBytes^^xsd:nonNegativeInteger),
-  NumChars is OutEntry.char_count - FirstInEntry.char_count,
-  qb(M, MetaG, nsdef:numberOfCharacters, NumChars^^xsd:nonNegativeInteger),
-  NumLines is OutEntry.line_count - FirstInEntry.line_count,
-  qb(M, MetaG, nsdef:numberOfLines, NumLines^^xsd:nonNegativeInteger),
+  qb(M, MetaG, nsdef:numberOfReadBytes, FirstInEntry.byte_count^^xsd:nonNegativeInteger),
+  qb(M, MetaG, nsdef:numberOfWrittenBytes, OutEntry.byte_count^^xsd:nonNegativeInteger),
+  qb(M, MetaG, nsdef:numberOfReadCharacters, FirstInEntry.char_count^^xsd:nonNegativeInteger),
+  qb(M, MetaG, nsdef:numberOfWrittenCharacters, OutEntry.char_count^^xsd:nonNegativeInteger),
+  qb(M, MetaG, nsdef:numberOfReadLines, FirstInEntry.line_count^^xsd:nonNegativeInteger),
+  qb(M, MetaG, nsdef:numberOfWrittenLines, OutEntry.line_count^^xsd:nonNegativeInteger),
   dict_get(number_of_quads, OutEntry, 0, NumQuads),
   qb(M, MetaG, nsdef:numberOfQuads, NumQuads^^xsd:nonNegativeInteger),
   dict_get(number_of_triples, OutEntry, 0, NumTriples),
   qb(M, MetaG, nsdef:numberOfTriples, NumTriples^^xsd:nonNegativeInteger),
   dict_get(number_of_tuples, OutEntry, 0, NumTuples),
   qb(M, MetaG, nsdef:numberOfTuples, NumTuples^^xsd:nonNegativeInteger),
-  NumDuplicates is NumTuples - NumLines,
+  NumDuplicates is NumTuples - OutEntry.line_count + 1,
   qb(M, MetaG, nsdef:numberOfDuplicates, NumDuplicates^^xsd:nonNegativeInteger),
-  rdf_format_iri(FirstInEntry.rdf_format, Format),
+  rdf_media_type(FirstInEntry.rdf_media_type, Format, _),
   qb(M, MetaG, nsdef:rdfFormat, Format),
   forall(
     nth1(N, InPath, InEntry),
@@ -328,7 +326,7 @@ rdf_store_metadata_entry_pair(_, _, line_count-_).
 rdf_store_metadata_entry_pair(_, _, mtime-_).
 rdf_store_metadata_entry_pair(_, _, name-_).
 rdf_store_metadata_entry_pair(_, _, newline-_).
-rdf_store_metadata_entry_pair(_, _, rdf_format-_).
+rdf_store_metadata_entry_pair(_, _, rdf_media_type-_).
 rdf_store_metadata_entry_pair(_, _, size-_).
 
 
@@ -355,6 +353,8 @@ rdf_store_metadata_entry_pair(M, BNode, headers-Dict) :-
   ).
 rdf_store_metadata_entry_pair(M, BNode, iri-Iri) :-
   qb(M, BNode, nsdef:iri, Iri).
+rdf_store_metadata_entry_pair(M, BNode, permissions-Mask) :-
+  qb(M, BNode, nsdef:permissions, Mask^^xsd:string).
 rdf_store_metadata_entry_pair(M, BNode, status-Status) :-
   qb(M, BNode, nsdef:status, Status^^xsd:positiveInteger).
 rdf_store_metadata_entry_pair(M, BNode, time-Time) :-

@@ -47,7 +47,7 @@ lodlab_media_type(M, Method, text/html) :-
     ll(false),
     [
       \meta_description("SPARQL endpoint of the LOD Laundromat"),
-      \q_title(["LOD Lab"])
+      \cp_title(["LOD Lab"])
     ],
     article([
       \lodlab_header,

@@ -5,7 +5,7 @@
 The page where cleaned data documents are displayed.
 
 @author Wouter Beek
-@version 2016/09-2016/10, 2016/12
+@version 2016/09-2016/12
 */
 
 :- use_module(library(apply)).
@@ -32,7 +32,7 @@ The page where cleaned data documents are displayed.
 :- use_module(ll(api/seedlist)).
 :- use_module(ll(style/ll_style)).
 
-:- http_handler(ll(doc), wardrobe_handler, [prefix]).
+:- http_handler(ll(wardrobe), wardrobe_handler, [prefix]).
 
 :- multifile
     http_param/1,
@@ -70,7 +70,7 @@ wardrobe_method(Req, Method, MTs) :-
   http_parameters(
     Req,
     [page(Page),page_size(PageSize),pattern(Pattern)],
-    [attribute_declarations(http_param(ll_wardrobe))]
+    [attribute_declarations(http_param(wardrobe))]
   ),
   http_location_iri(Req, Iri),
   include(ground, [pattern(Pattern)], Query),
@@ -81,11 +81,11 @@ wardrobe_method(Req, Method, MTs) :-
     pattern: Pattern,
     query: Query
   },
-  Filter = _{filtered: _{filter: _{range: _{ended: _{gt: 0.0}}}}},
+  Filter = _{range: _{ended: _{gt: 0.0}}},
   (   var(Pattern)
   ->  Must = _{}
   ;   atomics_to_string(["*",Pattern,"*"], Wildcard),
-      Must = _{query: _{wildcard: _{from: _{value: Wildcard}}}}
+      Must = _{wildcard: _{from: _{value: Wildcard}}}
   ),
   once(
     es_search(
@@ -107,7 +107,7 @@ wardrobe_media_type(Result, Method, text/html) :-
     ll([]),
     [
       \pagination_links(Result),
-      \q_title(["Wardrobe","Overview"])
+      \cp_title(["Wardrobe","Overview"])
     ],
     [
       \wardrobe_header,
@@ -140,7 +140,8 @@ documents(Dicts) -->
 document(Dict) -->
   {
     dict_tag(Dict, Hash),
-    maplist(q_store_graph(Hash), [data,meta], [DataG,MetaG]),
+    q_graph_hash(DataG, data, Hash),
+    q_graph_hash(MetaG, meta, Hash),
     http_link_to_id(sgp_handler, [graph=DataG], DataIri),
     http_link_to_id(sgp_handler, [graph=MetaG], MetaIri),
     q(hdt, _, nsdef:numberOfTuples, NumTuples^^xsd:nonNegativeInteger, MetaG),

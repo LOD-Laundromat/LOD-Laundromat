@@ -33,7 +33,7 @@ basket_media_type(Method, text/html) :-
     Method,
     ll([]),
     [
-      \q_title("Laundry Basket"),
+      \cp_title(["Laundry Basket"]),
       \meta_description("Contains the URLs of dirty datasets that are
       waiting to be cleaned by the LOD Washing Machine.")
     ],

@@ -13,6 +13,8 @@ currently_debugging0('9f251a7f61cff3fd85550a1b5c2f4efd').
 currently_debugging0('bc03c42d0f8bd054abe94fa0a3e8d0d7').
 currently_debugging0('c557802a90c57502d99e71d356dec90f').
 
+:- debug(es_api).
+:- debug(http_io).
 :- debug(lclean).
 :- debug(lotus(_)).
 :- debug(seedlist(_)).

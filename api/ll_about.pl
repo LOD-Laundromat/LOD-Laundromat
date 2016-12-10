@@ -11,6 +11,7 @@
 :- use_module(library(http/html_write)).
 :- use_module(library(http/http_dispatch)).
 :- use_module(library(http/http_ext)).
+:- use_module(library(http/rest)).
 
 :- use_module(ll(style/ll_style)).
 
