@@ -12,7 +12,7 @@
 /** <module> LOD Laundromat: Data cleaning
 
 @author Wouter Beek
-@version 2016/03-2016/05, 2016/08-2016/10
+@version 2016/03-2016/05, 2016/08-2016/10, 2016/12
 */
 
 :- use_module(library(apply)).
@@ -42,15 +42,12 @@
 
 :- use_module(ll(api/seedlist)).
 
-:- meta_predicate
-    rdf_store_messages(+, +, 0).
-
-:- rdf_meta
-   rdf_store_messages(+, r, :).
-
 :- dynamic
     currently_debugging0/1,
     thread_seed/2.
+
+:- meta_predicate
+    rdf_store_messages(+, +, 0, -, -).
 
 :- multifile
     currently_debugging0/1.
@@ -114,16 +111,24 @@ clean_seed_dir(Seed, Hash, Dir) :-
   q_dir_file(Dir, meta, ntriples, MetaFile),
   q_dir_file(Dir, warn, ntriples, WarnFile),
   atom_string(From, Seed.from),
+  % Write to three files: CleanFile (data), MetaFile (metadata) and
+  % WarnFile (warnings).
   call_to_streams(
     MetaFile,
     WarnFile,
     clean_streams0(Dir, Hash, From, CleanFile),
-    [compression(false)],
-    [compression(false),metadata(Path)]
+    [compression(true)],
+    [compression(true),metadata(Path)]
   ),
-  q_dir_file(Dir, data, ntriples, DataFile),
-  create_file_link(DataFile, CleanFile),
+  % If there was some data then let DataFile link to CleanFile.
+  (   var(CleanFile)
+  ->  true
+  ;   q_dir_file(Dir, data, ntriples, DataFile),
+      create_file_link(DataFile, CleanFile)
+  ),
   (var(Path) -> NumWarns = 0 ; Path = [Entry|_], NumWarns = Entry.line_count),
+  % Convert the MetaFile (metadata) from N-Tiples to HDT so we can
+  % query it.
   hdt_prepare_file(MetaFile, HdtMetaFile),
   q_file_touch_ready(MetaFile),
   (   once(
@@ -158,14 +163,17 @@ clean_seed_dir(Seed, Hash, Dir) :-
   %%%%call_collect_messages(rdf_download_to_file(From, DirtyTo)).
 
 clean_streams0(Dir, Hash, From, CleanFile, MetaOut, WarnOut) :-
-  State = _{meta: MetaOut, warn: WarnOut, warns: 0},
+  Counter = _{number_of_warnings: 0},
   InOpts = [parse_headers(true),warn(WarnOut)],
   rdf_store_messages(
-    State,
+    WarnOut,
     Hash,
-    rdf_clean0(Dir, From, CleanFile, InOpts, InPath, OutEntry)
+    rdf_clean0(Dir, From, CleanFile, InOpts, InPath, OutEntry),
+    Counter,
+    End
   ),
-  rdf_store_metadata(State, Hash, InPath, OutEntry, CleanFile).
+  NumWarns = Counter.number_of_warnings,
+  rdf_store_metadata(MetaOut, NumWarns, Hash, End, InPath, OutEntry, CleanFile).
 
 rdf_clean0(Dir, From, CleanFile, InOpts1, InPath, OutEntry2) :-
   merge_options(InOpts1, [compression(false),metadata(InPath)], InOpts2),
@@ -246,19 +254,19 @@ set_thread_seed(Alias, Hash) :-
 
 % HELPERS %
 
-%! rdf_store_messages(+State, +Hash, :Goal_0) is det.
+%! rdf_store_messages(+WarnOut, +Hash, :Goal_0, +Counter, -End:string) is det.
 %
 % Run Goal, unify Result with `true`, `false` or `exception(Error)`
 % and messages with a list of generated error and warning messages.
 % Each message is a term `message(Term, Kind, Lines)`.
 
-rdf_store_messages(State, Hash, Goal_0) :-
+rdf_store_messages(WarnOut, Hash, Goal_0, Counter, End) :-
   q_graph_hash(MetaG, meta, Hash),
   asserta((
     user:thread_message_hook(Term,Kind,_) :-
       error_kind(Kind),
-      dict_inc(warns, State),
-      rdf_store_warning(State.warn, MetaG, Term)
+      dict_inc(warns, Counter),
+      rdf_store_warning(WarnOut, MetaG, Term)
   )),
   (catch(Goal_0, E, true) -> true ; E = fail),
   (   var(E)
@@ -266,47 +274,55 @@ rdf_store_messages(State, Hash, Goal_0) :-
   ;   End0 = E,
       msg_warning("[FAILED] ~w ~w~n", [End0,Hash])
   ),
-  with_output_to(string(End), write_term(End0)),
-  q_graph_hash(DataG, data, Hash),
-  write_ntriple(State.meta, DataG, nsdef:end, End^^xsd:string).
+  with_output_to(string(End), write_term(End0)).
 
 
 
-%! rdf_store_metadata(+State, +Hash, +InPath, +OutEntry, +CleanFile) is det.
+%! rdf_store_metadata(+MetaOut, +NumWarns, +Hash, +End, +InPath, +OutEntry, +CleanFile) is det.
 
-rdf_store_metadata(State, Hash, InPath, OutEntry, CleanFile) :-
-  q_file_graph(CleanFile, DataG),
+rdf_store_metadata(MetaOut, NumWarns, Hash, End, InPath, OutEntry, CleanFile) :-
+  % Explicitly turn off compression.  Otherwise we compress twice.
   call_to_ntriples(
-    State.meta,
-    rdf_store_metadata(State.warns, Hash, InPath, OutEntry, DataG)
+    MetaOut,
+    rdf_store_metadata(NumWarns, Hash, End, InPath, OutEntry, CleanFile),
+    [compression(false)]
   ).
 
 
-rdf_store_metadata(NumWarns, Hash, InPath, OutEntry, DataG, State, Out) :-
+rdf_store_metadata(NumWarns, Hash, End, InPath, OutEntry, CleanFile, State, Out) :-
+  format(user_output, "~w~n", [Out]),
   M = stream(State,Out),
   q_graph_hash(MetaG, meta, Hash),
-  qb(M, MetaG, nsdef:dataGraph, DataG),
+  qb(M, MetaG, nsdef:end, End^^xsd:string),
+  (   var(CleanFile)
+  ->  true
+  ;   q_graph_hash(DataG, data, Hash),
+      qb(M, MetaG, nsdef:dataGraph, DataG)
+  ),
   qb(M, MetaG, nsdef:numberOfWarnings, NumWarns^^xsd:nonNegativeInteger),
-  InPath = [FirstInEntry|_],
-  qb(M, MetaG, nsdef:numberOfReadBytes, FirstInEntry.byte_count^^xsd:nonNegativeInteger),
-  qb(M, MetaG, nsdef:numberOfWrittenBytes, OutEntry.byte_count^^xsd:nonNegativeInteger),
-  qb(M, MetaG, nsdef:numberOfReadCharacters, FirstInEntry.char_count^^xsd:nonNegativeInteger),
-  qb(M, MetaG, nsdef:numberOfWrittenCharacters, OutEntry.char_count^^xsd:nonNegativeInteger),
-  qb(M, MetaG, nsdef:numberOfReadLines, FirstInEntry.line_count^^xsd:nonNegativeInteger),
-  qb(M, MetaG, nsdef:numberOfWrittenLines, OutEntry.line_count^^xsd:nonNegativeInteger),
-  dict_get(number_of_quads, OutEntry, 0, NumQuads),
-  qb(M, MetaG, nsdef:numberOfQuads, NumQuads^^xsd:nonNegativeInteger),
-  dict_get(number_of_triples, OutEntry, 0, NumTriples),
-  qb(M, MetaG, nsdef:numberOfTriples, NumTriples^^xsd:nonNegativeInteger),
-  dict_get(number_of_tuples, OutEntry, 0, NumTuples),
-  qb(M, MetaG, nsdef:numberOfTuples, NumTuples^^xsd:nonNegativeInteger),
-  NumDuplicates is NumTuples - OutEntry.line_count + 1,
-  qb(M, MetaG, nsdef:numberOfDuplicates, NumDuplicates^^xsd:nonNegativeInteger),
-  rdf_media_type(FirstInEntry.rdf_media_type, Format, _),
-  qb(M, MetaG, nsdef:rdfFormat, Format),
-  forall(
-    nth1(N, InPath, InEntry),
-    rdf_store_metadata_entry(N, InEntry, MetaG, M)
+  (   var(InPath)
+  ->  true
+  ;   InPath = [FirstInEntry|_],
+      qb(M, MetaG, nsdef:numberOfReadBytes, FirstInEntry.byte_count^^xsd:nonNegativeInteger),
+      qb(M, MetaG, nsdef:numberOfWrittenBytes, OutEntry.byte_count^^xsd:nonNegativeInteger),
+      qb(M, MetaG, nsdef:numberOfReadCharacters, FirstInEntry.char_count^^xsd:nonNegativeInteger),
+      qb(M, MetaG, nsdef:numberOfWrittenCharacters, OutEntry.char_count^^xsd:nonNegativeInteger),
+      qb(M, MetaG, nsdef:numberOfReadLines, FirstInEntry.line_count^^xsd:nonNegativeInteger),
+      qb(M, MetaG, nsdef:numberOfWrittenLines, OutEntry.line_count^^xsd:nonNegativeInteger),
+      dict_get(number_of_quads, OutEntry, 0, NumQuads),
+      qb(M, MetaG, nsdef:numberOfQuads, NumQuads^^xsd:nonNegativeInteger),
+      dict_get(number_of_triples, OutEntry, 0, NumTriples),
+      qb(M, MetaG, nsdef:numberOfTriples, NumTriples^^xsd:nonNegativeInteger),
+      dict_get(number_of_tuples, OutEntry, 0, NumTuples),
+      qb(M, MetaG, nsdef:numberOfTuples, NumTuples^^xsd:nonNegativeInteger),
+      NumDuplicates is NumTuples - OutEntry.line_count + 1,
+      qb(M, MetaG, nsdef:numberOfDuplicates, NumDuplicates^^xsd:nonNegativeInteger),
+      rdf_media_type(FirstInEntry.rdf_media_type, Format, _),
+      qb(M, MetaG, nsdef:rdfFormat, Format),
+      forall(
+        nth1(N, InPath, InEntry),
+        rdf_store_metadata_entry(N, InEntry, MetaG, M)
+      )
   ).
 
 
