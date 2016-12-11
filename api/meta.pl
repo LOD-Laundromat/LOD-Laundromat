@@ -7,6 +7,7 @@
 */
 
 :- use_module(library(apply)).
+:- use_module(library(hdt/hdt_ext)).
 :- use_module(library(html/html_doc)).
 :- use_module(library(html/html_ext)).
 :- use_module(library(html/qh)).
@@ -18,6 +19,7 @@
 :- use_module(library(http/http_parameters)).
 :- use_module(library(http/rest)).
 :- use_module(library(json_ext)).
+:- use_module(library(os/file_ext)).
 :- use_module(library(pagination)).
 :- use_module(library(q/q_container)).
 :- use_module(library(q/q_fs)).
@@ -95,18 +97,18 @@ method0(Mode, Req, Method, MTs) :-
   include(ground, [hash(Hash),object(O),predicate(P),subject(S)], Query0),
   maplist(q_query_term, Query0, Query),
   PageOpts = _{iri: Iri, page: Page, page_size: PageSize, query: Query},
-  pagination(
-    rdf(S,P,O,G),
-    (
-      q_hash(Hash),
-      q_graph_hash(G, Mode, Hash),
-      q(hdt, S, P, O, G)
-    ),
-    PageOpts,
-    Result
-  ),
+  pagination(Quad, quad0(S, P, O, Hash, Mode, Quad), PageOpts, Result),
   rest_media_type(Req, Method, MTs, media_type0(Mode, Result)).
 
+quad0(S, P, O, Hash, Mode, rdf(S,P,O,G)) :-
+  q_hash(Hash),
+  q_file_hash(MetaFile, meta, ntriples, Hash),
+  exists_file(MetaFile),
+  q_file_hash(NtFile, Mode, ntriples, Hash),
+  exists_file(NtFile),
+  q_file_graph(NtFile, G),
+  hdt_prepare_file(NtFile, HdtFile),
+  hdt_call_on_file(HdtFile, hdt0(S, P, O)).
 
 media_type0(Mode, Result, Method, text/html) :-
   mode_label(Mode, Lbl),

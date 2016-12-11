@@ -137,7 +137,7 @@ clean_seed_dir(Seed, Hash, Dir) :-
           rdf_store_warning(WarnOut, MetaG, Term)
       )),
       (   catch(
-            rdf_clean0(Dir, From, InPath, OutEntry, CleanFile),
+            rdf_clean0(Dir, From, InPath, OutEntry, NtCleanFile),
             Exception,
             true
           )
@@ -156,17 +156,19 @@ clean_seed_dir(Seed, Hash, Dir) :-
       
       % Assert metadata.
       % Explicitly turn off compression.  Otherwise we compress twice.
-      call_to_ntriples(
-        MetaOut,
+      Opts = [rdf_media_type(application/'n-triples')],
+      setup_call_cleanup(
+        gen_ntuples:gen_ntuples_begin(State, Opts),
         rdf_store_metadata(
           Counter.number_of_warnings,
           Hash,
           Status,
           InPath,
           OutEntry,
-          CleanFile
+          NtCleanFile,
+          stream(State,MetaOut)
         ),
-        [compression(false)]
+        gen_ntuples:gen_ntuples_end(State, Opts)
       )
     ),
     (
@@ -175,20 +177,11 @@ clean_seed_dir(Seed, Hash, Dir) :-
     )
   ),
 
-  % If there was some data then link DataFile to CleanFile.
-  (   var(CleanFile)
-  ->  true
-  ;   q_dir_file(Dir, data, ntriples, DataFile),
-      create_file_link(DataFile, CleanFile)
-  ),
-
-  % Metadata file.
-  % Convert the MetaFile (metadata) from N-Tiples to HDT so we can
-  % query it.
+  % Handle the metadata file.
   hdt_prepare_file(MetaFile, HdtMetaFile),
   q_file_touch_ready(MetaFile),
 
-  % Warnings file.
+  % Handle the warnings file.
   (   once(
         hdt_call_on_file(
           HdtMetaFile,
@@ -201,24 +194,38 @@ clean_seed_dir(Seed, Hash, Dir) :-
   ),
   q_file_touch_ready(WarnFile),
 
-  % Clean data file.
-  (   once(
+  % Handle the cleaned data file.
+  (   var(NtCleanFile)
+  ->  true
+  ;   q_file_touch_ready(NtCleanFile),
+      once(
         hdt_call_on_file(
           HdtMetaFile,
           hdt0(_, nsdef:numberOfTuples, NumTuples^^xsd:nonNegativeInteger)
         )
       ),
-      NumTuples >= 1,
-      rocks_merge(ll_index, number_of_tuples, NumTuples)
-  ->  hdt_prepare_file(CleanFile, HdtCleanFile),
-      q_dir_file(Dir, data, hdt, HdtDataFile),
-      create_file_link(HdtDataFile, HdtCleanFile),
-      q_file_touch_ready(HdtCleanFile),
+      hdt_prepare_file(NtCleanFile),
+      file_directory_name(NtCleanFile, CleanDir),
+      
+      % Link to the data.
+      link0(Dir, 'data.hdt', CleanDir),
+      link0(Dir, 'data.hdt.index', CleanDir),
+      link0(Dir, 'data.nt.gz', CleanDir),
+      link0(Dir, 'data.nt.gz.ready', CleanDir),
+
+      % Store the number of tuples in RocksDB and ElasticSearch.
+      rocks_merge(ll_index, number_of_tuples, NumTuples),
       es_update_pp([ll,seedlist,Hash], _{doc: _{number_of_tuples: NumTuples}})
-  ;   true
   ),
-  (var(CleanFile) -> true ; q_file_touch_ready(CleanFile)),
+
+  % That's it!
   rocks_merge(ll_index, number_of_documents, 1).
+
+
+link0(Dir1, Local, Dir2) :-
+  directory_file_path(Dir1, Local, File1),
+  directory_file_path(Dir2, Local, File2),
+  create_file_link(File1, File2).
 
 
 rdf_clean0(Dir, From, InPath, OutEntry2, CleanFile) :-
@@ -311,9 +318,7 @@ currently_debugging(_).
 
 
 
-rdf_store_metadata(NumWarns, Hash, Status, InPath, OutEntry, CleanFile, State, Out) :-
-  format(user_output, "~w~n", [Out]),
-  M = stream(State,Out),
+rdf_store_metadata(NumWarns, Hash, Status, InPath, OutEntry, CleanFile, M) :-
   q_graph_hash(MetaG, meta, Hash),
   qb(M, MetaG, nsdef:end, Status^^xsd:string),
   (   var(CleanFile)
@@ -339,7 +344,7 @@ rdf_store_metadata(NumWarns, Hash, Status, InPath, OutEntry, CleanFile, State, O
       qb(M, MetaG, nsdef:numberOfTuples, NumTuples^^xsd:nonNegativeInteger),
       NumDuplicates is NumTuples - OutEntry.line_count + 1,
       qb(M, MetaG, nsdef:numberOfDuplicates, NumDuplicates^^xsd:nonNegativeInteger),
-      rdf_media_type(FirstInEntry.rdf_media_type, Format, _),
+      once(rdf_media_type(FirstInEntry.rdf_media_type, Format, _)),
       qb(M, MetaG, nsdef:rdfFormat, Format),
       forall(
         nth1(N, InPath, InEntry),
