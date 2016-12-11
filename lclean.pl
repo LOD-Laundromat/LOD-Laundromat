@@ -46,9 +46,6 @@
     currently_debugging0/1,
     thread_seed/2.
 
-:- meta_predicate
-    rdf_store_messages(+, +, 0, -, -).
-
 :- multifile
     currently_debugging0/1.
 
@@ -94,10 +91,13 @@ clean_seed(Seed) :-
   debug(lclean, "Thread ~a has cleaned ~a ~a", [Alias,Hash,Seed.from]),
   end_seed(Seed).
 
+
 clean_seed(Seed, Hash) :-
   currently_debugging(Hash),
   q_dir_hash(Dir, Hash),
-  with_mutex(lclean,
+  % Only the Boolean needs to be determined under mutex.
+  with_mutex(
+    lclean,
     (   % This seed has already been processed.
         exists_directory(Dir)
     ->  Done = true
@@ -105,32 +105,90 @@ clean_seed(Seed, Hash) :-
         Done = false
     )
   ),
-  (Done == true -> true ; Done == false -> clean_seed_dir(Seed, Hash, Dir)).
+  % If the source directory already exists, then the seed was already
+  % crawled.
+  (   Done == true
+  ->  true
+  ;   Done == false
+  ->  clean_seed_dir(Seed, Hash, Dir)
+  ).
+
 
 clean_seed_dir(Seed, Hash, Dir) :-
+  atom_string(From, Seed.from),
+  q_graph_hash(MetaG, meta, Hash),
   q_dir_file(Dir, meta, ntriples, MetaFile),
   q_dir_file(Dir, warn, ntriples, WarnFile),
-  atom_string(From, Seed.from),
-  % Write to three files: CleanFile (data), MetaFile (metadata) and
-  % WarnFile (warnings).
-  call_to_streams(
-    MetaFile,
-    WarnFile,
-    clean_streams0(Dir, Hash, From, CleanFile),
-    [compression(true)],
-    [compression(true),metadata(Path)]
+  setup_call_cleanup(
+    (
+      open(MetaFile, write, MetaOut0),
+      zopen(MetaOut0, MetaOut, [format(gzip)]),
+      open(WarnFile, write, WarnOut0),
+      zopen(WarnOut0, WarnOut, [format(gzip)])
+    ),
+    (
+      % Count the number of warnings.
+      Counter = _{number_of_warnings: 0},
+      % Assert the warnings.
+      asserta((
+        user:thread_message_hook(Term,Kind,_) :-
+          error_kind(Kind),
+          dict_inc(number_of_warnings, Counter),
+          rdf_store_warning(WarnOut, MetaG, Term)
+      )),
+      (   catch(
+            rdf_clean0(Dir, From, InPath, OutEntry, CleanFile),
+            Exception,
+            true
+          )
+      ->  true
+      ;   % This should not occur.  Look these up in the metadata.
+          Exception = fail
+      ),
+      % Store the status of the cleaning process (‘true’, ‘false’, or
+      % compound error term).
+      (   var(Exception)
+      ->  Status0 = true
+      ;   Status0 = Exception,
+          msg_warning("[FAILED] ~w ~w~n", [Status0,Hash])
+      ),
+      with_output_to(string(Status), write_term(Status0)),
+      
+      % Assert metadata.
+      % Explicitly turn off compression.  Otherwise we compress twice.
+      call_to_ntriples(
+        MetaOut,
+        rdf_store_metadata(
+          Counter.number_of_warnings,
+          Hash,
+          Status,
+          InPath,
+          OutEntry,
+          CleanFile
+        ),
+        [compression(false)]
+      )
+    ),
+    (
+      close(MetaOut),
+      close(WarnOut)
+    )
   ),
-  % If there was some data then let DataFile link to CleanFile.
+
+  % If there was some data then link DataFile to CleanFile.
   (   var(CleanFile)
   ->  true
   ;   q_dir_file(Dir, data, ntriples, DataFile),
       create_file_link(DataFile, CleanFile)
   ),
-  (var(Path) -> NumWarns = 0 ; Path = [Entry|_], NumWarns = Entry.line_count),
+
+  % Metadata file.
   % Convert the MetaFile (metadata) from N-Tiples to HDT so we can
   % query it.
   hdt_prepare_file(MetaFile, HdtMetaFile),
   q_file_touch_ready(MetaFile),
+
+  % Warnings file.
   (   once(
         hdt_call_on_file(
           HdtMetaFile,
@@ -142,6 +200,8 @@ clean_seed_dir(Seed, Hash, Dir) :-
   ;   true
   ),
   q_file_touch_ready(WarnFile),
+
+  % Clean data file.
   (   once(
         hdt_call_on_file(
           HdtMetaFile,
@@ -159,29 +219,18 @@ clean_seed_dir(Seed, Hash, Dir) :-
   ),
   (var(CleanFile) -> true ; q_file_touch_ready(CleanFile)),
   rocks_merge(ll_index, number_of_documents, 1).
-  %%%%absolute_file_name('dirty.gz', DirtyTo, Opts),
-  %%%%call_collect_messages(rdf_download_to_file(From, DirtyTo)).
 
-clean_streams0(Dir, Hash, From, CleanFile, MetaOut, WarnOut) :-
-  Counter = _{number_of_warnings: 0},
-  InOpts = [parse_headers(true),warn(WarnOut)],
-  rdf_store_messages(
-    WarnOut,
-    Hash,
-    rdf_clean0(Dir, From, CleanFile, InOpts, InPath, OutEntry),
-    Counter,
-    End
+
+rdf_clean0(Dir, From, InPath, OutEntry2, CleanFile) :-
+  absolute_file_name(
+    cleaning,
+    TmpFile0,
+    [access(write),relative_to(Dir)]
   ),
-  NumWarns = Counter.number_of_warnings,
-  rdf_store_metadata(MetaOut, NumWarns, Hash, End, InPath, OutEntry, CleanFile).
-
-rdf_clean0(Dir, From, CleanFile, InOpts1, InPath, OutEntry2) :-
-  merge_options(InOpts1, [compression(false),metadata(InPath)], InOpts2),
-  absolute_file_name(cleaning, TmpFile0, [access(write),relative_to(Dir)]),
   thread_file(TmpFile0, TmpFile),
   call_to_ntriples(
     TmpFile,
-    dummy1(From, InOpts2),
+    dummy1(From, [compression(false),metadata(InPath)]),
     [
       compression(false),
       md5(CleanHash),
@@ -191,6 +240,8 @@ rdf_clean0(Dir, From, CleanFile, InOpts1, InPath, OutEntry2) :-
       tuples(NumTuples)
     ]
   ),
+
+  % Sort the N-Triples on disk.
   sort_file(TmpFile),
   OutEntry2 = OutEntry1.put(_{
     number_of_quads: NumQuads,
@@ -198,11 +249,15 @@ rdf_clean0(Dir, From, CleanFile, InOpts1, InPath, OutEntry2) :-
     number_of_tuples: NumTuples
   }),
   q_file_hash(CleanFile, data, ntriples, CleanHash),
+
+  % Compress the cleaned file.
   (   exists_file(CleanFile)
   ->  true
   ;   create_file_directory(CleanFile),
       compress_file(TmpFile, CleanFile)
   ),
+  
+  % Delete the temporary file.
   delete_file(TmpFile).
 
 dummy1(From, InOpts, State, Out) :-
@@ -210,12 +265,6 @@ dummy1(From, InOpts, State, Out) :-
 
 dummy2(State, Out, _, S, P, O, G) :-
   gen_ntuple(S, P, O, G, State, Out).
-
-currently_debugging(Hash) :-
-  currently_debugging0(Hash), !,
-  ansi_format(user_output, [bold], "~a", [Hash]),
-  gtrace. %DEB
-currently_debugging(_).
 
 
 
@@ -254,46 +303,19 @@ set_thread_seed(Alias, Hash) :-
 
 % HELPERS %
 
-%! rdf_store_messages(+WarnOut, +Hash, :Goal_0, +Counter, -End:string) is det.
-%
-% Run Goal, unify Result with `true`, `false` or `exception(Error)`
-% and messages with a list of generated error and warning messages.
-% Each message is a term `message(Term, Kind, Lines)`.
-
-rdf_store_messages(WarnOut, Hash, Goal_0, Counter, End) :-
-  q_graph_hash(MetaG, meta, Hash),
-  asserta((
-    user:thread_message_hook(Term,Kind,_) :-
-      error_kind(Kind),
-      dict_inc(warns, Counter),
-      rdf_store_warning(WarnOut, MetaG, Term)
-  )),
-  (catch(Goal_0, E, true) -> true ; E = fail),
-  (   var(E)
-  ->  End0 = true
-  ;   End0 = E,
-      msg_warning("[FAILED] ~w ~w~n", [End0,Hash])
-  ),
-  with_output_to(string(End), write_term(End0)).
+currently_debugging(Hash) :-
+  currently_debugging0(Hash), !,
+  ansi_format(user_output, [bold], "~a", [Hash]),
+  gtrace. %DEB
+currently_debugging(_).
 
 
 
-%! rdf_store_metadata(+MetaOut, +NumWarns, +Hash, +End, +InPath, +OutEntry, +CleanFile) is det.
-
-rdf_store_metadata(MetaOut, NumWarns, Hash, End, InPath, OutEntry, CleanFile) :-
-  % Explicitly turn off compression.  Otherwise we compress twice.
-  call_to_ntriples(
-    MetaOut,
-    rdf_store_metadata(NumWarns, Hash, End, InPath, OutEntry, CleanFile),
-    [compression(false)]
-  ).
-
-
-rdf_store_metadata(NumWarns, Hash, End, InPath, OutEntry, CleanFile, State, Out) :-
+rdf_store_metadata(NumWarns, Hash, Status, InPath, OutEntry, CleanFile, State, Out) :-
   format(user_output, "~w~n", [Out]),
   M = stream(State,Out),
   q_graph_hash(MetaG, meta, Hash),
-  qb(M, MetaG, nsdef:end, End^^xsd:string),
+  qb(M, MetaG, nsdef:end, Status^^xsd:string),
   (   var(CleanFile)
   ->  true
   ;   q_graph_hash(DataG, data, Hash),

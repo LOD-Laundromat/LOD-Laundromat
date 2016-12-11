@@ -21,25 +21,31 @@
 :- use_module(library(pagination)).
 :- use_module(library(q/q_container)).
 :- use_module(library(q/q_fs)).
+:- use_module(library(q/q_print)).
 :- use_module(library(q/q_rdf)).
 :- use_module(library(q/q_rdfs)).
 :- use_module(library(q/q_term)).
 :- use_module(library(settings)).
+:- use_module(library(yall)).
 
 :- use_module(cp(http_param)).
 
 :- use_module(ll(style/ll_style)).
 
+:- http_handler(ll(data), data_handler, [prefix]).
 :- http_handler(ll(meta), meta_handler, [prefix]).
 
 :- multifile
     http_param/1,
     media_type/1.
 
+http_param(hash).
+http_param(object).
 http_param(page).
 http_param(page_size).
+http_param(predicate).
+http_param(subject).
 
-media_type(application/json).
 media_type(text/html).
 
 :- setting(
@@ -51,67 +57,104 @@ media_type(text/html).
 :- setting(
      max_page_size,
      positive_integer,
-     100,
+     50,
      "The maximum number of tuples that can be retrieved in one request."
    ).
 
 
 
 
+data_handler(Req) :-
+  handler0(data, Req).
+
 
 meta_handler(Req) :-
-  rest_method(
-    Req,
-    [get],
-    meta_plural_method,
-    meta_handler,
-    meta_singular_method
-  ).
+  handler0(meta, Req).
 
 
-meta_plural_method(Req, Method, MTs) :-
+handler0(Mode, Req) :-
+  rest_method(Req, [get], method0(Mode)).
+
+
+method0(Mode, Req, Method, MTs) :-
   http_is_get(Method),
   http_parameters(
     Req,
-    [page(Page),page_size(PageSize)],
+    [
+      hash(Hash, [atom,optional(true)]),
+      object(O0),
+      page(Page),
+      page_size(PageSize),
+      predicate(P0),
+      subject(S0)
+    ],
     [attribute_declarations(http_param(meta))]
   ),
+  maplist(q_term_expansion, [O0,P0,S0], [O,P,S]),
   http_location_iri(Req, Iri),
-  PageOpts = _{iri: Iri, page: Page, page_size: PageSize},
-  pagination([Hash], q_hash(Hash), PageOpts, Result),  
-  rest_media_type(Req, Method, MTs, meta_plural_media_type(Result)).
+  include(ground, [hash(Hash),object(O),predicate(P),subject(S)], Query0),
+  maplist(q_query_term, Query0, Query),
+  PageOpts = _{iri: Iri, page: Page, page_size: PageSize, query: Query},
+  pagination(
+    rdf(S,P,O,G),
+    (
+      q_hash(Hash),
+      q_graph_hash(G, Mode, Hash),
+      q(hdt, S, P, O, G)
+    ),
+    PageOpts,
+    Result
+  ),
+  rest_media_type(Req, Method, MTs, media_type0(Mode, Result)).
 
 
-meta_singular_method(Res, Req, Method, MTs) :-
-  rdf_global_id(meta:Hash, Res),
-  (   q_graph_hash(G, meta, Hash)
-  ->  rest_media_type(Req, Method, MTs, meta_singular_media_type(G, Hash))
-  ;   rest_exception(MTs, 404)
+media_type0(Mode, Result, Method, text/html) :-
+  mode_label(Mode, Lbl),
+  reply_html_page(
+    Method,
+    cp([]),
+    \cp_title([Lbl,"browser"]),
+    \pagination_result(Result, {Mode}/[Quads]>>qh_quad_table(Mode, Quads))
   ).
 
+qh_quad_table(Mode, Quads) -->
+  {HeaderRow = ["Subject","Predicate","Object","Graph"]},
+  table(
+    \table_header_row(HeaderRow),
+    \html_maplist({Mode}/[Quad]>>qh_quad_row0(Mode, Quad), Quads)
+  ).
 
-meta_plural_media_type(Result, Method, text/html) :-
+qh_quad_row0(Mode, rdf(S,P,O,G)) -->
+  {
+    mode_handle(Mode, HandleId),
+    Opts = _{max_iri_length: 25, max_lit_len: 25}
+  },
+  html(
+    tr([
+      td(class='col-md-3', \internal_link(link_to_id(HandleId,[subject(S)]),\qh_subject(S, Opts))),
+      td(class='col-md-3', \internal_link(link_to_id(HandleId,[predicate(P)]),\qh_predicate(P, Opts))),
+      td(class='col-md-3', \internal_link(link_to_id(HandleId,[object(O)]),\qh_object(O, Opts))),
+      td(class='col-md-3', \graph_cell(HandleId, G))
+    ])
+  ).
+
+graph_cell(HandleId, G) -->
+  {q_graph_hash(G, Hash)},
+  internal_link(link_to_id(HandleId,[hash(Hash)]),\qh_graph_term(G)).
+
+mode_handle(data, data_handler).
+mode_handle(meta, meta_handler).
+
+mode_label(data, "Data").
+mode_label(meta, "Meta").
+
+/*
+meta_media_type(G, Method, text/html) :-
+  once(q_container(hdt, _, Path, G)),
   reply_html_page(
     Method,
     ll([]),
-    \cp_title(["Metadata browser"]),
-    \pagination_result(Result, meta_table)
-  ).
-meta_plural_media_type(Result, Method, MT) :-
-  MT = application/json,
-  rest_reply(
-    Method,
-    reply_content_type(MT),
-    json_write_dict(Result.results)
-  ).
-
-
-meta_singular_media_type(G, Hash, Method, text/html) :-
-  once(q_container(hdt, G, Path, G)),
-  reply_html_page(
-    Method,
-    ll([]),
-    \cp_title(["Metadata browser",Hash]),
+    \cp_title_call(("Metadata browser",dcg_q_print_graph_term(G))),
     \panels([\overall_panel(G),\entry_panels(G, Path)])
   ).
 
@@ -174,6 +217,7 @@ meta_table(Rows) --> table(tr(th("Hash")), \html_maplist(meta_row, Rows)).
 
 meta_row(Cells) --> html(tr(\html_maplist(meta_cell, Cells))).
 
-meta_cell(Hash) -->
-  {http_link_to_id(meta_handler, path_postfix(Hash), Iri)},
-  html(td(\internal_link(Iri, Hash))).
+meta_cell(G) -->
+  {http_link_to_id(meta_handler, [graph(G)], Link)},
+  html(td(a(href=Link, \qh_graph_term(G)))).
+*/

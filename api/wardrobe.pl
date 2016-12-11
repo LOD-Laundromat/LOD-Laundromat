@@ -146,10 +146,9 @@ documents(Dicts) -->
 document(Dict) -->
   {
     dict_tag(Dict, Hash),
-    q_graph_hash(DataG, data, Hash),
+    http_link_to_id(data_handler, [hash=Hash], DataIri),
+    http_link_to_id(meta_handler, [hash=Hash], MetaIri),
     q_graph_hash(MetaG, meta, Hash),
-    http_link_to_id(sgp_handler, [graph=DataG], DataIri),
-    http_link_to_id(sgp_handler, [graph=MetaG], MetaIri),
     q(hdt, _, nsdef:numberOfTuples, NumTuples^^xsd:nonNegativeInteger, MetaG),
     q(hdt, _, nsdef:numberOfWarnings, NumWarnings^^xsd:nonNegativeInteger, MetaG)
   },

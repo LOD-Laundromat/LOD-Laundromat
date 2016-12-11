@@ -80,13 +80,14 @@ add_wm :-
 
 add_wms(0) :- !.
 add_wms(M1) :-
-  must_be(positive_integer, M1),
-  max_wm(N1),
-  N2 is N1 + 1,
-  atom_concat(wm, N2, Alias),
+  max_wm(Id0),
+  M1 > Id0, !,
+  Id is Id0 + 1,
+  atom_concat(wm, Id, Alias),
   thread_create(start_wm0, _, [alias(Alias),detached(false)]),
   M2 is M1 - 1,
   add_wms(M2).
+add_wms(_).
 
 
 

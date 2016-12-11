@@ -250,7 +250,11 @@ seed_row(Dict) -->
 
 
 seed_actions0(Dict) -->
-  {dict_tag(Dict, Hash)},
+  {
+    dict_tag(Dict, Hash),
+    http_link_to_id(data_handler, [hash=Hash], DataIri),
+    http_link_to_id(meta_handler, [hash=Hash], MetaIri)
+  },
   (   % Start crawling of ‘todo’ seeds.
       {Dict.started =:= 0.0}
   ->  {
@@ -263,7 +267,8 @@ seed_actions0(Dict) -->
       {Dict.ended =:= 0.0}
   ->  ll_reset_button(Hash)
   ;   % Show results for ‘cleaned’.
-      link_button(Hash, "Data"),
+      link_button(DataIri, "Data"),
+      link_button(MetaIri, "Meta"),
       ll_reset_button(Hash)
   ).
 
@@ -408,13 +413,15 @@ seed_status(ended).
 % Returns all seeds with the same status in pages.
 
 seeds_by_status(Status, Pagination) :-
-  dict_pairs(Range, [Status-_{gt: 0.0}]),
-  es_search(
-    [ll,seedlist],
-    _{query: _{bool: _{filter: _{range: Range}}}},
-    _{},
-    Pagination
-  ).
+  status_query(Status, Query),
+  es_search([ll,seedlist], _{query: Query}, _{}, Pagination).
+
+status_query(ended, Query) :- !,
+  Query = _{range: _{ended: _{gt: 0.0}}}.
+status_query(started, Query) :- !,
+  Query = _{bool: _{must: [_{term: _{ended: 0.0}}, _{range: _{started: _{gt: 0.0}}}]}}.
+status_query(added, Query) :-
+  Query = _{bool: _{must: [_{term: _{started: 0.0}}, _{range: _{added: _{gt: 0.0}}}]}}.
 
 
 

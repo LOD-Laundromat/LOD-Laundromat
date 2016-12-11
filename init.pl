@@ -29,18 +29,20 @@ user:file_search_path(ll, cpack('LOD-Laundromat')).
 
 cp:logo(washing_machine_round).
 
-%:- use_module(cp(api/alias)).
-%:- use_module(cp(api/class)).
+:- use_module(cp(api/alias)).
+:- use_module(cp(api/class)).
 %:- use_module(cp(api/dataset)).
 %:- use_module(cp(api/documentation)).
 %:- use_module(cp(api/download)).
 %:- use_module(cp(api/geo_proximity)).
-%:- use_module(cp(api/graph)).
-%:- use_module(cp(api/predicate)).
+:- use_module(cp(api/graph)).
+:- use_module(cp(api/predicate)).
 :- use_module(cp(api/simple_graph_pattern)).
 %:- use_module(cp(api/sparql_query)).
-%:- use_module(cp(api/term)).
-%:- use_module(cp(api/triple)).
+:- use_module(cp(api/term)).
+:- use_module(cp(api/triple)).
+
+:- set_setting(simple_graph_pattern:backend, hdt).
 
 :- use_module(ll(washing_machine)).
 
@@ -73,16 +75,10 @@ root(Req) :-
 :- use_module(ll(api/wardrobe)).
 :- use_module(ll(washing_machine)).
 
-html:menu_item(10, wardrobe_handler, "Wardrobe").
-html:menu_item(20, basket_handler, "Basket").
-html:menu_item(30, ll_about_handler, "About").
-html:menu_item(40, sgp_handler, "Graph").
-html:menu_item(50, seedlist_handler, "Seeds").
-%html:menu_item(60, lodlab_handler, "LOD Lab").
-%html:menu_item(70, rdf11_handler, "RDF 1.1").
-%html:menu_item(80, lotus_handler, "LOTUS").
-%html:menu_item(90, article, "Articles") :-
-%html:menu_item(100, stat_handler, "Stats").
+html:menu_item(10, seedlist_handler, "Seeds").
+html:menu_item(20, meta_handler, "Meta").
+html:menu_item(30, data_handler, "Data").
+html:menu_item(40, wardrobe_handler, "Wardrobe").
 
 :- [ll(debug)].
 :- [ll(local)].
