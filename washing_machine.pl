@@ -2,15 +2,16 @@
   washing_machine,
   [
     add_wm/0,
-    add_wms/1,              % +NumWashingMachines
-    buggy_seedpoint/1,      % ?Hash
-    current_wm/1,           % ?Alias
-    number_of_seedpoints/1, % -NumSeeds
-    number_of_wms/1,        % -NumWachingMachines
+    add_wms/1,                 % +NumWashingMachines
+    buggy_seedpoint/1,         % ?Hash
+    current_wm/1,              % ?Alias
+    number_of_seedpoints/1,    % -NumSeeds
+    number_of_wms/1,           % -NumWachingMachines
     single_wm/0,
-    washing_seed/1,         % ?Hash
+    washing_hash/1,            % ?Hash
+    wm_clean/0,
     wm_reset/0,
-    wm_reset_and_clean/1,   % +Hash
+    wm_reset_and_clean_hash/1, % +Hash
     wm_restore/0,
     wm_status/0,
     wm_table/0
@@ -26,6 +27,7 @@
 :- use_module(library(aggregate)).
 :- use_module(library(apply)).
 :- use_module(library(atom_ext)).
+:- use_module(library(call_ext)).
 :- use_module(library(debug_ext)).
 :- use_module(library(dcg/dcg_ext)).
 :- use_module(library(dcg/dcg_table)).
@@ -75,19 +77,17 @@ prolog_stack:stack_guard(none).
 % Add a LOD Laundromat thread.
 
 add_wm :-
-  add_wms(1).
+  max_wm(Id0),
+  Id is Id0 + 1,
+  atomic_list_concat([wm0,Id], :, Alias),
+  thread_create(start_wm0, _, [alias(Alias),detached(false)]).
 
 
 add_wms(0) :- !.
-add_wms(M1) :-
-  max_wm(Id0),
-  M1 > Id0, !,
-  Id is Id0 + 1,
-  atom_concat(wm, Id, Alias),
-  thread_create(start_wm0, _, [alias(Alias),detached(false)]),
-  M2 is M1 - 1,
-  add_wms(M2).
-add_wms(_).
+add_wms(N1) :-
+  N2 is N1 - 1,
+  add_wm,
+  add_wms(N2).
 
 
 
@@ -98,7 +98,7 @@ add_wms(_).
 
 buggy_seedpoint(Hash) :-
   seed_by_status(started, Hash),
-  \+ washing_seed(Hash).
+  \+ washing_hash(Hash).
 
 
 
@@ -107,7 +107,7 @@ buggy_seedpoint(Hash) :-
 
 current_wm(Alias) :-
   thread_property(Id, alias(Alias)),
-  atom_prefix(Alias, wm),
+  atom_prefix(Alias, 'wm0:'),
   thread_property(Id, status(running)).
 
 
@@ -119,7 +119,7 @@ max_wm(N) :-
     max(N),
     (
       current_wm(Alias),
-      atom_concat(wm, N0, Alias),
+      atomic_list_concat([wm0,N0], :, Alias),
       atom_number(N0, N)
     ),
     N
@@ -151,11 +151,25 @@ single_wm :-
 
 
 
-%! washing_seed(+Hash) is semidet.
-%! washing_seed(-Hash) is nondet.
+%! washing_hash(+Hash) is semidet.
+%! washing_hash(-Hash) is nondet.
 
-washing_seed(Hash) :-
-  get_thread_seed(_, Hash).
+washing_hash(Hash) :-
+  current_wm(Alias),
+  atomic_list_concat([wm,Hash], :, Alias).
+
+
+
+%! wm_clean is det.
+
+wm_clean :-
+  forall(
+    (
+      seed_by_status(started, Seed),
+      dict_pairs(Seed, Hash, _)
+    ),
+    reset_seed(Hash)
+  ).
 
 
 
@@ -169,17 +183,17 @@ wm_reset :-
   delete_directory_and_contents_msg(Dir1),
   setting(ll_index, Dir2),
   delete_directory_and_contents_msg(Dir2),
-  es_rm_pp([ll]).
+  retry0(es_rm([ll])).
 
 
 
-%! wm_reset_and_clean(+Hash) is det.
+%! wm_reset_and_clean_hash(+Hash) is det.
 
-wm_reset_and_clean(Hash) :-
+wm_reset_and_clean_hash(Hash) :-
   % Do not reset seedpoints that are currently being processed by a
   % washing machine.
-  \+ washing_seed(Hash),
-  reset_and_clean(Hash).
+  \+ washing_hash(Hash),
+  reset_and_clean_hash(Hash).
 
 
 
@@ -189,7 +203,7 @@ wm_reset_and_clean(Hash) :-
 
 wm_restore :-
   findall(Hash, seed_by_status(started, Hash), Hashs),
-  concurrent_maplist(wm_reset_and_clean, Hashs).
+  concurrent_maplist(wm_reset_and_clean_hash, Hashs).
 
 
 

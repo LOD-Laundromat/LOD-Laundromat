@@ -1,18 +1,18 @@
 :- module(
   seedlist,
   [
-    add_seed/1,       % +From
-    add_seed/2,       % +From, -Hash
-    begin_seed/1,     % +Seed
-    end_seed/1,       % +Seed
+    add_seed/1,        % +From
+    add_seed/2,        % +From, -Hash
+    begin_seed_hash/1, % +Hash
+    end_seed_hash/1,   % +Hash
     print_seeds/0,
-    remove_seed/1,    % +Hash
-    reset_seed/1,     % +Hash
-    seed/1,           % -Dict
-    seed_by_hash/2,   % +Hash, -Dict
-    seed_by_status/2, % +Status:oneof([added,started,ended]), -Dict
-    seed_status/1,    % ?Status
-    seeds_by_status/2 % +Status:oneof([added,started,ended]), -Result
+    remove_seed/1,     % +Hash
+    reset_seed/1,      % +Hash
+    seed/1,            % -Dict
+    seed_by_hash/2,    % +Hash, -Dict
+    seed_by_status/2,  % +Status:oneof([added,started,ended]), -Dict
+    seed_status/1,     % ?Status
+    seeds_by_status/2  % +Status:oneof([added,started,ended]), -Result
   ]
 ).
 
@@ -49,6 +49,7 @@ there (409).  The HTTP body is expected to be `{"from": $IRI$}`.
 
 :- use_module(library(apply)).
 :- use_module(library(atom_ext)).
+:- use_module(library(call_ext)).
 :- use_module(library(dcg/dcg_ext)).
 :- use_module(library(dcg/dcg_pl)).
 :- use_module(library(debug_ext)).
@@ -303,32 +304,32 @@ add_seed(From1, Hash) :-
   iri_normalized(From1, From2),
   md5(From2, Hash),
   get_time(Now),
-  es_create_pp(
-    [ll,seedlist,Hash],
-    _{added: Now, ended: 0.0, from: From2, number_of_tuples: 0, started: 0.0}
+  retry0(
+    es_create(
+      [ll,seedlist,Hash],
+      _{added: Now, ended: 0.0, from: From2, number_of_tuples: 0, started: 0.0}
+    )
   ),
   debug(seedlist, "Added to seedlist: ~a (~a)", [From2,Hash]).
 
 
 
-%! begin_seed(+Seed) is det.
+%! begin_seed_hash(+Hash:atom) is det.
 %
 % Pop a dirty seed off the seedlist.
 
-begin_seed(Seed) :-
-  dict_tag(Seed, Hash),
+begin_seed_hash(Hash) :-
   get_time(Started),
-  es_update_pp([ll,seedlist,Hash], _{doc: _{started: Started}}),
+  retry0(es_update([ll,seedlist,Hash], _{doc: _{started: Started}})),
   debug(seedlist(begin), "Started cleaning seed ~a", [Hash]).
 
 
 
-%! end_seed(+Seed) is det.
+%! end_seed_hash(+Hash) is det.
 
-end_seed(Seed) :-
-  dict_tag(Seed, Hash),
+end_seed_hash(Hash) :-
   get_time(Ended),
-  es_update_pp([ll,seedlist,Hash], _{doc: _{ended: Ended}}),
+  retry0(es_update([ll,seedlist,Hash], _{doc: _{ended: Ended}})),
   debug(seedlist(end), "Ended cleaning seed ~a", [Hash]).
 
 
@@ -358,7 +359,7 @@ print_seeds :-
 %! remove_seed(+Hash) is det.
 
 remove_seed(Hash) :-
-  es_rm_pp([ll,seedlist,Hash]),
+  retry0(es_rm([ll,seedlist,Hash])),
   debug(seedlist(remove), "Removed seed ~a", [Hash]).
 
 
@@ -367,9 +368,11 @@ remove_seed(Hash) :-
 
 reset_seed(Hash) :-
   get_time(Now),
-  es_update_pp(
-    [ll,seedlist,Hash],
-    _{doc: _{added: Now, started: 0.0, ended: 0.0}}
+  retry0(
+    es_update(
+      [ll,seedlist,Hash],
+      _{doc: _{added: Now, started: 0.0, ended: 0.0}}
+    )
   ),
   debug(seedlist(reset), "Reset seed ~a", [Hash]).
 
@@ -386,7 +389,7 @@ seed(Dict) :-
 %! seed_by_hash(+Hash, -Dict) is nondet.
 
 seed_by_hash(Hash, Dict) :-
-  es_get([ll,seedlist,Hash], Dict).
+  retry0(es_get([ll,seedlist,Hash], Dict)).
 
 
 
@@ -414,7 +417,7 @@ seed_status(ended).
 
 seeds_by_status(Status, Pagination) :-
   status_query(Status, Query),
-  es_search([ll,seedlist], _{query: Query}, _{}, Pagination).
+  retry0(es_search([ll,seedlist], _{query: Query}, _{}, Pagination)).
 
 status_query(ended, Query) :- !,
   Query = _{range: _{ended: _{gt: 0.0}}}.
@@ -473,7 +476,7 @@ ll_reset_button(Iri) -->
 
 seed_date_time0(DT) -->
   {DT =:= 0.0}, !,
-  html('∅').
+  html("∅").
 seed_date_time0(DT) -->
   {current_ltag(LTag)},
   html_date_time(DT, _{ltag: LTag, masks: [offset], month_abbr: true}).

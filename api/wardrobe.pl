@@ -9,6 +9,7 @@ The page where cleaned data documents are displayed.
 */
 
 :- use_module(library(apply)).
+:- use_module(library(call_ext)).
 :- use_module(library(dict_ext)).
 :- use_module(library(html/html_date_time)).
 :- use_module(library(html/html_doc)).
@@ -87,7 +88,7 @@ wardrobe_method(Req, Method, MTs) :-
   ;   atomics_to_string(["*",Pattern,"*"], Wildcard),
       Must = _{wildcard: _{from: _{value: Wildcard}}}
   ),
-  once(
+  retry0(
     es_search(
       [ll,seedlist],
       _{

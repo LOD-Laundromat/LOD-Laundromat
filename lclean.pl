@@ -2,10 +2,9 @@
   lclean,
   [
     clean/0,
-    clean/1,           % +Hash
-    clean_seed/1,      % +Seed
-    get_thread_seed/2, % +Alias, -Hash
-    reset_and_clean/1  % +Hash
+    clean_hash/1,          % +Hash
+    clean_seed/1,          % +Seed
+    reset_and_clean_hash/1 % +Hash
   ]
 ).
 
@@ -16,6 +15,7 @@
 */
 
 :- use_module(library(apply)).
+:- use_module(library(call_ext)).
 :- use_module(library(debug_ext)).
 :- use_module(library(default)).
 :- use_module(library(dict_ext)).
@@ -43,8 +43,7 @@
 :- use_module(ll(api/seedlist)).
 
 :- dynamic
-    currently_debugging0/1,
-    thread_seed/2.
+    currently_debugging0/1.
 
 :- multifile
     currently_debugging0/1.
@@ -62,18 +61,18 @@ clean :-
   clean_seed(Seed).
 
 
-%! clean(+Hash) is det.
+%! clean_hash(+Hash) is det.
 %
 % Clean a specific seed from the seedlist.  Does not re-clean
 % documents.
 %
 % @throws existence_error If the seed is not in the seedlist.
 
-clean(Hash) :-
+clean_hash(Hash) :-
   q_file_hash(File, data, ntriples, Hash),
   q_file_is_ready(File), !,
   msg_notification("Already cleaned ~a", [Hash]).
-clean(Hash) :-
+clean_hash(Hash) :-
   seed_by_hash(Hash, Seed),
   clean_seed(Seed).
 
@@ -82,17 +81,8 @@ clean(Hash) :-
 %! clean_seed(+Seed) is det.
 
 clean_seed(Seed) :-
-  begin_seed(Seed),
-  thread_name(Alias),
   dict_tag(Seed, Hash),
-  set_thread_seed(Alias, Hash),
-  debug(lclean, "Thread ~a is cleaning ~a ~a", [Alias,Hash,Seed.from]),
-  clean_seed(Seed, Hash),
-  debug(lclean, "Thread ~a has cleaned ~a ~a", [Alias,Hash,Seed.from]),
-  end_seed(Seed).
-
-
-clean_seed(Seed, Hash) :-
+  begin_seed_hash(Hash),
   currently_debugging(Hash),
   q_dir_hash(Dir, Hash),
   % Only the Boolean needs to be determined under mutex.
@@ -110,21 +100,35 @@ clean_seed(Seed, Hash) :-
   (   Done == true
   ->  true
   ;   Done == false
-  ->  clean_seed_dir(Seed, Hash, Dir)
-  ).
+  ->  atomic_list_concat([wm,Hash], :, Alias),
+      call_in_thread(Alias, clean_seed_in_dir(Seed, Hash, Dir))
+  ),
+  
+  end_seed_hash(Hash).
 
 
-clean_seed_dir(Seed, Hash, Dir) :-
+:- meta_predicate
+    call_in_thread(+, 0).
+
+call_in_thread(Alias, Goal_0) :-
+  thread_create(profile(Goal_0), Id, [alias(Alias)]),
+  thread_join(Id, true).
+
+
+clean_seed_in_dir(Seed, Hash, Dir) :-
   atom_string(From, Seed.from),
   q_graph_hash(MetaG, meta, Hash),
   q_dir_file(Dir, meta, ntriples, MetaFile),
   q_dir_file(Dir, warn, ntriples, WarnFile),
+  GenOpts = [rdf_media_type(application/'n-triples')],
   setup_call_cleanup(
     (
       open(MetaFile, write, MetaOut0),
       zopen(MetaOut0, MetaOut, [format(gzip)]),
+      gen_ntuples:gen_ntuples_begin(MetaState, GenOpts),
       open(WarnFile, write, WarnOut0),
-      zopen(WarnOut0, WarnOut, [format(gzip)])
+      zopen(WarnOut0, WarnOut, [format(gzip)]),
+      gen_ntuples:gen_ntuples_begin(WarnState, GenOpts)
     ),
     (
       % Count the number of warnings.
@@ -134,7 +138,7 @@ clean_seed_dir(Seed, Hash, Dir) :-
         user:thread_message_hook(Term,Kind,_) :-
           error_kind(Kind),
           dict_inc(number_of_warnings, Counter),
-          rdf_store_warning(WarnOut, MetaG, Term)
+          rdf_store_warning(stream(WarnState,WarnOut), MetaG, Term)
       )),
       (   catch(
             rdf_clean0(Dir, From, InPath, OutEntry, NtCleanFile),
@@ -156,23 +160,20 @@ clean_seed_dir(Seed, Hash, Dir) :-
       
       % Assert metadata.
       % Explicitly turn off compression.  Otherwise we compress twice.
-      Opts = [rdf_media_type(application/'n-triples')],
-      setup_call_cleanup(
-        gen_ntuples:gen_ntuples_begin(State, Opts),
-        rdf_store_metadata(
-          Counter.number_of_warnings,
-          Hash,
-          Status,
-          InPath,
-          OutEntry,
-          NtCleanFile,
-          stream(State,MetaOut)
-        ),
-        gen_ntuples:gen_ntuples_end(State, Opts)
+      rdf_store_metadata(
+        Counter.number_of_warnings,
+        Hash,
+        Status,
+        InPath,
+        OutEntry,
+        NtCleanFile,
+        stream(MetaState,MetaOut)
       )
     ),
     (
+      gen_ntuples:gen_ntuples_end(MetaState, GenOpts),
       close(MetaOut),
+      gen_ntuples:gen_ntuples_end(WarnState, GenOpts),
       close(WarnOut)
     )
   ),
@@ -215,7 +216,12 @@ clean_seed_dir(Seed, Hash, Dir) :-
 
       % Store the number of tuples in RocksDB and ElasticSearch.
       rocks_merge(ll_index, number_of_tuples, NumTuples),
-      es_update_pp([ll,seedlist,Hash], _{doc: _{number_of_tuples: NumTuples}})
+      retry0(
+        es_update(
+          [ll,seedlist,Hash],
+          _{doc: _{number_of_tuples: NumTuples}}
+        )
+      )
   ),
 
   % That's it!
@@ -237,7 +243,7 @@ rdf_clean0(Dir, From, InPath, OutEntry2, CleanFile) :-
   thread_file(TmpFile0, TmpFile),
   call_to_ntriples(
     TmpFile,
-    dummy1(From, [compression(false),metadata(InPath)]),
+    dummy1(From, [metadata(InPath)]),
     [
       compression(false),
       md5(CleanHash),
@@ -275,34 +281,15 @@ dummy2(State, Out, _, S, P, O, G) :-
 
 
 
-%! reset_and_clean(+Hash) is det.
+%! reset_and_clean_hash(+Hash) is det.
 
-reset_and_clean(Hash) :-
+reset_and_clean_hash(Hash) :-
   % Remove directory and contents from disk.
   q_dir_hash(Dir, Hash),
   with_mutex(lclean, delete_directory_and_contents_msg(Dir)),
   % Reset the seedpoint in the seedlist.
   reset_seed(Hash),
-  clean(Hash).
-
-
-
-%! get_thread_seed(?Alias, ?Hash) is nondet.
-
-get_thread_seed(Alias, Hash) :-
-  with_mutex(thread_seed,
-    thread_seed(Alias, Hash)
-  ).
-
-
-
-%! set_thread_seed(+Alias, +Hash) is det.
-
-set_thread_seed(Alias, Hash) :-
-  with_mutex(thread_seed, (
-    retractall(thread_seed(Alias, _)),
-    assert(thread_seed(Alias, Hash))
-  )).
+  clean_hash(Hash).
 
 
 
