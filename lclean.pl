@@ -20,7 +20,6 @@
 :- use_module(library(default)).
 :- use_module(library(dict_ext)).
 :- use_module(library(filesex)).
-:- use_module(library(gen/gen_ntuples)).
 :- use_module(library(hdt/hdt_ext)).
 :- use_module(library(lists)).
 :- use_module(library(option)).
@@ -125,10 +124,10 @@ clean_seed_in_dir(Seed, Hash, Dir) :-
     (
       open(MetaFile, write, MetaOut0),
       zopen(MetaOut0, MetaOut, [format(gzip)]),
-      gen_ntuples:gen_ntuples_begin(MetaState, GenOpts),
+      rdf__io:rdf_write_ntuples_begin(MetaState, GenOpts),
       open(WarnFile, write, WarnOut0),
       zopen(WarnOut0, WarnOut, [format(gzip)]),
-      gen_ntuples:gen_ntuples_begin(WarnState, GenOpts)
+      rdf__io:rdf_write_ntuples_begin(WarnState, GenOpts)
     ),
     (
       % Count the number of warnings.
@@ -171,9 +170,9 @@ clean_seed_in_dir(Seed, Hash, Dir) :-
       )
     ),
     (
-      gen_ntuples:gen_ntuples_end(MetaState, GenOpts),
+      rdf__io:rdf_write_ntuples_end(MetaState, GenOpts),
       close(MetaOut),
-      gen_ntuples:gen_ntuples_end(WarnState, GenOpts),
+      rdf__io:rdf_write_ntuples_end(WarnState, GenOpts),
       close(WarnOut)
     )
   ),
@@ -241,7 +240,7 @@ rdf_clean0(Dir, From, InPath, OutEntry2, CleanFile) :-
     [access(write),relative_to(Dir)]
   ),
   thread_file(TmpFile0, TmpFile),
-  call_to_ntriples(
+  rdf_call_to_ntriples(
     TmpFile,
     dummy1(From, [metadata(InPath)]),
     [
@@ -277,7 +276,7 @@ dummy1(From, InOpts, State, Out) :-
   rdf_call_on_tuples(From, dummy2(State, Out), InOpts).
 
 dummy2(State, Out, _, S, P, O, G) :-
-  gen_ntuple(S, P, O, G, State, Out).
+  rdf_write_ntuple(S, P, O, G, State, Out).
 
 
 

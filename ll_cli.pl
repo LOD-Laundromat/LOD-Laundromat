@@ -1,9 +1,9 @@
 :- module(
-     ll_cli,
-     [
-       number_of_triples/0
-     ]
-   ).
+  ll_cli,
+  [
+    number_of_triples/0
+  ]
+).
 
 :- reexport(library(hdt/hdt_ext)).
 :- reexport(library(q/q_rdf)).
