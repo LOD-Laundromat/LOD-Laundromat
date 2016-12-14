@@ -65,6 +65,7 @@ there (409).  The HTTP body is expected to be `{"from": $IRI$}`.
 :- use_module(library(http/http_json)).
 :- use_module(library(http/http_path)).
 :- use_module(library(http/js_write)).
+:- use_module(library(http/json)).
 :- use_module(library(http/rest)).
 :- use_module(library(json_ext)).
 :- use_module(library(list_ext)).
@@ -85,7 +86,7 @@ there (409).  The HTTP body is expected to be `{"from": $IRI$}`.
 
 :- use_module(ll(style/ll_style)).
 
-:- http_handler(ll(seed), seedlist_handler, [prefix]).
+:- http_handler(ll(seed), seedlist_handler, [methods([delete,get,post]),prefix]).
 
 :- multifile
     http_param/1,
@@ -104,7 +105,7 @@ media_type(text/html).
 % HTTP API %
 
 seedlist_handler(Req) :-
-  rest_method(Req, [delete,get,post], seedlist_handler_method(Req)).
+  rest_method(Req, seedlist_handler_method(Req)).
 
 
 seedlist_handler_method(Req, delete, MTs) :-
@@ -113,27 +114,27 @@ seedlist_handler_method(Req, delete, MTs) :-
 seedlist_handler_method(Req, get, MTs) :-
   memberchk(request_uri(Iri), Req),
   rest_media_type(MTs, seedlist_get(Iri)).
-seedlist_handler_method(post, MTs) :-
+seedlist_handler_method(Req, post, MTs) :-
   http_read_json_dict(Req, Data),
   add_seed(Data.from, Iri),
   rest_media_type(MTs, seedlist_post(Iri)).
 
 
-seedlist_delete(Iri, MT) :-
-  MT = application/json,
+seedlist_delete(Iri, application/json) :-
   iri_to_hash(Iri, Hash),
   remove_seed(Hash),
-  reply_rest(MT, json(_{}), [ContentType]).
+  reply_json_dict(_{}, [status(204)]).
 
 
-seedlist_get(Iri, MT) :-
-  MT = application/json,
+seedlist_get(Iri, application/json) :-
   (   iri_to_hash(Iri, Hash)
   ->  pagination(Dict, seed_by_hash(Hash, Dict), Result)
   ;   pagination(Dict, seed(Dict), Result)
   ),
-  http_link_header(Result, Link),
-  rest_reply(MT, json(Result.results), [Link]).
+  format("Content-Type: application/json~n"),
+  http_link_header(Result),
+  nl,
+  json_write_dict(Result.results).
 seedlist_get(Iri, text/html) :-
   (   iri_to_hash(Iri, Hash)
   ->  seed_by_hash(Hash, Dict),

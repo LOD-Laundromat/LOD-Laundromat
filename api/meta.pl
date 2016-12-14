@@ -97,7 +97,7 @@ method0(Req, Mode, get, MTs) :-
   maplist(q_query_term, Query0, Query),
   PageOpts = _{iri: Iri, page: Page, page_size: PageSize, query: Query},
   pagination(Quad, quad0(S, P, O, Hash, Mode, Quad), PageOpts, Result),
-  rest_media_type(Method, MTs, get0(Mode, Result)).
+  rest_media_type(MTs, get0(Mode, Result)).
 
 quad0(S, P, O, Hash, Mode, rdf(S,P,O,G)) :-
   q_hash(Hash),

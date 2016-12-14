@@ -18,22 +18,21 @@
 :- use_module(ll(api/wardrobe)).
 :- use_module(ll(style/ll_style)).
 
-:- http_handler(ll(overview), ll_overview_handler,  [prefix,priority(1)]).
+:- http_handler(ll(overview), ll_overview_handler,  [methods([get]),prefix,priority(1)]).
 
 
 
 
 
 ll_overview_handler(Req) :-
-  rest_method(Req, [get], ll_overview_handler).
+  rest_method(Req, ll_overview_handler).
 
 
-ll_overview_handler(_, Method, MTs) :-
-  http_is_get(Method),
-  rest_media_type(Method, MTs, ll_overview_media_type).
+ll_overview_handler(get, MTs) :-
+  rest_media_type(MTs, ll_overview_get).
 
 
-ll_overview_media_type(_, text/html) :-
+ll_overview_get(text/html) :-
   reply_html_page(
     ll([]),
     \cp_title(["Overview"]),

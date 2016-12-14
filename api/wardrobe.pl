@@ -98,7 +98,7 @@ wardrobe_method(Req, get, MTs) :-
       Result
     )
   ),
-  rest_media_type(Method, MTs, wardrobe_get(Result)).
+  rest_media_type(MTs, wardrobe_get(Result)).
 
 
 wardrobe_get(Result, text/html) :-

@@ -13,22 +13,21 @@
 
 :- use_module(ll(style/ll_style)).
 
-:- http_handler(ll(basket), basket_handler, [prefix]).
+:- http_handler(ll(basket), basket_handler, [methods([get]),prefix]).
 
 
 
 
 
 basket_handler(Req) :-
-  rest_method(Req, [get], basket_handler).
+  rest_method(Req, basket_handler).
 
 
-basket_handler(_, Method, MTs) :-
-  http_is_get(Method),
-  rest_media_type(Method, MTs, basket_media_type).
+basket_handler(get, MTs) :-
+  rest_media_type(MTs, basket_get).
 
 
-basket_media_type(_, text/html) :-
+basket_get(text/html) :-
   reply_html_page(
     ll([]),
     [
