@@ -28,14 +28,13 @@ ll_overview_handler(Req) :-
   rest_method(Req, [get], ll_overview_handler).
 
 
-ll_overview_handler(Req, Method, MTs) :-
+ll_overview_handler(_, Method, MTs) :-
   http_is_get(Method),
-  rest_media_type(Req, Method, MTs, ll_overview_media_type).
+  rest_media_type(Method, MTs, ll_overview_media_type).
 
 
-ll_overview_media_type(Method, text/html) :-
+ll_overview_media_type(_, text/html) :-
   reply_html_page(
-    Method,
     ll([]),
     \cp_title(["Overview"]),
     [

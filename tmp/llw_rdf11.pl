@@ -21,7 +21,6 @@
 
 rdf11_handler(_) :-
   reply_html_page(
-    Method,
     ll([]),
     \title(["RDF 1.1","SWI-Prolog's RDF library"]),
     article([

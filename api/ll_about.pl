@@ -25,14 +25,13 @@ ll_about_handler(Req) :-
   rest_method(Req, [get], ll_about_handler).
 
 
-ll_about_handler(Req, Method, MTs) :-
+ll_about_handler(_, Method, MTs) :-
   http_is_get(Method),
-  rest_media_type(Req, Method, MTs, ll_about_media_type).
+  rest_media_type(MTs, ll_about_get).
 
 
-ll_about_media_type(Method, text/html) :-
+ll_about_get(text/html) :-
   reply_html_page(
-    Method,
     ll([]),
     \cp_title(["About"]),
     article([

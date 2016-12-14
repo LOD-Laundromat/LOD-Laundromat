@@ -104,42 +104,40 @@ media_type(text/html).
 % HTTP API %
 
 seedlist_handler(Req) :-
-  rest_method(Req, [delete,get,post], seedlist_handler_method).
+  rest_method(Req, [delete,get,post], seedlist_handler_method(Req)).
 
 
 seedlist_handler_method(Req, delete, MTs) :-
-  http_relative_iri(Req, Iri),
-  rest_media_type(Req, delete, MTs, seedlist_media_type(Iri)).
-seedlist_handler_method(Req, Method, MTs) :-
-  http_is_get(Method),
-  http_relative_iri(Req, Iri),
-  rest_media_type(Req, Method, MTs, seedlist_media_type(Iri)).
-seedlist_handler_method(Req, post, MTs) :-
-  http_read_json_dict(Data),
+  memberchk(request_uri(Iri), Req),
+  rest_media_type(MTs, seedlist_delete(Iri)).
+seedlist_handler_method(Req, get, MTs) :-
+  memberchk(request_uri(Iri), Req),
+  rest_media_type(MTs, seedlist_get(Iri)).
+seedlist_handler_method(post, MTs) :-
+  http_read_json_dict(Req, Data),
   add_seed(Data.from, Iri),
-  rest_media_type(Req, post, MTs, seedlist_media_type(Iri)).
+  rest_media_type(MTs, seedlist_post(Iri)).
 
 
-seedlist_media_type(Iri, delete, application/json) :-
+seedlist_delete(Iri, MT) :-
+  MT = application/json,
   iri_to_hash(Iri, Hash),
   remove_seed(Hash),
-  reply_json_dict(_{}, [status(200)]).
-seedlist_media_type(Iri, Method, MT) :-
+  reply_rest(MT, json(_{}), [ContentType]).
+
+
+seedlist_get(Iri, MT) :-
   MT = application/json,
   (   iri_to_hash(Iri, Hash)
   ->  pagination(Dict, seed_by_hash(Hash, Dict), Result)
   ;   pagination(Dict, seed(Dict), Result)
   ),
-  rest_reply(
-    Method,
-    reply_content_type(MT),
-    json_write_dict(Result.results)
-  ).
-seedlist_media_type(Iri, Method, text/html) :-
+  http_link_header(Result, Link),
+  rest_reply(MT, json(Result.results), [Link]).
+seedlist_get(Iri, text/html) :-
   (   iri_to_hash(Iri, Hash)
   ->  seed_by_hash(Hash, Dict),
       reply_html_page(
-        Method,
         ll([]),
         \cp_title(["Seed",Hash]),
         \html_seed(Dict)
@@ -148,7 +146,6 @@ seedlist_media_type(Iri, Method, text/html) :-
       seeds_by_status(started, Pagination2),
       seeds_by_status(added, Pagination3),
       reply_html_page(
-        Method,
         ll([]),
         \cp_title(["Seedlist"]),
         [
@@ -162,7 +159,8 @@ seedlist_media_type(Iri, Method, text/html) :-
       )
   ).
 
-seedlist_media_type(Iri, post, application/json) :-
+
+seedlist_post(Iri, application/json) :-
   reply_json_dict(_{seed: Iri}, [status(201)]).
 
 seedlist_panel(Id, Lbl, Pagination) -->

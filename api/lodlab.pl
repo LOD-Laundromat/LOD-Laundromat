@@ -40,10 +40,9 @@ lodlab_handler(M, Req, Method, MTs) :-
   rest_media_type(Method, MTs, lodlab_media_type(M)).
 
 
-lodlab_media_type(M, Method, text/html) :-
+lodlab_media_type(M, text/html) :-
   rdf_default_graph(G),
   reply_html_page(
-    Method,
     ll(false),
     [
       \meta_description("SPARQL endpoint of the LOD Laundromat"),

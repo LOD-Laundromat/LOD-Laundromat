@@ -23,14 +23,13 @@ basket_handler(Req) :-
   rest_method(Req, [get], basket_handler).
 
 
-basket_handler(Req, Method, MTs) :-
+basket_handler(_, Method, MTs) :-
   http_is_get(Method),
-  rest_media_type(Req, Method, MTs, basket_media_type).
+  rest_media_type(Method, MTs, basket_media_type).
 
 
-basket_media_type(Method, text/html) :-
+basket_media_type(_, text/html) :-
   reply_html_page(
-    Method,
     ll([]),
     [
       \cp_title(["Laundry Basket"]),

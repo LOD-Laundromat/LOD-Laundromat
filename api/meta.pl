@@ -75,11 +75,10 @@ meta_handler(Req) :-
 
 
 handler0(Mode, Req) :-
-  rest_method(Req, [get], method0(Mode)).
+  rest_method(Req, method0(Req, Mode)).
 
 
-method0(Mode, Req, Method, MTs) :-
-  http_is_get(Method),
+method0(Req, Mode, get, MTs) :-
   http_parameters(
     Req,
     [
@@ -98,7 +97,7 @@ method0(Mode, Req, Method, MTs) :-
   maplist(q_query_term, Query0, Query),
   PageOpts = _{iri: Iri, page: Page, page_size: PageSize, query: Query},
   pagination(Quad, quad0(S, P, O, Hash, Mode, Quad), PageOpts, Result),
-  rest_media_type(Req, Method, MTs, media_type0(Mode, Result)).
+  rest_media_type(Method, MTs, get0(Mode, Result)).
 
 quad0(S, P, O, Hash, Mode, rdf(S,P,O,G)) :-
   q_hash(Hash),
@@ -110,10 +109,9 @@ quad0(S, P, O, Hash, Mode, rdf(S,P,O,G)) :-
   hdt_prepare_file(NtFile, HdtFile),
   hdt_call_on_file(HdtFile, hdt0(S, P, O)).
 
-media_type0(Mode, Result, Method, text/html) :-
+get0(Mode, Result, text/html) :-
   mode_label(Mode, Lbl),
   reply_html_page(
-    Method,
     cp([]),
     \cp_title([Lbl,"browser"]),
     \pagination_result(Result, {Mode}/[Quads]>>qh_quad_table(Mode, Quads))
@@ -151,10 +149,9 @@ mode_label(data, "Data").
 mode_label(meta, "Meta").
 
 /*
-meta_media_type(G, Method, text/html) :-
+meta_media_type(G, _, text/html) :-
   once(q_container(hdt, _, Path, G)),
   reply_html_page(
-    Method,
     ll([]),
     \cp_title_call(("Metadata browser",dcg_q_print_graph_term(G))),
     \panels([\overall_panel(G),\entry_panels(G, Path)])

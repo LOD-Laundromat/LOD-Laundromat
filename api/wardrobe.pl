@@ -33,7 +33,7 @@ The page where cleaned data documents are displayed.
 :- use_module(ll(api/seedlist)).
 :- use_module(ll(style/ll_style)).
 
-:- http_handler(ll(wardrobe), wardrobe_handler, [prefix]).
+:- http_handler(ll(wardrobe), wardrobe_handler, [methods([get]),prefix]).
 
 :- multifile
     http_param/1,
@@ -63,11 +63,10 @@ media_type(text/html).
 
 
 wardrobe_handler(Req) :-
-  rest_method(Req, [get], wardrobe_method).
+  rest_method(Req, wardrobe_method(Req)).
 
 
-wardrobe_method(Req, Method, MTs) :-
-  http_is_get(Method),
+wardrobe_method(Req, get, MTs) :-
   http_parameters(
     Req,
     [page(Page),page_size(PageSize),pattern(Pattern)],
@@ -99,12 +98,11 @@ wardrobe_method(Req, Method, MTs) :-
       Result
     )
   ),
-  rest_media_type(Req, Method, MTs, wardrobe_media_type(Result)).
+  rest_media_type(Method, MTs, wardrobe_get(Result)).
 
 
-wardrobe_media_type(Result, Method, text/html) :-
+wardrobe_get(Result, text/html) :-
   reply_html_page(
-    Method,
     ll([]),
     [
       \pagination_links(Result),
