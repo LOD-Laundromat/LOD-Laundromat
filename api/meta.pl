@@ -34,8 +34,8 @@
 
 :- use_module(ll(style/ll_style)).
 
-:- http_handler(ll(data), data_handler, [prefix]).
-:- http_handler(ll(meta), meta_handler, [prefix]).
+:- http_handler(ll(data), data_handler, [methods([get]),prefix]).
+:- http_handler(ll(meta), meta_handler, [methods([get]),prefix]).
 
 :- multifile
     http_param/1,

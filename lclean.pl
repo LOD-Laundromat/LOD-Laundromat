@@ -110,7 +110,7 @@ clean_seed(Seed) :-
     call_in_thread(+, 0).
 
 call_in_thread(Alias, Goal_0) :-
-  thread_create(profile(Goal_0), Id, [alias(Alias)]),
+  thread_create(Goal_0, Id, [alias(Alias)]),
   thread_join(Id, true).
 
 
@@ -240,6 +240,7 @@ rdf_clean0(Dir, From, InPath, OutEntry2, CleanFile) :-
     [access(write),relative_to(Dir)]
   ),
   thread_file(TmpFile0, TmpFile),
+  gtrace,
   rdf_call_to_ntriples(
     TmpFile,
     dummy1(From, [metadata(InPath)]),

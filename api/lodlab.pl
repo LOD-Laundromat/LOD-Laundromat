@@ -17,7 +17,7 @@
 
 :- use_module(ll(style/ll_style)).
 
-:- http_handler(ll(lodlab), lodlab_handler, [prefix]).
+:- http_handler(ll(lodlab), lodlab_handler, [methods([get]),prefix]).
 
 :- setting(
      backend,
@@ -32,12 +32,11 @@
 
 lodlab_handler(Req) :-
   setting(backend, M),
-  rest_method(Req, [get], lodlab_handler(M)).
+  rest_method(Req, lodlab_handler(M)).
 
 
-lodlab_handler(M, Req, Method, MTs) :-
-  http_is_get(Method),
-  rest_media_type(Method, MTs, lodlab_media_type(M)).
+lodlab_handler(M, get, MTs) :-
+  rest_media_type(MTs, lodlab_media_type(M)).
 
 
 lodlab_media_type(M, text/html) :-

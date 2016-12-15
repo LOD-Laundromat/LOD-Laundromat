@@ -15,18 +15,17 @@
 
 :- use_module(ll(style/ll_style)).
 
-:- http_handler(ll(about), ll_about_handler, [prefix]).
+:- http_handler(ll(about), ll_about_handler, [methods([get]),prefix]).
 
 
 
 
 
 ll_about_handler(Req) :-
-  rest_method(Req, [get], ll_about_handler).
+  rest_method(Req, ll_about_handler).
 
 
-ll_about_handler(_, Method, MTs) :-
-  http_is_get(Method),
+ll_about_handler(get, MTs) :-
   rest_media_type(MTs, ll_about_get).
 
 
