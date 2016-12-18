@@ -240,14 +240,13 @@ rdf_clean0(Dir, From, InPath, OutEntry2, CleanFile) :-
     [access(write),relative_to(Dir)]
   ),
   thread_file(TmpFile0, TmpFile),
-  gtrace,
   rdf_call_to_ntriples(
     TmpFile,
     dummy1(From, [metadata(InPath)]),
     [
       compression(false),
       md5(CleanHash),
-      metadata([OutEntry1]),
+      metadata(OutPath),
       quads(NumQuads),
       triples(NumTriples),
       tuples(NumTuples)
@@ -256,6 +255,8 @@ rdf_clean0(Dir, From, InPath, OutEntry2, CleanFile) :-
 
   % Sort the N-Triples on disk.
   sort_file(TmpFile),
+  gtrace,
+  OutPath = [OutEntry1|_],
   OutEntry2 = OutEntry1.put(_{
     number_of_quads: NumQuads,
     number_of_triples: NumTriples,
