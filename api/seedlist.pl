@@ -306,7 +306,7 @@ add_seed(From1, Hash) :-
   retry0(
     es_create(
       [ll,seedlist,Hash],
-      _{added: Now, ended: 0.0, from: From2, number_of_tuples: 0, started: 0.0}
+      _{added: Now, ended: 0.0, from: From2, started: 0.0}
     )
   ),
   debug(seedlist, "Added to seedlist: ~a (~a)", [From2,Hash]).
