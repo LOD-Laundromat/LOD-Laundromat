@@ -11,7 +11,7 @@
 /** <module> LOD Laundromat: Data cleaning
 
 @author Wouter Beek
-@version 2016/03-2016/05, 2016/08-2016/10, 2016/12
+@version 2016/03-2016/12
 */
 
 :- use_module(library(apply)).
@@ -20,9 +20,11 @@
 :- use_module(library(default)).
 :- use_module(library(dict_ext)).
 :- use_module(library(filesex)).
+:- use_module(library(hash_ext)).
 :- use_module(library(hdt/hdt_ext)).
 :- use_module(library(lists)).
 :- use_module(library(option)).
+:- use_module(library(os/archive_ext)).
 :- use_module(library(os/compress_ext)).
 :- use_module(library(os/file_ext)).
 :- use_module(library(os/gnu_sort)).
@@ -46,6 +48,9 @@
 
 :- multifile
     currently_debugging0/1.
+
+:- thread_local
+   number_of_warnings/1.
 
 
 
@@ -83,64 +88,60 @@ clean_seed(Seed) :-
   dict_tag(Seed, Hash),
   begin_seed_hash(Hash),
   currently_debugging(Hash),
-  q_dir_hash(Dir, Hash),
-  % Only the Boolean needs to be determined under mutex.
-  with_mutex(
-    lclean,
-    (   % This seed has already been processed.
-        exists_directory(Dir)
-    ->  Done = true
-    ;   make_directory_path(Dir),
-        Done = false
-    )
-  ),
-  % If the source directory already exists, then the seed was already
-  % crawled.
-  (   Done == true
-  ->  true
-  ;   Done == false
-  ->  atomic_list_concat([wm,Hash], :, Alias),
-      call_in_thread(Alias, clean_seed_in_dir(Seed, Hash, Dir))
-  ),
-  
+  atomic_list_concat([wm,Hash], :, Alias),
+  % We start a new thread with the seed's hash as alias.  This makes
+  % it easy to see which seed caused a thread to fail.
+  call_in_thread(Alias, clean_seed_in_thread(Seed)),
   end_seed_hash(Hash).
 
 
-:- meta_predicate
-    call_in_thread(+, 0).
-
-call_in_thread(Alias, Goal_0) :-
-  thread_create(Goal_0, Id, [alias(Alias)]),
-  thread_join(Id, true).
-
-
-clean_seed_in_dir(Seed, Hash, Dir) :-
+clean_seed_in_thread(Seed) :-
+  % @tbd: Superfluous?
   atom_string(From, Seed.from),
-  q_graph_hash(MetaG, meta, Hash),
+  % Iterate over all entries inside the document stored at From.
+  forall(rdf_call_on_stream(From, clean_entry(From)), true).
+
+
+clean_entry(From, In, InPath, InPath) :-
+  % Find the name of the current entry.
+  path_entry_name(InPath, EntryName),
+  % The clean hash is based on the pair (From,EntryName).
+  md5(From-EntryName, Hash),
+  debug(lclean, "[START] ~a:~a (~a)", [From,EntryName,Hash]),
+  q_dir_hash(Dir, Hash),
+  make_directory_path(Dir),
   q_dir_file(Dir, meta, ntriples, MetaFile),
   q_dir_file(Dir, warn, ntriples, WarnFile),
-  GenOpts = [rdf_media_type(application/'n-triples')],
+  % Specify the clean serialization format for RDF.
+  GenOpts = [rdf_media_type(application/'n-quads')],
+  
   setup_call_cleanup(
     (
+      % Open a triple write stream for metadata.
       open(MetaFile, write, MetaOut0),
       zopen(MetaOut0, MetaOut, [format(gzip)]),
-      rdf__io:rdf_write_ntuples_begin(MetaState, GenOpts),
+      rdf__io:rdf_write_ntuples_begin(MetaState, [name(meta)|GenOpts]),
+      % Open a triple write stream for warnings.
       open(WarnFile, write, WarnOut0),
       zopen(WarnOut0, WarnOut, [format(gzip)]),
-      rdf__io:rdf_write_ntuples_begin(WarnState, GenOpts)
+      rdf__io:rdf_write_ntuples_begin(WarnState, [name(warn)|GenOpts])
     ),
     (
-      % Count the number of warnings.
-      Counter = _{number_of_warnings: 0},
-      % Assert the warnings.
+      % Count the number of warnings as we go along.
+      flag(Hash, _, 0),
+      % Assert the warnings.  Warnings are attributed to the metadata
+      % graph.  The metadata graph acts as the (From,EntryName)
+      % dataset identifier (not sure whether this is good or not).
+      q_graph_hash(MetaG, meta, Hash),
       asserta((
         user:thread_message_hook(Term,Kind,_) :-
           error_kind(Kind),
-          dict_inc(number_of_warnings, Counter),
+          flag(Hash, N, N + 1),
+          % @bug: WarnState gets reset each time, e.g., ‘triples: 1’.
           rdf_store_warning(stream(WarnState,WarnOut), MetaG, Term)
       )),
       (   catch(
-            rdf_clean0(Dir, From, InPath, OutEntry, NtCleanFile),
+            rdf_clean0(Dir, In, InPath, OutEntry, NtCleanFile),
             Exception,
             true
           )
@@ -159,20 +160,21 @@ clean_seed_in_dir(Seed, Hash, Dir) :-
       
       % Assert metadata.
       % Explicitly turn off compression.  Otherwise we compress twice.
+      flag(Hash, NumWarns, 0),
       rdf_store_metadata(
-        Counter.number_of_warnings,
+        NumWarns,
         Hash,
         Status,
         InPath,
         OutEntry,
         NtCleanFile,
         stream(MetaState,MetaOut)
-      )
+      ),
+      rdf__io:rdf_write_ntuples_end(MetaState, GenOpts),
+      rdf__io:rdf_write_ntuples_end(WarnState, GenOpts)
     ),
     (
-      rdf__io:rdf_write_ntuples_end(MetaState, GenOpts),
       close(MetaOut),
-      rdf__io:rdf_write_ntuples_end(WarnState, GenOpts),
       close(WarnOut)
     )
   ),
@@ -214,17 +216,12 @@ clean_seed_in_dir(Seed, Hash, Dir) :-
       link0(Dir, 'data.nt.gz.ready', CleanDir),
 
       % Store the number of tuples in RocksDB and ElasticSearch.
-      rocks_merge(ll_index, number_of_tuples, NumTuples),
-      retry0(
-        es_update(
-          [ll,seedlist,Hash],
-          _{doc: _{number_of_tuples: NumTuples}}
-        )
-      )
+      rocks_merge(ll_index, number_of_tuples, NumTuples)
   ),
+  rocks_merge(ll_index, number_of_documents, 1),
 
   % That's it!
-  rocks_merge(ll_index, number_of_documents, 1).
+  debug(lclean, "[END] ~a:~a (~a)", [From,EntryName,Hash]).
 
 
 link0(Dir1, Local, Dir2) :-
@@ -233,48 +230,45 @@ link0(Dir1, Local, Dir2) :-
   create_file_link(File1, File2).
 
 
-rdf_clean0(Dir, From, InPath, OutEntry2, CleanFile) :-
+rdf_clean0(Dir, In, InPath, OutEntry2, CleanFile) :-
   absolute_file_name(
     cleaning,
     TmpFile0,
     [access(write),relative_to(Dir)]
   ),
   thread_file(TmpFile0, TmpFile),
-  gtrace,
   rdf_call_to_ntriples(
     TmpFile,
-    dummy1(From, [metadata(InPath)]),
+    dummy1(In, InPath),
     [
       compression(false),
       md5(CleanHash),
-      metadata([OutEntry1]),
+      metadata(OutPath),
       quads(NumQuads),
       triples(NumTriples),
       tuples(NumTuples)
     ]
   ),
-
   % Sort the N-Triples on disk.
   sort_file(TmpFile),
+  OutPath = [OutEntry1|_],
   OutEntry2 = OutEntry1.put(_{
     number_of_quads: NumQuads,
     number_of_triples: NumTriples,
     number_of_tuples: NumTuples
   }),
   q_file_hash(CleanFile, data, ntriples, CleanHash),
-
   % Compress the cleaned file.
   (   exists_file(CleanFile)
   ->  true
   ;   create_file_directory(CleanFile),
       compress_file(TmpFile, CleanFile)
   ),
-  
   % Delete the temporary file.
   delete_file(TmpFile).
 
-dummy1(From, InOpts, State, Out) :-
-  rdf_call_on_tuples(From, dummy2(State, Out), InOpts).
+dummy1(In, InPath, State, Out) :-
+  rdf_call_on_tuples_stream(In, dummy2(State, Out), InPath).
 
 dummy2(State, Out, _, S, P, O, G) :-
   rdf_write_ntuple(S, P, O, G, State, Out).
@@ -317,11 +311,11 @@ rdf_store_metadata(NumWarns, Hash, Status, InPath, OutEntry, CleanFile, M) :-
   (   var(InPath)
   ->  true
   ;   InPath = [FirstInEntry|_],
-      qb(M, MetaG, nsdef:numberOfReadBytes, FirstInEntry.byte_count^^xsd:nonNegativeInteger),
+      %%%%qb(M, MetaG, nsdef:numberOfReadBytes, FirstInEntry.byte_count^^xsd:nonNegativeInteger),
       qb(M, MetaG, nsdef:numberOfWrittenBytes, OutEntry.byte_count^^xsd:nonNegativeInteger),
-      qb(M, MetaG, nsdef:numberOfReadCharacters, FirstInEntry.char_count^^xsd:nonNegativeInteger),
+      %%%%qb(M, MetaG, nsdef:numberOfReadCharacters, FirstInEntry.char_count^^xsd:nonNegativeInteger),
       qb(M, MetaG, nsdef:numberOfWrittenCharacters, OutEntry.char_count^^xsd:nonNegativeInteger),
-      qb(M, MetaG, nsdef:numberOfReadLines, FirstInEntry.line_count^^xsd:nonNegativeInteger),
+      %%%%qb(M, MetaG, nsdef:numberOfReadLines, FirstInEntry.line_count^^xsd:nonNegativeInteger),
       qb(M, MetaG, nsdef:numberOfWrittenLines, OutEntry.line_count^^xsd:nonNegativeInteger),
       dict_get(number_of_quads, OutEntry, 0, NumQuads),
       qb(M, MetaG, nsdef:numberOfQuads, NumQuads^^xsd:nonNegativeInteger),
