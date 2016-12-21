@@ -118,7 +118,7 @@ clean_entry(From, In, InPath, InPath) :-
   q_dir_file(Dir, warn, ntriples, WarnFile),
   % Specify the clean serialization format for RDF.
   GenOpts = [rdf_media_type(application/'n-quads')],
-  
+
   setup_call_cleanup(
     (
       % Open a triple write stream for metadata.
