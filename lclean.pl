@@ -65,6 +65,7 @@ clean :-
   clean_seed(Seed).
 
 
+
 %! clean_hash(+Hash) is det.
 %
 % Clean a specific seed from the seedlist.  Does not re-clean
@@ -88,28 +89,53 @@ clean_seed(Seed) :-
   dict_tag(Seed, Hash),
   begin_seed_hash(Hash),
   currently_debugging(Hash),
-  atomic_list_concat([wm,Hash], :, Alias),
-  % We start a new thread with the seed's hash as alias.  This makes
-  % it easy to see which seed caused a thread to fail.
-  call_in_thread(Alias, clean_seed_in_thread(Seed)),
-  end_seed_hash(Hash).
-
-
-clean_seed_in_thread(Seed) :-
   % @tbd: Superfluous?
   atom_string(From, Seed.from),
   % Iterate over all entries inside the document stored at From.
-  forall(rdf_call_on_stream(From, clean_entry(From)), true).
+  (   catch(
+        forall(rdf_call_on_stream(From, clean_seed_entry(From)), true),
+        Exception,
+        true
+      )
+  ->  true
+  ;   % This should not occur.  Look these up in the metadata.
+      Exception = fail
+  ),
+  (   var(Exception)
+  ->  true
+  ;   msg_warning("[FAILED] ~w ~w~n", [Exception,Hash])
+  ),
+  end_seed_hash(Hash).
 
 
-clean_entry(From, In, InPath, InPath) :-
+clean_seed_entry(From, In, InPath, InPath) :-
   % Find the name of the current entry.
   path_entry_name(InPath, EntryName),
   % The clean hash is based on the pair (From,EntryName).
   md5(From-EntryName, Hash),
-  debug(lclean, "[START] ~a:~a (~a)", [From,EntryName,Hash]),
   q_dir_hash(Dir, Hash),
-  make_directory_path(Dir),
+  with_mutex(
+    lclean,
+    (   exists_directory(Dir)
+    ->  Exists = true
+    ;   make_directory_path(Dir),
+        Exists = false
+    )
+  ),
+  (   Exists = true
+  ->  true
+  ;   atomic_list_concat([wm,Hash], :, Alias),
+      % We start a new thread with the seed's hash as alias.  This
+      % makes it easy to see which seed caused a thread to fail.
+      call_in_thread(
+        Alias,
+        clean_seed_entry_in_thread(From, In, InPath, EntryName, Hash, Dir)
+      )
+  ).
+
+
+clean_seed_entry_in_thread(From, In, InPath, EntryName, Hash, Dir) :-
+  debug(lclean, "[START] ~a:~a (~a)", [From,EntryName,Hash]),
   q_dir_file(Dir, meta, ntriples, MetaFile),
   q_dir_file(Dir, warn, ntriples, WarnFile),
   % Specify the clean serialization format for RDF.
