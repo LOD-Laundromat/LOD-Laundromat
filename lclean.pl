@@ -95,12 +95,16 @@ clean_seed(Seed) :-
   end_seed_hash(Hash).
 
 
+%! clean_seed_in_thread(+Seed) is det.
+
 clean_seed_in_thread(Seed) :-
   % @tbd: Superfluous?
   atom_string(From, Seed.from),
   % Iterate over all entries inside the document stored at From.
   forall(rdf_call_on_stream(From, clean_entry(From)), true).
 
+
+%! clean_entry(+From, +In, +InPath1, -InPath2) is det.
 
 clean_entry(From, In, InPath, InPath) :-
   % Find the name of the current entry.
