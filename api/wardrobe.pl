@@ -19,7 +19,7 @@ The page where cleaned data documents are displayed.
 :- use_module(library(http/http_ext)).
 :- use_module(library(http/http_parameters)).
 :- use_module(library(http/rest)).
-:- use_module(library(pagination)).
+:- use_module(library(pagination/html_pagination)).
 :- use_module(library(q/q_fs)).
 :- use_module(library(q/q_io)).
 :- use_module(library(q/q_rdf)).
@@ -105,7 +105,7 @@ wardrobe_get(Result, text/html) :-
   reply_html_page(
     ll([]),
     [
-      \pagination_links(Result),
+      \html_pagination_links(Result),
       \cp_title(["Wardrobe","Overview"])
     ],
     [
@@ -114,7 +114,7 @@ wardrobe_get(Result, text/html) :-
         [autocomplete=off,class='search-box'],
         link_to_id(wardrobe_handler)
       ),
-      \pagination_result(Result, documents)
+      \html_pagination_result(Result, documents)
     ]
   ).
 
