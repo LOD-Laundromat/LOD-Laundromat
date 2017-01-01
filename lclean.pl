@@ -86,14 +86,18 @@ clean_hash(Hash) :-
 %! clean_seed(+Seed) is det.
 
 clean_seed(Seed) :-
-  dict_tag(Seed, Hash),
-  begin_seed_hash(Hash),
-  currently_debugging(Hash),
-  % @tbd: Superfluous?
+  dict_tag(Seed, SeedHash),
+  begin_seed_hash(SeedHash),
+  currently_debugging(SeedHash),
   atom_string(From, Seed.from),
-  % Iterate over all entries inside the document stored at From.
+  % Iterate over all entries inside the document stored at From.  We
+  % need to catch TCP exceptions, because there will not be an input
+  % stream to run the cleaning goal on.
   (   catch(
-        forall(rdf_call_on_stream(From, clean_seed_entry(From)), true),
+        forall(
+          rdf_call_on_stream(From, clean_seed_entry(From, SeedHash)),
+          true
+        ),
         Exception,
         true
       )
@@ -103,19 +107,51 @@ clean_seed(Seed) :-
   ),
   (   var(Exception)
   ->  true
-  ;   msg_warning("[FAILED] ~w ~w~n", [Exception,Hash])
+  ;   msg_warning("[FAILED] ~w ~w~n", [Exception,SeedHash]),
+      with_output_to(string(Status), write_term(Exception)),
+      q_graph_hash(MetaG, meta, SeedHash),
+      q_dir_hash(Dir, SeedHash),
+      make_directory_path(Dir),
+      q_dir_file(Dir, meta, ntriples, MetaFile),
+      q_dir_file(Dir, warn, ntriples, WarnFile),
+      setup_call_cleanup(
+        (
+          open_output_stream(MetaFile, meta, MetaOut, MetaState),
+          open_output_stream(WarnFile, warn, WarnOut, WarnState)
+        ),
+        (
+          debug(lclean, "[START] ~a (~a)", [From,SeedHash]),
+          MetaM = stream(MetaState,MetaOut),
+          qb(MetaM, MetaG, nsdef:end, Status^^xsd:string),
+          qb(MetaM, MetaG, nsdef:numberOfWarnings, 1^^xsd:nonNegativeInteger),
+          rdf_store_warning(stream(WarnState,WarnOut), MetaG, Exception),
+          rdf__io:rdf_write_ntuples_end(MetaState, []),
+          rdf__io:rdf_write_ntuples_end(WarnState, []),
+          hdt_prepare_file(MetaFile),
+          q_file_touch_ready(MetaFile),
+          hdt_prepare_file(WarnFile),
+          q_file_touch_ready(WarnFile),
+          rocks_merge(ll_index, number_of_documents, 1),
+          debug(lclean, "[END] ~a (~a)", [From,SeedHash])
+        ),
+        (
+          close(MetaOut),
+          close(WarnOut)
+        )
+      )
   ),
-  end_seed_hash(Hash).
+  end_seed_hash(SeedHash).
 
 
-clean_seed_entry(From, In, InPath, InPath) :-
+%! clean_seed_entry(+From, +SeedHash, +In, +InPath1, -InPath2) is det.
+
+clean_seed_entry(From, SeedHash, In, InPath, InPath) :-
   % Find the name of the current entry.
   path_entry_name(InPath, EntryName),
   % The clean hash is based on the pair (From,EntryName).
-  md5(From-EntryName, Hash),
-  q_dir_hash(Dir, Hash),
-  with_mutex(
-    lclean,
+  md5(From-EntryName, EntryHash),
+  q_dir_hash(Dir, EntryHash),
+  with_mutex(lclean,
     (   exists_directory(Dir)
     ->  Exists = true
     ;   make_directory_path(Dir),
@@ -124,45 +160,55 @@ clean_seed_entry(From, In, InPath, InPath) :-
   ),
   (   Exists = true
   ->  true
-  ;   atomic_list_concat([wm,Hash], :, Alias),
-      % We start a new thread with the seed's hash as alias.  This
+  ;   atomic_list_concat([wm,SeedHash], :, SeedAlias),
+      % We start a new thread with the _seed_ hash as alias.  This
       % makes it easy to see which seed caused a thread to fail.
       call_in_thread(
-        Alias,
-        clean_seed_entry_in_thread(From, In, InPath, EntryName, Hash, Dir)
+        SeedAlias,
+        clean_seed_entry_in_thread(
+          From,
+          In,
+          InPath,
+          EntryName,
+          EntryHash,
+          Dir
+        )
       )
   ).
 
 
-clean_seed_entry_in_thread(From, In, InPath, EntryName, Hash, Dir) :-
-  debug(lclean, "[START] ~a:~a (~a)", [From,EntryName,Hash]),
+%! clean_seed_entry_in_thread(
+%!   +From,
+%!   +In,
+%!   +InPath,
+%!   +EntryName,
+%!   +EntryHash,
+%!   +Dir
+%! ) is det.
+
+clean_seed_entry_in_thread(From, In, InPath, EntryName, EntryHash, Dir) :-
+  debug(lclean, "[START] ~a:~a (~a)", [From,EntryName,EntryHash]),
+  q_dir_hash(Dir, EntryHash),
+  make_directory_path(Dir),
   q_dir_file(Dir, meta, ntriples, MetaFile),
   q_dir_file(Dir, warn, ntriples, WarnFile),
-  % Specify the clean serialization format for RDF.
-  GenOpts = [rdf_media_type(application/'n-quads')],
-
+  % Let's do this!
   setup_call_cleanup(
     (
-      % Open a triple write stream for metadata.
-      open(MetaFile, write, MetaOut0),
-      zopen(MetaOut0, MetaOut, [format(gzip)]),
-      rdf__io:rdf_write_ntuples_begin(MetaState, [name(meta)|GenOpts]),
-      % Open a triple write stream for warnings.
-      open(WarnFile, write, WarnOut0),
-      zopen(WarnOut0, WarnOut, [format(gzip)]),
-      rdf__io:rdf_write_ntuples_begin(WarnState, [name(warn)|GenOpts])
+      open_output_stream(MetaFile, meta, MetaOut, MetaState),
+      open_output_stream(WarnFile, warn, WarnOut, WarnState)
     ),
     (
       % Count the number of warnings as we go along.
-      flag(Hash, _, 0),
+      flag(EntryHash, _, 0),
       % Assert the warnings.  Warnings are attributed to the metadata
       % graph.  The metadata graph acts as the (From,EntryName)
       % dataset identifier (not sure whether this is good or not).
-      q_graph_hash(MetaG, meta, Hash),
+      q_graph_hash(MetaG, meta, EntryHash),
       asserta((
         user:thread_message_hook(Term,Kind,_) :-
           error_kind(Kind),
-          flag(Hash, N, N + 1),
+          flag(EntryHash, N, N + 1),
           % @bug: WarnState gets reset each time, e.g., ‘triples: 1’.
           rdf_store_warning(stream(WarnState,WarnOut), MetaG, Term)
       )),
@@ -180,24 +226,24 @@ clean_seed_entry_in_thread(From, In, InPath, EntryName, Hash, Dir) :-
       (   var(Exception)
       ->  Status0 = true
       ;   Status0 = Exception,
-          msg_warning("[FAILED] ~w ~w~n", [Status0,Hash])
+          msg_warning("[FAILED] ~w ~w~n", [Status0,EntryHash])
       ),
       with_output_to(string(Status), write_term(Status0)),
       
-      % Assert metadata.
-      % Explicitly turn off compression.  Otherwise we compress twice.
-      flag(Hash, NumWarns, 0),
+      % Assert metadata.  Explicitly turn off compression (otherwise
+      % we compress twice).
+      flag(EntryHash, NumWarns, 0),
       rdf_store_metadata(
         NumWarns,
-        Hash,
+        EntryHash,
         Status,
         InPath,
         OutEntry,
         NtCleanFile,
         stream(MetaState,MetaOut)
       ),
-      rdf__io:rdf_write_ntuples_end(MetaState, GenOpts),
-      rdf__io:rdf_write_ntuples_end(WarnState, GenOpts)
+      rdf__io:rdf_write_ntuples_end(MetaState, []),
+      rdf__io:rdf_write_ntuples_end(WarnState, [])
     ),
     (
       close(MetaOut),
@@ -247,7 +293,7 @@ clean_seed_entry_in_thread(From, In, InPath, EntryName, Hash, Dir) :-
   rocks_merge(ll_index, number_of_documents, 1),
 
   % That's it!
-  debug(lclean, "[END] ~a:~a (~a)", [From,EntryName,Hash]).
+  debug(lclean, "[END] ~a:~a (~a)", [From,EntryName,EntryHash]).
 
 
 link0(Dir1, Local, Dir2) :-
@@ -317,6 +363,8 @@ reset_and_clean_hash(Hash) :-
 
 % HELPERS %
 
+%! currently_debugging(+Hash) is det.
+
 currently_debugging(Hash) :-
   currently_debugging0(Hash), !,
   ansi_format(user_output, [bold], "~a", [Hash]),
@@ -325,38 +373,55 @@ currently_debugging(_).
 
 
 
-rdf_store_metadata(NumWarns, Hash, Status, InPath, OutEntry, CleanFile, M) :-
-  q_graph_hash(MetaG, meta, Hash),
+%! open_output_stream(+File, +Name, -Out, -State) is det.
+
+open_output_stream(File, Name, Out, State) :-
+  open(File, write, Out0),
+  zopen(Out0, Out, [format(gzip)]),
+  rdf__io:rdf_write_ntuples_begin(
+    State,
+    [name(Name),rdf_media_type(application/'n-quads')]
+  ).
+
+
+
+rdf_store_metadata(
+  NumWarns,
+  EntryHash,
+  Status,
+  InPath,
+  OutEntry,
+  CleanFile,
+  M
+) :-
+  q_graph_hash(MetaG, meta, EntryHash),
   qb(M, MetaG, nsdef:end, Status^^xsd:string),
   (   var(CleanFile)
   ->  true
-  ;   q_graph_hash(DataG, data, Hash),
+  ;   q_graph_hash(DataG, data, EntryHash),
       qb(M, MetaG, nsdef:dataGraph, DataG)
   ),
   qb(M, MetaG, nsdef:numberOfWarnings, NumWarns^^xsd:nonNegativeInteger),
-  (   var(InPath)
-  ->  true
-  ;   InPath = [FirstInEntry|_],
-      %%%%qb(M, MetaG, nsdef:numberOfReadBytes, FirstInEntry.byte_count^^xsd:nonNegativeInteger),
-      qb(M, MetaG, nsdef:numberOfWrittenBytes, OutEntry.byte_count^^xsd:nonNegativeInteger),
-      %%%%qb(M, MetaG, nsdef:numberOfReadCharacters, FirstInEntry.char_count^^xsd:nonNegativeInteger),
-      qb(M, MetaG, nsdef:numberOfWrittenCharacters, OutEntry.char_count^^xsd:nonNegativeInteger),
-      %%%%qb(M, MetaG, nsdef:numberOfReadLines, FirstInEntry.line_count^^xsd:nonNegativeInteger),
-      qb(M, MetaG, nsdef:numberOfWrittenLines, OutEntry.line_count^^xsd:nonNegativeInteger),
-      dict_get(number_of_quads, OutEntry, 0, NumQuads),
-      qb(M, MetaG, nsdef:numberOfQuads, NumQuads^^xsd:nonNegativeInteger),
-      dict_get(number_of_triples, OutEntry, 0, NumTriples),
-      qb(M, MetaG, nsdef:numberOfTriples, NumTriples^^xsd:nonNegativeInteger),
-      dict_get(number_of_tuples, OutEntry, 0, NumTuples),
-      qb(M, MetaG, nsdef:numberOfTuples, NumTuples^^xsd:nonNegativeInteger),
-      NumDuplicates is NumTuples - OutEntry.line_count + 1,
-      qb(M, MetaG, nsdef:numberOfDuplicates, NumDuplicates^^xsd:nonNegativeInteger),
-      once(rdf_media_type(FirstInEntry.rdf_media_type, Format, _)),
-      qb(M, MetaG, nsdef:rdfFormat, Format),
-      forall(
-        nth1(N, InPath, InEntry),
-        rdf_store_metadata_entry(N, InEntry, MetaG, M)
-      )
+  InPath = [FirstInEntry|_],
+  %%%%qb(M, MetaG, nsdef:numberOfReadBytes, FirstInEntry.byte_count^^xsd:nonNegativeInteger),
+  qb(M, MetaG, nsdef:numberOfWrittenBytes, OutEntry.byte_count^^xsd:nonNegativeInteger),
+  %%%%qb(M, MetaG, nsdef:numberOfReadCharacters, FirstInEntry.char_count^^xsd:nonNegativeInteger),
+  qb(M, MetaG, nsdef:numberOfWrittenCharacters, OutEntry.char_count^^xsd:nonNegativeInteger),
+  %%%%qb(M, MetaG, nsdef:numberOfReadLines, FirstInEntry.line_count^^xsd:nonNegativeInteger),
+  qb(M, MetaG, nsdef:numberOfWrittenLines, OutEntry.line_count^^xsd:nonNegativeInteger),
+  dict_get(number_of_quads, OutEntry, 0, NumQuads),
+  qb(M, MetaG, nsdef:numberOfQuads, NumQuads^^xsd:nonNegativeInteger),
+  dict_get(number_of_triples, OutEntry, 0, NumTriples),
+  qb(M, MetaG, nsdef:numberOfTriples, NumTriples^^xsd:nonNegativeInteger),
+  dict_get(number_of_tuples, OutEntry, 0, NumTuples),
+  qb(M, MetaG, nsdef:numberOfTuples, NumTuples^^xsd:nonNegativeInteger),
+  NumDuplicates is NumTuples - OutEntry.line_count + 1,
+  qb(M, MetaG, nsdef:numberOfDuplicates, NumDuplicates^^xsd:nonNegativeInteger),
+  once(rdf_media_type(FirstInEntry.rdf_media_type, Format, _)),
+  qb(M, MetaG, nsdef:rdfFormat, Format),
+  forall(
+    nth1(N, InPath, InEntry),
+    rdf_store_metadata_entry(N, InEntry, MetaG, M)
   ).
 
 
