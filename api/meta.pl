@@ -20,7 +20,7 @@
 :- use_module(library(http/rest)).
 :- use_module(library(json_ext)).
 :- use_module(library(os/file_ext)).
-:- use_module(library(pagination)).
+:- use_module(library(pagination/html_pagination)).
 :- use_module(library(q/q_container)).
 :- use_module(library(q/q_fs)).
 :- use_module(library(q/q_print)).
@@ -96,7 +96,7 @@ method0(Req, Mode, get, MTs) :-
   include(ground, [hash(Hash),object(O),predicate(P),subject(S)], Query0),
   maplist(q_query_term, Query0, Query),
   PageOpts = _{iri: Iri, page: Page, page_size: PageSize, query: Query},
-  pagination(Quad, quad0(S, P, O, Hash, Mode, Quad), PageOpts, Result),
+  create_pagination(Quad, quad0(S, P, O, Hash, Mode, Quad), PageOpts, Result),
   rest_media_type(MTs, get0(Mode, Result)).
 
 quad0(S, P, O, Hash, Mode, rdf(S,P,O,G)) :-
@@ -114,7 +114,7 @@ get0(Mode, Result, text/html) :-
   reply_html_page(
     cp([]),
     \cp_title([Lbl,"browser"]),
-    \pagination_result(Result, {Mode}/[Quads]>>qh_quad_table(Mode, Quads))
+    \html_pagination_result(Result, {Mode}/[Quads]>>qh_quad_table(Mode, Quads))
   ).
 
 qh_quad_table(Mode, Quads) -->

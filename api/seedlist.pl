@@ -72,7 +72,7 @@ there (409).  The HTTP body is expected to be `{"from": $IRI$}`.
 :- use_module(library(math/math_ext)).
 :- use_module(library(nlp/nlp_lang)).
 :- use_module(library(os/file_ext)).
-:- use_module(library(pagination)).
+:- use_module(library(pagination/html_pagination)).
 :- use_module(library(pair_ext)).
 :- use_module(library(print_ext)).
 :- use_module(library(q/q_iri)).
@@ -128,11 +128,11 @@ seedlist_delete(Iri, application/json) :-
 
 seedlist_get(Iri, application/json) :-
   (   iri_to_hash(Iri, Hash)
-  ->  pagination(Dict, seed_by_hash(Hash, Dict), Result)
-  ;   pagination(Dict, seed(Dict), Result)
+  ->  create_pagination(Dict, seed_by_hash(Hash, Dict), Result)
+  ;   create_pagination(Dict, seed(Dict), Result)
   ),
   format("Content-Type: application/json~n"),
-  http_link_header(Result),
+  http_pagination_header(Result),
   nl,
   json_write_dict(Result.results).
 seedlist_get(Iri, text/html) :-
@@ -143,18 +143,18 @@ seedlist_get(Iri, text/html) :-
         \cp_title(["Seed",Hash]),
         \html_seed(Dict)
       )
-  ;   seeds_by_status(ended, Pagination1),
-      seeds_by_status(started, Pagination2),
-      seeds_by_status(added, Pagination3),
+  ;   seeds_by_status(ended, Result1),
+      seeds_by_status(started, Result2),
+      seeds_by_status(added, Result3),
       reply_html_page(
         ll([]),
         \cp_title(["Seedlist"]),
         [
           h1("Seedlist"),
           \panels([
-            \seedlist_panel(1, "Cleaned", Pagination1),
-            \seedlist_panel(2, "Cleaning", Pagination2),
-            \seedlist_panel(3, "To be cleaned", Pagination3)
+            \seedlist_panel(1, "Cleaned", Result1),
+            \seedlist_panel(2, "Cleaning", Result2),
+            \seedlist_panel(3, "To be cleaned", Result3)
           ])
         ]
       )
@@ -164,18 +164,18 @@ seedlist_get(Iri, text/html) :-
 seedlist_post(Iri, application/json) :-
   reply_json_dict(_{seed: Iri}, [status(201)]).
 
-seedlist_panel(Id, Lbl, Pagination) -->
+seedlist_panel(Id, Lbl, Result) -->
   panel(
     Id,
     html([
       Lbl,
       " ",
       \out_of(
-        Pagination.number_of_results,
-        Pagination.total_number_of_results
+        Result.number_of_results,
+        Result.total_number_of_results
       )
     ]),
-    \seeds_table(Pagination.results)
+    \seeds_table(Result.results)
   ).
 
 out_of(M, N) -->
@@ -395,8 +395,8 @@ seed_by_hash(Hash, Dict) :-
 %! seed_by_status(+Status:oneof([added,ended,started]), -Dict) is nondet.
 
 seed_by_status(Status, Dict) :-
-  seeds_by_status(Status, Pagination),
-  Results = Pagination.results,
+  seeds_by_status(Status, Result),
+  Results = Result.results,
   member(Dict, Results).
   
 
@@ -410,13 +410,13 @@ seed_status(ended).
 
 
 
-%! seeds_by_status(+Status, -Pagination) is nondet.
+%! seeds_by_status(+Status, -Result) is nondet.
 %
 % Returns all seeds with the same status in pages.
 
-seeds_by_status(Status, Pagination) :-
+seeds_by_status(Status, Result) :-
   status_query(Status, Query),
-  retry0(es_search([ll,seedlist], _{query: Query}, _{}, Pagination)).
+  retry0(es_search([ll,seedlist], _{query: Query}, _{}, Result)).
 
 status_query(ended, Query) :- !,
   Query = _{range: _{ended: _{gt: 0.0}}}.
