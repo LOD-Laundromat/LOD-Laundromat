@@ -48,8 +48,8 @@
     currently_debugging0/1.
 
 :- meta_predicate
-    encapsulate(+, +, 2),
-    encapsulate_inner(+, 2).
+    call_meta_warn(+, 2),
+    call_meta_warn(+, +, 2).
 
 :- multifile
     currently_debugging0/1.
@@ -93,30 +93,26 @@ clean_seed(Seed) :-
   currently_debugging(ArchiveHash),
   begin_seed_hash(ArchiveHash),
   archive_label(From, ArchiveHash, Lbl),
-  encapsulate(a-Lbl, ArchiveHash, clean_archive(From)),
+  call_meta_warn(a-Lbl, ArchiveHash, clean_archive(From)),
   end_seed_hash(ArchiveHash).
 
 clean_archive(From, _, _) :-
   % Iterate over all entries inside the document stored at From.
   % We need to catch TCP exceptions, because there will not be an
   % input stream to run the cleaning goal on.
-  forall(
-    rdf_call_on_stream(From, clean_entry(From)),
-    true
-  ).
+  forall(rdf_call_on_stream(From, clean_entry(From)), true).
 
 clean_entry(From, In, InPath, InPath) :-
   path_entry_name(InPath, EntryName),
   md5(From-EntryName, EntryHash),
   entry_label(From, EntryName, EntryHash, Lbl),
-  encapsulate(e-Lbl, EntryHash, clean_stream(In, InPath)).
+  call_meta_warn(e-Lbl, EntryHash, clean_stream(In, InPath)).
 
 clean_stream(In, InPath, EntryHash, MetaM) :-
   q_dir_hash(EntryDir, EntryHash),
   q_graph_hash(MetaG, meta, EntryHash),
   clean_stream_inner(EntryDir, OutPath, TmpFile, CleanHash, In, InPath),
-  % Handle the cleaned data file.  Notice that there may not be a
-  % cleaned data file.
+  % Handle the cleaned data file, if any.
   (   var(TmpFile)
   ->  true
   ;   q_graph_hash(DataG, data, CleanHash),
@@ -250,31 +246,38 @@ currently_debugging(_).
 
 
 
-%! encapsulate(+Debug, +Hash, :Goal_2) is det.
+%! call_meta_warn(+Debug, +Hash, :Goal_2) is det.
+%
+% Call `Goal_2(+Hash,+MetaM)` while storing metadata and warnings to
+% files.
 
-encapsulate(Mode-Lbl, Hash, Goal_2) :-
+call_meta_warn(Mode-Lbl, Hash, Goal_2) :-
   q_dir_hash(Dir, Hash),
   with_mutex(lclean, existed_dir(Dir, Existed)),
   (   Existed == true
   ->  debug(ll(done), "No need to recrawl ~s", [Lbl])
   ;   atomic_list_concat([wm,Mode,Hash], :, Alias),
       debug(lclean, "»~a ~s", [Mode,Lbl]),
-      call_in_thread(Alias, encapsulate_inner(Hash, Goal_2)),
+      call_in_thread(Alias, call_meta_warn(Hash, Goal_2)),
       debug(lclean, "«~a ~s", [Mode,Lbl])
   ).
 
-%! encapsulate_inner(+Hash, :Goal_2) is det.
+%! call_meta_warn(+Hash, :Goal_2) is det.
 %
-% Call Goal_2(+Hash,+MetaM) and store all metadata and warnings inside
-% directory Dir.  This should be the same for archives and entries.
+% Call `Goal_2(+Hash,+MetaM)` and store all metadata and warnings
+% inside directory Dir.  This should be the same for archives and
+% entries.
 %
 % Assert the warnings.  Warnings are attributed to the metadata graph.
 % The metadata graph acts as the (From,EntryName) dataset identifier
 % (not sure whether this is good or not).
 
-encapsulate_inner(Hash, Goal_2) :-
-  q_graph_hash(MetaG, meta, Hash),
+call_meta_warn(Hash, Goal_2) :-
+  % @hack Count the number of warnings.  WarnState should be able to
+  %       do this as well.
   flag(Hash, _, 0),
+  q_graph_hash(MetaG, meta, Hash),
+  % Assert all warnings as RDF.
   asserta((
     user:thread_message_hook(Term,Kind,_) :-
       error_kind(Kind),
@@ -282,6 +285,8 @@ encapsulate_inner(Hash, Goal_2) :-
       % @bug WarnState gets reset each time, e.g., ‘triples: 1’.
       rdf_store_warning(stream(WarnState,WarnOut), MetaG, Term)
   )),
+  % Use the Hash directory Dir to assert metadata (MetaFile) and
+  % warnings (WarnFile).
   q_dir_hash(Dir, Hash),
   q_dir_file(Dir, meta, ntriples, MetaFile),
   q_dir_file(Dir, warn, ntriples, WarnFile),
