@@ -186,6 +186,7 @@ clean_seed_entry(From, SeedHash, In, InPath, InPath) :-
 
 clean_seed_entry_in_thread(From, In, InPath, EntryName, EntryHash, Dir) :-
   debug(lclean, "[START] ~a:~a (~a)", [From,EntryName,EntryHash]),
+  %gtrace,
   q_dir_hash(Dir, EntryHash),
   make_directory_path(Dir),
   q_dir_file(Dir, meta, ntriples, MetaFile),
@@ -210,6 +211,7 @@ clean_seed_entry_in_thread(From, In, InPath, EntryName, EntryHash, Dir) :-
           % @bug: WarnState gets reset each time, e.g., ‘triples: 1’.
           rdf_store_warning(stream(WarnState,WarnOut), MetaG, Term)
       )),
+      gtrace,
       (   catch(
             rdf_clean0(Dir, In, InPath, OutEntry, NtCleanFile),
             Exception,
