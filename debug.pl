@@ -10,7 +10,8 @@ currently_debugging0('a27d8c6ed29512294e4beabb87a250fd'). % INSTANTIATION EROR
 
 :- debug(es_api).
 :- debug(http_io).
-:- debug(io).
+:- debug(io(close)).
+:- debug(io(open)).
 :- debug(lclean).
 :- debug(rdf__io).
 :- debug(seedlist(_)).

@@ -440,15 +440,20 @@ rdf_store_metadata_entry_pair(_, _, size-_).
 
 
 % Properties for which metadata is stored.
-rdf_store_metadata_entry_pair(M, BNode, filters-Filters) :-
+rdf_store_metadata_entry_pair(M, S, '@id'-Uri) :-
+  qb(M, S, nsdef:uri, Uri).
+rdf_store_metadata_entry_pair(M, S, '@type'-Local) :-
+  rdf_global_id(nsdef:Local, C),
+  qb(M, S, rdf:type, C).
+rdf_store_metadata_entry_pair(M, S, filters-Filters) :-
   atomic_list_concat(Filters, ',', A),
-  qb(M, BNode, nsdef:filters, A^^xsd:string).
-rdf_store_metadata_entry_pair(M, BNode, format-Format) :-
+  qb(M, S, nsdef:filters, A^^xsd:string).
+rdf_store_metadata_entry_pair(M, S, format-Format) :-
   (   Format == raw
   ->  true
-  ;   qb(M, BNode, nsdef:format, Format^^xsd:string)
+  ;   qb(M, S, nsdef:format, Format^^xsd:string)
   ).
-rdf_store_metadata_entry_pair(M, BNode, headers-Dict) :-
+rdf_store_metadata_entry_pair(M, S, headers-Dict) :-
   dict_pairs(Dict, Pairs),
   forall(
     member(Key-Vals, Pairs),
@@ -456,21 +461,19 @@ rdf_store_metadata_entry_pair(M, BNode, headers-Dict) :-
       member(Val, Vals),
       (
         rdf_global_id(nsdef:Key, P),
-        qb(M, BNode, P, Val.raw^^xsd:string)
+        qb(M, S, P, Val.raw^^xsd:string)
       )
     )
   ).
-rdf_store_metadata_entry_pair(M, BNode, iri-Iri) :-
-  qb(M, BNode, nsdef:iri, Iri).
-rdf_store_metadata_entry_pair(M, BNode, permissions-Mask) :-
-  qb(M, BNode, nsdef:permissions, Mask^^xsd:string).
-rdf_store_metadata_entry_pair(M, BNode, status-Status) :-
-  qb(M, BNode, nsdef:status, Status^^xsd:positiveInteger).
-rdf_store_metadata_entry_pair(M, BNode, time-Time) :-
-  qb(M, BNode, nsdef:time, Time^^xsd:float).
-rdf_store_metadata_entry_pair(M, BNode, version-Dict) :-
+rdf_store_metadata_entry_pair(M, S, permissions-Mask) :-
+  qb(M, S, nsdef:permissions, Mask^^xsd:string).
+rdf_store_metadata_entry_pair(M, S, status-Status) :-
+  qb(M, S, nsdef:status, Status^^xsd:positiveInteger).
+rdf_store_metadata_entry_pair(M, S, time-Time) :-
+  qb(M, S, nsdef:time, Time^^xsd:float).
+rdf_store_metadata_entry_pair(M, S, version-Dict) :-
   atomic_list_concat([Dict.major,Dict.minor], ., A),
-  qb(M, BNode, nsdef:version, A^^xsd:string).
+  qb(M, S, nsdef:version, A^^xsd:string).
 rdf_store_metadata_entry_pair(_, _, Key-Val) :-
   gtrace, %DEB
   writeln(Key-Val).
