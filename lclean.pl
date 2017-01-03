@@ -11,7 +11,8 @@
 /** <module> LOD Laundromat: Data cleaning
 
 @author Wouter Beek
-@version 2016/03-2016/12
+@tbd Include byte_count, char_count, lines_count in metadata.
+@version 2016/03-2017/01
 */
 
 :- use_module(library(apply)).
@@ -86,188 +87,129 @@ clean_hash(Hash) :-
 %! clean_seed(+Seed) is det.
 
 clean_seed(Seed) :-
-  dict_tag(Seed, SeedHash),
-  begin_seed_hash(SeedHash),
-  currently_debugging(SeedHash),
+  dict_tag(Seed, ArchiveHash),
+  begin_seed_hash(ArchiveHash),
+  currently_debugging(ArchiveHash),
   atom_string(From, Seed.from),
-  % Iterate over all entries inside the document stored at From.  We
-  % need to catch TCP exceptions, because there will not be an input
-  % stream to run the cleaning goal on.
-  (   catch(
-        forall(
-          rdf_call_on_stream(From, clean_seed_entry(From, SeedHash)),
-          true
-        ),
-        Exception,
-        true
-      )
+  % 1. Make sure the directory exists.
+  with_mutex(lclean, existed_dir(ArchiveDir, Existed)),
+  % 2. Start a thread.
+  (   Existed == true
   ->  true
-  ;   % This should not occur.  Look these up in the metadata.
-      Exception = fail
+  ;   atomic_list_concat([wm,a,ArchiveHash], :, ArchiveAlias),
+      call_in_thread(ArchiveAlias, clean_archive(From, ArchiveHash))
   ),
-  (   var(Exception)
-  ->  true
-  ;   msg_warning("[FAILED] ~w ~w~n", [Exception,SeedHash]),
-      with_output_to(string(Status), write_term(Exception)),
-      q_graph_hash(MetaG, meta, SeedHash),
-      q_dir_hash(Dir, SeedHash),
-      make_directory_path(Dir),
-      q_dir_file(Dir, meta, ntriples, MetaFile),
-      q_dir_file(Dir, warn, ntriples, WarnFile),
-      setup_call_cleanup(
-        (
-          open_output_stream(MetaFile, meta, MetaOut, MetaState),
-          open_output_stream(WarnFile, warn, WarnOut, WarnState)
-        ),
-        (
-          debug(lclean, "[START] ~a (~a)", [From,SeedHash]),
-          MetaM = stream(MetaState,MetaOut),
-          qb(MetaM, MetaG, nsdef:end, Status^^xsd:string),
-          qb(MetaM, MetaG, nsdef:numberOfWarnings, 1^^xsd:nonNegativeInteger),
-          rdf_store_warning(stream(WarnState,WarnOut), MetaG, Exception),
-          rdf__io:rdf_write_ntuples_end(MetaState, []),
-          rdf__io:rdf_write_ntuples_end(WarnState, []),
-          hdt_prepare_file(MetaFile),
-          q_file_touch_ready(MetaFile),
-          hdt_prepare_file(WarnFile),
-          q_file_touch_ready(WarnFile),
-          rocks_merge(ll_index, number_of_documents, 1),
-          debug(lclean, "[END] ~a (~a)", [From,SeedHash])
-        ),
-        (
-          close(MetaOut),
-          close(WarnOut)
-        )
-      )
-  ),
-  end_seed_hash(SeedHash).
+  end_seed_hash(ArchiveHash).
 
-
-%! clean_seed_entry(+From, +SeedHash, +In, +InPath1, -InPath2) is det.
-
-clean_seed_entry(From, SeedHash, In, InPath, InPath) :-
-  % Find the name of the current entry.
-  path_entry_name(InPath, EntryName),
-  % The clean hash is based on the pair (From,EntryName).
-  md5(From-EntryName, EntryHash),
-  q_dir_hash(Dir, EntryHash),
-  with_mutex(lclean,
-    (   exists_directory(Dir)
-    ->  Exists = true
-    ;   make_directory_path(Dir),
-        Exists = false
+% 3. Encapsulate
+clean_archive(From, ArchiveHash) :-
+  % Iterate over all entries inside the document stored at From.
+  % We need to catch TCP exceptions, because there will not be an
+  % input stream to run the cleaning goal on.
+  encapsulate(
+    ArchiveHash,
+    forall(
+      rdf_call_on_stream(From, clean_entry(From)),
+      true
     )
-  ),
-  (   Exists = true
-  ->  true
-  ;   atomic_list_concat([wm,SeedHash], :, SeedAlias),
-      % We start a new thread with the _seed_ hash as alias.  This
-      % makes it easy to see which seed caused a thread to fail.
-      call_in_thread(
-        SeedAlias,
-        clean_seed_entry_in_thread(
-          From,
-          In,
-          InPath,
-          EntryName,
-          EntryHash,
-          Dir
-        )
-      )
   ).
 
+:- meta_predicate
+    encapsulate(+, 0).
 
-%! clean_seed_entry_in_thread(
-%!   +From,
-%!   +In,
-%!   +InPath,
-%!   +EntryName,
-%!   +EntryHash,
-%!   +Dir
-%! ) is det.
+%! encapsulate(+Hash, :Goal_0) is det.
+%
+% Call Goal_0 and store all metadata and warnings inside directory
+% Dir.  This should be the same for archives and entries.
+%
+% Assert the warnings.  Warnings are attributed to the metadata graph.
+% The metadata graph acts as the (From,EntryName) dataset identifier
+% (not sure whether this is good or not).
 
-clean_seed_entry_in_thread(From, In, InPath, EntryName, EntryHash, Dir) :-
-  debug(lclean, "[START] ~a:~a (~a)", [From,EntryName,EntryHash]),
-  q_dir_hash(Dir, EntryHash),
-  make_directory_path(Dir),
-  q_dir_file(Dir, meta, ntriples, MetaFile),
-  q_dir_file(Dir, warn, ntriples, WarnFile),
-  % Let's do this!
+encapsulate(Hash, Goal_0) :-
+  q_graph_hash(MetaG, meta, Hash),%
+  flag(Hash, _, 0),
+  asserta((
+    user:thread_message_hook(Term,Kind,_) :-
+      error_kind(Kind),
+      flag(Hash, NumWarns, NumWarns + 1),
+      % @bug WarnState gets reset each time, e.g., ‘triples: 1’.
+      rdf_store_warning(stream(WarnState,WarnOut), MetaG, Term)
+  )),
+  q_dir_hash(Dir, Hash),
+  q_dir_file(Dir, meta, ntriples, MetaFile),%
+  q_dir_file(Dir, warn, ntriples, WarnFile),%
   setup_call_cleanup(
     (
-      open_output_stream(MetaFile, meta, MetaOut, MetaState),
-      open_output_stream(WarnFile, warn, WarnOut, WarnState)
+      open_output_stream(MetaFile, meta, MetaOut, MetaState),%
+      open_output_stream(WarnFile, warn, WarnOut, WarnState)%
     ),
     (
-      % Count the number of warnings as we go along.
-      flag(EntryHash, _, 0),
-      % Assert the warnings.  Warnings are attributed to the metadata
-      % graph.  The metadata graph acts as the (From,EntryName)
-      % dataset identifier (not sure whether this is good or not).
-      q_graph_hash(MetaG, meta, EntryHash),
-      asserta((
-        user:thread_message_hook(Term,Kind,_) :-
-          error_kind(Kind),
-          flag(EntryHash, N, N + 1),
-          % @bug: WarnState gets reset each time, e.g., ‘triples: 1’.
-          rdf_store_warning(stream(WarnState,WarnOut), MetaG, Term)
-      )),
-      (   catch(
-            rdf_clean0(Dir, In, InPath, OutEntry, NtCleanFile),
-            Exception,
-            true
-          )
-      ->  true
-      ;   % This should not occur.  Look these up in the metadata.
-          Exception = fail
+      MetaM = stream(MetaState,MetaOut),
+      (catch(Goal_0, E, true) -> true ; E = fail),
+      (   var(E)
+      ->  End = true
+      ;   msg_warning("[FAILED] ~w (~a)~n", [E,Hash]),
+          with_output_to(string(End), write_term(E))
       ),
-      % Store the status of the cleaning process (‘true’, ‘false’, or
-      % compound error term).
-      (   var(Exception)
-      ->  Status0 = true
-      ;   Status0 = Exception,
-          msg_warning("[FAILED] ~w ~w~n", [Status0,EntryHash])
-      ),
-      with_output_to(string(Status), write_term(Status0)),
-      
-      % Assert metadata.  Explicitly turn off compression (otherwise
-      % we compress twice).
-      flag(EntryHash, NumWarns, 0),
-      rdf_store_metadata(
-        NumWarns,
-        EntryHash,
-        Status,
-        InPath,
-        OutEntry,
-        NtCleanFile,
-        stream(MetaState,MetaOut)
-      ),
-      rdf__io:rdf_write_ntuples_end(MetaState, []),
-      rdf__io:rdf_write_ntuples_end(WarnState, [])
+      qb(MetaM, MetaG, nsdef:end, End^^xsd:string),
+      flag(Hash, NumWarns, 0),
+      qb(MetaM, MetaG, nsdef:warnings, NumWarns^^xsd:nonNegativeInteger),
+      rdf_store_metadata(Hash, Status, InPath, Entry, CleanFIle
+      close_output_stream(MetaFile, MetaState, HdtMetaFile),
+      close_output_stream(WarnFile, WarnState, _)
     ),
     (
       close(MetaOut),
       close(WarnOut)
     )
-  ),
+  ).
 
-  % Handle the metadata file.
-  hdt_prepare_file(MetaFile, HdtMetaFile),
-  q_file_touch_ready(MetaFile),
 
-  % Handle the warnings file.
-  (   once(
-        hdt_call_on_file(
-          HdtMetaFile,
-          hdt0(_, nsdef:numberOfWarnings, NumWarns^^xsd:nonNegativeInteger)
-        )
+%! clean_entry(+From, +In, +InPath1, -InPath2) is det.
+
+clean_entry(From, In, InPath, InPath) :-
+  % Find the name of the current entry.
+  path_entry_name(InPath, EntryName),
+  % The clean hash is based on the pair (From,EntryName).
+  md5(From-EntryName, EntryHash),
+  q_dir_hash(EntryDir, EntryHash),
+  with_mutex(lclean, existed_dir(EntryDir, Existed)),
+  entry_label(From, EntryName, EntryHash, EntryLbl),
+  (   Existed == true
+  ->  debug(ll(done), "No need to recrawl ~s", [EntryLbl])
+  ;   atomic_list_concat([wm,e,EntryHash], :, EntryAlias),
+      debug(lclean, "»ENTRY ~s", [EntryLbl]),
+      call_in_thread(
+        EntryAlias,
+        clean_entry(From, In, InPath, EntryHash)
       ),
-      NumWarns >= 1
-  ->  hdt_prepare_file(WarnFile)
-  ;   true
-  ),
-  q_file_touch_ready(WarnFile),
+      debug(lclean, "«ENTRY ~s", [EntryLbl])
+  ).
 
+
+%! clean_entry(+From, +In, +InPath, +EntryHash) is det.
+
+clean_entry(From, In, InPath, EntryHash) :-
+  encapsulate(EntryHash, clean_stream(From, In, InPath)).
+
+clean_stream(From, In, InPath) :-
+  (   var(CleanFile)
+  ->  true
+  ;   q_graph_hash(DataG, data, Hash),
+      qb(M, G, nsdef:dataGraph, DataG)
+  ),
+  % Assert metadata.  Explicitly turn off compression (otherwise
+  % we compress twice).
+  rdf_store_metadata(
+    NumWarns,
+    EntryHash,
+    Status,
+    InPath,
+    OutEntry,
+    NtCleanFile,
+    stream(MetaState,MetaOut)
+  ),
   % Handle the cleaned data file.
   (   var(NtCleanFile)
   ->  true
@@ -280,20 +222,15 @@ clean_seed_entry_in_thread(From, In, InPath, EntryName, EntryHash, Dir) :-
       ),
       hdt_prepare_file(NtCleanFile),
       file_directory_name(NtCleanFile, CleanDir),
-      
       % Link to the data.
       link0(Dir, 'data.hdt', CleanDir),
       link0(Dir, 'data.hdt.index', CleanDir),
       link0(Dir, 'data.nt.gz', CleanDir),
       link0(Dir, 'data.nt.gz.ready', CleanDir),
-
       % Store the number of tuples in RocksDB and ElasticSearch.
       rocks_merge(ll_index, number_of_tuples, NumTuples)
   ),
-  rocks_merge(ll_index, number_of_documents, 1),
-
-  % That's it!
-  debug(lclean, "[END] ~a:~a (~a)", [From,EntryName,EntryHash]).
+  rocks_merge(ll_index, number_of_documents, 1).
 
 
 link0(Dir1, Local, Dir2) :-
@@ -302,7 +239,7 @@ link0(Dir1, Local, Dir2) :-
   create_file_link(File1, File2).
 
 
-rdf_clean0(Dir, In, InPath, OutEntry2, CleanFile) :-
+clean_stream(Dir, In, InPath, OutEntry2, CleanFile) :-
   absolute_file_name(
     cleaning,
     TmpFile0,
@@ -363,6 +300,15 @@ reset_and_clean_hash(Hash) :-
 
 % HELPERS %
 
+%! close_output_stream(+File, +State, -HdtFile) is det.
+
+close_output_stream(File, State, HdtFile) :-
+  rdf__io:rdf_write_ntuples_end(State, []),
+  hdt_prepare_file(File, HdtFile),
+  q_file_touch_ready(File).
+
+
+
 %! currently_debugging(+Hash) is det.
 
 currently_debugging(Hash) :-
@@ -370,6 +316,25 @@ currently_debugging(Hash) :-
   ansi_format(user_output, [bold], "~a", [Hash]),
   gtrace. %DEB
 currently_debugging(_).
+
+
+
+%! entry_label(+From, +EntryName, +EntryHash, -EntryLbl) is det.
+
+entry_label(From, EntryName, EntryHash, EntryLbl) :-
+  format(string(EntryLbl), "~a:~a (~a)", [From,EntryName,EntryHash]).
+
+
+
+%! existed_dir(+Dir, -Existed) is det.
+%
+% Ensures that directory Dir is created and returns whether or not it
+% already existed before.
+
+existed_dir(Dir, true) :-
+  exists_directory(Dir), !.
+existed_dir(Dir, false) :-
+  make_directory_path(Dir).
 
 
 
@@ -385,50 +350,30 @@ open_output_stream(File, Name, Out, State) :-
 
 
 
-rdf_store_metadata(
-  NumWarns,
-  EntryHash,
-  Status,
-  InPath,
-  OutEntry,
-  CleanFile,
-  M
-) :-
-  q_graph_hash(MetaG, meta, EntryHash),
-  qb(M, MetaG, nsdef:end, Status^^xsd:string),
-  (   var(CleanFile)
-  ->  true
-  ;   q_graph_hash(DataG, data, EntryHash),
-      qb(M, MetaG, nsdef:dataGraph, DataG)
-  ),
-  qb(M, MetaG, nsdef:numberOfWarnings, NumWarns^^xsd:nonNegativeInteger),
-  InPath = [FirstInEntry|_],
-  %%%%qb(M, MetaG, nsdef:numberOfReadBytes, FirstInEntry.byte_count^^xsd:nonNegativeInteger),
-  qb(M, MetaG, nsdef:numberOfWrittenBytes, OutEntry.byte_count^^xsd:nonNegativeInteger),
-  %%%%qb(M, MetaG, nsdef:numberOfReadCharacters, FirstInEntry.char_count^^xsd:nonNegativeInteger),
-  qb(M, MetaG, nsdef:numberOfWrittenCharacters, OutEntry.char_count^^xsd:nonNegativeInteger),
-  %%%%qb(M, MetaG, nsdef:numberOfReadLines, FirstInEntry.line_count^^xsd:nonNegativeInteger),
-  qb(M, MetaG, nsdef:numberOfWrittenLines, OutEntry.line_count^^xsd:nonNegativeInteger),
+rdf_store_metadata(Hash, InPath, OutEntry, CleanFile, M, G) :-
+  qb(M, G, nsdef:writtenBytes, OutEntry.byte_count^^xsd:nonNegativeInteger),
+  qb(M, G, nsdef:writtenChars, OutEntry.char_count^^xsd:nonNegativeInteger),
+  qb(M, G, nsdef:writtenLines, OutEntry.line_count^^xsd:nonNegativeInteger),
   dict_get(number_of_quads, OutEntry, 0, NumQuads),
-  qb(M, MetaG, nsdef:numberOfQuads, NumQuads^^xsd:nonNegativeInteger),
+  qb(M, G, nsdef:quads, NumQuads^^xsd:nonNegativeInteger),
   dict_get(number_of_triples, OutEntry, 0, NumTriples),
-  qb(M, MetaG, nsdef:numberOfTriples, NumTriples^^xsd:nonNegativeInteger),
+  qb(M, G, nsdef:triples, NumTriples^^xsd:nonNegativeInteger),
   dict_get(number_of_tuples, OutEntry, 0, NumTuples),
-  qb(M, MetaG, nsdef:numberOfTuples, NumTuples^^xsd:nonNegativeInteger),
+  qb(M, G, nsdef:tuples, NumTuples^^xsd:nonNegativeInteger),
   NumDuplicates is NumTuples - OutEntry.line_count + 1,
-  qb(M, MetaG, nsdef:numberOfDuplicates, NumDuplicates^^xsd:nonNegativeInteger),
-  once(rdf_media_type(FirstInEntry.rdf_media_type, Format, _)),
-  qb(M, MetaG, nsdef:rdfFormat, Format),
+  qb(M, G, nsdef:duplicates, NumDuplicates^^xsd:nonNegativeInteger),
+  dicts_get(rdf_media_type, InPath, Format),
+  qb(M, G, nsdef:rdfFormat, Format^^xsd:string),
   forall(
     nth1(N, InPath, InEntry),
-    rdf_store_metadata_entry(N, InEntry, MetaG, M)
+    rdf_store_metadata_entry(N, InEntry, G, M)
   ).
 
 
-rdf_store_metadata_entry(N, InEntry, MetaG, M) :-
+rdf_store_metadata_entry(N, InEntry, G, M) :-
   rdfs_container_membership_property(P, N),
   atom_concat('_:', N, BNode),
-  qb(M, MetaG, P, BNode),
+  qb(M, G, P, BNode),
   dict_pairs(InEntry, InPairs),
   maplist(rdf_store_metadata_entry_pair(M, BNode), InPairs).
 
