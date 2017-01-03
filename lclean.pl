@@ -23,6 +23,7 @@
 :- use_module(library(filesex)).
 :- use_module(library(hash_ext)).
 :- use_module(library(hdt/hdt_ext)).
+:- use_module(library(http/http_io)).
 :- use_module(library(lists)).
 :- use_module(library(option)).
 :- use_module(library(os/archive_ext)).
@@ -49,7 +50,8 @@
 
 :- meta_predicate
     call_meta_warn(+, 2),
-    call_meta_warn(+, +, 2).
+    call_meta_warn(+, +, 2),
+    call_meta_warn_streams(+, 2, +, +).
 
 :- multifile
     currently_debugging0/1.
@@ -103,15 +105,17 @@ clean_archive(From, _, _) :-
   forall(rdf_call_on_stream(From, clean_entry(From)), true).
 
 clean_entry(From, In, InPath, InPath) :-
+  % Make sure that the HTTP status code is in the 2xx range.
+  http_check_for_success(InPath),
   path_entry_name(InPath, EntryName),
   md5(From-EntryName, EntryHash),
   entry_label(From, EntryName, EntryHash, Lbl),
-  call_meta_warn(e-Lbl, EntryHash, clean_stream(In, InPath)).
+  call_meta_warn(e-Lbl, EntryHash, clean_stream1(In, InPath)).
 
-clean_stream(In, InPath, EntryHash, MetaM) :-
+clean_stream1(In, InPath, EntryHash, MetaM) :-
   q_dir_hash(EntryDir, EntryHash),
   q_graph_hash(MetaG, meta, EntryHash),
-  clean_stream_inner(EntryDir, OutPath, TmpFile, CleanHash, In, InPath),
+  clean_stream2(EntryDir, OutPath, TmpFile, CleanHash, In, InPath),
   % Handle the cleaned data file, if any.
   (   var(TmpFile)
   ->  true
@@ -122,10 +126,12 @@ clean_stream(In, InPath, EntryHash, MetaM) :-
       (   exists_file(CleanFile)
       ->  true
       ;   create_file_directory(CleanFile),
-          compress_file(TmpFile, CleanFile)
+          compress_file(TmpFile, CleanFile),
+          delete_file(TmpFile)
       ),
       q_file_touch_ready(CleanFile),
       q_file_hash(HdtMetaFile, meta, hdt, EntryHash),
+      gtrace,
       once(
         hdt_call_on_file(
           HdtMetaFile,
@@ -164,7 +170,7 @@ clean_stream(In, InPath, EntryHash, MetaM) :-
   ),
   rocks_merge(ll_index, documents, 1).
 
-clean_stream_inner(EntryDir, OutPath2, TmpFile, CleanHash, In, InPath):-
+clean_stream2(EntryDir, OutPath2, TmpFile, CleanHash, In, InPath):-
   absolute_file_name(
     cleaning,
     TmpFile0,
@@ -172,8 +178,8 @@ clean_stream_inner(EntryDir, OutPath2, TmpFile, CleanHash, In, InPath):-
   ),
   thread_file(TmpFile0, TmpFile),
   rdf_call_to_ntriples(
-    TmpFile,
-    clean_stream_inner(In, InPath),
+    file(TmpFile),
+    clean_stream3(In, InPath),
     [
       compression(false),
       md5(CleanHash),
@@ -191,11 +197,9 @@ clean_stream_inner(EntryDir, OutPath2, TmpFile, CleanHash, In, InPath):-
     triples: NumTriples,
     tuples: NumTuples
   }),
-  OutPath2 = [OutEntry2|OutPath],
-  % Delete the temporary file.
-  delete_file(TmpFile).
+  OutPath2 = [OutEntry2|OutPath].
 
-clean_stream_inner(In, InPath, State, Out) :-
+clean_stream3(In, InPath, State, Out) :-
   rdf_call_on_tuples_stream(In, clean_tuple(State, Out), InPath).
 
 clean_tuple(State, Out, _, S, P, O, G) :-
@@ -219,30 +223,6 @@ reset_and_clean_hash(Hash) :-
 
 archive_label(From, ArchiveHash, ArchiveLbl) :-
   format(string(ArchiveLbl), "~a (~a)", [From,ArchiveHash]).
-
-
-
-%! close_output_stream(+File, +State) is det.
-%! close_output_stream(+File, +State, -HdtFile) is det.
-
-close_output_stream(File, State) :-
-  close_output_stream(File, State, _).
-
-
-close_output_stream(File, State, HdtFile) :-
-  rdf__io:rdf_write_ntuples_end(State, []),
-  hdt_prepare_file(File, HdtFile),
-  q_file_touch_ready(File).
-
-
-
-%! currently_debugging(+Hash) is det.
-
-currently_debugging(Hash) :-
-  currently_debugging0(Hash), !,
-  ansi_format(user_output, [bold], "~a", [Hash]),
-  gtrace. %DEB
-currently_debugging(_).
 
 
 
@@ -273,6 +253,28 @@ call_meta_warn(Mode-Lbl, Hash, Goal_2) :-
 % (not sure whether this is good or not).
 
 call_meta_warn(Hash, Goal_2) :-
+  % Use the Hash directory Dir to assert metadata (MetaFile) and
+  % warnings (WarnFile).
+  q_dir_hash(Dir, Hash),
+  q_dir_file(Dir, meta, ntriples, MetaFile),
+  q_dir_file(Dir, warn, ntriples, WarnFile),
+  call_to_streams(
+    file(MetaFile),
+    file(WarnFile),
+    call_meta_warn_streams(Hash, Goal_2)
+  ),
+  hdt_prepare_file(MetaFile),
+  q_file_touch_ready(MetaFile),
+  hdt_prepare_file(WarnFile),
+  q_file_touch_ready(WarnFile).
+
+call_meta_warn_streams(Hash, Goal_2, MetaOut, WarnOut) :-
+  Opts = [rdf_media_type(application/'n-quads')],
+  MetaOpts = [name(meta)|Opts],
+  rdf__io:rdf_write_ntuples_begin(MetaState, MetaOpts),
+  MetaM = stream(MetaState,MetaOut),
+  WarnOpts = [name(warn)|Opts],
+  rdf__io:rdf_write_ntuples_begin(WarnState, WarnOpts),
   % @hack Count the number of warnings.  WarnState should be able to
   %       do this as well.
   flag(Hash, _, 0),
@@ -285,35 +287,27 @@ call_meta_warn(Hash, Goal_2) :-
       % @bug WarnState gets reset each time, e.g., ‘triples: 1’.
       rdf_store_warning(stream(WarnState,WarnOut), MetaG, Term)
   )),
-  % Use the Hash directory Dir to assert metadata (MetaFile) and
-  % warnings (WarnFile).
-  q_dir_hash(Dir, Hash),
-  q_dir_file(Dir, meta, ntriples, MetaFile),
-  q_dir_file(Dir, warn, ntriples, WarnFile),
-  setup_call_cleanup(
-    (
-      open_output_stream(MetaFile, meta, MetaOut, MetaState),
-      open_output_stream(WarnFile, warn, WarnOut, WarnState)
-    ),
-    (
-      MetaM = stream(MetaState,MetaOut),
-      (catch(call(Goal_2, Hash, MetaM), E, true) -> true ; E = fail),
-      (   var(E)
-      ->  End = true
-      ;   with_output_to(string(End), write_term(E)),
-          msg_warning("[FAILED] ~s (~a)~n", [End,Hash])
-      ),
-      qb(MetaM, MetaG, nsdef:end, End^^xsd:string),
-      flag(Hash, NumWarns, 0),
-      qb(MetaM, MetaG, nsdef:warnings, NumWarns^^xsd:nonNegativeInteger),
-      close_output_stream(MetaFile, MetaState),
-      close_output_stream(WarnFile, WarnState)
-    ),
-    (
-      close(MetaOut),
-      close(WarnOut)
-    )
-  ).
+  (catch(call(Goal_2, Hash, MetaM), E, true) -> true ; E = fail),
+  (   var(E)
+  ->  End = true
+  ;   with_output_to(string(End), write_term(E)),
+      msg_warning("[FAILED] ~s (~a)~n", [End,Hash])
+  ),
+  qb(MetaM, MetaG, nsdef:end, End^^xsd:string),
+  flag(Hash, NumWarns, 0),
+  qb(MetaM, MetaG, nsdef:warnings, NumWarns^^xsd:nonNegativeInteger),
+  rdf__io:rdf_write_ntuples_end(MetaState, MetaOpts),
+  rdf__io:rdf_write_ntuples_end(WarnState, WarnOpts).
+
+
+
+%! currently_debugging(+Hash) is det.
+
+currently_debugging(Hash) :-
+  currently_debugging0(Hash), !,
+  ansi_format(user_output, [bold], "~a", [Hash]),
+  gtrace. %DEB
+currently_debugging(_).
 
 
 

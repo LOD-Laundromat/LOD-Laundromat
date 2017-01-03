@@ -6,7 +6,6 @@
 :- multifile
     currently_debugging0/1.
 
-currently_debugging0('88b773d75772d57e12f29f5b20bf6dff'). % ???
 currently_debugging0('a27d8c6ed29512294e4beabb87a250fd'). % INSTANTIATION EROR
 
 :- debug(es_api).
