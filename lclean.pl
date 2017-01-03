@@ -116,6 +116,7 @@ clean_stream1(In, InPath, EntryHash, MetaM) :-
   q_dir_hash(EntryDir, EntryHash),
   q_graph_hash(MetaG, meta, EntryHash),
   clean_stream2(EntryDir, OutPath, TmpFile, CleanHash, In, InPath),
+  OutPath = [OutEntry|_],
   % Handle the cleaned data file, if any.
   (   var(TmpFile)
   ->  true
@@ -129,28 +130,20 @@ clean_stream1(In, InPath, EntryHash, MetaM) :-
           compress_file(TmpFile, CleanFile),
           delete_file(TmpFile)
       ),
-      q_file_touch_ready(CleanFile),
-      q_file_hash(HdtMetaFile, meta, hdt, EntryHash),
-      gtrace,
-      once(
-        hdt_call_on_file(
-          HdtMetaFile,
-          hdt0(_, nsdef:tuples, NumTuples^^xsd:nonNegativeInteger)
-        )
-      ),
       hdt_prepare_file(CleanFile),
+      q_file_touch_ready(CleanFile),
+      % Link the entry directory to the data directory.
       file_directory_name(CleanFile, CleanDir),
-      % Link to the data.
       link_dirs(EntryDir, 'data.hdt', CleanDir),
       link_dirs(EntryDir, 'data.hdt.index', CleanDir),
       link_dirs(EntryDir, 'data.nt.gz', CleanDir),
       link_dirs(EntryDir, 'data.nt.gz.ready', CleanDir),
       % Store the number of tuples in RocksDB and ElasticSearch.
+      get_dict(tuples, OutEntry, NumTuples),
       rocks_merge(ll_index, tuples, NumTuples)
   ),
   % Explicitly turn off compression when asserting metadata, otherwise
   % we compress twice.
-  OutPath = [OutEntry|_],
   qb(MetaM, MetaG, nsdef:bytes, OutEntry.byte_count^^xsd:nonNegativeInteger),
   qb(MetaM, MetaG, nsdef:chars, OutEntry.char_count^^xsd:nonNegativeInteger),
   qb(MetaM, MetaG, nsdef:lines, OutEntry.line_count^^xsd:nonNegativeInteger),
@@ -162,8 +155,9 @@ clean_stream1(In, InPath, EntryHash, MetaM) :-
   qb(MetaM, MetaG, nsdef:tuples, NumTuples^^xsd:nonNegativeInteger),
   NumDuplicates is NumTuples - OutEntry.line_count + 1,
   qb(MetaM, MetaG, nsdef:duplicates, NumDuplicates^^xsd:nonNegativeInteger),
-  dicts_get(rdf_media_type, InPath, Format),
-  qb(MetaM, MetaG, nsdef:rdfFormat, Format^^xsd:string),
+  dicts_getchk(rdf_media_type, InPath, MT),
+  once(rdf_media_type(MT, Format, _)),
+  qb(MetaM, MetaG, nsdef:rdfFormat, Format),
   forall(
     nth1(N, InPath, InEntry),
     rdf_store_metadata_entry(N, InEntry, MetaG, MetaM)
