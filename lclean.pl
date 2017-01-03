@@ -11,7 +11,7 @@
 /** <module> LOD Laundromat: Data cleaning
 
 @author Wouter Beek
-@version 2016/03-2016/12
+@version 2016/03-2017/01
 */
 
 :- use_module(library(apply)).
@@ -95,7 +95,7 @@ clean_seed(Seed) :-
   % stream to run the cleaning goal on.
   (   catch(
         forall(
-          rdf_call_on_stream(From, clean_seed_entry(From, SeedHash)),
+          rdf_call_on_stream(uri(From), clean_seed_entry(From, SeedHash)),
           true
         ),
         Exception,
@@ -146,19 +146,17 @@ clean_seed(Seed) :-
 %! clean_seed_entry(+From, +SeedHash, +In, +InPath1, -InPath2) is det.
 
 clean_seed_entry(From, SeedHash, In, InPath, InPath) :-
-  % Find the name of the current entry.
   path_entry_name(InPath, EntryName),
-  % The clean hash is based on the pair (From,EntryName).
   md5(From-EntryName, EntryHash),
-  q_dir_hash(Dir, EntryHash),
+  q_dir_hash(EntryDir, EntryHash),
   with_mutex(lclean,
-    (   exists_directory(Dir)
-    ->  Exists = true
-    ;   make_directory_path(Dir),
-        Exists = false
+    (   exists_directory(EntryDir)
+    ->  EntryDirExists = true
+    ;   make_directory_path(EntryDir),
+        EntryDirExists = false
     )
   ),
-  (   Exists = true
+  (   EntryDirExists = true
   ->  true
   ;   atomic_list_concat([wm,SeedHash], :, SeedAlias),
       % We start a new thread with the _seed_ hash as alias.  This
@@ -171,7 +169,7 @@ clean_seed_entry(From, SeedHash, In, InPath, InPath) :-
           InPath,
           EntryName,
           EntryHash,
-          Dir
+          EntryDir
         )
       )
   ).
@@ -350,10 +348,6 @@ dummy2(State, Out, _, S, P, O, G) :-
 %! reset_and_clean_hash(+Hash) is det.
 
 reset_and_clean_hash(Hash) :-
-  % Remove directory and contents from disk.
-  q_dir_hash(Dir, Hash),
-  with_mutex(lclean, delete_directory_and_contents_msg(Dir)),
-  % Reset the seedpoint in the seedlist.
   reset_seed(Hash),
   clean_hash(Hash).
 

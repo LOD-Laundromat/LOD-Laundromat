@@ -44,7 +44,7 @@ there (409).  The HTTP body is expected to be `{"from": $IRI$}`.
 
 @author Wouter Beek
 @tbd Add authorization for DELETE and POST requests.
-@version 2016/01-2016/12
+@version 2016/01-2017/01
 */
 
 :- use_module(library(apply)).
@@ -71,10 +71,13 @@ there (409).  The HTTP body is expected to be `{"from": $IRI$}`.
 :- use_module(library(list_ext)).
 :- use_module(library(math/math_ext)).
 :- use_module(library(nlp/nlp_lang)).
+:- use_module(library(os/archive_ext)).
 :- use_module(library(os/file_ext)).
+:- use_module(library(os/io)).
 :- use_module(library(pagination/html_pagination)).
 :- use_module(library(pair_ext)).
 :- use_module(library(print_ext)).
+:- use_module(library(q/q_fs)).
 :- use_module(library(q/q_iri)).
 :- use_module(library(service/es_api)).
 :- use_module(library(settings)).
@@ -366,6 +369,20 @@ remove_seed(Hash) :-
 %! reset_seed(+Hash) is det.
 
 reset_seed(Hash) :-
+  seed_by_hash(Hash, Seed),
+  atom_string(From, Seed.from),
+  % Remove the directories for all seed entries, if any.
+  ignore(
+    forall(
+      call_on_stream(uri(From), reset_seed_entry(From)),
+      true
+    )
+  ),
+  % Remove the directory for the seed,
+  q_dir_hash(Dir, Hash),
+  with_mutex(lclean, delete_directory_and_contents_msg(Dir)),
+  
+  % Update the seedlist.
   get_time(Now),
   retry0(
     es_update(
@@ -374,6 +391,13 @@ reset_seed(Hash) :-
     )
   ),
   debug(seedlist(reset), "Reset seed ~a", [Hash]).
+
+
+reset_seed_entry(From, _, InPath, InPath) :-
+  path_entry_name(InPath, EntryName),
+  md5(From-EntryName, EntryHash),
+  q_dir_hash(EntryDir, EntryHash),
+  with_mutex(lclean, delete_directory_and_contents_msg(EntryDir)).
 
 
 
