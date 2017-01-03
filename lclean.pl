@@ -75,21 +75,26 @@ clean :-
 
 clean_hash(Hash) :-
   q_file_hash(File, data, ntriples, Hash),
-  q_file_is_ready(File), !,
-  msg_notification("Already cleaned ~a", [Hash]).
-clean_hash(Hash) :-
-  seed_by_hash(Hash, Seed),
-  clean_seed(Seed).
+  (   q_file_is_ready(File)
+  ->  msg_notification("Already cleaned ~a", [Hash])
+  ;   seed_by_hash(Hash, Seed),
+      atom_string(From, Seed.from),
+      clean_seed0(From, Hash, File)
+  ).
 
 
 
 %! clean_seed(+Seed) is det.
 
 clean_seed(Seed) :-
-  dict_tag(Seed, SeedHash),
+  dict_tag(Seed, Hash),
+  q_file_hash(File, data, ntriples, Hash),
+  atom_string(From, Seed.from),
+  clean_seed0(From, Hash, File).
+
+clean_seed0(From, SeedHash, ParentFile) :-
   begin_seed_hash(SeedHash),
   currently_debugging(SeedHash),
-  atom_string(From, Seed.from),
   % Iterate over all entries inside the document stored at From.  We
   % need to catch TCP exceptions, because there will not be an input
   % stream to run the cleaning goal on.
@@ -366,6 +371,22 @@ currently_debugging(Hash) :-
   ansi_format(user_output, [bold], "~a", [Hash]),
   gtrace. %DEB
 currently_debugging(_).
+
+
+
+%! http_check_for_success(+InPath) is det.
+%
+% @throws http_status/2 exception
+
+http_check_for_success(InPath) :-
+  % The last HTTP status code must have been success.
+  (   dicts_getchk(status, InPath, Status)
+  ->  (   http_status_is_success(Status)
+      ->  true
+      ;   throw(http_status(Status, '2xx'))
+      )
+  ;   true
+  ).
 
 
 
