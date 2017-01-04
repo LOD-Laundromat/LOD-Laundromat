@@ -140,22 +140,22 @@ clean_stream1(In, InPath, EntryHash, MetaM) :-
       link_dirs(EntryDir, 'data.nt.gz', CleanDir),
       link_dirs(EntryDir, 'data.nt.gz.ready', CleanDir),
       % Store the number of tuples in RocksDB and ElasticSearch.
-      get_dict(tuples, OutEntry, NumTuples),
-      rocks_merge(ll_index, tuples, NumTuples)
+      get_dict(number_of_tuples, OutEntry, NumTuples),
+      rocks_merge(ll_index, number_of_tuples, NumTuples)
   ),
   % Explicitly turn off compression when asserting metadata, otherwise
   % we compress twice.
-  qb(MetaM, MetaG, nsdef:bytes, OutEntry.byte_count^^xsd:nonNegativeInteger),
-  qb(MetaM, MetaG, nsdef:chars, OutEntry.char_count^^xsd:nonNegativeInteger),
-  qb(MetaM, MetaG, nsdef:lines, OutEntry.line_count^^xsd:nonNegativeInteger),
-  dict_get(quads, OutEntry, 0, NumQuads),
-  qb(MetaM, MetaG, nsdef:quads, NumQuads^^xsd:nonNegativeInteger),
-  dict_get(triples, OutEntry, 0, NumTriples),
-  qb(MetaM, MetaG, nsdef:triples, NumTriples^^xsd:nonNegativeInteger),
-  dict_get(tuples, OutEntry, 0, NumTuples),
-  qb(MetaM, MetaG, nsdef:tuples, NumTuples^^xsd:nonNegativeInteger),
-  NumDuplicates is NumTuples - OutEntry.line_count + 1,
-  qb(MetaM, MetaG, nsdef:duplicates, NumDuplicates^^xsd:nonNegativeInteger),
+  qb(MetaM, MetaG, nsdef:numberOfBytes, OutEntry.number_of_bytes^^xsd:nonNegativeInteger),
+  qb(MetaM, MetaG, nsdef:numberOfCharacters, OutEntry.number_of_chars^^xsd:nonNegativeInteger),
+  qb(MetaM, MetaG, nsdef:numberOfLines, OutEntry.number_of_lines^^xsd:nonNegativeInteger),
+  dict_get(number_of_quads, OutEntry, 0, NumQuads),
+  qb(MetaM, MetaG, nsdef:numberOfQuads, NumQuads^^xsd:nonNegativeInteger),
+  dict_get(number_of_triples, OutEntry, 0, NumTriples),
+  qb(MetaM, MetaG, nsdef:numberOfTriples, NumTriples^^xsd:nonNegativeInteger),
+  dict_get(number_of_tuples, OutEntry, 0, NumTuples),
+  qb(MetaM, MetaG, nsdef:numberOfTuples, NumTuples^^xsd:nonNegativeInteger),
+  NumDuplicates is NumTuples - OutEntry.number_of_lines + 1,
+  qb(MetaM, MetaG, nsdef:numberOfDuplicates, NumDuplicates^^xsd:nonNegativeInteger),
   dicts_getchk(rdf_media_type, InPath, MT),
   once(rdf_media_type(MT, Format, _)),
   qb(MetaM, MetaG, nsdef:rdfFormat, Format),
@@ -180,18 +180,18 @@ clean_stream2(EntryDir, OutPath2, TmpFile, CleanHash, In, InPath):-
       md5(CleanHash),
       metadata(OutPath1),
       name(data),
-      quads(NumQuads),
-      triples(NumTriples),
-      tuples(NumTuples)
+      number_of_quads(NumQuads),
+      number_of_triples(NumTriples),
+      number_of_tuples(NumTuples)
     ]
   ),
   % Sort the N-Triples on disk.
   sort_file(TmpFile),
   OutPath1 = [OutEntry1|OutPath],
   OutEntry2 = OutEntry1.put(_{
-    quads: NumQuads,
-    triples: NumTriples,
-    tuples: NumTuples
+    number_of_quads: NumQuads,
+    number_of_triples: NumTriples,
+    number_of_tuples: NumTuples
   }),
   OutPath2 = [OutEntry2|OutPath].
 
@@ -280,7 +280,7 @@ call_meta_warn_streams(Hash, Goal_2, MetaOut, WarnOut) :-
     user:thread_message_hook(Term,Kind,_) :-
       error_kind(Kind),
       flag(Hash, NumWarns, NumWarns + 1),
-      % @bug WarnState gets reset each time, e.g., ‘triples: 1’.
+      % @bug WarnState gets reset each time (‘number_of_triples:1’).
       rdf_store_warning(stream(WarnState,WarnOut), MetaG, Term)
   )),
   (catch(call(Goal_2, Hash, MetaM), E, true) -> true ; E = fail),
@@ -372,13 +372,13 @@ rdf_store_metadata_entry(N, InEntry, G, M) :-
 
 
 % Properties that are skipped.
-rdf_store_metadata_entry_pair(_, _, byte_count-_).
-rdf_store_metadata_entry_pair(_, _, char_count-_).
 rdf_store_metadata_entry_pair(_, _, filetype-_).
-rdf_store_metadata_entry_pair(_, _, line_count-_).
 rdf_store_metadata_entry_pair(_, _, mtime-_).
 rdf_store_metadata_entry_pair(_, _, name-_).
 rdf_store_metadata_entry_pair(_, _, newline-_).
+rdf_store_metadata_entry_pair(_, _, number_of_bytes-_).
+rdf_store_metadata_entry_pair(_, _, number_of_chars-_).
+rdf_store_metadata_entry_pair(_, _, number_of_lines-_).
 rdf_store_metadata_entry_pair(_, _, rdf_media_type-_).
 rdf_store_metadata_entry_pair(_, _, size-_).
 
