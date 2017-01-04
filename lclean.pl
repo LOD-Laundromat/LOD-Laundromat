@@ -182,6 +182,7 @@ clean_stream2(EntryDir, OutPath2, TmpFile, CleanHash, In, InPath):-
       compression(false),
       md5(CleanHash),
       metadata(OutPath1),
+      name(data),
       quads(NumQuads),
       triples(NumTriples),
       tuples(NumTuples)
