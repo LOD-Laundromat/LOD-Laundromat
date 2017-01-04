@@ -11,7 +11,8 @@
 /** <module> LOD Laundromat: Data cleaning
 
 @author Wouter Beek
-@tbd Include byte_count, char_count, lines_count in metadata.
+@tbd Can we also count (byte_count, char_count, lines_count) what is
+     _read_?
 @version 2016/03-2017/01
 */
 
