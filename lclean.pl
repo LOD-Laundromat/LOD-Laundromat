@@ -103,10 +103,7 @@ clean_archive(From, _, _) :-
   % Iterate over all entries inside the document stored at From.  We
   % need to catch TCP exceptions, because there will not be an input
   % stream to run the cleaning goal on.
-  forall(
-    rdf_call_on_stream(From, clean_entry(From)),
-    true
-  ).
+  forall(rdf_call_on_stream(From, clean_entry(From)), true).
 
 clean_entry(From, In, InPath, InPath) :-
   % Make sure that the HTTP status code is in the 2xx range.
