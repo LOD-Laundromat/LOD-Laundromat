@@ -100,10 +100,13 @@ clean_seed(Seed) :-
   end_seed_hash(ArchiveHash).
 
 clean_archive(From, _, _) :-
-  % Iterate over all entries inside the document stored at From.
-  % We need to catch TCP exceptions, because there will not be an
-  % input stream to run the cleaning goal on.
-  forall(rdf_call_on_stream(From, clean_entry(From)), true).
+  % Iterate over all entries inside the document stored at From.  We
+  % need to catch TCP exceptions, because there will not be an input
+  % stream to run the cleaning goal on.
+  forall(
+    rdf_call_on_stream(From, clean_entry(From)),
+    true
+  ).
 
 clean_entry(From, In, InPath, InPath) :-
   % Make sure that the HTTP status code is in the 2xx range.
@@ -309,7 +312,7 @@ currently_debugging(_).
 %! entry_label(+From, +EntryName, +EntryHash, -EntryLbl) is det.
 
 entry_label(From, EntryName, EntryHash, EntryLbl) :-
-  format(string(EntryLbl), "~a:~a (~a)", [From,EntryName,EntryHash]).
+  format(string(EntryLbl), "~a ~a (~a)", [From,EntryName,EntryHash]).
 
 
 
@@ -414,9 +417,8 @@ rdf_store_metadata_entry_pair(M, S, status-Status) :-
   qb(M, S, nsdef:status, Status^^xsd:positiveInteger).
 rdf_store_metadata_entry_pair(M, S, time-Time) :-
   qb(M, S, nsdef:time, Time^^xsd:float).
-rdf_store_metadata_entry_pair(M, S, version-Dict) :-
-  atomic_list_concat([Dict.major,Dict.minor], ., A),
-  qb(M, S, nsdef:version, A^^xsd:string).
+rdf_store_metadata_entry_pair(M, S, version-Version) :-
+  qb(M, S, nsdef:version, Version^^xsd:string).
 rdf_store_metadata_entry_pair(_, _, Key-Val) :-
   gtrace, %DEB
   writeln(Key-Val).
