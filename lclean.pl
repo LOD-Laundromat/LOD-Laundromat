@@ -163,7 +163,7 @@ clean_stream1(In, InPath, EntryHash, MetaM) :-
     nth1(N, InPath, InEntry),
     rdf_store_metadata_entry(N, InEntry, MetaG, MetaM)
   ),
-  rocks_merge(ll_index, documents, 1).
+  rocks_merge(ll_index, number_of_documents, 1).
 
 clean_stream2(EntryDir, OutPath2, TmpFile, CleanHash, In, InPath):-
   absolute_file_name(
@@ -280,7 +280,8 @@ call_meta_warn_streams(Hash, Goal_2, MetaOut, WarnOut) :-
     user:thread_message_hook(Term,Kind,_) :-
       error_kind(Kind),
       flag(Hash, NumWarns, NumWarns + 1),
-      % @bug WarnState gets reset each time (‘number_of_triples:1’).
+      % @bug WarnState gets reset each time so that
+      %      ‘number_of_triples’ equals 1.
       rdf_store_warning(stream(WarnState,WarnOut), MetaG, Term)
   )),
   (catch(call(Goal_2, Hash, MetaM), E, true) -> true ; E = fail),
