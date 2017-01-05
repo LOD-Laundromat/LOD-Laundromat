@@ -178,12 +178,16 @@ wm_clean :-
 % Reset the LOD Laundromat, removing all data files and resetting the
 % seedlist.
 
+:- [script/init_old_seedlist].
 wm_reset :-
   setting(q_io:store_dir, Dir1),
   delete_directory_and_contents_msg(Dir1),
   setting(ll_index, Dir2),
   delete_directory_and_contents_msg(Dir2),
-  retry0(es_rm([ll])).
+  retry0(es_rm([ll])),
+  rocks_put(ll_index, number_of_documents, 0),
+  rocks_put(ll_index, number_of_tuples, 0),
+  init_old_seedlist.
 
 
 

@@ -110,6 +110,8 @@ clean_entry(From, In, InPath, InPath) :-
   http_check_for_success(InPath),
   path_entry_name(InPath, EntryName),
   md5(From-EntryName, EntryHash),
+  % io_error
+  (EntryHash == '67c5cafdecbd16ea14ea4c2255e80338' -> gtrace ; true),
   entry_label(From, EntryName, EntryHash, Lbl),
   call_meta_warn(e-Lbl, EntryHash, clean_stream1(In, InPath)).
 
