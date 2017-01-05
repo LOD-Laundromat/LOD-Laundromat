@@ -131,8 +131,8 @@ clean_stream1(In, InPath, EntryHash, MetaM) :-
           compress_file(TmpFile, CleanFile),
           delete_file(TmpFile)
       ),
-      hdt_prepare_file(CleanFile),
-      q_file_touch_ready(CleanFile),
+      hdt_prepare_file(CleanFile, HdtCleanFile),
+      maplist(q_file_touch_ready, [CleanFile,HdtCleanFile]),
       % Link the entry directory to the data directory.
       file_directory_name(CleanFile, CleanDir),
       link_dirs(EntryDir, 'data.hdt', CleanDir),
