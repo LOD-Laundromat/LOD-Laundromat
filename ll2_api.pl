@@ -12,6 +12,7 @@
 :- reexport(library(q/q_cli)).
 :- reexport(library(q/q_rdf)).
 :- reexport(library(semweb/rdf11)).
+:- reexport(library(service/rocks_ext)).
 
 /** <module> LOD Laundromat 2 API
 
@@ -31,7 +32,6 @@
 :- use_module(library(q/q_term)).
 :- use_module(library(q/qb)).
 :- use_module(library(rdf/rdf__io)).
-:- use_module(library(service/rocks_ext)).
 :- use_module(library(settings)).
 :- use_module(library(yall)).
 
@@ -54,7 +54,17 @@ gen_term_index :-
 gen_term_index(Alias) :-
   q(hdt, S, P, O, G),
   q_graph_hash(G, Hash),
-  rocks_merge(Alias, Hash, S).
+  maplist(add_term_index(Alias, Hash), [S,P,O]),
+  flag(number_of_triples, NumTriples, NumTriples + 1),
+  format(user_output, "~D~n", [NumTriples]),
+  fail.
+gen_term_index(_).
+
+add_term_index(Alias, Hash, Term) :-
+  q_term_to_atom(Term, A),
+  rocks_merge(Alias, A, [Hash]).
+
+
 
 gen_stat :-
   call_on_rocks(stat, int, gen_stat).
@@ -133,7 +143,7 @@ term_index(Term, Hash) :-
 
 term_index(Term, Hash, Alias) :-
   (   var(Hash)
-  ->  rocks_enum(Alias, Hash, Hashes)
+  ->  rocks_enum(Alias, Term, Hashes)
   ;   rocks_get(Alias, Term, Hashes)
   ),
   member(Hash, Hashes).

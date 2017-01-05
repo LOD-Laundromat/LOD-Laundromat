@@ -31,14 +31,9 @@ cp:logo(washing_machine_round).
 
 :- use_module(cp(api/alias)).
 :- use_module(cp(api/class)).
-%:- use_module(cp(api/dataset)).
-%:- use_module(cp(api/documentation)).
-%:- use_module(cp(api/download)).
-%:- use_module(cp(api/geo_proximity)).
 :- use_module(cp(api/graph)).
 :- use_module(cp(api/predicate)).
 :- use_module(cp(api/simple_graph_pattern)).
-%:- use_module(cp(api/sparql_query)).
 :- use_module(cp(api/term)).
 :- use_module(cp(api/triple)).
 
