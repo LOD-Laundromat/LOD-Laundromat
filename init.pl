@@ -9,7 +9,7 @@
 :- use_module(library(http/http_host), []).
 :- use_module(library(q/q_io)).
 :- use_module(library(rdf/rdf__io)).
-:- use_module(library(service/rocksdb_ext)).
+:- use_module(library(service/rocks_ext)).
 :- use_module(library(settings)).
 
 :- use_module(cp(applications/admin)).
@@ -51,15 +51,11 @@ set_data_dirs :-
   rdf_load_file(ttl('ll.ttl')),
   set_setting(q_io:source_dir, '/scratch/wbeek/crawls/13/source/'),
   set_setting(q_io:store_dir,  '/scratch/wbeek/crawls/13/store/' ),
-  setting(washing_machine:ll_index, Dir),
-  rocks_open(
-    Dir,
-    _,
-    [alias(ll_index),key(atom),merge(rocks_merge_sum),value(int64)]
-  ),
-  rocks_merge(ll_index, number_of_documents, 0),
-  rocks_merge(ll_index, number_of_tuples, 0).
-:- at_halt(rocks_close(ll_index)).
+  set_setting(rocks_ext:index_dir, '/scratch/wbeek/crawls/13/index/'),
+  rocks_open(llw, int),
+  rocks_merge(llw, number_of_documents, 0),
+  rocks_merge(llw, number_of_tuples, 0).
+:- at_halt(rocks_close(llw)).
 
 :- http_handler(/, root, []).
 

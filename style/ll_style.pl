@@ -23,7 +23,7 @@
 :- use_module(library(http/http_dispatch)).
 :- use_module(library(http/http_ext)).
 :- use_module(library(pair_ext)).
-:- use_module(library(service/rocksdb_ext)).
+:- use_module(library(service/rocks_ext)).
 :- use_module(library(settings)).
 
 :- use_module(ll(api/ll_overview)).
@@ -171,8 +171,8 @@ ll_link0(wouter_beek, "Wouter Beek", 'http://www.wouterbeek.com').
 
 data_counter -->
   {
-    rocks_get(ll_index, number_of_documents, NumDocs),
-    rocks_get(ll_index, number_of_tuples, NumTuples)
+    rocks_get(llw, number_of_documents, NumDocs),
+    rocks_get(llw, number_of_tuples, NumTuples)
   },
   html(
     p(class='navbar-text', [

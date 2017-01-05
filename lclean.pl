@@ -42,7 +42,7 @@
 :- use_module(library(semweb/rdf11)).
 :- use_module(library(semweb/rdf11_containers)).
 :- use_module(library(service/es_api)).
-:- use_module(library(service/rocksdb_ext)).
+:- use_module(library(service/rocks_ext)).
 
 :- use_module(ll(api/seedlist)).
 
@@ -110,8 +110,6 @@ clean_entry(From, In, InPath, InPath) :-
   http_check_for_success(InPath),
   path_entry_name(InPath, EntryName),
   md5(From-EntryName, EntryHash),
-  % io_error
-  (EntryHash == '67c5cafdecbd16ea14ea4c2255e80338' -> gtrace ; true),
   entry_label(From, EntryName, EntryHash, Lbl),
   call_meta_warn(e-Lbl, EntryHash, clean_stream1(In, InPath)).
 
@@ -143,7 +141,7 @@ clean_stream1(In, InPath, EntryHash, MetaM) :-
       link_dirs(EntryDir, 'data.nt.gz.ready', CleanDir),
       % Store the number of tuples in RocksDB and ElasticSearch.
       get_dict(number_of_tuples, OutEntry, NumTuples),
-      rocks_merge(ll_index, number_of_tuples, NumTuples)
+      rocks_merge(llw, number_of_tuples, NumTuples)
   ),
   % Explicitly turn off compression when asserting metadata, otherwise
   % we compress twice.
@@ -165,7 +163,7 @@ clean_stream1(In, InPath, EntryHash, MetaM) :-
     nth1(N, InPath, InEntry),
     rdf_store_metadata_entry(N, InEntry, MetaG, MetaM)
   ),
-  rocks_merge(ll_index, number_of_documents, 1).
+  rocks_merge(llw, number_of_documents, 1).
 
 clean_stream2(EntryDir, OutPath2, TmpFile, CleanHash, In, InPath):-
   absolute_file_name(

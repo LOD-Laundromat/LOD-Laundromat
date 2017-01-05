@@ -21,7 +21,7 @@
 /* <module> LOD Laundromat: Washing machine API
 
 @author Wouter Beek
-@version 2016/01-2016/05, 2016/08, 2016/10, 2016/12
+@version 2016/01-2016/05, 2016/08, 2016/10, 2016/12-2017/01
 */
 
 :- use_module(library(aggregate)).
@@ -49,6 +49,7 @@
 :- use_module(library(rdf/rdf__io)).
 :- use_module(library(semweb/rdf11)).
 :- use_module(library(service/es_api)).
+:- use_module(library(service/rocks_ext)).
 :- use_module(library(settings)).
 :- use_module(library(string_ext)).
 :- use_module(library(thread)).
@@ -56,13 +57,6 @@
 
 :- use_module(ll(lclean)).
 :- use_module(ll(api/seedlist)).
-
-:- setting(
-     ll_index,
-     atom,
-     '/scratch/wbeek/crawls/13/index/',
-     "Directory for the LOD Laundromat RocksDB index."
-   ).
 
 prolog_stack:stack_guard('C').
 prolog_stack:stack_guard(none).
@@ -180,13 +174,16 @@ wm_clean :-
 
 :- [script/init_old_seedlist].
 wm_reset :-
+  % Reset the data store.
   setting(q_io:store_dir, Dir1),
   delete_directory_and_contents_msg(Dir1),
-  setting(ll_index, Dir2),
-  delete_directory_and_contents_msg(Dir2),
+  % Reset the web site index.
+  rocks_rm(llw),
+  rocks_open(llw, int),
+  rocks_put(llw, number_of_documents, 0),
+  rocks_put(llw, number_of_tuples, 0),
+  % Reset the seedlist.
   retry0(es_rm([ll])),
-  rocks_put(ll_index, number_of_documents, 0),
-  rocks_put(ll_index, number_of_tuples, 0),
   init_old_seedlist.
 
 
