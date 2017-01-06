@@ -1,10 +1,7 @@
 :- module(
-  lclean,
+  wm,
   [
-    clean/0,
-    clean_hash/1,          % +Hash
-    clean_seed/1,          % +Seed
-    reset_and_clean_hash/1 % +Hash
+    wm_run/0
   ]
 ).
 
@@ -13,14 +10,19 @@
 @author Wouter Beek
 @tbd Can we also count (byte_count, char_count, lines_count) what is
      _read_?
-@version 2016/03-2017/01
+@version 2016/01-2017/01
 */
 
+:- use_module(library(aggregate)).
 :- use_module(library(apply)).
+:- use_module(library(atom_ext)).
 :- use_module(library(call_ext)).
+:- use_module(library(dcg/dcg_ext)).
+:- use_module(library(dcg/dcg_table)).
 :- use_module(library(debug_ext)).
 :- use_module(library(default)).
 :- use_module(library(dict_ext)).
+:- use_module(library(error)).
 :- use_module(library(filesex)).
 :- use_module(library(hash_ext)).
 :- use_module(library(hdt/hdt_ext)).
@@ -32,17 +34,25 @@
 :- use_module(library(os/file_ext)).
 :- use_module(library(os/gnu_sort)).
 :- use_module(library(os/io)).
+:- use_module(library(os/process_ext)).
 :- use_module(library(os/thread_ext)).
+:- use_module(library(pair_ext)).
 :- use_module(library(pl_ext)).
 :- use_module(library(print_ext)).
+:- use_module(library(prolog_stack)).
 :- use_module(library(q/qb)).
 :- use_module(library(q/q_fs)).
+:- use_module(library(q/q_print)).
 :- use_module(library(rdf/rdf__io)).
 :- use_module(library(rdf/rdf_error)).
 :- use_module(library(semweb/rdf11)).
 :- use_module(library(semweb/rdf11_containers)).
 :- use_module(library(service/es_api)).
 :- use_module(library(service/rocks_ext)).
+:- use_module(library(settings)).
+:- use_module(library(string_ext)).
+:- use_module(library(thread)).
+:- use_module(library(zlib)).
 
 :- use_module(ll(api/seedlist)).
 
@@ -57,17 +67,10 @@
 :- multifile
     currently_debugging0/1.
 
+prolog_stack:stack_guard('C').
+prolog_stack:stack_guard(none).
 
 
-
-
-%! clean is det.
-%
-% Clean an arbitrarily chosen seedpoint.
-
-clean :-
-  once(seed_by_status(added, Seed)),
-  clean_seed(Seed).
 
 
 
@@ -203,11 +206,23 @@ clean_tuple(State, Out, _, S, P, O, G) :-
 
 
 
-%! reset_and_clean_hash(+Hash) is det.
+%! wm_run is det.
 
-reset_and_clean_hash(Hash) :-
-  reset_seed(Hash),
-  clean_hash(Hash).
+wm_run :-
+  wm_loop(_{idle: 0}).
+
+
+wm_loop(State) :-
+  % Clean one, arbitrarily chosen, seed.
+  once(seed_by_status(added, Seed)),
+  clean_seed(Seed), !,
+  wm_loop(State).
+wm_loop(State) :-
+  sleep(1),
+  dict_inc(idle, State, NumWMs),
+  thread_name(Alias),
+  debug(wm(idle), "ZZZ Thread ~w idle ~D sec.", [Alias,NumWMs]),
+  wm_loop(State).
 
 
 
@@ -226,6 +241,14 @@ archive_label(From, ArchiveHash, ArchiveLbl) :-
 %
 % Call `Goal_2(+Hash,+MetaM)` while storing metadata and warnings to
 % files.
+%
+% Call `Goal_2(+Hash,+MetaM)` and store all metadata and warnings
+% inside directory Dir.  This should be the same for archives and
+% entries.
+%
+% Assert the warnings.  Warnings are attributed to the metadata graph.
+% The metadata graph acts as the (From,EntryName) dataset identifier
+% (not sure whether this is good or not).
 
 call_meta_warn(Mode-Lbl, Hash, Goal_2) :-
   q_dir_hash(Dir, Hash),
@@ -237,16 +260,6 @@ call_meta_warn(Mode-Lbl, Hash, Goal_2) :-
       call_in_thread(Alias, call_meta_warn(Hash, Goal_2)),
       debug(lclean, "«~a ~s", [Mode,Lbl])
   ).
-
-%! call_meta_warn(+Hash, :Goal_2) is det.
-%
-% Call `Goal_2(+Hash,+MetaM)` and store all metadata and warnings
-% inside directory Dir.  This should be the same for archives and
-% entries.
-%
-% Assert the warnings.  Warnings are attributed to the metadata graph.
-% The metadata graph acts as the (From,EntryName) dataset identifier
-% (not sure whether this is good or not).
 
 call_meta_warn(Hash, Goal_2) :-
   % Use the Hash directory Dir to assert metadata (MetaFile) and

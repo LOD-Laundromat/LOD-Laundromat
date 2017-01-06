@@ -39,8 +39,6 @@ cp:logo(washing_machine_round).
 
 :- set_setting(simple_graph_pattern:backend, hdt).
 
-:- use_module(ll(washing_machine)).
-
 :- initialization(set_data_dirs).
 set_data_dirs :-
   rdf_load_file(ttl('ll.ttl')),
@@ -64,7 +62,7 @@ root(Req) :-
 :- use_module(ll(api/meta)).
 :- use_module(ll(api/seedlist)).
 :- use_module(ll(api/wardrobe)).
-:- use_module(ll(washing_machine)).
+:- use_module(ll(wm)).
 
 html:menu_item(10, seedlist_handler, "Seeds").
 html:menu_item(20, meta_handler, "Meta").
