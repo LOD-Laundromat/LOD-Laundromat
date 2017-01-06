@@ -62,6 +62,7 @@ root(Req) :-
 :- use_module(ll(api/meta)).
 :- use_module(ll(api/seedlist)).
 :- use_module(ll(api/wardrobe)).
+:- use_module(ll(ll)).
 :- use_module(ll(wm)).
 
 html:menu_item(10, seedlist_handler, "Seeds").

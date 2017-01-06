@@ -1,11 +1,14 @@
 :- module(
   wm,
   [
-    wm_run/0
+    clean_hash/1,       % +Hash
+    wm_run/0,
+    wm_thread_alias/2,  % +Prefix, -Alias
+    wm_thread_postfix/2 % +Prefix, -Hash
   ]
 ).
 
-/** <module> LOD Laundromat: Data cleaning
+/** <module> LOD Washing Machine
 
 @author Wouter Beek
 @tbd Can we also count (byte_count, char_count, lines_count) what is
@@ -223,6 +226,28 @@ wm_loop(State) :-
   thread_name(Alias),
   debug(wm(idle), "ZZZ Thread ~w idle ~D sec.", [Alias,NumWMs]),
   wm_loop(State).
+
+
+
+%! wm_thread_alias(+Prefix:oneof([a,e,m]), -Hash) is nondet.
+%
+% @arg Prefix Either `a` (archive), `e` (entry) or `m` (machine).
+
+wm_thread_alias(Prefix, Alias) :-
+  thread_property(Id, alias(Alias)),
+  atomic_list_concat([Prefix|_], :, Alias),
+  thread_property(Id, status(running)).
+
+
+
+%! wm_thread_postfix(+Prefix:oneof([a,e,m]), -Postfix) is nondet.
+%
+% @arg Prefix Either `a` (archive), `e` (entry) or `m` (machine).
+
+wm_thread_postfix(Prefix, Postfix) :-
+  thread_property(Id, alias(Alias)),
+  atomic_list_concat([Prefix,Postfix], :, Alias),
+  thread_property(Id, status(running)).
 
 
 

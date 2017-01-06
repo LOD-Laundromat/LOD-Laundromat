@@ -17,7 +17,12 @@
 @version 2017/01
 */
 
-:- use_module(ll(lwm)).
+:- use_module(library(call_ext)).
+:- use_module(library(dict_ext)).
+:- use_module(library(os/file_ext)).
+:- use_module(library(pair_ext)).
+
+:- use_module(ll(wm)).
 
 :- at_halt(ll_stop).
 
@@ -50,15 +55,6 @@ add_wms(N1) :-
 
 
 
-%! archive_hash(+Hash) is semidet.
-%! archive_hash(-Hash) is nondet.
-
-archive_hash(Hash) :-
-  current_wm(Alias),
-  atomic_list_concat([m,Hash], :, Alias).
-
-
-
 %! buggy_hash(+Hash) is semidet.
 %! buggy_hash(-Hash) is nondet.
 %
@@ -68,17 +64,7 @@ archive_hash(Hash) :-
 buggy_hash(Hash) :-
   seed_by_status(started, Seed),
   dict_tag(Seed, Hash),
-  \+ archive_hash(Hash).
-
-
-
-%! current_wm(+Alias) is semidet.
-%! current_wm(-Alias) is nondet.
-
-current_wm(Alias) :-
-  thread_property(Id, alias(Alias)),
-  atom_prefix(Alias, 'm:'),
-  thread_property(Id, status(running)).
+  \+ wm_thread_postfix(a, Hash).
 
 
 
@@ -133,30 +119,21 @@ ll_start :-
 
 
 
-%! ll_stop is det.
-%
-% Stop all processes for the currently running LOD Laundromat.
-
-ll_stop.
-  %%%%forall(current_wm(Alias), thread_kill(Alias)).
-
-
-
 %! ll_status is det.
 
 ll_status :-
   findall(
     Global-[Alias,Global,Hash],
     (
-      ll_current_wm(Alias),
-      thread_statistics(Alias, global, Global),
-      get_thread_seed(Alias, Hash)
+      wm_thread_alias(a, Alias),
+      atomic_list_concat([a,Hash], :, Alias),
+      thread_statistics(Alias, global, Global)
     ),
     Pairs
   ),
   desc_pairs_values(Pairs, Rows),
   print_table(Rows),
-  aggregate_all(count, ll_current_wm(_), NumWMs),
+  aggregate_all(count, wm_thread_alias(m, _), NumWMs),
   number_of_seeds_by_status(added, NumSeeds),
   msg_notification(
     "~D washing machines are cleaning ~D seedpoints.~n",
@@ -166,9 +143,11 @@ ll_status :-
 
 
 %! ll_stop is det.
+%
+% Stop all processes for the currently running LOD Laundromat.
 
-ll_stop :-
-  findall(
+ll_stop.
+  %%%%forall(wm_thread_alias(m, Alias), thread_kill(Alias)).
 
 
 
@@ -180,8 +159,7 @@ max_wm(N) :-
   aggregate_all(
     max(N),
     (
-      current_wm(Alias),
-      atomic_list_concat([m,N], :, Alias),
+      wm_thread_postfix(m, N0),
       atom_number(N0, N)
     ),
     N
@@ -193,7 +171,7 @@ max_wm(0).
 %! number_of_wms(-NumWMs) is det.
 
 number_of_wms(NumWMs) :-
-  aggregate_all(count, current_wm(_), NumWMs).
+  aggregate_all(count, wm_thread_alias(m, _), NumWMs).
 
 
 
@@ -202,6 +180,6 @@ number_of_wms(NumWMs) :-
 reset_and_clean_hash(Hash) :-
   % Do not reset seedpoints that are currently being processed by a
   % washing machine.
-  \+ archive_hash(Hash),
+  \+ wm_thread_postfix(a, Hash),
   reset_seed(Hash),
   clean_hash(Hash).
