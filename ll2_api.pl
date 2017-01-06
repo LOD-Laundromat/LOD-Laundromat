@@ -142,7 +142,7 @@ term_index(Term, Hash) :-
   call_on_rocks(term_hashes, set(atom), term_index(Term, Hash)).
 
 term_index(Term, Hash, Alias) :-
-  (   var(Hash)
+  (   var(Term)
   ->  rocks_enum(Alias, Term, Hashes)
   ;   rocks_get(Alias, Term, Hashes)
   ),
