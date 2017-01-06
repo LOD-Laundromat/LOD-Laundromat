@@ -1,18 +1,19 @@
 :- module(
   seedlist,
   [
-    add_seed/1,        % +From
-    add_seed/2,        % +From, -Hash
-    begin_seed_hash/1, % +Hash
-    end_seed_hash/1,   % +Hash
+    add_seed/1,                  % +From
+    add_seed/2,                  % +From, -Hash
+    begin_seed_hash/1,           % +Hash
+    end_seed_hash/1,             % +Hash
+    number_of_seeds_by_status/2, % +Status, -NumSeeds
     print_seeds/0,
-    remove_seed/1,     % +Hash
-    reset_seed/1,      % +Hash
-    seed/1,            % -Dict
-    seed_by_hash/2,    % +Hash, -Dict
-    seed_by_status/2,  % +Status:oneof([added,started,ended]), -Dict
-    seed_status/1,     % ?Status
-    seeds_by_status/2  % +Status:oneof([added,started,ended]), -Result
+    remove_seed/1,               % +Hash
+    reset_seed/1,                % +Hash
+    seed/1,                      % -Dict
+    seed_by_hash/2,              % +Hash, -Dict
+    seed_by_status/2,            % +Status, -Dict
+    seed_status/1,               % ?Status
+    seeds_by_status/2            % +Status, -Result
   ]
 ).
 
@@ -47,6 +48,7 @@ there (409).  The HTTP body is expected to be `{"from": $IRI$}`.
 @version 2016/01-2017/01
 */
 
+:- use_module(library(aggregate)).
 :- use_module(library(apply)).
 :- use_module(library(atom_ext)).
 :- use_module(library(call_ext)).
@@ -333,6 +335,13 @@ end_seed_hash(Hash) :-
   get_time(Ended),
   retry0(es_update([ll,seedlist,Hash], _{doc: _{ended: Ended}})),
   debug(seedlist(end), "Ended cleaning seed ~a", [Hash]).
+
+
+
+%! number_of_seeds_by_status(+Status, -NumSeeds) is det.
+
+number_of_seeds_by_status(Status, NumSeeds) :-
+  aggregate_all(count, seed_by_status(Status, _), NumSeeds).
 
 
 
