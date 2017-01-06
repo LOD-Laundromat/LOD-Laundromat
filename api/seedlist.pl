@@ -314,7 +314,7 @@ add_seed(From1, Hash) :-
       _{added: Now, ended: 0.0, from: From2, started: 0.0}
     )
   ),
-  debug(seedlist, "Added to seedlist: ~a (~a)", [From2,Hash]).
+  debug(seedlist(add), "Added to seedlist: ~a (~a)", [From2,Hash]).
 
 
 
@@ -392,7 +392,7 @@ reset_seed(Hash) :-
   ),
   % Remove the directory for the seed,
   q_dir_hash(Dir, Hash),
-  with_mutex(lclean, delete_directory_and_contents_msg(Dir)),
+  with_mutex(ll, delete_directory_and_contents_msg(Dir)),
   
   % Update the seedlist.
   get_time(Now),
@@ -409,7 +409,7 @@ reset_seed_entry(From, _, InPath, InPath) :-
   path_entry_name(InPath, EntryName),
   md5(From-EntryName, EntryHash),
   q_dir_hash(EntryDir, EntryHash),
-  with_mutex(lclean, delete_directory_and_contents_msg(EntryDir)).
+  with_mutex(ll, delete_directory_and_contents_msg(EntryDir)).
 
 
 

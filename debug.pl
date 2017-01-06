@@ -12,9 +12,7 @@
 %:- debug(http(send_request)).
 %:- debug(http(reply)).
 %:- debug(http_io).
-:- debug(io(close)).
-:- debug(io(open)).
-:- debug(lclean).
-:- debug(rdf__io).
-:- debug(seedlist(_)).
-:- debug(wm(_)).
+%:- debug(io(close)).
+%:- debug(io(open)).
+%:- debug(seedlist(_)).
+:- debug(wm(idle)).

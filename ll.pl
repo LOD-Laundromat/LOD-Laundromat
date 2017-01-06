@@ -120,8 +120,10 @@ ll_rm_store :-
 % Start by cleaning the rubbish from last time.
 
 ll_start :-
-  findall(Hash, buggy_hash(Hash), Hashes),
-  concurrent_maplist(reset_and_clean_hash, Hashes).
+  forall(
+    buggy_hash(Hash),
+    reset_seed(Hash)
+  ).
 
 
 
@@ -138,12 +140,17 @@ ll_status :-
     Pairs
   ),
   desc_pairs_values(Pairs, Rows),
-  print_table(Rows),
+  print_table([head(["Thread","Global stack","Seed"])|Rows], [indexed(true)]),
   aggregate_all(count, wm_thread_alias(m, _), NumWMs),
   number_of_seeds_by_status(added, NumSeeds),
   msg_notification(
     "~D washing machines are cleaning ~D seedpoints.~n",
     [NumWMs,NumSeeds]
+  ),
+  aggregate_all(count, buggy_hash(_), NumBuggyHashes),
+  (   NumBuggyHashes =:= 0
+  ->  msg_success("No buggy seedpoints.~n")
+  ;   msg_warning("~D buggy seedpoints.~n", [NumBuggyHashes])
   ).
 
 

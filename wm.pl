@@ -10,6 +10,16 @@
 
 /** <module> LOD Washing Machine
 
+The following debug flags are defined:
+
+  - wm(begin)
+
+  - wm(done)
+
+  - wm(end)
+
+  - wm(idle)
+
 @author Wouter Beek
 @tbd Can we also count (byte_count, char_count, lines_count) what is
      _read_?
@@ -277,13 +287,13 @@ archive_label(From, ArchiveHash, ArchiveLbl) :-
 
 call_meta_warn(Mode-Lbl, Hash, Goal_2) :-
   q_dir_hash(Dir, Hash),
-  with_mutex(lclean, existed_dir(Dir, Existed)),
+  with_mutex(ll, existed_dir(Dir, Existed)),
   (   Existed == true
-  ->  debug(ll(done), "No need to recrawl ~s", [Lbl])
-  ;   atomic_list_concat([wm,Mode,Hash], :, Alias),
-      debug(lclean, "»~a ~s", [Mode,Lbl]),
+  ->  debug(wm(done), "No need to recrawl ~s", [Lbl])
+  ;   atomic_list_concat([Mode,Hash], :, Alias),
+      debug(wm(begin), "»~a ~s", [Mode,Lbl]),
       call_in_thread(Alias, call_meta_warn(Hash, Goal_2)),
-      debug(lclean, "«~a ~s", [Mode,Lbl])
+      debug(wm(end), "«~a ~s", [Mode,Lbl])
   ).
 
 call_meta_warn(Hash, Goal_2) :-

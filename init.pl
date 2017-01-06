@@ -47,7 +47,8 @@ set_data_dirs :-
   set_setting(rocks_ext:index_dir, '/scratch/wbeek/crawls/13/index/'),
   rocks_open(llw, int),
   rocks_merge(llw, number_of_documents, 0),
-  rocks_merge(llw, number_of_tuples, 0).
+  rocks_merge(llw, number_of_tuples, 0),
+  ll_start.
 :- at_halt(rocks_close(llw)).
 
 :- http_handler(/, root, []).
