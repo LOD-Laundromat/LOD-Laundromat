@@ -341,17 +341,20 @@ end_seed_hash(Hash) :-
 %! number_of_seeds_by_status(+Status, -NumSeeds) is det.
 
 number_of_seeds_by_status(Status, NumSeeds) :-
-  aggregate_all(count, seed_by_status(Status, _), NumSeeds).
+  once(seeds_by_status(Status, Result)),
+  NumSeeds = Result.total_number_of_results.
 
 
 
 %! print_seeds is det.
 
 print_seeds :-
-  maplist(seeds_by_status, [added,started,ended], [Seeds1,Seeds2,Seeds3]),
-  Num1 = Seeds1.total_number_of_results,
-  Num2 = Seeds2.total_number_of_results,
-  Num3 = Seeds3.total_number_of_results,
+  once(seeds_by_status(added, Result1)),
+  once(seeds_by_status(started, Result2)),
+  once(seeds_by_status(ended, Result3)),
+  Num1 = Result1.total_number_of_results,
+  Num2 = Result2.total_number_of_results,
+  Num3 = Result3.total_number_of_results,
   sum_list([Num1,Num2,Num3], Num123),
   float_div_zero(Num1, Num123, Perc1),
   float_div_zero(Num2, Num123, Perc2),
