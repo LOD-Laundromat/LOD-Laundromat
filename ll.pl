@@ -35,9 +35,9 @@
 % Add one more washing machine to the LOD Laundromat.
 
 add_wm :-
-  max_wm(Id0),
-  Id is Id0 + 1,
-  atomic_list_concat([wm0,Id], :, Alias),
+  max_wm(N0),
+  N is N0 + 1,
+  atomic_list_concat([m,N], :, Alias),
   thread_create(wm_run, _, [alias(Alias),detached(false)]).
 
 
@@ -81,13 +81,7 @@ ll_rm :-
   ll_rm_index,
   ll_rm_seedlist.
 
-%! ll_rm_store is det.
-%
-% Remove all LOD Laundromat data and metadata file. 
 
-ll_rm_store :-
-  setting(q_io:store_dir, Dir),
-  delete_directory_and_contents_msg(Dir).
 
 %! ll_rm_index is det.
 %
@@ -99,6 +93,8 @@ ll_rm_index :-
   rocks_put(llw, number_of_documents, 0),
   rocks_put(llw, number_of_tuples, 0).
 
+
+
 %! ll_rm_seedlist is det.
 %
 % Remove and re-populate the LOD Laundromat seedlist.
@@ -106,6 +102,16 @@ ll_rm_index :-
 ll_rm_seedlist :-
   retry0(es_rm([ll])),
   init_old_seedlist.
+
+
+
+%! ll_rm_store is det.
+%
+% Remove all LOD Laundromat data and metadata file. 
+
+ll_rm_store :-
+  setting(q_io:store_dir, Dir),
+  delete_directory_and_contents_msg(Dir).
 
 
 
@@ -146,8 +152,8 @@ ll_status :-
 %
 % Stop all processes for the currently running LOD Laundromat.
 
-ll_stop.
-  %%%%forall(wm_thread_alias(m, Alias), thread_kill(Alias)).
+ll_stop :-
+  forall(wm_thread_alias(m, Alias), thread_signal(Alias, abort)).
 
 
 
