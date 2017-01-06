@@ -86,7 +86,7 @@ prolog_stack:stack_guard(none).
 
 clean_hash(Hash) :-
   q_file_hash(File, data, ntriples, Hash),
-  (   q_file_is_ready(File)
+  (   file_is_ready(File)
   ->  msg_notification("Already cleaned ~a", [Hash])
   ;   seed_by_hash(Hash, Seed),
       clean_seed(Seed)
@@ -138,7 +138,7 @@ clean_stream1(In, InPath, EntryHash, MetaM) :-
           delete_file(TmpFile)
       ),
       hdt_prepare_file(CleanFile, HdtCleanFile),
-      maplist(q_file_touch_ready, [CleanFile,HdtCleanFile]),
+      maplist(file_touch_ready, [CleanFile,HdtCleanFile]),
       % Link the entry directory to the data directory.
       file_directory_name(CleanFile, CleanDir),
       link_dirs(EntryDir, 'data.hdt', CleanDir),
@@ -298,9 +298,9 @@ call_meta_warn(Hash, Goal_2) :-
     call_meta_warn_streams(Hash, Goal_2)
   ),
   hdt_prepare_file(MetaFile),
-  q_file_touch_ready(MetaFile),
+  file_touch_ready(MetaFile),
   hdt_prepare_file(WarnFile),
-  q_file_touch_ready(WarnFile).
+  file_touch_ready(WarnFile).
 
 call_meta_warn_streams(Hash, Goal_2, MetaOut, WarnOut) :-
   Opts = [rdf_media_type(application/'n-quads')],

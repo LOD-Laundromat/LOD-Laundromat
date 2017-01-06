@@ -9,6 +9,7 @@
 ).
 
 :- reexport(library(hdt/hdt_ext)).
+:- reexport(library(os/file_ext)).
 :- reexport(library(q/q_cli)).
 :- reexport(library(q/q_rdf)).
 :- reexport(library(semweb/rdf11)).
@@ -26,6 +27,7 @@
 :- use_module(library(hdt/hdt_ext)).
 :- use_module(library(iri/iri_ext)).
 :- use_module(library(lists)).
+:- use_module(library(print_ext)).
 :- use_module(library(q/q_fs)).
 :- use_module(library(q/q_io), []).
 :- use_module(library(q/q_iri)).
@@ -36,6 +38,9 @@
 :- use_module(library(yall)).
 
 :- debug(stat).
+
+:- meta_predicate
+    call_todo(+, 2).
 
 :- set_setting(iri:data_auth, 'lodlaundromat.org').
 :- set_setting(iri:data_scheme, http).
@@ -52,13 +57,21 @@ gen_term_index :-
   call_on_rocks(term_hashes, set(atom), gen_term_index).
 
 gen_term_index(Alias) :-
-  q(hdt, S, P, O, G),
-  q_graph_hash(G, Hash),
-  maplist(add_term_index(Alias, Hash), [S,P,O]),
-  flag(number_of_triples, NumTriples, NumTriples + 1),
-  format(user_output, "~D~n", [NumTriples]),
-  fail.
-gen_term_index(_).
+  call_todo(Alias, gen_term_index_file(Alias)).
+
+gen_term_index_file(Alias, DataFile, _) :-
+  q_file_hash(DataFile, Hash),
+  hdt_call_on_file(DataFile, gen_term_index_hdt(Alias, Hash)).
+
+gen_term_index_hdt(Alias, Hash, Hdt) :-
+  forall(
+    hdt0(S, P, O, Hdt),
+    (
+      maplist(add_term_index(Alias, Hash), [S,P,O]),
+      flag(number_of_triples, NumTriples, NumTriples + 1),
+      format(user_output, "~D~n", [NumTriples])
+    )
+  ).
 
 add_term_index(Alias, Hash, Term) :-
   q_term_to_atom(Term, A),
@@ -70,16 +83,15 @@ gen_stat :-
   call_on_rocks(stat, int, gen_stat).
 
 gen_stat(Alias) :-
-  init_stat(Alias),
-  forall(
-    stat_file_todo(DataFile, G, StatFile),
-    (
-      hdt_call_on_file(DataFile, gen_stat(Alias)),
-      rdf_call_to_ntriples(StatFile, rdf_write_stat(Alias, G)),
-      hdt_prepare_file(StatFile, HdtStatFile),
-      maplist(q_file_touch_ready, [StatFile,HdtStatFile])
-    )
-  ).
+  forall(update_stat(Key, _, _, _), rocks_merge(Alias, Key, 0)),
+  call_todo('stat.nt.gz', gen_stat_file(Alias)).
+
+gen_stat_file(Alias, DataFile, StatFile) :-
+  hdt_call_on_file(DataFile, gen_stat(Alias)),
+  q_file_graph(DataFile, G),
+  rdf_call_to_ntriples(StatFile, rdf_write_stat(Alias, G)),
+  hdt_prepare_file(StatFile, HdtStatFile),
+  file_touch_ready(HdtStatFile).
 
 rdf_write_stat(Alias, G, State, Out) :-
   forall(
@@ -100,26 +112,43 @@ gen_stat(Alias, Hdt) :-
   fail.
 gen_stat(_, _).
 
-init_stat(Alias) :-
-  forall(
-    update_stat(Key, _, _, _),
-    rocks_merge(Alias, Key, 0)
-  ).
-
 update_stat(literal, _, _, O) :-
   q_is_literal(O).
 
 
 
-%! stat_file_todo(-DataFile, -G, -StatFile) is nondet.
+%! todo_file(+Local, -DataFile, -TodoFile) is nondet.
+%
+% Enumerates Local files that are not ready, but whose corresponding
+% data file is.
 
-stat_file_todo(DataFile, G, StatFile) :-
-  q_dir_file(Dir, data, hdt, DataFile),
-  q_file_is_ready(DataFile),
-  directory_file_path(Dir, 'stat.nt.gz', StatFile),
-  q_dir_graph(Dir, data, G),
-  \+ q_file_is_ready(StatFile).
-  
+todo_file(Local, DataFile, TodoFile) :-
+  data_file_ready(DataFile),
+  file_directory_name(DataFile, Dir),
+  directory_file_path(Dir, Local, TodoFile),
+  \+ file_is_ready(TodoFile).
+
+
+
+%! call_todo_file(+Local, :Goal_2) is det.
+
+call_todo(Local, Goal_2) :-
+  forall(
+    todo_file(Local, DataFile, TodoFile),
+    (   call(Goal_2, DataFile, TodoFile)
+    ->  file_touch_ready(TodoFile)
+    ;   msg_warning("Could not create ‘~a’.~n", [TodoFile])
+    )
+  ).
+
+
+
+%! data_file_ready(-DataFile) is nondet.
+
+data_file_ready(DataFile) :-
+  q_file(data, hdt, DataFile),
+  file_is_ready(DataFile).
+
 
 
 %! number_of_triples is det.

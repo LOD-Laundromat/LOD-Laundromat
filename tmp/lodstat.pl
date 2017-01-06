@@ -88,7 +88,7 @@ create_lstat(NumWorkers) :-
 create_lstat_resource0(File1) :-
   q_dir(Dir),
   q_dir_file(Dir, data, hdt, File1),
-  q_file_is_ready(File1),
+  file_is_ready(File1),
   q_dir_file(Dir, stat, json, File2),
   \+ exists_file(File2).
 
