@@ -4,6 +4,7 @@
     add_wm/0,
     add_wms/1,   % +NumWMs
     ll_rm/0,
+    ll_stack/0,
     ll_start/0,
     ll_status/0,
     ll_stop/0,
@@ -112,6 +113,24 @@ ll_rm_seedlist :-
 ll_rm_store :-
   setting(q_io:store_dir, Dir),
   delete_directory_and_contents_msg(Dir).
+
+
+
+%! ll_stack is det.
+
+ll_stack :-
+  findall(
+    Global-[Alias,Global],
+    (
+      thread_property(Id, alias(Alias)),
+      thread_property(Id, status(running)),
+      thread_statistics(Id, global, Global)
+    ),
+    Pairs
+  ),
+  asc_pairs_values(Pairs, Rows),
+  msg_notification("LSIYCKUTTMDHE (Let’s See If You Can Keep Up This Time My Dear Hardware Engineers):~n"),
+  print_table([head(["Alias","Global stack"])|Rows]).
 
 
 
