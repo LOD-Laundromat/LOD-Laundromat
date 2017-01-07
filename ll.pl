@@ -21,6 +21,7 @@
 :- use_module(library(dict_ext)).
 :- use_module(library(os/file_ext)).
 :- use_module(library(pair_ext)).
+:- use_module(library(service/rocks_api)).
 
 :- use_module(ll(wm)).
 

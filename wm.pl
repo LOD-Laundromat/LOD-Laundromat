@@ -61,7 +61,7 @@ The following debug flags are defined:
 :- use_module(library(semweb/rdf11)).
 :- use_module(library(semweb/rdf11_containers)).
 :- use_module(library(service/es_api)).
-:- use_module(library(service/rocks_ext)).
+:- use_module(library(service/rocks_api)).
 :- use_module(library(settings)).
 :- use_module(library(string_ext)).
 :- use_module(library(thread)).

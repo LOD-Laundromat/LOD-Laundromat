@@ -23,7 +23,7 @@
 :- use_module(library(http/http_dispatch)).
 :- use_module(library(http/http_ext)).
 :- use_module(library(pair_ext)).
-:- use_module(library(service/rocks_ext)).
+:- use_module(library(service/rocks_api)).
 :- use_module(library(settings)).
 
 :- use_module(ll(api/ll_overview)).
