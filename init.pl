@@ -1,23 +1,25 @@
-:- use_module(library(iri/iri_ext)).
-:- set_setting(iri:data_auth, 'lodlaundromat.org').
-:- set_setting(iri:data_scheme, http).
-
+:- use_module(library(iri/iri_ext), []).
+:- use_module(library(q/q_io), []).
 :- use_module(library(q/q_iri)).
-:- q_init_ns.
-
-:- use_module(library(http/http_dispatch)).
-:- use_module(library(http/http_host), []).
-:- use_module(library(q/q_io)).
-:- use_module(library(rdf/rdf__io)).
 :- use_module(library(service/rocks_api)).
 :- use_module(library(settings)).
+
+:- set_setting(iri:data_auth, 'lodlaundromat.org').
+:- set_setting(iri:data_scheme, http).
+:- q_init_ns.
+
+:- use_module(ll).
+:- use_module(wm).
 
 :- dynamic
     user:file_search_path/2.
 
 :- multifile
-    http:location/3,
     user:file_search_path/2.
+
+:- at_halt(rocks_close(llw)).
+
+:- initialization(init).
 
 init :-
   set_setting(q_io:source_dir, '/scratch/wbeek/crawls/13/source/'),
@@ -27,10 +29,5 @@ init :-
   rocks_merge(llw, number_of_documents, 0),
   rocks_merge(llw, number_of_tuples, 0),
   ll_start.
-:- initialization(init).
-:- at_halt(rocks_close(llw)).
-
-:- use_module(ll).
-:- use_module(wm).
 
 :- [debug].
