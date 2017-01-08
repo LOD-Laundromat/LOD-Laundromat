@@ -20,10 +20,13 @@
 
 :- use_module(library(call_ext)).
 :- use_module(library(dict_ext)).
+:- use_module(library(lists)).
 :- use_module(library(os/file_ext)).
 :- use_module(library(pair_ext)).
+:- use_module(library(sparql/sparql_query_client)).
 
-:- use_module(ll(wm)).
+:- use_module(seedlist).
+:- use_module(wm).
 
 :- at_halt(ll_stop).
 
@@ -75,7 +78,6 @@ buggy_hash(Hash) :-
 % After all the data, metadata and indices are removed, the seedlist
 % is re-initialized to its original contents.
 
-:- [script/init_old_seedlist].
 ll_rm :-
   ll_stop,
   ll_rm_store,
@@ -103,6 +105,22 @@ ll_rm_index :-
 ll_rm_seedlist :-
   retry0(es_rm([ll])),
   init_old_seedlist.
+
+init_old_seedlist :-
+  % Extract all seeds from the old LOD Laundromat server and store
+  % them locally as a seedlist.  This is intended for debugging
+  % purposes only.
+  Q = '\c
+PREFIX llo: <http://lodlaundromat.org/ontology/>\n\c
+SELECT ?url\n\c
+WHERE {\n\c
+  ?doc llo:url ?url\n\c
+}\n',
+  forall(
+    sparql_select('http://sparql.backend.lodlaundromat.org', Q, Rows),
+    forall(member([From], Rows), add_seed(From))
+  ).
+
 
 
 

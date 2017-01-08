@@ -67,7 +67,7 @@ The following debug flags are defined:
 :- use_module(library(thread)).
 :- use_module(library(zlib)).
 
-:- use_module(ll(api/seedlist)).
+:- use_module(seedlist).
 
 :- dynamic
     currently_debugging0/1.
