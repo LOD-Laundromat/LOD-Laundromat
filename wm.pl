@@ -74,7 +74,7 @@ The following debug flags are defined:
 
 :- meta_predicate
     call_meta_warn(+, 2),
-    call_meta_warn(+, +, 2),
+    call_meta_warn(+, +, +, 2),
     call_meta_warn_streams(+, 2, +, +).
 
 :- multifile
@@ -111,8 +111,9 @@ clean_seed(Seed) :-
   dict_tag(Seed, ArchiveHash),
   currently_debugging(ArchiveHash),
   begin_seed_hash(ArchiveHash),
-  archive_label(From, ArchiveHash, Lbl),
-  call_meta_warn(a-Lbl, ArchiveHash, clean_archive(From)),
+  atomic_list_concat([a,ArchiveHash], :, ArchiveAlias),
+  archive_label(From, ArchiveHash, ArchiveLbl),
+  call_meta_warn(ArchiveAlias, ArchiveLbl, ArchiveHash, clean_archive(From)),
   end_seed_hash(ArchiveHash).
 
 clean_archive(From, ArchiveHash, _) :-
@@ -126,8 +127,15 @@ clean_entry(From, ArchiveHash, In, InPath, InPath) :-
   http_check_for_success(InPath),
   path_entry_name(InPath, EntryName),
   md5(From-EntryName, EntryHash),
-  entry_label(From, EntryName, EntryHash, Lbl),
-  call_meta_warn(e-Lbl, EntryHash, clean_stream1(In, InPath, ArchiveHash)).
+  (EntryHash == '2212d7c675ac87a12fa73ec150ba4751' -> gtrace ; true), %DEB
+  atomic_list_concat([e,ArchiveHash,EntryHash], :, EntryAlias),
+  entry_label(From, ArchiveHash, EntryName, EntryHash, EntryLbl),
+  call_meta_warn(
+    EntryAlias,
+    EntryLbl,
+    EntryHash,
+    clean_stream1(In, InPath, ArchiveHash)
+  ).
 
 clean_stream1(In, InPath, ArchiveHash, EntryHash, MetaM) :-
   q_dir_hash(EntryDir, EntryHash),
@@ -270,30 +278,33 @@ wm_thread_postfix(Prefix, Postfix) :-
 %! archive_label(+From, +ArchiveHash, -ArchiveLbl) is det.
 
 archive_label(From, ArchiveHash, ArchiveLbl) :-
-  format(string(ArchiveLbl), "~a (~a)", [From,ArchiveHash]).
+  format(string(ArchiveLbl), "[A] ~a (~a)", [From,ArchiveHash]).
 
 
 
-%! call_meta_warn(+Debug, +Hash, :Goal_2) is det.
+%! call_meta_warn(+Alias, +Lbl, +Hash, :Goal_2) is det.
 %
-% Call `Goal_2(+Hash,+MetaM)` while storing metadata and warnings to
-% files.
+% Calls ‘Goal_2(+Hash,+MetaM)’ while storing all metadata and warnings
+% inside a Hash-based directory and graph.
 %
-% Call `Goal_2(+Hash,+MetaM)` and store all metadata and warnings
-% inside directory Dir.  This should be the same for archives and
-% entries.
+% @arg Alias is the name of the thread.  This allows us to see for
+%      each error messages which archive/entry it is about.
 %
-% Assert the warnings.  Warnings are attributed to the metadata graph.
-% The metadata graph acts as the (From,EntryName) dataset identifier
-% (not sure whether this is good or not).
+% @arg Lbl is the label is solely used for display in dedicated debug
+%      messages, under debug flags ‘wm(begin)’, ‘wm(end)’, and
+%      ‘wm(done)’.
+%
+% @arg Hash is either the hash of an archive or an entry.  This is
+%      used to name the files/directory and graph.
+%
+% @arg Goal_2 is called with arguments ‘Hash’ and ‘MetaM’.
 
-call_meta_warn(Mode-Lbl, Hash, Goal_2) :-
+call_meta_warn(Alias, Lbl, Hash, Goal_2) :-
   q_dir_hash(Dir, Hash),
   with_mutex(ll, existed_dir(Dir, Existed)),
   (   Existed == true
   ->  debug(wm(done), "No need to recrawl ~s", [Lbl])
-  ;   atomic_list_concat([Mode,Hash], :, Alias),
-      debug(wm(begin), "»~a ~s", [Mode,Lbl]),
+  ;   debug(wm(begin), "»~a ~s", [Mode,Lbl]),
       call_in_thread(Alias, call_meta_warn(Hash, Goal_2)),
       debug(wm(end), "«~a ~s", [Mode,Lbl])
   ).
@@ -358,10 +369,14 @@ currently_debugging(_).
 
 
 
-%! entry_label(+From, +EntryName, +EntryHash, -EntryLbl) is det.
+%! entry_label(+From, +ArchiveHash, +EntryName, +EntryHash, -EntryLbl) is det.
 
-entry_label(From, EntryName, EntryHash, EntryLbl) :-
-  format(string(EntryLbl), "~a ~a (~a)", [From,EntryName,EntryHash]).
+entry_label(From, ArchiveHash, EntryName, EntryHash, EntryLbl) :-
+  format(
+    string(EntryLbl),
+    "[E] ~a ~a (~a~a)",
+    [From,EntryName,ArchiveHash,EntryHash]
+  ).
 
 
 
