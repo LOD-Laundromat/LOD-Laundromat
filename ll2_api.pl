@@ -44,12 +44,10 @@
 
 :- set_setting(iri:data_auth, 'lodlaundromat.org').
 :- set_setting(iri:data_scheme, http).
-
+:- q_init_ns.
 :- set_setting(q_io:source_dir, '/scratch/wbeek/crawls/13/source/').
 :- set_setting(q_io:store_dir, '/scratch/wbeek/crawls/13/store/').
 :- set_setting(rocks_api:index_dir, '/scratch/wbeek/crawls/13/index/').
-
-:- q_init_ns.
 
 
 
@@ -66,11 +64,7 @@ gen_term_index_file(Alias, DataFile, _) :-
 gen_term_index_hdt(Alias, Hash, Hdt) :-
   forall(
     hdt0(S, P, O, Hdt),
-    (
-      maplist(add_term_index(Alias, Hash), [S,P,O]),
-      flag(number_of_triples, NumTriples, NumTriples + 1),
-      format(user_output, "~D~n", [NumTriples])
-    )
+    maplist(add_term_index(Alias, Hash), [S,P,O])
   ).
 
 add_term_index(Alias, Hash, Term) :-
@@ -130,7 +124,7 @@ todo_file(Local, DataFile, TodoFile) :-
 
 
 
-%! call_todo_file(+Local, :Goal_2) is det.
+%! call_todo(+Local, :Goal_2) is det.
 
 call_todo(Local, Goal_2) :-
   forall(
