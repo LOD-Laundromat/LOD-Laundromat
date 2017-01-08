@@ -115,21 +115,21 @@ clean_seed(Seed) :-
   call_meta_warn(a-Lbl, ArchiveHash, clean_archive(From)),
   end_seed_hash(ArchiveHash).
 
-clean_archive(From, _, _) :-
+clean_archive(From, ArchiveHash, _) :-
   % Iterate over all entries inside the document stored at From.  We
   % need to catch TCP exceptions, because there will not be an input
   % stream to run the cleaning goal on.
-  forall(rdf_call_on_stream(From, clean_entry(From)), true).
+  forall(rdf_call_on_stream(From, clean_entry(From, ArchiveHash)), true).
 
-clean_entry(From, In, InPath, InPath) :-
+clean_entry(From, ArchiveHash, In, InPath, InPath) :-
   % Make sure that the HTTP status code is in the 2xx range.
   http_check_for_success(InPath),
   path_entry_name(InPath, EntryName),
   md5(From-EntryName, EntryHash),
   entry_label(From, EntryName, EntryHash, Lbl),
-  call_meta_warn(e-Lbl, EntryHash, clean_stream1(In, InPath)).
+  call_meta_warn(e-Lbl, EntryHash, clean_stream1(In, InPath, ArchiveHash)).
 
-clean_stream1(In, InPath, EntryHash, MetaM) :-
+clean_stream1(In, InPath, ArchiveHash, EntryHash, MetaM) :-
   q_dir_hash(EntryDir, EntryHash),
   q_graph_hash(MetaG, meta, EntryHash),
   clean_stream2(EntryDir, OutPath, TmpFile, CleanHash, In, InPath),
@@ -161,6 +161,8 @@ clean_stream1(In, InPath, EntryHash, MetaM) :-
   ),
   % Explicitly turn off compression when asserting metadata, otherwise
   % we compress twice.
+  rdf_global_id(nsid:ArchiveHash, Archive),
+  qb(MetaM, MetaG, nsdef:hasArchive, Archive),
   qb(MetaM, MetaG, nsdef:numberOfBytes, OutEntry.number_of_bytes^^xsd:nonNegativeInteger),
   qb(MetaM, MetaG, nsdef:numberOfCharacters, OutEntry.number_of_chars^^xsd:nonNegativeInteger),
   qb(MetaM, MetaG, nsdef:numberOfLines, OutEntry.number_of_lines^^xsd:nonNegativeInteger),
