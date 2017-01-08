@@ -185,6 +185,12 @@ ll_status :-
     "~D washing machines are cleaning ~D seedpoints.~n",
     [NumWMs,NumSeeds]
   ),
+  rocks_get(llw, number_of_documents, NumDocs),
+  rocks_get(llw, number_of_tuples, NumTuples),
+  msg_notification(
+    "Cleaned ~D documents containing ~D statements.~n",
+    [NumDocs,NumTuples]
+  ),
   aggregate_all(count, buggy_hash(_), NumBuggyHashes),
   (   NumBuggyHashes =:= 0
   ->  msg_success("No buggy seedpoints.~n")
