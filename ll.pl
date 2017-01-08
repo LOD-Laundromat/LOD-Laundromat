@@ -23,6 +23,7 @@
 :- use_module(library(lists)).
 :- use_module(library(os/file_ext)).
 :- use_module(library(pair_ext)).
+:- use_module(library(service/rocks_api)).
 :- use_module(library(sparql/sparql_query_client)).
 
 :- use_module(seedlist).

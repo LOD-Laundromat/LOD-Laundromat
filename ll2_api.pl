@@ -13,7 +13,7 @@
 :- reexport(library(q/q_cli)).
 :- reexport(library(q/q_rdf)).
 :- reexport(library(semweb/rdf11)).
-:- reexport(library(service/rocks_ext)).
+:- reexport(library(service/rocks_api)).
 
 /** <module> LOD Laundromat 2 API
 
@@ -47,7 +47,7 @@
 
 :- set_setting(q_io:source_dir, '/scratch/wbeek/crawls/13/source/').
 :- set_setting(q_io:store_dir, '/scratch/wbeek/crawls/13/store/').
-:- set_setting(rocks_ext:index_dir, '/scratch/wbeek/crawls/13/index/').
+:- set_setting(rocks_api:index_dir, '/scratch/wbeek/crawls/13/index/').
 
 :- q_init_ns.
 
