@@ -23,27 +23,6 @@ C-stack trace labeled "crash":
   [10] start_thread() at /lhome/wbeek/Git/swipl-devel/src/pl-thread.c:1597 [0x7fa00b553652]
   [11] start_thread() at ??:? [0x7fa00b2966ba]
   [12] clone() at /build/glibc-t3gR2i/glibc-2.23/misc/../sysdeps/unix/sysv/linux/x86_64/clone.S:111 [0x7fa00afcc82d]
-** 2
-?- gen_term_index.
-^  Call: (1) call(rocks_api:rocks_merge_set, partial, 'http://rdfdata.eionet.europa.eu/eurostat/data/earn_ses10_29#A,PPS,HU,AB,B-N,F,GE10,FIX,2010', [c3c55106c8e7d1173f1cbe74839866cd], [c3c55106c8e7d1173f1cbe74839866cd], _44) ? 
-ERROR: Unknown error term: rocks_error('IO error: /scratch/wbeek/crawls/13/index/term_hashes/378695.sst: Too many open files')
-ERROR: In:
-ERROR:   [23] rocks_merge(term_hashes,'http://rdfdata.eionet.europa.eu/eurostat/data/earn_ses10_29#A,PPS,HU,AE,D,F,TOTAL,INDEF,2010',[c3c55106c8e7d1173f1cbe74839866cd])
-ERROR:   [21] ll2_api:'__aux_maplist/2_add_term_index+2'(['http://rdfdata.eionet.europa.eu/eurostat/data/earn_ses10_29#A,PPS,HU,AE,D,F,TOTAL,INDEF,2010','http://rdfdata.eionet.europa.eu/eurostat/property#indic_se'|...],term_hashes,c3c55106c8e7d1173f1cbe74839866cd) at /lhome/wbeek/Git/LOD-Laundromat/ll2_api.pl:64
-ERROR:   [20] ll2_api:gen_term_index_hdt(term_hashes,c3c55106c8e7d1173f1cbe74839866cd,<hdt>(0x3ecbdd0)) at /lhome/wbeek/Git/LOD-Laundromat/ll2_api.pl:67
-ERROR:   [19] '<meta-call>'(hdt_ext:call(...,<hdt>(0x3ecbdd0))) <foreign>
-ERROR:   [18] setup_call_catcher_cleanup(hdt:hdt_open(<hdt>(0x3ecbdd0),'/scratch/wbeek/crawls/13/store/c3/c55106c8e7d1173f1cbe74839866cd/data.hdt'),hdt_ext:call(...,<hdt>(0x3ecbdd0)),_5094,hdt:hdt_close(<hdt>(0x3ecbdd0))) at /lhome/wbeek/lib/swipl/boot/init.pl:434
-ERROR:   [14] ll2_api:call_todo(term_hashes,ll2_api:gen_term_index_file(term_hashes)) at /lhome/wbeek/Git/LOD-Laundromat/ll2_api.pl:129
-ERROR:   [12] '<meta-call>'('<garbage_collected>') <foreign>
-ERROR:   [11] setup_call_catcher_cleanup('<garbage_collected>',rocks_api:call(...,term_hashes),_5234,rocks_api:rocks_close(term_hashes)) at /lhome/wbeek/lib/swipl/boot/init.pl:434
-ERROR:    [9] rocks_api:call_on_rocks(term_hashes,'<garbage_collected>','<garbage_collected>') at /lhome/wbeek/lib/swipl/pack/Prolog-Library-Collection/prolog/service/rocks_api.pl:49
-ERROR:    [7] <user>
-ERROR: 
-ERROR: Note: some frames are missing due to last-call optimization.
-ERROR: Re-run your program in debug mode (:- debug.) to get more detail.
-^  Exception: (18) setup_call_catcher_cleanup(hdt:hdt_open(<hdt>(0x3ecbdd0), '/scratch/wbeek/crawls/13/store/c3/c55106c8e7d1173f1cbe74839866cd/data.hdt'), hdt_ext:call(ll2_api:gen_term_index_hdt(term_hashes, c3c55106c8e7d1173f1cbe74839866cd), <hdt>(0x3ecbdd0)), _5344, hdt:hdt_close(<hdt>(0x3ecbdd0))) ?
-** 3
-SGML: Fatal: out of memory
 * Libraries
 ** Table prints 0 rows strangely
 ** Downloading URIs with the FTP scheme

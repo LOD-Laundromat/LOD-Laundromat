@@ -303,9 +303,9 @@ call_meta_warn(Alias, Lbl, Hash, Goal_2) :-
   with_mutex(ll, existed_dir(Dir, Existed)),
   (   Existed == true
   ->  debug(wm(done), "No need to recrawl ~s", [Lbl])
-  ;   debug(wm(begin), "»~a ~s", [Mode,Lbl]),
+  ;   debug(wm(begin), "»~a ~s", [Alias,Lbl]),
       call_in_thread(Alias, call_meta_warn(Hash, Goal_2)),
-      debug(wm(end), "«~a ~s", [Mode,Lbl])
+      debug(wm(end), "«~a ~s", [Alias,Lbl])
   ).
 
 call_meta_warn(Hash, Goal_2) :-

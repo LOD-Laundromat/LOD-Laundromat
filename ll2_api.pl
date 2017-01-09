@@ -44,6 +44,8 @@
 :- meta_predicate
     call_todo(+, 2).
 
+:- rlimit(nofile, _, 50000).
+
 :- set_setting(iri:data_auth, 'lodlaundromat.org').
 :- set_setting(iri:data_scheme, http).
 :- q_init_ns.
@@ -136,7 +138,9 @@ gen_term_index_hdt(Alias, Hash, Hdt) :-
 
 add_term_index(Alias, Hash, Term) :-
   q_term_to_atom(Term, A),
-  rocks_merge(Alias, A, [Hash]).
+  rocks_merge(Alias, A, [Hash]),
+  flag(number_of_keys, NumKeys, NumKeys + 1),
+  (NumKeys mod 100000 =:= 0 -> format(user_output, "~D~n", [NumKeys]) ; true).
 
 
 
