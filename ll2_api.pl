@@ -1,10 +1,12 @@
 :- module(
   ll2_api,
   [
-    gen_term_index/0,
     gen_stat/0,
+    gen_term_index/0,
     number_of_triples/0,
-    term_index/2 % ?Term, ?Hash
+    print_todo_process/1, % +Local
+    term_index/2,         % ?Term, ?Hash
+    term_index_size/1     % -NumTerms
   ]
 ).
 
@@ -51,27 +53,30 @@
 
 
 
-gen_term_index :-
-  call_on_rocks(term_hashes, set(atom), gen_term_index).
 
-gen_term_index(Alias) :-
-  call_todo(Alias, gen_term_index_file(Alias)).
 
-gen_term_index_file(Alias, DataFile, _) :-
-  q_file_hash(DataFile, Hash),
-  hdt_call_on_file(DataFile, gen_term_index_hdt(Alias, Hash)).
+%! call_todo(+Local, :Goal_2) is det.
 
-gen_term_index_hdt(Alias, Hash, Hdt) :-
+call_todo(Local, Goal_2) :-
   forall(
-    hdt0(S, P, O, Hdt),
-    maplist(add_term_index(Alias, Hash), [S,P,O])
+    todo_file(Local, DataFile, TodoFile),
+    (   call(Goal_2, DataFile, TodoFile)
+    ->  file_touch_ready(TodoFile)
+    ;   msg_warning("Could not create ‘~a’.~n", [TodoFile])
+    )
   ).
 
-add_term_index(Alias, Hash, Term) :-
-  q_term_to_atom(Term, A),
-  rocks_merge(Alias, A, [Hash]).
 
 
+%! data_file_ready(-DataFile) is nondet.
+
+data_file_ready(DataFile) :-
+  q_file(data, hdt, DataFile),
+  file_is_ready(DataFile).
+
+
+
+%! gen_stat is det.
 
 gen_stat :-
   call_on_rocks(stat, int, gen_stat).
@@ -111,37 +116,27 @@ update_stat(literal, _, _, O) :-
 
 
 
-%! todo_file(+Local, -DataFile, -TodoFile) is nondet.
-%
-% Enumerates Local files that are not ready, but whose corresponding
-% data file is.
+%! gen_term_index is det.
 
-todo_file(Local, DataFile, TodoFile) :-
-  data_file_ready(DataFile),
-  file_directory_name(DataFile, Dir),
-  directory_file_path(Dir, Local, TodoFile),
-  \+ file_is_ready(TodoFile).
+gen_term_index :-
+  call_on_rocks(term_hashes, set(atom), gen_term_index).
 
+gen_term_index(Alias) :-
+  call_todo(Alias, gen_term_index_file(Alias)).
 
+gen_term_index_file(Alias, DataFile, _) :-
+  q_file_hash(DataFile, Hash),
+  hdt_call_on_file(DataFile, gen_term_index_hdt(Alias, Hash)).
 
-%! call_todo(+Local, :Goal_2) is det.
-
-call_todo(Local, Goal_2) :-
+gen_term_index_hdt(Alias, Hash, Hdt) :-
   forall(
-    todo_file(Local, DataFile, TodoFile),
-    (   call(Goal_2, DataFile, TodoFile)
-    ->  file_touch_ready(TodoFile)
-    ;   msg_warning("Could not create ‘~a’.~n", [TodoFile])
-    )
+    hdt0(S, P, O, Hdt),
+    maplist(add_term_index(Alias, Hash), [S,P,O])
   ).
 
-
-
-%! data_file_ready(-DataFile) is nondet.
-
-data_file_ready(DataFile) :-
-  q_file(data, hdt, DataFile),
-  file_is_ready(DataFile).
+add_term_index(Alias, Hash, Term) :-
+  q_term_to_atom(Term, A),
+  rocks_merge(Alias, A, [Hash]).
 
 
 
@@ -157,6 +152,15 @@ number_of_triples :-
 
 
 
+%! print_todo_process(+Local) is det.
+
+print_todo_process(Local) :-
+  aggregate_all(count, todo_file(Local, _, _), NumTodos),
+  aggregate_all(count, data_file_ready(_), NumAll),
+  NumDone is NumAll - NumTodos,
+  msg_notification("(~D/~D)~n", [NumDone,NumAll]).
+
+
 %! term_index(+Term, +Hash) is semidet.
 %! term_index(+Term, -Hash) is nondet.
 %! term_index(-Term, -Hash) is nondet.
@@ -170,3 +174,26 @@ term_index(Term, Hash, Alias) :-
   ;   rocks_get(Alias, Term, Hashes)
   ),
   member(Hash, Hashes).
+
+
+
+%! term_index_size(-NumTerms) is det.
+
+term_index_size(NumTerms) :-
+  call_on_rocks(term_hashes, set(atom), term_index_size(NumTerms)).
+
+term_index_size(NumTerms, Alias) :-
+  aggregate_all(count, rocks_key(Alias, _), NumTerms).
+
+
+
+%! todo_file(+Local, -DataFile, -TodoFile) is nondet.
+%
+% Enumerates Local files that are not ready, but whose corresponding
+% data file is.
+
+todo_file(Local, DataFile, TodoFile) :-
+  data_file_ready(DataFile),
+  file_directory_name(DataFile, Dir),
+  directory_file_path(Dir, Local, TodoFile),
+  \+ file_is_ready(TodoFile).
