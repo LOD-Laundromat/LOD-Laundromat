@@ -114,7 +114,8 @@ clean_seed(Seed) :-
   atomic_list_concat([a,ArchiveHash], :, ArchiveAlias),
   archive_label(From, ArchiveHash, ArchiveLbl),
   call_meta_warn(ArchiveAlias, ArchiveLbl, ArchiveHash, clean_archive(From)),
-  end_seed_hash(ArchiveHash).
+  end_seed_hash(ArchiveHash),
+  debug(wm(finish), "Finished ~a", [ArchiveHash]).
 
 clean_archive(From, ArchiveHash, _) :-
   % Iterate over all entries inside the document stored at From.  We

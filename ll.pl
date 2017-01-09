@@ -194,11 +194,6 @@ ll_status :-
   msg_notification(
     "Cleaned ~D documents containing ~D statements.~n",
     [NumDocs,NumTuples]
-  ),
-  aggregate_all(count, buggy_hash(_), NumBuggyHashes),
-  (   NumBuggyHashes =:= 0
-  ->  msg_success("No buggy seedpoints.~n")
-  ;   msg_warning("~D buggy seedpoints.~n", [NumBuggyHashes])
   ).
 
 

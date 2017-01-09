@@ -128,7 +128,8 @@ gen_term_index(Alias) :-
 
 gen_term_index_file(Alias, DataFile, _) :-
   q_file_hash(DataFile, Hash),
-  hdt_call_on_file(DataFile, gen_term_index_hdt(Alias, Hash)).
+  hdt_call_on_file(DataFile, gen_term_index_hdt(Alias, Hash)),
+  format(user_output, "Processed ~a~n", [Hash]).
 
 gen_term_index_hdt(Alias, Hash, Hdt) :-
   forall(
@@ -140,7 +141,7 @@ add_term_index(Alias, Hash, Term) :-
   q_term_to_atom(Term, A),
   rocks_merge(Alias, A, [Hash]),
   flag(number_of_keys, NumKeys, NumKeys + 1),
-  (NumKeys mod 100000 =:= 0 -> format(user_output, "~D~n", [NumKeys]) ; true).
+  (NumKeys mod 1000000 =:= 0 -> format(user_output, "Inserted ~D keys~n", [NumKeys]) ; true).
 
 
 
