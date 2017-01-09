@@ -5,6 +5,7 @@
     add_seed/2,                  % +From, -Hash
     begin_seed_hash/1,           % +Hash
     end_seed_hash/1,             % +Hash
+    is_seed_hash/1,              % +Hash
     number_of_seeds_by_status/2, % +Status, -NumSeeds
     print_seeds/0,
     remove_seed/1,               % +Hash
@@ -86,6 +87,13 @@ end_seed_hash(Hash) :-
 
 
 
+%! is_seed_hash(+Hash) is semidet.
+
+is_seed_hash(Hash) :-
+  seed_by_hash(Hash, _).
+
+
+
 %! number_of_seeds_by_status(+Status, -NumSeeds) is det.
 
 number_of_seeds_by_status(Status, NumSeeds) :-
@@ -129,20 +137,6 @@ remove_seed(Hash) :-
 %! reset_seed(+Hash) is det.
 
 reset_seed(Hash) :-
-  seed_by_hash(Hash, Seed),
-  atom_string(From, Seed.from),
-  % Remove the directories for all seed entries, if any.
-  ignore(
-    forall(
-      call_on_stream(uri(From), reset_seed_entry(From)),
-      true
-    )
-  ),
-  % Remove the directory for the seed,
-  q_dir_hash(Dir, Hash),
-  with_mutex(ll, delete_directory_and_contents_msg(Dir)),
-  
-  % Update the seedlist.
   get_time(Now),
   retry0(
     es_update(
@@ -151,13 +145,6 @@ reset_seed(Hash) :-
     )
   ),
   debug(seedlist(reset), "Reset seed ~a", [Hash]).
-
-
-reset_seed_entry(From, _, InPath, InPath) :-
-  path_entry_name(InPath, EntryName),
-  md5(From-EntryName, EntryHash),
-  q_dir_hash(EntryDir, EntryHash),
-  with_mutex(ll, delete_directory_and_contents_msg(EntryDir)).
 
 
 
@@ -169,7 +156,7 @@ seed(Dict) :-
 
 
 
-%! seed_by_hash(+Hash, -Dict) is nondet.
+%! seed_by_hash(+Hash, -Dict) is semidet.
 
 seed_by_hash(Hash, Dict) :-
   retry0(es_get([ll,seedlist,Hash], Dict)).

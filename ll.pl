@@ -2,13 +2,14 @@
   ll,
   [
     add_wm/0,
-    add_wms/1,   % +NumWMs
+    add_wms/1,             % +NumWMs
     ll_rm/0,
     ll_stack/0,
     ll_start/0,
     ll_status/0,
     ll_stop/0,
-    number_of_wms/1 % -NumWMs
+    number_of_wms/1,       % -NumWMs
+    reset_and_clean_hash/1 % +Hash
   ]
 ).
 
@@ -23,6 +24,7 @@
 :- use_module(library(lists)).
 :- use_module(library(os/file_ext)).
 :- use_module(library(pair_ext)).
+:- use_module(library(q/q_fs)).
 :- use_module(library(service/rocks_api)).
 :- use_module(library(sparql/sparql_query_client)).
 
@@ -60,16 +62,18 @@ add_wms(N1) :-
 
 
 
-%! buggy_hash(+Hash) is semidet.
 %! buggy_hash(-Hash) is nondet.
 %
-% A buggy hash is one that is ‘started’ according to the seedlist, but
-% that is not currently being processed by a washing machine.
+% Enumerates Hashes for archive, entry and data directories that do
+% not contain a single ‘.ready’ file.  These are certainly buggy.
 
 buggy_hash(Hash) :-
-  seed_by_status(started, Seed),
-  dict_tag(Seed, Hash),
-  \+ wm_thread_postfix(a, Hash).
+  q_dir(Dir),
+  forall(
+    directory_file(Dir, File),
+    \+ file_name_extension(_, ready, File)
+  ),
+  q_dir_hash(Dir, Hash).
 
 
 
@@ -160,7 +164,7 @@ ll_stack :-
 ll_start :-
   forall(
     buggy_hash(Hash),
-    reset_seed(Hash)
+    reset_hash(Hash)
   ).
 
 
@@ -238,5 +242,18 @@ reset_and_clean_hash(Hash) :-
   % Do not reset seedpoints that are currently being processed by a
   % washing machine.
   \+ wm_thread_postfix(a, Hash),
-  reset_seed(Hash),
+  reset_hash(Hash),
   clean_hash(Hash).
+
+
+
+%! reset_hash(+Hash) is det.
+%
+% Resets _any_ hash, i.e., archive/seed, entry, and data.
+
+reset_hash(Hash) :-
+  % Remove the directory for the hash,
+  q_dir_hash(Dir, Hash),
+  with_mutex(ll, delete_directory_and_contents_msg(Dir)),
+  % If a seed, reset it in the seedlist.
+  (is_seed_hash(Hash) -> reset_seed(Hash) ; true).

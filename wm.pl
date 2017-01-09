@@ -127,7 +127,6 @@ clean_entry(From, ArchiveHash, In, InPath, InPath) :-
   http_check_for_success(InPath),
   path_entry_name(InPath, EntryName),
   md5(From-EntryName, EntryHash),
-  (EntryHash == '2212d7c675ac87a12fa73ec150ba4751' -> gtrace ; true), %DEB
   atomic_list_concat([e,ArchiveHash,EntryHash], :, EntryAlias),
   entry_label(From, ArchiveHash, EntryName, EntryHash, EntryLbl),
   call_meta_warn(
