@@ -2,14 +2,15 @@
   ll,
   [
     add_wm/0,
-    add_wms/1,             % +NumWMs
+    add_wms/1,                  % +NumWMs
     ll_rm/0,
     ll_stack/0,
     ll_start/0,
     ll_status/0,
     ll_stop/0,
-    number_of_wms/1,       % -NumWMs
-    reset_and_clean_hash/1 % +Hash
+    number_of_wms/1,            % -NumWMs
+    reset_and_clean_hash/1,     % +Hash
+    reset_archive_and_entries/1 % +Hash
   ]
 ).
 
@@ -21,8 +22,11 @@
 
 :- use_module(library(call_ext)).
 :- use_module(library(dict_ext)).
+:- use_module(library(hash_ext)).
 :- use_module(library(lists)).
+:- use_module(library(os/archive_ext)).
 :- use_module(library(os/file_ext)).
+:- use_module(library(os/io)).
 :- use_module(library(pair_ext)).
 :- use_module(library(q/q_fs)).
 :- use_module(library(service/rocks_api)).
@@ -239,6 +243,30 @@ reset_and_clean_hash(Hash) :-
   \+ wm_thread_postfix(a, Hash),
   reset_hash(Hash),
   clean_hash(Hash).
+
+
+
+%! reset_archive_and_entries(+Hash) is det.
+
+reset_archive_and_entries(Hash) :-
+  seed_by_hash(Hash, Seed),
+  atom_string(From, Seed.from),
+  % Remove the directories for all seed entries, if any.
+  ignore(
+    forall(
+      call_on_stream(uri(From), reset_seed_entry(From)),
+      true
+    )
+  ),
+  % Remove the directory for the seed,
+  q_dir_hash(Dir, Hash),
+  with_mutex(ll, delete_directory_and_contents_msg(Dir)).
+
+reset_seed_entry(From, _, InPath, InPath) :-
+  path_entry_name(InPath, EntryName),
+  md5(From-EntryName, EntryHash),
+  q_dir_hash(EntryDir, EntryHash),
+  with_mutex(ll, delete_directory_and_contents_msg(EntryDir)).
 
 
 

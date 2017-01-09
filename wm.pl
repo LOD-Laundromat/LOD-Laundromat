@@ -374,7 +374,7 @@ currently_debugging(_).
 entry_label(From, ArchiveHash, EntryName, EntryHash, EntryLbl) :-
   format(
     string(EntryLbl),
-    "[E] ~a ~a (~a~a)",
+    "[E] ~a ~a (~a ~a)",
     [From,EntryName,ArchiveHash,EntryHash]
   ).
 

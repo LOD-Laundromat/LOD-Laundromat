@@ -6,7 +6,7 @@
 :- multifile
     currently_debugging0/1.
 
-%currently_debugging0('121c7500fbf827c064e7affe0d517c69').
+currently_debugging0('c1f0bedf6d6ef52c78c7b6a2a14f2773').
 
 %:- debug(es_api).
 %:- debug(http(send_request)).
@@ -16,5 +16,6 @@
 %:- debug(io(open)).
 %:- debug(seedlist(_)).
 % @tbd Document that ‘wm(idle)’ overrules ‘wm(_)’.
-:- debug(wm(finish)).
-:- debug(wm(idle)).
+:- debug(wm(_)).
+%:- debug(wm(finish)).
+%:- debug(wm(idle)).

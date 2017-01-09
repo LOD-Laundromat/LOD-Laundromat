@@ -4,9 +4,9 @@
     gen_stat/0,
     gen_term_index/0,
     number_of_triples/0,
-    print_todo_process/1, % +Local
-    term_index/2,         % ?Term, ?Hash
-    term_index_size/1     % -NumTerms
+    print_todo_progress/1, % +Local
+    term_index/2,          % ?Term, ?Hash
+    term_index_size/1      % -NumTerms
   ]
 ).
 
@@ -157,9 +157,9 @@ number_of_triples :-
 
 
 
-%! print_todo_process(+Local) is det.
+%! print_todo_progress(+Local) is det.
 
-print_todo_process(Local) :-
+print_todo_progress(Local) :-
   aggregate_all(count, todo_file(Local, _, _), NumTodos),
   aggregate_all(count, data_file_ready(_), NumAll),
   NumDone is NumAll - NumTodos,
