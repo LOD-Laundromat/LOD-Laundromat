@@ -6,7 +6,8 @@
 :- multifile
     currently_debugging0/1.
 
-%currently_debugging0('').
+currently_debugging0('5eb6e64653740aac40a4ca9a32544f6d').
+currently_debugging0('beea23e94e0f9b967d6e9ad5b94fc7ec').
 
 %:- debug(es_api).
 %:- debug(http(send_request)).
