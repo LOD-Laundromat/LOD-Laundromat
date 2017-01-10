@@ -7,6 +7,11 @@
 top -c -p $(pgrep -d',' -f <COMMAND>)
 #+END_SRC
 * bugs
+** TODO 0
+Seedpoint c1f0bedf6d6ef52c78c7b6a2a14f2773 or
+http://acm.rkbexplorer.com/models/dump.tgz given a archive error
+(truncated input file) that does not appear for the downloaded file
+with only call_on_stream/3.
 ** 1
 SWI-Prolog [thread 56 (e:d7551824eff43abe5030b150adfe33fd) at Fri Jan  6 20:29:17 2017]: received fatal signal 11 (segv)
 C-stack trace labeled "crash":

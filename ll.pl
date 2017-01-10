@@ -14,6 +14,9 @@
   ]
 ).
 
+:- use_module(library(q/q_iri)).
+:- q_init_ns.
+
 /** <module> LOD Laundromat
 
 @author Wouter Beek
@@ -21,21 +24,48 @@
 */
 
 :- use_module(library(call_ext)).
+:- use_module(library(debug)).
 :- use_module(library(dict_ext)).
 :- use_module(library(hash_ext)).
+:- use_module(library(iri/iri_ext)).
 :- use_module(library(lists)).
 :- use_module(library(os/archive_ext)).
 :- use_module(library(os/file_ext)).
 :- use_module(library(os/io)).
 :- use_module(library(pair_ext)).
 :- use_module(library(q/q_fs)).
+:- use_module(library(q/q_io), []).
 :- use_module(library(service/rocks_api)).
+:- use_module(library(settings)).
 :- use_module(library(sparql/sparql_query_client)).
 
 :- use_module(seedlist).
 :- use_module(wm).
 
-:- at_halt(ll_stop).
+:- at_halt((ll_stop, rocks_close(llw))).
+
+%:- debug(es_api).
+%:- debug(http(send_request)).
+%:- debug(http(reply)).
+%:- debug(http_io).
+%:- debug(io(close)).
+%:- debug(io(open)).
+%:- debug(seedlist(_)).
+% @tbd Document that ‘wm(idle)’ overrules ‘wm(_)’.
+:- debug(wm(_)).
+
+:- initialization((ll_start, init_llw_index)).
+
+:- set_setting(iri:data_auth, 'lodlaundromat.org').
+:- set_setting(iri:data_scheme, http).
+:- set_setting(q_io:source_dir, '/scratch/wbeek/crawls/13/source/').
+:- set_setting(q_io:store_dir,  '/scratch/wbeek/crawls/13/store/' ).
+:- set_setting(rocks_api:index_dir, '/scratch/wbeek/crawls/13/index/').
+
+init_llw_index :-
+  rocks_open(llw, int),
+  rocks_merge(llw, number_of_documents, 0),
+  rocks_merge(llw, number_of_tuples, 0).
 
 
 

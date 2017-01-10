@@ -69,16 +69,10 @@ The following debug flags are defined:
 
 :- use_module(seedlist).
 
-:- dynamic
-    currently_debugging0/1.
-
 :- meta_predicate
     call_meta_warn(+, 2),
     call_meta_warn(+, +, +, 2),
     call_meta_warn_streams(+, 2, +, +).
-
-:- multifile
-    currently_debugging0/1.
 
 prolog_stack:stack_guard('C').
 prolog_stack:stack_guard(none).
@@ -362,10 +356,12 @@ call_meta_warn_streams(Hash, Goal_2, MetaOut, WarnOut) :-
 %! currently_debugging(+Hash) is det.
 
 currently_debugging(Hash) :-
-  currently_debugging0(Hash), !,
+  deb0(Hash), !,
   ansi_format(user_output, [bold], "~a", [Hash]),
   gtrace. %DEB
 currently_debugging(_).
+
+deb0('6de4d9c7e59ab7aae94f059133620827').
 
 
 
