@@ -361,7 +361,10 @@ currently_debugging(Hash) :-
   gtrace. %DEB
 currently_debugging(_).
 
-deb0('6de4d9c7e59ab7aae94f059133620827').
+:- dynamic
+    deb0/1.
+
+%%%%deb0('6de4d9c7e59ab7aae94f059133620827').
 
 
 

@@ -58,7 +58,6 @@
 
 :- set_setting(iri:data_auth, 'lodlaundromat.org').
 :- set_setting(iri:data_scheme, http).
-:- set_setting(q_io:source_dir, '/scratch/wbeek/crawls/13/source/').
 :- set_setting(q_io:store_dir,  '/scratch/wbeek/crawls/13/store/' ).
 :- set_setting(rocks_api:index_dir, '/scratch/wbeek/crawls/13/index/').
 

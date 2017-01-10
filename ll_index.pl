@@ -24,6 +24,7 @@
 :- use_module(library(rdf/rdf__io)).
 :- use_module(library(semweb/rdf11)).
 :- use_module(library(service/rocks_api)).
+:- use_module(library(settings)).
 
 :- debug(stat).
 
@@ -31,6 +32,9 @@
     call_todo(+, 2).
 
 :- rlimit(nofile, _, 50000).
+
+:- set_setting(q_io:store_dir,  '/scratch/wbeek/crawls/13/store/' ).
+:- set_setting(rocks_api:index_dir, '/scratch/wbeek/crawls/13/index/').
 
 
 
@@ -91,7 +95,7 @@ gen_term_index(Alias) :-
 
 gen_term_index_file(Alias, DataFile, _) :-
   q_file_hash(DataFile, Hash),
-  hdt_call_on_file(DataFile, gen_term_index_hdt(50000, Alias, Hash)),
+  hdt_call_on_file(DataFile, gen_term_index_hdt(500000, Alias, Hash)),
   format(user_output, "Processed ~a~n", [Hash]).
 
 gen_term_index_hdt(BatchSize, Alias, Hash, Hdt) :-
