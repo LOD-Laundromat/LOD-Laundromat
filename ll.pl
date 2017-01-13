@@ -2,15 +2,20 @@
   ll,
   [
     add_wm/0,
-    add_wms/1,                  % +NumWMs
+    add_wms/1,                   % +NumWMs
+    clean_file/1,                % +File
+    clean_hash/1,                % +Hash
     ll_rm/0,
     ll_stack/0,
     ll_start/0,
     ll_status/0,
     ll_stop/0,
-    number_of_wms/1,            % -NumWMs
-    reset_and_clean_hash/1,     % +Hash
-    reset_archive_and_entries/1 % +Hash
+    number_of_wms/1,             % -NumWMs
+    reset_and_clean_hash/1,      % +Hash
+    reset_archive_and_entries/1, % +Hash
+    wm_run/0,
+    wm_thread_alias/2,           % +Prefix, -Alias
+    wm_thread_postfix/2          % +Prefix, -Hash
   ]
 ).
 
@@ -107,6 +112,36 @@ buggy_hash(Hash) :-
     \+ file_name_extension(_, ready, File)
   ),
   q_dir_hash(Dir, Hash).
+
+
+
+%! clean_hash(+Hash) is det.
+%
+% Clean a specific seed from the seedlist.  Does not re-clean
+% documents.
+%
+% @throws existence_error If the seed is not in the seedlist.
+
+clean_hash(Hash) :-
+  q_file_hash(File, data, ntriples, Hash),
+  (   file_is_ready(File)
+  ->  msg_notification("Already cleaned ~a", [Hash])
+  ;   seed_by_hash(Hash, Seed),
+      clean_seed(Seed)
+  ).
+
+
+
+%! clean_seed(+Seed) is det.
+
+clean_seed(Seed) :-
+  atom_string(From, Seed.from),
+  dict_tag(Seed, Hash),
+  currently_debugging(Hash),
+  begin_seed_hash(Hash),
+  clean_inner(From, Hash),
+  end_seed_hash(Hash),
+  debug(wm(finish), "Finished ~a", [Hash]).
 
 
 
@@ -304,8 +339,67 @@ reset_seed_entry(From, _, InPath, InPath) :-
 % Resets _any_ hash, i.e., archive/seed, entry, and data.
 
 reset_hash(Hash) :-
-  % Remove the directory for the hash,
-  q_dir_hash(Dir, Hash),
-  with_mutex(ll, delete_directory_and_contents_msg(Dir)),
+  wm_reset_hash(Hash),
   % If a seed, reset it in the seedlist.
   (is_seed_hash(Hash) -> reset_seed(Hash) ; true).
+
+
+
+%! wm_run is det.
+
+wm_run :-
+  wm_loop(_{idle: 0}).
+
+
+wm_loop(State) :-
+  % Clean one, arbitrarily chosen, seed.
+  once(seed_by_status(added, Seed)),
+  clean_seed(Seed), !,
+  wm_loop(State).
+wm_loop(State) :-
+  sleep(1),
+  dict_inc(idle, State, NumWMs),
+  thread_name(Alias),
+  debug(wm(idle), "ZZZ Thread ~w idle ~D sec.", [Alias,NumWMs]),
+  wm_loop(State).
+
+
+
+%! wm_thread_alias(+Prefix:oneof([a,e,m]), -Hash) is nondet.
+%
+% @arg Prefix Either `a` (archive), `e` (entry) or `m` (machine).
+
+wm_thread_alias(Prefix, Alias) :-
+  thread_property(Id, alias(Alias)),
+  atomic_list_concat([Prefix|_], :, Alias),
+  thread_property(Id, status(running)).
+
+
+
+%! wm_thread_postfix(+Prefix:oneof([a,e,m]), -Postfix) is nondet.
+%
+% @arg Prefix Either `a` (archive), `e` (entry) or `m` (machine).
+
+wm_thread_postfix(Prefix, Postfix) :-
+  thread_property(Id, alias(Alias)),
+  atomic_list_concat([Prefix,Postfix], :, Alias),
+  thread_property(Id, status(running)).
+
+
+
+
+
+% DEBUG %
+
+%! currently_debugging(+Hash) is det.
+
+currently_debugging(Hash) :-
+  deb0(Hash), !,
+  ansi_format(user_output, [bold], "~a", [Hash]),
+  gtrace. %DEB
+currently_debugging(_).
+
+:- dynamic
+    deb0/1.
+
+%%%%deb0('6de4d9c7e59ab7aae94f059133620827').
