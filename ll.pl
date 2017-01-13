@@ -42,8 +42,8 @@ The following debug flags are defined:
 :- use_module(library(q/q_fs)).
 :- use_module(library(q/q_io), []).
 :- use_module(library(service/rocks_api)).
-:- use_module(library(settings)).
 :- use_module(library(service/wm)).
+:- use_module(library(settings)).
 :- use_module(library(sparql/sparql_query_client)).
 
 :- use_module(seedlist).
@@ -140,7 +140,9 @@ ll_clean_seed(Seed) :-
   dict_tag(Seed, Hash),
   currently_debugging(Hash),
   begin_seed_hash(Hash),
-  clean_inner(Uri, Hash),
+  wm_clean_inner(Uri, Hash),
+  % @tbd rocks_merge(llw, number_of_tuples, NumTuples),
+  % @tbd rocks_merge(llw, number_of_documents, 1),
   end_seed_hash(Hash),
   debug(ll(finish), "Finished ~a", [Hash]).
 
