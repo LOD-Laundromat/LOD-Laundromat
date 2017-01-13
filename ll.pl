@@ -42,6 +42,7 @@
 :- use_module(library(q/q_io), []).
 :- use_module(library(service/rocks_api)).
 :- use_module(library(settings)).
+:- use_module(library(service/wm)).
 :- use_module(library(sparql/sparql_query_client)).
 
 :- use_module(seedlist).
