@@ -1,21 +1,18 @@
 :- module(
   ll,
   [
-    add_wm/0,
-    add_wms/1,                   % +NumWMs
-    clean_file/1,                % +File
-    clean_hash/1,                % +Hash
+    ll_add_wm/0,
+    ll_add_wms/1,              % +NumWMs
+    ll_clean_hash/1,           % +Hash
     ll_rm/0,
+    ll_reset_and_clean_hash/1, % +Hash
+    ll_run/0,
     ll_stack/0,
     ll_start/0,
     ll_status/0,
     ll_stop/0,
-    number_of_wms/1,             % -NumWMs
-    reset_and_clean_hash/1,      % +Hash
-    reset_archive_and_entries/1, % +Hash
-    wm_run/0,
-    wm_thread_alias/2,           % +Prefix, -Alias
-    wm_thread_postfix/2          % +Prefix, -Hash
+    ll_thread_alias/2,         % +Prefix, -Alias
+    number_of_wms/1            % -NumWMs
   ]
 ).
 
@@ -23,6 +20,10 @@
 :- q_init_ns.
 
 /** <module> LOD Laundromat
+
+The following debug flags are defined:
+  * ll(finish)
+  * ll(idle)
 
 @author Wouter Beek
 @version 2017/01
@@ -46,7 +47,6 @@
 :- use_module(library(sparql/sparql_query_client)).
 
 :- use_module(seedlist).
-:- use_module(wm).
 
 :- at_halt((ll_stop, rocks_close(llw))).
 
@@ -57,8 +57,8 @@
 %:- debug(io(close)).
 %:- debug(io(open)).
 %:- debug(seedlist(_)).
-% @tbd Document that ‘wm(idle)’ overrules ‘wm(_)’.
-:- debug(wm(_)).
+% @tbd Document that ‘ll(idle)’ overrules ‘ll(_)’.
+:- debug(ll(_)).
 
 :- initialization((ll_start, init_llw_index)).
 
@@ -73,31 +73,6 @@ init_llw_index :-
   rocks_merge(llw, number_of_tuples, 0).
 
 
-
-
-
-%! add_wm is det.
-%
-% Add one more washing machine to the LOD Laundromat.
-
-add_wm :-
-  max_wm(N0),
-  N is N0 + 1,
-  atomic_list_concat([m,N], :, Alias),
-  thread_create(wm_run, _, [alias(Alias),detached(false)]).
-
-
-
-%! add_wms(+NumWMs) is det.
-%
-% Add the given number of washing machines to LOD Laundromat.
-
-
-add_wms(0) :- !.
-add_wms(N1) :-
-  N2 is N1 - 1,
-  add_wm,
-  add_wms(N2).
 
 
 
@@ -116,33 +91,83 @@ buggy_hash(Hash) :-
 
 
 
-%! clean_hash(+Hash) is det.
+%! ll_add_wm is det.
+%
+% Add one more washing machine to the LOD Laundromat.
+
+ll_add_wm :-
+  max_wm(N0),
+  N is N0 + 1,
+  atomic_list_concat([m,N], :, Alias),
+  thread_create(wm_loop(_{idle: 0}), _, [alias(Alias),detached(false)]).
+
+
+
+%! ll_add_wms(+NumWMs) is det.
+%
+% Add the given number of washing machines to LOD Laundromat.
+
+
+ll_add_wms(0) :- !.
+ll_add_wms(N1) :-
+  N2 is N1 - 1,
+  ll_add_wm,
+  ll_add_wms(N2).
+
+
+
+%! ll_clean_hash(+Hash) is det.
 %
 % Clean a specific seed from the seedlist.  Does not re-clean
 % documents.
 %
 % @throws existence_error If the seed is not in the seedlist.
 
-clean_hash(Hash) :-
+ll_clean_hash(Hash) :-
   q_file_hash(File, data, ntriples, Hash),
   (   file_is_ready(File)
   ->  msg_notification("Already cleaned ~a", [Hash])
   ;   seed_by_hash(Hash, Seed),
-      clean_seed(Seed)
+      ll_clean_seed(Seed)
   ).
 
 
 
-%! clean_seed(+Seed) is det.
+%! ll_clean_seed(+Seed) is det.
 
-clean_seed(Seed) :-
-  atom_string(From, Seed.from),
+ll_clean_seed(Seed) :-
+  atom_string(Uri, Seed.from),
   dict_tag(Seed, Hash),
   currently_debugging(Hash),
   begin_seed_hash(Hash),
-  clean_inner(From, Hash),
+  clean_inner(Uri, Hash),
   end_seed_hash(Hash),
-  debug(wm(finish), "Finished ~a", [Hash]).
+  debug(ll(finish), "Finished ~a", [Hash]).
+
+
+
+%! ll_reset_and_clean_hash(+Hash) is det.
+
+ll_reset_and_clean_hash(Hash) :-
+  % Do not reset seedpoints that are currently being processed by a
+  % washing machine.
+  \+ (
+    ll_thread_alias(a, Alias),
+    atomic_list_concat([a,Hash], :, Alias)
+  ),
+  ll_reset_hash(Hash),
+  ll_clean_hash(Hash).
+
+
+
+%! ll_reset_hash(+Hash) is det.
+%
+% Resets _any_ hash, i.e., archive/seed, entry, and data.
+
+ll_reset_hash(Hash) :-
+  wm_reset_hash(Hash),
+  % If a seed, reset it in the seedlist.
+  (is_seed_hash(Hash) -> reset_seed(Hash) ; true).
 
 
 
@@ -192,7 +217,7 @@ WHERE {\n\c
 }\n',
   forall(
     sparql_select('http://sparql.backend.lodlaundromat.org', Q, Rows),
-    forall(member([From], Rows), add_seed(From))
+    forall(member([Uri], Rows), add_seed(Uri))
   ).
 
 
@@ -233,7 +258,7 @@ ll_stack :-
 ll_start :-
   forall(
     buggy_hash(Hash),
-    reset_hash(Hash)
+    ll_reset_hash(Hash)
   ).
 
 
@@ -244,7 +269,7 @@ ll_status :-
   findall(
     Global-[Alias,Global,Hash],
     (
-      wm_thread_alias(a, Alias),
+      ll_thread_alias(a, Alias),
       atomic_list_concat([a,Hash], :, Alias),
       thread_statistics(Alias, global, Global)
     ),
@@ -252,7 +277,7 @@ ll_status :-
   ),
   desc_pairs_values(Pairs, Rows),
   print_table([head(["Thread","Global stack","Seed"])|Rows], [indexed(true)]),
-  aggregate_all(count, wm_thread_alias(m, _), NumWMs),
+  aggregate_all(count, ll_thread_alias(m, _), NumWMs),
   number_of_seeds_by_status(added, NumSeeds),
   msg_notification(
     "~D washing machines are cleaning ~D seedpoints.~n",
@@ -272,7 +297,10 @@ ll_status :-
 % Stop all processes for the currently running LOD Laundromat.
 
 ll_stop :-
-  forall(wm_thread_alias(m, Alias), thread_signal(Alias, abort)).
+  forall(
+    ll_thread_alias(m, Alias),
+    thread_signal(Alias, abort)
+  ).
 
 
 
@@ -284,7 +312,8 @@ max_wm(N) :-
   aggregate_all(
     max(N),
     (
-      wm_thread_postfix(m, N0),
+      ll_thread_alias(m, Alias),
+      atomic_list_concat([w,N0], :, Alias),
       atom_number(N0, N)
     ),
     N
@@ -296,95 +325,34 @@ max_wm(0).
 %! number_of_wms(-NumWMs) is det.
 
 number_of_wms(NumWMs) :-
-  aggregate_all(count, wm_thread_alias(m, _), NumWMs).
+  aggregate_all(count, ll_thread_alias(m, _), NumWMs).
 
 
 
-%! reset_and_clean_hash(+Hash) is det.
+%! ll_loop(+State) is det.
 
-reset_and_clean_hash(Hash) :-
-  % Do not reset seedpoints that are currently being processed by a
-  % washing machine.
-  \+ wm_thread_postfix(a, Hash),
-  reset_hash(Hash),
-  clean_hash(Hash).
-
-
-
-%! reset_archive_and_entries(+Hash) is det.
-
-reset_archive_and_entries(Hash) :-
-  seed_by_hash(Hash, Seed),
-  atom_string(From, Seed.from),
-  % Remove the directories for all seed entries, if any.
-  ignore(
-    forall(
-      call_on_stream(uri(From), reset_seed_entry(From)),
-      true
-    )
-  ),
-  % Remove the directory for the seed,
-  q_dir_hash(Dir, Hash),
-  with_mutex(ll, delete_directory_and_contents_msg(Dir)).
-
-reset_seed_entry(From, _, InPath, InPath) :-
-  path_entry_name(InPath, EntryName),
-  md5(From-EntryName, EntryHash),
-  q_dir_hash(EntryDir, EntryHash),
-  with_mutex(ll, delete_directory_and_contents_msg(EntryDir)).
-
-
-
-%! reset_hash(+Hash) is det.
-%
-% Resets _any_ hash, i.e., archive/seed, entry, and data.
-
-reset_hash(Hash) :-
-  wm_reset_hash(Hash),
-  % If a seed, reset it in the seedlist.
-  (is_seed_hash(Hash) -> reset_seed(Hash) ; true).
-
-
-
-%! wm_run is det.
-
-wm_run :-
-  wm_loop(_{idle: 0}).
-
-
-wm_loop(State) :-
+ll_loop(State) :-
   % Clean one, arbitrarily chosen, seed.
   once(seed_by_status(added, Seed)),
-  clean_seed(Seed), !,
-  wm_loop(State).
-wm_loop(State) :-
+  ll_clean_seed(Seed), !,
+  ll_loop(State).
+ll_loop(State) :-
   sleep(1),
   dict_inc(idle, State, NumWMs),
   thread_name(Alias),
-  debug(wm(idle), "ZZZ Thread ~w idle ~D sec.", [Alias,NumWMs]),
-  wm_loop(State).
+  debug(ll(idle), "ZZZ Thread ~w idle ~D sec.", [Alias,NumWMs]),
+  ll_loop(State).
 
 
 
-%! wm_thread_alias(+Prefix:oneof([a,e,m]), -Hash) is nondet.
+%! ll_thread_alias(+Prefix:oneof([a,e,m]), -Alias) is nondet.
 %
 % @arg Prefix Either `a` (archive), `e` (entry) or `m` (machine).
 
-wm_thread_alias(Prefix, Alias) :-
+ll_thread_alias(Prefix, Alias) :-
+  thread_property(Id, status(running)),
   thread_property(Id, alias(Alias)),
-  atomic_list_concat([Prefix|_], :, Alias),
-  thread_property(Id, status(running)).
-
-
-
-%! wm_thread_postfix(+Prefix:oneof([a,e,m]), -Postfix) is nondet.
-%
-% @arg Prefix Either `a` (archive), `e` (entry) or `m` (machine).
-
-wm_thread_postfix(Prefix, Postfix) :-
-  thread_property(Id, alias(Alias)),
-  atomic_list_concat([Prefix,Postfix], :, Alias),
-  thread_property(Id, status(running)).
+  atomic_list_concat([Prefix|_], :, Alias).
 
 
 
