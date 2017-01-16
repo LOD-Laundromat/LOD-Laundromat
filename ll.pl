@@ -16,9 +16,6 @@
   ]
 ).
 
-:- use_module(library(q/q_iri)).
-:- q_init_ns.
-
 /** <module> LOD Laundromat
 
 The following debug flags are defined:
@@ -40,7 +37,7 @@ The following debug flags are defined:
 :- use_module(library(os/io)).
 :- use_module(library(pair_ext)).
 :- use_module(library(q/q_fs)).
-:- use_module(library(q/q_io), []).
+:- use_module(library(rdf/rdf_iri)).
 :- use_module(library(service/rocks_api)).
 :- use_module(library(service/wm)).
 :- use_module(library(settings)).
@@ -64,7 +61,7 @@ The following debug flags are defined:
 
 :- set_setting(iri:data_auth, 'lodlaundromat.org').
 :- set_setting(iri:data_scheme, http).
-:- set_setting(q_io:store_dir,  '/scratch/wbeek/crawls/13/store/' ).
+:- set_setting(q_fs:store_dir,  '/scratch/wbeek/crawls/13/store/' ).
 :- set_setting(rocks_api:index_dir, '/scratch/wbeek/crawls/13/index/').
 
 init_llw_index :-
@@ -230,7 +227,7 @@ WHERE {\n\c
 % Remove all LOD Laundromat data and metadata file. 
 
 ll_rm_store :-
-  setting(q_io:store_dir, Dir),
+  q_store_dir(Dir),
   delete_directory_and_contents_msg(Dir).
 
 

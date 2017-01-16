@@ -14,15 +14,13 @@
 */
 
 :- use_module(library(debug)).
-:- use_module(library(hdt/hdt_ext)).
+:- use_module(library(hdt/hdt_api)).
 :- use_module(library(lists)).
 :- use_module(library(os/file_ext)).
 :- use_module(library(print_ext)).
 :- use_module(library(q/q_fs)).
-:- use_module(library(q/q_rdf)).
-:- use_module(library(q/q_term)).
 :- use_module(library(rdf/rdf__io)).
-:- use_module(library(semweb/rdf11)).
+:- use_module(library(rdf/rdf_api)).
 :- use_module(library(service/rocks_api)).
 :- use_module(library(settings)).
 
@@ -31,9 +29,7 @@
 :- meta_predicate
     call_todo(+, 2).
 
-:- rlimit(nofile, _, 50000).
-
-:- set_setting(q_io:store_dir,  '/scratch/wbeek/crawls/13/store/' ).
+:- set_setting(q_fs:store_dir,  '/scratch/wbeek/crawls/13/store/' ).
 :- set_setting(rocks_api:index_dir, '/scratch/wbeek/crawls/13/index/').
 
 
@@ -81,7 +77,7 @@ gen_stat_index(Alias, Hdt) :-
 gen_stat_index(_, _).
 
 update_stat(literal, _, _, O) :-
-  q_is_literal(O).
+  rdf_is_literal(O).
 
 
 
@@ -116,7 +112,7 @@ gen_term_index_hdt(BatchSize, Alias, Hash, Hdt) :-
 gen_term_index_command(Hash, Command, Hdt) :-
   hdt0(S, P, O, Hdt),
   member(Term, [S,P,O]),
-  q_term_to_atom(Term, A),
+  rdf_term_to_atom(Term, A),
   Command = merge(A, [Hash]).
 
 

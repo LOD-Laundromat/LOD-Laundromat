@@ -43,7 +43,6 @@ in the LOD Washing Machine.
 :- use_module(library(apply)).
 :- use_module(library(lists)).
 :- use_module(library(rdf/rdf_term)).
-:- use_module(library(semweb/rdf11)).
 
 :- use_module(query/lwm_sparql_generics).
 

@@ -25,7 +25,7 @@
 :- use_module(library(dcg/dcg_ext)).
 :- use_module(library(dcg/dcg_table)).
 :- use_module(library(dict_ext)).
-:- use_module(library(hdt/hdt_ext)).
+:- use_module(library(hdt/hdt_api)).
 :- use_module(library(json_ext)).
 :- use_module(library(lists)).
 :- use_module(library(lodcli/lodcli)).
@@ -35,7 +35,7 @@
 :- use_module(library(pair_ext)).
 :- use_module(library(pool)).
 :- use_module(library(print_ext)).
-:- use_module(library(semweb/rdf11)).
+:- use_module(library(rdf/rdf_api)).
 :- use_module(library(solution_sequences)).
 :- use_module(library(string_ext)).
 :- use_module(library(thread)).
@@ -114,7 +114,7 @@ lstat_data0(Dict, Hdt) :-
 
 data_key0(Hdt, Key) :-
   q(hdt0, _, _, O, Hdt),
-  q_is_literal(O),
+  rdf_is_literal(O),
   (O = _^^Key -> true ; (O = _@Key ; rdf_equal(rdf:langString, Key))).
 
 
@@ -123,7 +123,7 @@ pair0(Key, Key-0).
 
 lstat_data_count0(Hdt, Dict) :-
   q(hdt0, _, _, O, Hdt),
-  (   q_is_literal(O)
+  (   rdf_is_literal(O)
   ->  dict_inc(literals, Dict),
       (   O = _^^D
       ->  dict_inc(D, Dict)
