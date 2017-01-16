@@ -22,15 +22,11 @@
 :- use_module(library(rdf/rdf__io)).
 :- use_module(library(rdf/rdf_api)).
 :- use_module(library(service/rocks_api)).
-:- use_module(library(settings)).
 
 :- debug(stat).
 
 :- meta_predicate
     call_todo(+, 2).
-
-:- set_setting(q_fs:store_dir,  '/scratch/wbeek/crawls/13/store/' ).
-:- set_setting(rocks_api:index_dir, '/scratch/wbeek/crawls/13/index/').
 
 
 
@@ -41,7 +37,7 @@
 %! gen_stat_index is det.
 
 gen_stat_index :-
-  call_on_rocks(stat, int, gen_stat_index).
+  call_to_rocks(stat, int, gen_stat_index).
 
 gen_stat_index(Alias) :-
   forall(
@@ -84,7 +80,7 @@ update_stat(literal, _, _, O) :-
 %! gen_term_index is det.
 
 gen_term_index :-
-  call_on_rocks(term_hashes, set(atom), gen_term_index).
+  call_to_rocks(term_hashes, set(atom), gen_term_index).
 
 gen_term_index(Alias) :-
   call_todo(Alias, gen_term_index_file(Alias)).

@@ -40,7 +40,6 @@ The following debug flags are defined:
 :- use_module(library(rdf/rdf_iri)).
 :- use_module(library(service/rocks_api)).
 :- use_module(library(service/wm)).
-:- use_module(library(settings)).
 :- use_module(library(sparql/sparql_query_client)).
 
 :- use_module(seedlist).
@@ -58,11 +57,6 @@ The following debug flags are defined:
 :- debug(ll(_)).
 
 :- initialization((ll_start, init_llw_index)).
-
-:- set_setting(iri:data_auth, 'lodlaundromat.org').
-:- set_setting(iri:data_scheme, http).
-:- set_setting(q_fs:store_dir,  '/scratch/wbeek/crawls/13/store/' ).
-:- set_setting(rocks_api:index_dir, '/scratch/wbeek/crawls/13/index/').
 
 init_llw_index :-
   rocks_open(llw, int),
