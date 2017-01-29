@@ -18,9 +18,7 @@
 /** <module> LOD Laundromat
 
 The following debug flags are defined:
-
   * ll(finish)
-
   * ll(idle)
 
 @author Wouter Beek
@@ -45,7 +43,7 @@ The following debug flags are defined:
 
 :- at_halt((ll_stop, rocks_close(llw))).
 
-:- initialization((ll_start, init_llw_index)).
+%:- initialization((ll_start, init_llw_index)).
 
 init_llw_index :-
   rocks_open(llw, int, write),
@@ -184,27 +182,35 @@ ll_rm_index :-
 % Remove and re-populate the LOD Laundromat seedlist.
 
 ll_rm_seedlist :-
-  retry0(es_rm([ll])),
+  % Ignore covers the case in which the ElasticSearch ‘ll’ index is
+  % already gone, i.e., 404.
+  ignore(es_delete([ll])),
   init_old_seedlist.
 
 init_old_seedlist :-
   % Extract all seeds from the old LOD Laundromat server and store
   % them locally as a seedlist.  This is intended for debugging
   % purposes only.
-  Q = '\c
+  Q = "\c
 PREFIX llo: <http://lodlaundromat.org/ontology/>\n\c
 SELECT ?url\n\c
 WHERE {\n\c
   ?doc llo:url ?url\n\c
-}\n',
+}\n",
   forall(
     sparql_get(
       'http://sparql.backend.lodlaundromat.org',
-      Q,
+      string(Q),
       media(application/'sparql-results+json',[]),
-      Rows
+      Result
     ),
-    forall(member([Uri], Rows), add_seed(Uri))
+    (
+      Result = select(_VarNames,Rows),
+      forall(
+        member([Uri], Rows),
+        add_seed(Uri)
+      )
+    )
   ).
 
 

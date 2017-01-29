@@ -57,11 +57,9 @@ add_seed(From1, Hash) :-
   iri_normalized(From1, From2),
   md5(From2, Hash),
   get_time(Now),
-  retry0(
-    es_create(
-      [ll,seedlist,Hash],
-      _{added: Now, ended: 0.0, from: From2, started: 0.0}
-    )
+  es_create(
+    [ll,seedlist,Hash],
+    _{added: Now, ended: 0.0, from: From2, started: 0.0}
   ),
   debug(seedlist(add), "Added to seedlist: ~a (~a)", [From2,Hash]).
 
@@ -73,7 +71,7 @@ add_seed(From1, Hash) :-
 
 begin_seed_hash(Hash) :-
   get_time(Started),
-  retry0(es_update([ll,seedlist,Hash], _{doc: _{started: Started}})),
+  es_update([ll,seedlist,Hash], _{doc: _{started: Started}}),
   debug(seedlist(begin), "Started cleaning seed ~a", [Hash]).
 
 
@@ -82,7 +80,7 @@ begin_seed_hash(Hash) :-
 
 end_seed_hash(Hash) :-
   get_time(Ended),
-  retry0(es_update([ll,seedlist,Hash], _{doc: _{ended: Ended}})),
+  es_update([ll,seedlist,Hash], _{doc: _{ended: Ended}}),
   debug(seedlist(end), "Ended cleaning seed ~a", [Hash]).
 
 
@@ -129,7 +127,7 @@ print_seeds :-
 %! remove_seed(+Hash) is det.
 
 remove_seed(Hash) :-
-  retry0(es_rm([ll,seedlist,Hash])),
+  es_delete([ll,seedlist,Hash]),
   debug(seedlist(remove), "Removed seed ~a", [Hash]).
 
 
@@ -138,11 +136,9 @@ remove_seed(Hash) :-
 
 reset_seed(Hash) :-
   get_time(Now),
-  retry0(
-    es_update(
-      [ll,seedlist,Hash],
-      _{doc: _{added: Now, started: 0.0, ended: 0.0}}
-    )
+  es_update(
+    [ll,seedlist,Hash],
+    _{doc: _{added: Now, started: 0.0, ended: 0.0}}
   ),
   debug(seedlist(reset), "Reset seed ~a", [Hash]).
 
@@ -159,7 +155,7 @@ seed(Dict) :-
 %! seed_by_hash(+Hash, -Dict) is semidet.
 
 seed_by_hash(Hash, Dict) :-
-  retry0(es_get([ll,seedlist,Hash], Dict)).
+  es_get([ll,seedlist,Hash], Dict).
 
 
 
@@ -187,7 +183,7 @@ seed_status(ended).
 
 seeds_by_status(Status, Result) :-
   status_query(Status, Query),
-  retry0(es_search([ll,seedlist], _{query: Query}, _{}, Result)).
+  es_search([ll,seedlist], _{query: Query}, _{}, Result).
 
 status_query(ended, Query) :- !,
   Query = _{range: _{ended: _{gt: 0.0}}}.
