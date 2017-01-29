@@ -33,6 +33,7 @@ Status is either `added', `ended', or `started'.
 :- use_module(library(io)).
 :- use_module(library(lists)).
 :- use_module(library(math/math_ext)).
+:- use_module(library(print_ext)).
 :- use_module(library(q/q_fs)).
 :- use_module(library(service/es_api)).
 :- use_module(library(uri)).

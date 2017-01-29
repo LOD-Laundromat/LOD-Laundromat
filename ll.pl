@@ -6,7 +6,6 @@
     ll_clean_hash/1,           % +Hash
     ll_rm/0,
     ll_reset_and_clean_hash/1, % +Hash
-    ll_run/0,
     ll_stack/0,
     ll_start/0,
     ll_status/0,
@@ -20,7 +19,9 @@
 /** <module> LOD Laundromat
 
 The following debug flags are defined:
+
   * ll(finish)
+
   * ll(idle)
 
 @author Wouter Beek
@@ -31,15 +32,13 @@ The following debug flags are defined:
 :- use_module(library(debug)).
 :- use_module(library(dict_ext)).
 :- use_module(library(file_ext)).
-:- use_module(library(hash_ext)).
-:- use_module(library(io)).
 :- use_module(library(lists)).
 :- use_module(library(pair_ext)).
 :- use_module(library(print_ext)).
 :- use_module(library(q/q_fs)).
-:- use_module(library(rdf/rdf_term)).
 :- use_module(library(service/es_api)).
 :- use_module(library(service/rocks_api)).
+:- use_module(library(settings)).
 :- use_module(library(sparql/sparql_client2)).
 :- use_module(library(thread_ext)).
 :- use_module(library(wm)).
@@ -64,6 +63,9 @@ init_llw_index :-
   rocks_open(llw, int, write),
   rocks_merge(llw, number_of_documents, 0),
   rocks_merge(llw, number_of_tuples, 0).
+
+:- set_setting(rocks_api:index_dir, '/scratch/wbeek/crawls/13/index/').
+:- set_setting(q_fs:store_dir, '/scratch/wbeek/crawls/13/store/').
 
 
 
@@ -92,7 +94,7 @@ ll_add_wm :-
   max_wm(N0),
   N is N0 + 1,
   atomic_list_concat([m,N], :, Alias),
-  thread_create(wm_loop(_{idle: 0}), _, [alias(Alias),detached(false)]).
+  thread_create(ll_loop(_{idle: 0}), _, [alias(Alias),detached(false)]).
 
 
 
@@ -225,7 +227,7 @@ WHERE {\n\c
 
 %! ll_rm_store is det.
 %
-% Remove all LOD Laundromat data and metadata file. 
+% Remove all LOD Laundromat data and metadata file.
 
 ll_rm_store :-
   q_store_dir(Dir),
