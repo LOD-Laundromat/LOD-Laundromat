@@ -28,12 +28,11 @@ Status is either `added', `ended', or `started'.
 
 :- use_module(library(call_ext)).
 :- use_module(library(debug)).
+:- use_module(library(file_ext)).
 :- use_module(library(hash_ext)).
+:- use_module(library(io)).
 :- use_module(library(lists)).
 :- use_module(library(math/math_ext)).
-:- use_module(library(os/archive_ext)).
-:- use_module(library(os/file_ext)).
-:- use_module(library(os/io)).
 :- use_module(library(q/q_fs)).
 :- use_module(library(service/es_api)).
 :- use_module(library(uri)).

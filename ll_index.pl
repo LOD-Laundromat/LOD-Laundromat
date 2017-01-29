@@ -14,9 +14,9 @@
 */
 
 :- use_module(library(debug)).
+:- use_module(library(file_ext)).
 :- use_module(library(hdt/hdt_api)).
 :- use_module(library(lists)).
-:- use_module(library(os/file_ext)).
 :- use_module(library(print_ext)).
 :- use_module(library(q/q_fs)).
 :- use_module(library(rdf/rdf__io)).

@@ -25,20 +25,18 @@
 :- use_module(library(dcg/dcg_ext)).
 :- use_module(library(dcg/dcg_table)).
 :- use_module(library(dict_ext)).
+:- use_module(library(file_ext)).
 :- use_module(library(hdt/hdt_api)).
 :- use_module(library(json_ext)).
 :- use_module(library(lists)).
 :- use_module(library(lodcli/lodcli)).
-:- use_module(library(os/file_ext)).
-:- use_module(library(os/thread_counter)).
-:- use_module(library(os/thread_ext)).
 :- use_module(library(pair_ext)).
 :- use_module(library(pool)).
 :- use_module(library(print_ext)).
 :- use_module(library(rdf/rdf_api)).
 :- use_module(library(solution_sequences)).
 :- use_module(library(string_ext)).
-:- use_module(library(thread)).
+:- use_module(library(thread_ext)).
 :- use_module(library(yall)).
 
 

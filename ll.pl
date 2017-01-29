@@ -15,6 +15,7 @@
     number_of_wms/1            % -NumWMs
   ]
 ).
+:- [library(init_rdf_aliases)].
 
 /** <module> LOD Laundromat
 
@@ -29,18 +30,19 @@ The following debug flags are defined:
 :- use_module(library(call_ext)).
 :- use_module(library(debug)).
 :- use_module(library(dict_ext)).
+:- use_module(library(file_ext)).
 :- use_module(library(hash_ext)).
-:- use_module(library(iri/iri_ext)).
+:- use_module(library(io)).
 :- use_module(library(lists)).
-:- use_module(library(os/archive_ext)).
-:- use_module(library(os/file_ext)).
-:- use_module(library(os/io)).
 :- use_module(library(pair_ext)).
+:- use_module(library(print_ext)).
 :- use_module(library(q/q_fs)).
-:- use_module(library(rdf/rdf_iri)).
+:- use_module(library(rdf/rdf_term)).
+:- use_module(library(service/es_api)).
 :- use_module(library(service/rocks_api)).
-:- use_module(library(service/wm)).
-:- use_module(library(sparql/sparql_query_client)).
+:- use_module(library(sparql/sparql_client2)).
+:- use_module(library(thread_ext)).
+:- use_module(library(wm)).
 
 :- use_module(seedlist).
 
@@ -59,7 +61,7 @@ The following debug flags are defined:
 :- initialization((ll_start, init_llw_index)).
 
 init_llw_index :-
-  rocks_open(llw, int),
+  rocks_open(llw, int, write),
   rocks_merge(llw, number_of_documents, 0),
   rocks_merge(llw, number_of_tuples, 0).
 
@@ -180,11 +182,11 @@ ll_rm :-
 
 %! ll_rm_index is det.
 %
-% Remove the LOD Laundromat web site index.
+% Remove and re-initialize the LOD Laundromat web site index.
 
 ll_rm_index :-
   rocks_rm(llw),
-  rocks_open(llw, int),
+  rocks_open(llw, int, write),
   rocks_put(llw, number_of_documents, 0),
   rocks_put(llw, number_of_tuples, 0).
 
@@ -209,7 +211,12 @@ WHERE {\n\c
   ?doc llo:url ?url\n\c
 }\n',
   forall(
-    sparql_select('http://sparql.backend.lodlaundromat.org', Q, Rows),
+    sparql_get(
+      'http://sparql.backend.lodlaundromat.org',
+      Q,
+      media(application/'sparql-results+json',[]),
+      Rows
+    ),
     forall(member([Uri], Rows), add_seed(Uri))
   ).
 

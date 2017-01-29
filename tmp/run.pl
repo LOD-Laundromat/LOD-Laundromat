@@ -16,8 +16,8 @@ for storing the metadata. See module [lwm_settings] for this.
 
 :- use_module(library(option_ext)).
 :- use_module(library(optparse)).
-:- use_module(library(os/thread_ext)).
-:- use_module(library(semweb/rdf_db)).
+:- use_module(library(semweb/rdf11)).
+:- use_module(library(thread_ext)).
 :- use_module(library(uri)).
 
 :- rdf_create_alias(error, 'http://lodlaundromat.org/error/ontology/').

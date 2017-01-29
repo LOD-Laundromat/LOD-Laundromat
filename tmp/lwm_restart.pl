@@ -15,7 +15,6 @@ Restart the LOD Washing Machine during debugging.
 
 :- use_module(library(debug)).
 :- use_module(library(thread)).
-:- use_module(library(iri/iri_ext)).
 
 
 
