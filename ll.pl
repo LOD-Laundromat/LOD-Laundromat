@@ -14,7 +14,6 @@
     number_of_wms/1            % -NumWMs
   ]
 ).
-:- [library(init_rdf_aliases)].
 
 /** <module> LOD Laundromat
 
@@ -38,7 +37,6 @@ The following debug flags are defined:
 :- use_module(library(q/q_fs)).
 :- use_module(library(service/es_api)).
 :- use_module(library(service/rocks_api)).
-:- use_module(library(settings)).
 :- use_module(library(sparql/sparql_client2)).
 :- use_module(library(thread_ext)).
 :- use_module(library(wm)).
@@ -47,25 +45,12 @@ The following debug flags are defined:
 
 :- at_halt((ll_stop, rocks_close(llw))).
 
-%:- debug(es_api).
-%:- debug(http(send_request)).
-%:- debug(http(reply)).
-%:- debug(http_io).
-%:- debug(io(close)).
-%:- debug(io(open)).
-%:- debug(seedlist(_)).
-% @tbd Document that ‘ll(idle)’ overrules ‘ll(_)’.
-:- debug(ll(_)).
-
 :- initialization((ll_start, init_llw_index)).
 
 init_llw_index :-
   rocks_open(llw, int, write),
   rocks_merge(llw, number_of_documents, 0),
   rocks_merge(llw, number_of_tuples, 0).
-
-:- set_setting(rocks_api:index_dir, '/scratch/wbeek/crawls/13/index/').
-:- set_setting(q_fs:store_dir, '/scratch/wbeek/crawls/13/store/').
 
 
 
