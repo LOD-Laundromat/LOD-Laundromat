@@ -4,6 +4,7 @@
     ll_add_wm/0,
     ll_add_wms/1,              % +NumWMs
     ll_clean_hash/1,           % +Hash
+    ll_clean_one_seed/1,       % -Seed
     ll_rm/0,
     ll_reset_and_clean_hash/1, % +Hash
     ll_stack/0,
@@ -126,6 +127,16 @@ ll_clean_seed(Seed) :-
 
 
 
+%! ll_clean_one_seed(-Seed) is det.
+%
+% Clean one, arbitrarily chosen, seedpoint.
+
+ll_clean_one_seed(Seed) :-
+  once(seed_by_status(added, Seed)),
+  ll_clean_seed(Seed).
+
+
+
 %! ll_reset_and_clean_hash(+Hash) is det.
 
 ll_reset_and_clean_hash(Hash) :-
@@ -185,9 +196,6 @@ ll_rm_seedlist :-
   % Ignore covers the case in which the ElasticSearch ‘ll’ index is
   % already gone, i.e., 404.
   ignore(es_delete([ll])),
-  init_old_seedlist.
-
-init_old_seedlist :-
   % Extract all seeds from the old LOD Laundromat server and store
   % them locally as a seedlist.  This is intended for debugging
   % purposes only.
@@ -325,9 +333,7 @@ number_of_wms(NumWMs) :-
 %! ll_loop(+State) is det.
 
 ll_loop(State) :-
-  % Clean one, arbitrarily chosen, seed.
-  once(seed_by_status(added, Seed)),
-  ll_clean_seed(Seed), !,
+  ll_clean_one_seed(_), !,
   ll_loop(State).
 ll_loop(State) :-
   sleep(1),
