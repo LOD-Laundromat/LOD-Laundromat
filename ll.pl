@@ -5,7 +5,7 @@
     ll_add_wms/1,              % +NumWMs
     ll_clean_hash/1,           % +Hash
     ll_clean_one_seed/1,       % -Seed
-    ll_rm/0,
+    ll_reset_all/0,
     ll_reset_and_clean_hash/1, % +Hash
     ll_stack/0,
     ll_start/0,
@@ -44,7 +44,7 @@ The following debug flags are defined:
 
 :- at_halt((ll_stop, rocks_close(llw))).
 
-%:- initialization((ll_start, init_llw_index)).
+:- initialization((ll_start, init_llw_index)).
 
 init_llw_index :-
   rocks_open(llw, int, write),
@@ -162,25 +162,25 @@ ll_reset_hash(Hash) :-
 
 
 
-%! ll_rm is det.
+%! ll_reset_all is det.
 %
 % Remove everything that was every cleaned by the LOD Laundromat.
 % After all the data, metadata and indices are removed, the seedlist
 % is re-initialized to its original contents.
 
-ll_rm :-
+ll_reset_all :-
   ll_stop,
-  ll_rm_store,
-  ll_rm_index,
-  ll_rm_seedlist.
+  ll_reset_store,
+  ll_reset_index,
+  ll_reset_seedlist.
 
 
 
-%! ll_rm_index is det.
+%! ll_reset_index is det.
 %
 % Remove and re-initialize the LOD Laundromat web site index.
 
-ll_rm_index :-
+ll_reset_index :-
   rocks_rm(llw),
   rocks_open(llw, int, write),
   rocks_put(llw, number_of_documents, 0),
@@ -188,11 +188,11 @@ ll_rm_index :-
 
 
 
-%! ll_rm_seedlist is det.
+%! ll_reset_seedlist is det.
 %
 % Remove and re-populate the LOD Laundromat seedlist.
 
-ll_rm_seedlist :-
+ll_reset_seedlist :-
   % Ignore covers the case in which the ElasticSearch ‘ll’ index is
   % already gone, i.e., 404.
   ignore(es_delete([ll])),
@@ -224,11 +224,11 @@ WHERE {\n\c
 
 
 
-%! ll_rm_store is det.
+%! ll_reset_store is det.
 %
 % Remove all LOD Laundromat data and metadata file.
 
-ll_rm_store :-
+ll_reset_store :-
   q_store_dir(Dir),
   delete_directory_and_contents_msg(Dir).
 
