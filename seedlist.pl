@@ -6,7 +6,7 @@
     begin_seed_hash/1,           % +Hash
     end_seed_hash/1,             % +Hash
     is_seed_hash/1,              % +Hash
-    number_of_seeds_by_status/2, % +Status, -NumSeeds
+    number_of_seeds_by_status/2, % ?Status, -NumSeeds
     print_seeds/0,
     remove_seed/1,               % +Hash
     reset_seed/1,                % +Hash
@@ -93,8 +93,10 @@ is_seed_hash(Hash) :-
 
 
 %! number_of_seeds_by_status(+Status, -NumSeeds) is det.
+%! number_of_seeds_by_status(-Status, -NumSeeds) is multi.
 
 number_of_seeds_by_status(Status, NumSeeds) :-
+  seed_status(Status),
   once(seeds_by_status(Status, Result)),
   NumSeeds = Result.total_number_of_results.
 
