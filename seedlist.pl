@@ -11,6 +11,7 @@
     remove_seed/1,               % +Hash
     reset_seed/1,                % +Hash
     seed/1,                      % -Dict
+    seed_hash/1,                 % -Hash
     seed_by_hash/2,              % +Hash, -Dict
     seed_by_status/2,            % +Status, -Dict
     seed_status/1,               % ?Status
@@ -23,11 +24,12 @@
 Status is either `added', `ended', or `started'.
 
 @author Wouter Beek
-@version 2017/01
+@version 2017/01-2017/02
 */
 
 :- use_module(library(call_ext)).
 :- use_module(library(debug)).
+:- use_module(library(dict_ext)).
 :- use_module(library(file_ext)).
 :- use_module(library(hash_ext)).
 :- use_module(library(io)).
@@ -168,6 +170,14 @@ seed_by_status(Status, Dict) :-
   Results = Result.results,
   member(Dict, Results).
   
+
+
+%! seed_hash(-Hash) is nondet.
+
+seed_hash(Hash) :-
+  seed(Seed),
+  dict_tag(Seed, Hash).
+
 
 
 %! seed_status(+Status) is semidet.
