@@ -85,15 +85,15 @@ create_lstat(NumWorkers) :-
 
 create_lstat_resource0(File1) :-
   q_dir(Dir),
-  q_dir_file(Dir, data, hdt, File1),
+  q_dir_file(Dir, data, [hdt], File1),
   file_is_ready(File1),
-  q_dir_file(Dir, stat, json, File2),
+  q_dir_file(Dir, stat, [json], File2),
   \+ exists_file(File2).
 
 
 create_lstat_worker0(DataHdtFile) :-
   q_dir_file(Dir, DataHdtFile),
-  q_dir_file(Dir, warn, hdt, WarnHdtFile),
+  q_dir_file(Dir, warn, [hdt], WarnHdtFile),
   exists_file(WarnHdtFile), !,
   hdt_call_on_file(DataHdtFile, lstat_data0(Dict1, Hdt)),
   hdt_call_on_file(WarnHdtFile, lstat_warn0(Dict2, Hdt)),

@@ -8,7 +8,6 @@
     ll_reset_all/0,
     ll_reset_and_clean_hash/1, % +Hash
     ll_stack/0,
-    ll_start/0,
     ll_status/0,
     ll_stop/0,
     ll_thread_alias/2,         % +Prefix, -Alias
@@ -44,7 +43,13 @@ The following debug flags are defined:
 
 :- at_halt((ll_stop, rocks_close(llw))).
 
-:- initialization((ll_start, init_llw_index)).
+:- initialization((ll_init, init_llw_index)).
+
+ll_init :-
+  forall(
+    buggy_hash(Hash),
+    ll_reset_hash(Hash)
+  ).
 
 init_llw_index :-
   rocks_open(llw, int, write),
@@ -103,7 +108,7 @@ ll_add_wms(N1) :-
 % @throws existence_error If the seed is not in the seedlist.
 
 ll_clean_hash(Hash) :-
-  q_file_hash(File, data, ntriples, Hash),
+  q_file_hash(File, data, [nt,gz], Hash),
   (   file_is_ready(File)
   ->  msg_notification("Already cleaned ~a", [Hash])
   ;   seed_by_hash(Hash, Seed),
@@ -249,18 +254,6 @@ ll_stack :-
   asc_pairs_values(Pairs, Rows),
   msg_notification("LSIYCKUTTMDHE (Let’s See If You Can Keep Up This Time My Dear Hardware Engineers):~n"),
   print_table([head(["Alias","Global stack"])|Rows]).
-
-
-
-%! ll_start is det.
-%
-% Start by cleaning the rubbish from last time.
-
-ll_start :-
-  forall(
-    buggy_hash(Hash),
-    ll_reset_hash(Hash)
-  ).
 
 
 
