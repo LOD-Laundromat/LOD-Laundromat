@@ -13,7 +13,7 @@
 
 :- use_module(ll(style/ll_style)).
 
-:- http_handler(ll(rdf11), rdf11_handler, [methods([get])]).
+:- http_handler(ll(rdf11), rdf11_handler, [methods([get,head,options])]).
 
 
 
