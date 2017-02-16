@@ -4,6 +4,7 @@
     ll_add_wm/0,
     ll_add_wms/1,              % +NumWMs
     ll_clean_hash/1,           % +Hash
+    ll_clean_one_seed/0,
     ll_clean_one_seed/1,       % -Seed
     ll_reset_all/0,
     ll_reset_and_clean_hash/1, % +Hash
@@ -22,7 +23,7 @@ The following debug flags are defined:
   * ll(idle)
 
 @author Wouter Beek
-@version 2017/01
+@version 2017/01-2017/02
 */
 
 :- use_module(library(call_ext)).
@@ -33,6 +34,7 @@ The following debug flags are defined:
 :- use_module(library(pair_ext)).
 :- use_module(library(print_ext)).
 :- use_module(library(q/q_fs)).
+:- use_module(library(random)).
 :- use_module(library(service/es_api)).
 :- use_module(library(service/rocks_api)).
 :- use_module(library(sparql/sparql_client2)).
@@ -132,13 +134,37 @@ ll_clean_seed(Seed) :-
 
 
 
+%! ll_clean_one_seed is det.
 %! ll_clean_one_seed(-Seed) is det.
 %
 % Clean one, arbitrarily chosen, seedpoint.
 
+ll_clean_one_seed :-
+  ll_clean_one_seed(_).
+
+
 ll_clean_one_seed(Seed) :-
-  once(seed_by_status(added, Seed)),
+  once(seeds_by_status(added, Result)),
+  % @note By taking a random member from th result set we have less
+  %       collisions than we would have had if we had used
+  %       seed_by_status/2.
+  Results = Result.results,
+  random_member(Seed, Results),
   ll_clean_seed(Seed).
+
+
+
+%! ll_loop(+State) is det.
+
+ll_loop(State) :-
+  ll_clean_one_seed, !,
+  ll_loop(State).
+ll_loop(State) :-
+  sleep(1),
+  dict_inc(idle, State, NumWMs),
+  thread_name(Alias),
+  debug(ll(idle), "💤 thread ~w (machine ~D)", [Alias,NumWMs]),
+  ll_loop(State).
 
 
 
@@ -228,7 +254,6 @@ WHERE {\n\c
 
 
 
-
 %! ll_reset_store is det.
 %
 % Remove all LOD Laundromat data and metadata file.
@@ -298,6 +323,17 @@ ll_stop :-
 
 
 
+%! ll_thread_alias(+Prefix:oneof([a,e,m]), -Alias) is nondet.
+%
+% @arg Prefix Either `a` (archive), `e` (entry) or `m` (machine).
+
+ll_thread_alias(Prefix, Alias) :-
+  thread_property(Id, status(running)),
+  thread_property(Id, alias(Alias)),
+  atomic_list_concat([Prefix|_], :, Alias).
+
+
+
 %! max_wm(-N) is det.
 %
 % The highest washing machine identifier.
@@ -307,7 +343,7 @@ max_wm(N) :-
     max(N),
     (
       ll_thread_alias(m, Alias),
-      atomic_list_concat([w,N0], :, Alias),
+      atomic_list_concat([m,N0], :, Alias),
       atom_number(N0, N)
     ),
     N
@@ -320,31 +356,6 @@ max_wm(0).
 
 number_of_wms(NumWMs) :-
   aggregate_all(count, ll_thread_alias(m, _), NumWMs).
-
-
-
-%! ll_loop(+State) is det.
-
-ll_loop(State) :-
-  ll_clean_one_seed(_), !,
-  ll_loop(State).
-ll_loop(State) :-
-  sleep(1),
-  dict_inc(idle, State, NumWMs),
-  thread_name(Alias),
-  debug(ll(idle), "ZZZ Thread ~w idle ~D sec.", [Alias,NumWMs]),
-  ll_loop(State).
-
-
-
-%! ll_thread_alias(+Prefix:oneof([a,e,m]), -Alias) is nondet.
-%
-% @arg Prefix Either `a` (archive), `e` (entry) or `m` (machine).
-
-ll_thread_alias(Prefix, Alias) :-
-  thread_property(Id, status(running)),
-  thread_property(Id, alias(Alias)),
-  atomic_list_concat([Prefix|_], :, Alias).
 
 
 
