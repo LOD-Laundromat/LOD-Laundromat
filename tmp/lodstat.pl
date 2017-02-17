@@ -181,4 +181,4 @@ ltuples(NumTuples) :-
 
 reset_lstat :-
   q_file(stat, json, File),
-  delete_file_msg(File).
+  delete_file_silent(File).

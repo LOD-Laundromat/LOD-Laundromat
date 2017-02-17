@@ -27,5 +27,5 @@ tmon :-
 %:- debug(io(close)).
 %:- debug(io(open)).
 % @tbd Document that ‘ll(idle)’ overrules ‘ll(_)’.
-:- debug(ll(_)).
+%:- debug(ll(_)).
 %:- debug(seedlist(_)).

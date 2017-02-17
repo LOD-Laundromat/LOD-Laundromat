@@ -143,14 +143,16 @@ ll_clean_one_seed :-
   ll_clean_one_seed(_).
 
 
-ll_clean_one_seed(Seed) :-
+ll_clean_one_seed(Seed2) :-
   once(seeds_by_status(added, Result)),
   % @note By taking a random member from th result set we have less
   %       collisions than we would have had if we had used
   %       seed_by_status/2.
   Results = Result.results,
-  random_member(Seed, Results),
-  ll_clean_seed(Seed).
+  random_member(Seed1, Results),
+  % @note There may still be concurrency problems in the seedlist.
+  catch(ll_clean_seed(Seed1), E, true),
+  (var(E) -> Seed2 = Seed1 ; ll_clean_one_seed(Seed2)).
 
 
 
@@ -260,7 +262,7 @@ WHERE {\n\c
 
 ll_reset_store :-
   q_store_dir(Dir),
-  delete_directory_and_contents_msg(Dir).
+  delete_directory_and_contents_silent(Dir).
 
 
 
