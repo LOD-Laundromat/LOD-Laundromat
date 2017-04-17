@@ -20,12 +20,6 @@ tmon :-
 :- use_module(ll).
 :- use_module(seedlist).
 
-%:- debug(es_api).
-%:- debug(http(reply)).
-%:- debug(http(send_request)).
-%:- debug(http_io).
-%:- debug(io(close)).
-%:- debug(io(open)).
 % @tbd Document that ‘ll(idle)’ overrules ‘ll(_)’.
 :- debug(ll(_)).
 %:- debug(seedlist(_)).
