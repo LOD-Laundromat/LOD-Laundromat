@@ -84,6 +84,7 @@ assert_pair(_, _, _, _, "") :- !.
 assert_pair(_, _, _, _, null) :- !.
 assert_pair(_, _, _, archiver, _) :- !.
 assert_pair(_, _, _, config, _) :- !.
+assert_pair(_, _, _, default_extras, _) :- !.
 assert_pair(_, _, _, extras, _) :- !.
 assert_pair(_, _, _, qa, _) :- !.
 assert_pair(_, _, _, status, _) :- !.
