@@ -8,14 +8,6 @@
 
 /** <module> Scape CKAN
 
-```sh
-curl -vL "http://data.gov.uk/api/action/package_show?id=relative_poverty_across_scottish_local_authorities"
-```
-
-```prolog
-ckan_package_show('http://data.gov.uk', _{id: "relative_poverty_across_scottish_local_authorities"}, Dict).
-```
-
 @author Wouter Beek
 @version 2017/04
 */

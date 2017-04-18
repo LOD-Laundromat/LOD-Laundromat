@@ -2,8 +2,8 @@
   clean,
   [
     clean/0,
-    clean/1,          % +Uri
-    seed/1            % -Uri
+    clean/1, % +Uri
+    seed/1   % -Uri
   ]
 ).
 
@@ -51,15 +51,13 @@ clean(Uri1) :-
   ).
 
 
-clean(Uri, MediaType, File) :-
-  uri_comps(Uri, uri(_,_,Segments,_,_)),
-  last(Segments, Local),
-  file_name_extension(_, Ext, Local),
+clean(Uri, HttpMediaType, File) :-
+  ignore(uri_media_type(Uri, UriMediaType)),
   setup_call_cleanup(
     open(File, read, In),
     (
       rdf_guess(In, MediaTypes),
-      maplist(writeln, MediaTypes)
+      choose_media_type(MediaTypes, HttpMediaType, UriMediaType)
     ),
     close(In)
   ).
@@ -181,3 +179,30 @@ hash_to_dir(Hash, Dir) :-
 
 rdf_format('RDF').
 rdf_format('SPARQL').
+
+
+
+%! uri_media_type(+Uri, -MediaType) is det.
+
+uri_media_type(Uri, MediaType) :-
+  uri_file_extensions(Uri, Exts),
+  member(Ext1, Exts),
+  (   media_type_ext(MediaType, Ext1)
+  ;   alt_ext(Ext1, Ext2),
+      media_type_ext(MediaType, Ext2)
+  ), !.
+
+media_type_ext(media(application/'ld+json',[]), jsonld).
+media_type_ext(media(application/'n-quads',[]), nq).
+media_type_ext(media(application/'n-triples',[]), nt).
+media_type_ext(media(application/'rdf+xml',[]), rdf).
+media_type_ext(media(application/trig,[]), trig).
+media_type_ext(media(application/'xhtml+xml',[]), xhtml).
+media_type_ext(media(text/html,[]), html).
+media_type_ext(media(text/turtle,[]), ttl).
+
+alt_ext(json, jsonld).
+alt_ext(nquads, nq).
+alt_ext(ntriples, nt).
+alt_ext(n3, ttl).
+alt_ext(turtle, ttl).
