@@ -69,6 +69,7 @@ scrape_formats :-
 scrape_sites :-
   M = trp,
   rdf_equal(graph:ckan, G),
+  Uri = 'http://dados.gov.br',
   forall(
     ckan_site_uri(Uri),
     (
@@ -90,8 +91,10 @@ scrape_site(M, G, I) :-
 assert_pair(_, _, _, _, "") :- !.
 assert_pair(_, _, _, _, null) :- !.
 assert_pair(_, _, _, archiver, _) :- !.
+assert_pair(_, _, _, config, _) :- !.
 assert_pair(_, _, _, extras, _) :- !.
 assert_pair(_, _, _, qa, _) :- !.
+assert_pair(_, _, _, status, _) :- !.
 assert_pair(_, _, _, tracking_summary, _) :- !.
 assert_pair(M, G, I, Key, L) :-
   is_list(L), !,
