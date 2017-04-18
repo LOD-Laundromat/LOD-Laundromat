@@ -89,7 +89,10 @@ scrape_site(M, G, I) :-
 
 assert_pair(_, _, _, _, "") :- !.
 assert_pair(_, _, _, _, null) :- !.
+assert_pair(_, _, _, archiver, _) :- !.
 assert_pair(_, _, _, extras, _) :- !.
+assert_pair(_, _, _, qa, _) :- !.
+assert_pair(_, _, _, tracking_summary, _) :- !.
 assert_pair(M, G, I, Key, L) :-
   is_list(L), !,
   maplist(assert_pair(M, G, I, Key), L).
@@ -128,8 +131,8 @@ key_predicate_class(containsPackage, containsPackage, package) :- !.
 key_predicate_class(containsResource, containsResource, resource) :- !.
 key_predicate_class(containsTag, containsTag, tag) :- !.
 key_predicate_class(containsUser, containsUser, user) :- !.
-%key_predicate_class(extras, hasExtra, extra) :- !.
 key_predicate_class(groups, hasGroup, group) :- !.
+key_predicate_class(individual_resources, hasIndividualResource, individualResource) :- !.
 key_predicate_class(organization, hasOrganization, organization) :- !.
 key_predicate_class(resources, hasResource, resource) :- !.
 key_predicate_class(tags, hasTag, tag) :- !.
