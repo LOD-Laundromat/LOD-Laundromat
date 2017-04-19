@@ -23,6 +23,7 @@
 :- use_module(library(rdf/rdf_build)).
 :- use_module(library(rdf/rdf_print)).
 :- use_module(library(rdf/rdf_term)).
+:- use_module(library(thread)).
 :- use_module(library(uri)).
 :- use_module(library(zlib)).
 
@@ -42,17 +43,21 @@
 
 scrape_formats :-
   retractall(format(_,_)),
-  ckan_site_uri(Site),
+  findall(Site, ckan_site_uri(Site), Sites),
+  concurrent_maplist(scrape_formats, Sites),
+  forall(
+    format(Format, N),
+    format(user_output, "~a\t~D\n", [Format,N])
+  ).
+
+scrape_formats(Site) :-
   ckan_resource(Site, Res),
   Format = Res.format,
   (retract(format(Format, N1)) -> N2 is N1 + 1 ; N2 = 1),
   assert(format(Format, N2)),
   fail.
-scrape_formats :-
-  forall(
-    format(Format, N),
-    format(user_output, "~a\t~D\n", [Format,N])
-  ).
+scrape_formats(Site) :-
+  format(user_output, "Finished: ~a\n", [Site]).
 
 
 
