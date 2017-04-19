@@ -16,9 +16,14 @@
 :- use_module(library(apply)).
 :- use_module(library(archive)).
 :- use_module(library(ckan_api)).
+:- use_module(library(date_time/date_time)).
 :- use_module(library(debug)).
+:- use_module(library(dict_ext)).
+:- use_module(library(http/http_cookie)).
 :- use_module(library(http/http_header)).
 :- use_module(library(http/http_open)).
+:- use_module(library(http/http_ssl_plugin)).
+:- use_module(library(http/json)).
 :- use_module(library(lists)).
 :- use_module(library(md5)).
 :- use_module(library(rdf)).
@@ -28,6 +33,7 @@
 :- use_module(library(semweb/rdf11)).
 :- use_module(library(semweb/rdfa)).
 :- use_module(library(semweb/turtle)).
+:- use_module(library(ssl)).
 :- use_module(library(zlib)).
 
 :- use_module(library(file_ext)).
@@ -36,7 +42,75 @@
 :- debug(clean).
 
 :- dynamic
-    format/2.
+    seed_uri0/1.
+
+seed_uri0('http://resource.geolba.ac.at/PoolParty/sparql/GeologicUnit').
+seed_uri0('http://resource.geolba.ac.at/PoolParty/sparql/GeologicTimeScale').
+seed_uri0('http://resource.geolba.ac.at/PoolParty/sparql/lithology').
+seed_uri0('http://resource.geolba.ac.at/PoolParty/sparql/tectonicunit').
+seed_uri0('http://resource.geolba.ac.at/PoolParty/sparql/structure').
+seed_uri0('http://resource.geolba.ac.at/GeologicUnit/export/GeologicUnit.rdf').
+seed_uri0('http://resource.geolba.ac.at/structure/export/structure.rdf').
+seed_uri0('http://resource.geolba.ac.at/GeologicTimeScale/export/GeologicTimeScale.rdf').
+seed_uri0('http://resource.geolba.ac.at/lithology/export/lithology.rdf').
+seed_uri0('http://resource.geolba.ac.at/tectonicunit/export/tectonicunit.rdf').
+seed_uri0('http://www.ogdcockpit.eu/Spezial:Semantische_Suche/-5B-5BKategorie:Metadaten-5D-5D/-3F%3DBezeichnung-23/-3FQuelle/-3FVersion/-3FFunktion/-3FID/-3FOGD-2DKurzname/-3FCKAN-20Feld/-3FAnzahl/-3FDefinition/-3FErl%C3%A4uterung/-3FBeispiel/-3FON-20A-202270:2010/-3FON-2FEN-2FISO-2019115:2003/-3FRDF-20property/-3FDefinition-20Englisch/format%3Drdf/sort%3DID/mainlabel%3DBezeichnung/offset%3D0').
+seed_uri0('http://dadosabertos.dataprev.gov.br/storage/f/2015-08-21T19%3A44%3A47.494Z/at-liquidados-por-mes.ttl').
+seed_uri0('http://dadosabertos.dataprev.gov.br/storage/f/2015-08-21T19%3A22%3A34.434Z/at-liquidados-por-uf.ttl').
+seed_uri0('http://dadosabertos.dataprev.gov.br/storage/f/2015-08-21T19%3A46%3A28.132Z/at-cnae-20.ttl').
+seed_uri0('http://dadosabertos.dataprev.gov.br/storage/f/2015-08-21T19%3A49%3A13.936Z/at-cnae-95.ttl').
+seed_uri0('http://dadosabertos.dataprev.gov.br/storage/f/2015-08-21T19%3A43%3A30.177Z/at-por-cbo.ttl').
+seed_uri0('http://dadosabertos.dataprev.gov.br/storage/f/2015-08-21T19%3A40%3A48.622Z/at-por-cid.ttl').
+seed_uri0('http://dadosabertos.dataprev.gov.br/storage/f/2015-08-21T19%3A29%3A39.082Z/at-por-idade.ttl').
+seed_uri0('http://dadosabertos.dataprev.gov.br/storage/f/2015-08-21T19%3A42%3A15.568Z/at-por-mes.ttl').
+seed_uri0('http://dadosabertos.dataprev.gov.br/storage/f/2015-08-21T19%3A12%3A14.117Z/at-por-parte-do-corpo-atingida.ttl').
+seed_uri0('http://dadosabertos.dataprev.gov.br/storage/f/2015-08-21T19%3A25%3A26.316Z/at-por-uf.ttl').
+seed_uri0('http://dadosabertos.dataprev.gov.br/storage/f/2015-09-28T20%3A10%3A17.798Z/cr-cred-mensal-pais.ttl').
+seed_uri0('http://dadosabertos.dataprev.gov.br/storage/f/2015-09-25T20%3A47%3A01.531Z/cr-cred-conc-uf.rdf').
+seed_uri0('http://dadosabertos.dataprev.gov.br/storage/f/2015-09-25T20%3A27%3A54.336Z/cr-cred-grupo-especies.rdf').
+seed_uri0('http://dadosabertos.dataprev.gov.br/storage/f/2015-09-30T21%3A23%3A47.099Z/cr-emissao-faixa-valor-e-especies.ttl').
+seed_uri0('http://dadosabertos.dataprev.gov.br/storage/f/2015-09-30T18%3A11%3A41.182Z/cr-emissao-especies-sexo.ttl').
+seed_uri0('http://dadosabertos.dataprev.gov.br/storage/f/2015-10-01T20%3A50%3A25.227Z/cr-emissao-meio-pagamento.ttl').
+seed_uri0('http://dadosabertos.dataprev.gov.br/storage/f/2015-09-10T14%3A16%3A50.035Z/sp-conclusivo-uf.ttl').
+seed_uri0('http://dadosabertos.dataprev.gov.br/storage/f/2015-08-28T20%3A32%3A59.413Z/sp-nao-conclusivo-uf.ttl').
+seed_uri0('http://dadosabertos.dataprev.gov.br/storage/f/2015-08-28T20%3A30%3A15.019Z/sp-exames-especialidade.ttl').
+seed_uri0('http://dadosabertos.dataprev.gov.br/storage/f/2015-09-10T21%3A11%3A08.419Z/sp-examestipouf.ttl').
+seed_uri0('http://dadosabertos.dataprev.gov.br/storage/f/2015-09-10T21%3A39%3A07.854Z/sp-examesnormaisgrupoesp.ttl').
+seed_uri0('http://www.portaldocidadao.tce.sp.gov.br/api_rdf_municipios').
+seed_uri0('http://www.portaldocidadao.tce.sp.gov.br/api_rdf_orgaos').
+seed_uri0('http://api.comprasnet.gov.br/sicaf/v1/consulta/fornecedores.rdf?uf=RN').
+seed_uri0('http://www1.siop.planejamento.gov.br/downloads/rdf/loa2000.zip').
+seed_uri0('http://www1.siop.planejamento.gov.br/downloads/rdf/loa2001.zip').
+seed_uri0('http://www1.siop.planejamento.gov.br/downloads/rdf/loa2002.zip').
+seed_uri0('http://www1.siop.planejamento.gov.br/downloads/rdf/loa2003.zip').
+seed_uri0('http://www1.siop.planejamento.gov.br/downloads/rdf/loa2004.zip').
+seed_uri0('http://www1.siop.planejamento.gov.br/downloads/rdf/loa2005.zip').
+seed_uri0('http://www1.siop.planejamento.gov.br/downloads/rdf/loa2006.zip').
+seed_uri0('http://www1.siop.planejamento.gov.br/downloads/rdf/loa2007.zip').
+seed_uri0('http://www1.siop.planejamento.gov.br/downloads/rdf/loa2008.zip').
+seed_uri0('http://www1.siop.planejamento.gov.br/downloads/rdf/loa2009.zip').
+seed_uri0('http://www1.siop.planejamento.gov.br/downloads/rdf/loa2010.zip').
+seed_uri0('http://www1.siop.planejamento.gov.br/downloads/rdf/loa2000.zip').
+seed_uri0('http://www1.siop.planejamento.gov.br/downloads/rdf/loa2012.zip').
+seed_uri0('http://www1.siop.planejamento.gov.br/downloads/rdf/loa2013.zip').
+seed_uri0('http://www1.siop.planejamento.gov.br/downloads/rdf/loa2014.zip').
+seed_uri0('http://www1.siop.planejamento.gov.br/downloads/rdf/loa2015.zip').
+seed_uri0('http://www1.siop.planejamento.gov.br/downloads/rdf/loa2016.zip').
+seed_uri0('http://dadosabertos.dataprev.gov.br/storage/f/2015-09-11T18%3A09%3A51.119Z/sp-reabilitacaoporuf.ttl').
+seed_uri0('http://dadosabertos.dataprev.gov.br/storage/f/2015-09-10T17%3A50%3A30.109Z/sp-servicosocialuf.ttl').
+seed_uri0('https://data.sazp.sk/dataset/sk-ld-inspire-bio-geographical-regions').
+seed_uri0('https://data.sazp.sk/dataset/sk-ld-inspire-species-distribution').
+seed_uri0('https://data.sazp.sk/dataset/sk-ld-environmental-burdens-contaminated-sites').
+seed_uri0('https://data.sazp.sk/dataset').
+seed_uri0('https://data.sazp.sk/dataset/sk-ld-inspire-protected-sites').
+seed_uri0('https://data.sazp.sk/dataset/sk-ld-inspire-corine-land-cover').
+
+:- nodebug(http(_)).
+
+:- public
+    ssl_verify/5.
+
+ssl_verify(_SSL, _ProblemCertificate, _AllCertificates, _FirstCertificate, _Error).
 
 :- rdf_register_prefix(bnode, 'https://lodlaundromat.org/.well-known/genid/').
 
@@ -47,7 +121,10 @@
 %! clean is det.
 
 clean :-
-  clean_uri('http://resource.geolba.ac.at/GeologicUnit/export/GeologicUnit.rdf').
+  forall(
+    seed_uri0(Uri),
+    clean_uri(Uri)
+  ).
 
 
 
@@ -84,13 +161,28 @@ clean_uri(BaseUri, Hash, HttpMediaType, Dir, File1) :-
     (
       rdf_guess(In, MediaTypes),
       choose_media_type(MediaTypes, HttpMediaType, ExtMediaType, MediaType),
-      clean_stream(In, Out, BNodePrefix, BaseUri, MediaType)
+      Count = count(1),
+      call_statistics(
+        clean_stream(Count, In, Out, BNodePrefix, BaseUri, MediaType),
+        walltime,
+        Walltime
+      ),
+      arg(1, Count, NumTriples),
+      stream_metadata(In, Out, Walltime, StreamDict),
+      MediaType = media(Super/Sub,_),
+      format(string(MediaType0), "~a/~a", [Super,Sub]),
+      Dict = _{
+        number_of_triples: NumTriples,
+        rdf_media_type: MediaType0,
+        stream: StreamDict
+      }
     ),
     (
       close(In),
       close(Out)
     )
-  ).
+  ),
+  write_json(Dir, 'clean.json', Dict).
 
 choose_media_type([MediaType], _, _, MediaType) :- !.
 choose_media_type(MediaTypes, HttpMediaType, ExtMediaType, MediaType) :-
@@ -98,25 +190,29 @@ choose_media_type(MediaTypes, HttpMediaType, ExtMediaType, MediaType) :-
   member(MediaType0, [HttpMediaType,ExtMediaType]),
   generalization(MediaType, MediaType0), !.
 
-clean_stream(In, Out, BNodePrefix, BaseUri, media(application/'n-quads',_)) :- !,
+% N-Quads
+clean_stream(Count, In, Out, BNodePrefix, BaseUri, media(application/'n-quads',_)) :- !,
   rdf_process_ntriples(
     In,
-    write_clean_tuples(Out),
+    write_clean_tuples(Count, Out),
     [anon_prefix(BNodePrefix),base_uri(BaseUri)]
   ).
-clean_stream(In, Out, BNodePrefix, BaseUri, media(application/'n-triples',_)) :- !,
+% N-Triples
+clean_stream(Count, In, Out, BNodePrefix, BaseUri, media(application/'n-triples',_)) :- !,
   rdf_process_ntriples(
     In,
-    write_clean_tuples(Out),
+    write_clean_tuples(Count, Out),
     [anon_prefix(BNodePrefix),base_uri(BaseUri)]
   ).
-clean_stream(In, Out, _BNodePrefix, BaseUri, media(application/'rdf+xml',_)) :- !,
+% RDF/XML
+clean_stream(Count, In, Out, _BNodePrefix, BaseUri, media(application/'rdf+xml',_)) :- !,
   % @tbd blank nodes
-  process_rdf(In, write_clean_tuples(Out), [base_uri(BaseUri)]).
-clean_stream(In, Out, BNodePrefix, BaseUri, media(application/trig,_)) :- !,
+  process_rdf(In, write_clean_tuples(Count, Out), [base_uri(BaseUri)]).
+% TriG
+clean_stream(Count, In, Out, BNodePrefix, BaseUri, media(application/trig,_)) :- !,
   rdf_process_turtle(
     In,
-    write_clean_tuples(Out),
+    write_clean_tuples(Count, Out),
     [
       anon_prefix(BNodePrefix),
       base_uri(BaseUri),
@@ -124,13 +220,11 @@ clean_stream(In, Out, BNodePrefix, BaseUri, media(application/trig,_)) :- !,
       resources(iri)
     ]
   ).
-clean_stream(In, Out, BNodePrefix, BaseUri, media(application/'xhtml+xml',_)) :- !,
-  read_rdfa(In, Triples, [anon_prefix(BNodePrefix),base(BaseUri)]),
-  maplist(write_clean_tuple(Out), Triples).
-clean_stream(In, Out, BNodePrefix, BaseUri, media(text/turtle,_)) :- !,
+% Turtle
+clean_stream(Count, In, Out, BNodePrefix, BaseUri, media(text/turtle,_)) :- !,
   rdf_process_turtle(
     In,
-    write_clean_tuples(Out),
+    write_clean_tuples(Count, Out),
     [
       anon_prefix(BNodePrefix),
       base_uri(BaseUri),
@@ -138,64 +232,125 @@ clean_stream(In, Out, BNodePrefix, BaseUri, media(text/turtle,_)) :- !,
       resources(iri)
     ]
   ).
+% RDFa
+clean_stream(Count, In, Out, BNodePrefix, BaseUri, MediaType) :-
+  memberchk(MediaType, [media(application/'xhtml+xml',_),media(text/html,_)]), !,
+  read_rdfa(In, Triples, [anon_prefix(BNodePrefix),base(BaseUri)]),
+  maplist(write_clean_tuple(Count, Out), Triples).
+% unsupported Media Type
+clean_stream(_, _, _, _, _, MediaType) :-
+  print_message(warning, unsupported_media_type(MediaType)).
 
 
 
-%! download(+Uri, +Dir, -File, -MediaType) is det.
+%! download(+Uri, +Dir, -File, -HttpMediaType) is det.
 
-download(Uri, Dir, File1, MediaType) :-
+download(Uri, Dir, File, HttpMediaType) :-
   create_directory(Dir),
-  directory_file_path(Dir, dirty, File1),
+  directory_file_path(Dir, dirty, File),
   setup_call_cleanup(
     (
-      open(File1, write, Out1, [type(binary)]),
-      open_uri(Uri, In, Headers)
+      open(File, write, Out, [type(binary)]),
+      open_uri(Uri, In, HttpDicts)
     ),
-    (
-      copy_stream_data(In, Out1),
-      stream_property(Out1, position(Pos)),
-      stream_position_data(byte_count, Pos, NumBytes),
-      stream_position_data(char_count, Pos, NumChars),
-      stream_position_data(line_count, Pos, NumLines),
-      stream_property(Out1, newline(Newline))
+    (   var(In)
+    ->  Dict = _{http: HttpDicts}
+    ;   call_statistics(copy_stream_data(In, Out), walltime, Walltime),
+        stream_metadata(In, Out, Walltime, StreamDict),
+        Dict = _{http: HttpDicts, stream: StreamDict}
     ),
     (
       close(In),
-      close(Out1)
+      close(Out)
     )
   ),
-  (   memberchk(content_type(ContentType), Headers)
-  ->  http_parse_header_value(content_type, ContentType, MediaType)
+  (   HttpDicts = [HttpDict|_],
+      get_dict(content_type, HttpDict.headers, ContentType)
+  ->  http_parse_header_value(content_type, ContentType, HttpMediaType)
   ;   true
   ),
-  directory_file_path(Dir, log, File2),
-  setup_call_cleanup(
-    open(File2, write, Out2),
-    maplist(
-      write_term0(Out2),
-      [
-        uri(Uri),
-        byte_count(NumBytes),
-        char_count(NumChars),
-        line_count(NumLines),
-        newline(Newline)
-      | Headers
-      ]
-    ),
-    close(Out2)
-  ).
+  write_json(Dir, 'download.json', Dict).
 
 open_uri(Uri, In, []) :-
   uri_components(Uri, uri_components(file,_,_,_,_)), !,
   uri_file_name(Uri, File),
   open(File, read, In, [type(binary)]).
-open_uri(Uri, In, Headers) :-
-  rdf_http_plugin:rdf_accept_header_value(_, Accept),
-  http_open(Uri, In, [headers(Headers),request_header(accept,Accept)]).
+open_uri(Uri, In2, Dicts2) :-
+  open_uri1(Uri, In2, 1, [], Dicts1),
+  reverse(Dicts1, Dicts2).
 
-write_term0(Out, Header) :-
-  write_canonical(Out, Header),
-  write(Out, ' .\n').
+open_uri1(Uri, In2, NumRetries, Visited, [Dict|Dicts]) :-
+  rdf_http_plugin:rdf_accept_header_value(_, Accept),
+  call_statistics(
+    http_open(
+      Uri,
+      In1,
+      [
+        authenticate(false),
+        cert_verify_hook(cert_accept_any),
+        header(location,Location),
+        headers(Headers),
+        redirect(false),
+        request_header(accept,Accept),
+        status_code(Status),
+        version(Major-Minor)
+      ]
+    ),
+    walltime,
+    Walltime
+  ),
+  maplist(term_to_pair, Headers, Pairs),
+  dict_pairs(HeadersDict, Pairs),
+  format(string(Version), "~d.~d", [Major,Minor]),
+  Dict = _{
+    '@id': Uri,
+    headers: HeadersDict,
+    status: Status,
+    version: Version,
+    walltime: Walltime
+  },
+  open_uri2(Uri, In1, Location, Status, NumRetries, Visited, In2, Dicts).
+
+term_to_pair(Term, Key-Val2) :-
+  Term =.. [Key,Val1],
+  with_output_to(string(Val2), write_canonical(Val1)).
+
+% authentication error
+open_uri2(_, In, _, Status, _, _, _, []) :-
+  Status =:= 401,
+  close(In),
+  print_message(warning, http_error_code(Status)).
+% non-authentication error
+open_uri2(Uri, In1, _, Status, NumRetries1, Visited, In2, Dicts) :-
+  between(400, 599, Status), !,
+  NumRetries2 is NumRetries1 + 1,
+  (   NumRetries2 >= 5
+  ->  close(In1),
+      Dicts = [],
+      print_message(warning, http_error_code(Status))
+  ;   open_uri1(Uri, In2, NumRetries2, Visited, Dicts)
+  ).
+% redirect
+open_uri2(Uri1, In1, Location, Status, NumRetries, Visited1, In2, Dicts) :-
+  between(300, 399, Status), !,
+  close(In1),
+  uri_resolve(Location, Uri1, Uri2),
+  Visited2 = [Uri2|Visited1],
+  (   length(Visited2, NumVisited),
+      NumVisited >= 5
+  ->  close(In1),
+      Dicts = [],
+      print_message(warning, http_max_redirect(5,Uri2))
+  ;   include(==(Uri2), Visited2, Visited3),
+      length(Visited3, NumRepeats),
+      NumRepeats >= 2
+  ->  close(In1),
+      Dicts = [],
+      print_message(warning, http_redirect_loop(Uri2))
+  ;   open_uri1(Uri2, In2, NumRetries, Visited2, Dicts)
+  ).
+% succes
+open_uri2(_, In, _, _, _, [], In, []).
 
 
 
@@ -339,6 +494,36 @@ rdf_is_graph(G) :-
 
 
 
+%! stream_metadata(+Stream, -Dict) is det.
+
+stream_metadata(Stream, Dict) :-
+  stream_property(Stream, position(Pos)),
+  stream_position_data(byte_count, Pos, NumBytes),
+  stream_position_data(char_count, Pos, NumChars),
+  stream_position_data(line_count, Pos, NumLines),
+  stream_property(Stream, newline(Newline)),
+  Dict = _{
+    byte_count: NumBytes,
+    char_count: NumChars,
+    line_count: NumLines,
+    newline: Newline
+  }.
+
+
+
+%! stream_metadata(+In, +Out, +Walltime, -Dict) is det.
+
+stream_metadata(In, Out, Walltime, Dict) :-
+  stream_metadata(In, InDict),
+  stream_metadata(Out, OutDict),
+  Dict = _{
+    in: InDict,
+    out: OutDict,
+    walltime: Walltime
+  }.
+
+
+
 %! uri_media_type(+Uri, -MediaType) is det.
 
 uri_media_type(Uri, MediaType) :-
@@ -366,17 +551,20 @@ alt_ext(turtle, ttl).
 
 
 
-%! write_clean_tuple(+Out, +Tuple) is det.
+%! write_clean_tuple(+Count, +Out, +Tuple) is det.
 
-write_clean_tuple(Out, Tuple) :-
+write_clean_tuple(Count, Out, Tuple) :-
   clean_tuple(Tuple, rdf(S,P,O,_)), !,
   write_ntriple0(Out, S, P, O),
-  write_eot(Out).
+  write_eot(Out),
+  arg(1, Count, N1),
+  N2 is N1 + 1,
+  nb_setarg(1, Count, N2).
 % always succeeds
-write_clean_tuple(_, _).
+write_clean_tuple(_, _, _).
 
-write_clean_tuples(Out, Tuples, _) :-
-  maplist(write_clean_tuple(Out), Tuples).
+write_clean_tuples(Count, Out, Tuples, _) :-
+  maplist(write_clean_tuple(Count, Out), Tuples).
 
 write_ntriple0(Out, S, P, O) :-
   write_subject(Out, S),
@@ -419,3 +607,15 @@ write_literal(Out, Lex@LTag) :- !,
 write_literal(Out, V) :-
   rdf_equal(xsd:string, D),
   write_literal(Out, V^^D).
+
+
+
+%! write_json(+Dir, +Local, +Dict) is det.
+
+write_json(Dir, Local, Dict) :-
+  directory_file_path(Dir, Local, File),
+  setup_call_cleanup(
+    open(File, write, Out),
+    json_write_dict(Out, Dict),
+    close(Out)
+  ).

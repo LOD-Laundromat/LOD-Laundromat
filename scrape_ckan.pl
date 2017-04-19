@@ -49,7 +49,7 @@
 
 ckan_formats :-
   findall(N-Format, ckan_format(Format, N), Pairs),
-  sort(1, @>=, Pairs, Sorted),
+  keysort(Pairs, Sorted),
   maplist(print_ckan_format, Sorted).
 
 print_ckan_format(N-Format) :-
@@ -64,22 +64,17 @@ scrape_formats :-
 
 scrape_formats0 :-
   retractall(ckan_format(_,_)),
-  findall(scrape_formats(Site), ckan_site_uri(Site), Goals),
-  concurrent(5, Goals, []),
   forall(
-    ckan_format(Format, N),
-    format(user_output, "~a\t~D\n", [Format,N])
-  ).
-
-scrape_formats(Site) :-
-  forall(
-    ckan_resource(Site, Res),
-    (
-      Format = Res.format,
-      with_mutex(ckan_format, (
-        (retract(ckan_format(Format, N1)) -> N2 is N1 + 1 ; N2 = 1),
-        assert(ckan_format(Format, N2))
-      ))
+    ckan_site_uri(Site),
+    forall(
+      ckan_resource(Site, Res),
+      (
+        Format = Res.format,
+        with_mutex(ckan_format, (
+          (retract(ckan_format(Format, N1)) -> N2 is N1 + 1 ; N2 = 1),
+          assert(ckan_format(Format, N2))
+        ))
+      )
     )
   ),
   format(user_output, "Finished: ~a\n", [Site]).
