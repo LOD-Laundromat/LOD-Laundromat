@@ -63,19 +63,30 @@ scrape_formats :-
   detached_thread(scrape_formats0).
 
 scrape_formats0 :-
-  retractall(ckan_format(_,_)),
   forall(
     ckan_site_uri(Site),
-    forall(
-      ckan_resource(Site, Res),
-      (
-        Format = Res.format,
-        with_mutex(ckan_format, (
-          (retract(ckan_format(Format, N1)) -> N2 is N1 + 1 ; N2 = 1),
-          assert(ckan_format(Format, N2))
-        ))
-      )
+    scrape_formats0(Site)
+  ).
+
+scrape_formats0(Site) :-
+  retractall(ckan_format(_,_)),
+  forall(
+    ckan_resource(Site, Res),
+    (
+      Format = Res.format,
+      with_mutex(ckan_format, (
+        (retract(ckan_format(Format, N1)) -> N2 is N1 + 1 ; N2 = 1),
+        assert(ckan_format(Format, N2))
+      ))
     )
+  ),
+  setup_call_cleanup(
+    open(Site, write, Out),
+    forall(
+      ckan_format(Format, N),
+      format(Out, "~a,~D\n", [Format,N])
+    ),
+    close(Out)
   ),
   format(user_output, "Finished: ~a\n", [Site]).
 
