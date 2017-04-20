@@ -125,21 +125,15 @@ clean :-
 clean_uri(BaseUri) :-
   debug(clean, "Start: ~a", [BaseUri]),
   md5_hash(BaseUri, Hash, []),
-  store_warnings(Hash, download(BaseUri, Hash, ArchFile, HttpMediaType)),
+  store_warnings(Hash, download_uri(BaseUri, Hash, ArchFile, HttpMediaType)),
   % Two cases: (1) download failed, (2) download succeeded.
   (   var(ArchFile)
   ->  hash_to_file(Hash, dirty, TmpFile),
       delete_file(TmpFile)
-  ;   unpack(BaseUri, Hash, HttpMediaType, ArchFile)
+  ;   unpack_file(BaseUri, Hash, HttpMediaType, ArchFile)
   ).
 
 
-
-/*
-  store_warnings(Hash, unpack(ArchFile, EntryFiles)),
-  % Step 3: Clean entry files
-  maplist(clean_file(BaseUri, Hash, HttpMediaType), EntryFiles)
-*/
 
 %! clean_file(+BaseUri, +Hash, +MediaType, +File) is det.
 
@@ -243,11 +237,11 @@ clean_stream(_, _, _, _, _, MediaType) :-
 
 
 
-%! download(+Uri, +Hash, -File, -HttpMediaType) is det.
+%! download_uri(+Uri, +Hash, -File, -HttpMediaType) is det.
 %
 % Step 1: Download archive
 
-download(Uri, Hash, File2, HttpMediaType) :-
+download_uri(Uri, Hash, File2, HttpMediaType) :-
   hash_to_file(Hash, dirty, File1),
   setup_call_cleanup(
     (
@@ -366,25 +360,28 @@ seed_uri(Uri) :-
 
 
 
-%! unpack(+BaseUri, +Hash, +HttpMediaType, +ArchFile) is det.
+%! unpack_file(+BaseUri, +Hash, +HttpMediaType, +File) is det.
 %
 % Step 2: Unpack archive file into entry files
 
-unpack(BaseUri, Hash, HttpMediaType, ArchFile) :-
+unpack_file(BaseUri, Hash, HttpMediaType, File) :-
   findall(format(Format), archive_format(Format, true), Opts),
-  archive_open(ArchFile, read, Arch, [filter(all)|Opts]),
+  archive_open(File, read, Arch, [filter(all)|Opts]),
   forall(
-    archive_data_stream(Arch, In, [meta_data(Dicts)]),
-    unpack_stream(BaseUri, Hash, HttpMediaType, ArchFile, In, Dicts)
+    store_warnings(Hash, archive_data_stream(Arch, In, [meta_data(Dicts)])),
+    unpack_stream(BaseUri, Hash, HttpMediaType, File, In, Dicts)
   ).
+
+
+
+%! unpack_stream(+BaseUri, +Hash, +HttpMediaType, +File, +In, +Dicts) is det.
 
 % raw data
 unpack_stream(BaseUri, Hash, HttpMediaType, File, In, [_]) :- !,
   close(In),
-  clean_file(BaseUri, Hash, HttpMediaType, File).
+  store_warnings(Hash, clean_file(BaseUri, Hash, HttpMediaType, File)).
 % more unpacking
-unpack_stream(BaseUri, Hash0, HttpMediaType, File, In, [Dict0|Dicts]) :-
-  gtrace,
+unpack_stream(BaseUri, Hash0, HttpMediaType, _, In0, [Dict0,_]) :-
   _{
     filetype: file,
     filters: Filters,
@@ -396,8 +393,17 @@ unpack_stream(BaseUri, Hash0, HttpMediaType, File, In, [Dict0|Dicts]) :-
   } :< Dict0,
   atomic_list_concat([BaseUri,EntryName], ' ', Name),
   md5_hash(Name, Hash, []),
-  call_statistics(copy_stream_data(In, Out), walltime, Walltime),
-  stream_metadata(In, Out, Walltime, StreamDict),
+  hash_to_file(Hash, dirty, File1),
+  setup_call_cleanup(
+    open(File1, write, Out, [type(binary)]),
+    (
+      call_statistics(copy_stream_data(In0, Out), walltime, Walltime),
+      stream_metadata(In0, Out, Walltime, StreamDict)
+    ),
+    close(Out)
+  ),
+  close(In0),
+  rename_file(File1, data, File2),
   Dict = _{
     filters: Filters,
     format: Format,
@@ -410,7 +416,7 @@ unpack_stream(BaseUri, Hash0, HttpMediaType, File, In, [Dict0|Dicts]) :-
     type: entry
   },
   write_json(Hash, 'dirty.json.gz', Dict),
-  unpack_stream(BaseUri, Hash, HttpMediaType, File, In, Dicts).
+  unpack_file(BaseUri, Hash, HttpMediaType, File2).
 
 
 
@@ -574,7 +580,7 @@ store_warnings(Hash, Goal_0) :-
           check_installation:error_kind(Kind),
           write_error(Out, E)
       )),
-      (catch(call(Goal_0), E, true) -> true ; E = fail),
+      (catch(call(Goal_0), E, true) *-> true ; E = fail),
       (var(E) -> true ; write_error(Out, E))
     ),
     close(Out)
