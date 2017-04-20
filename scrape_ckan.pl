@@ -1,7 +1,7 @@
 :- module(
   scape_ckan,
   [
-    ckan_formats/0,
+    print_formats/0,
     scrape_formats/0,
     scrape_sites/0
   ]
@@ -20,6 +20,7 @@
 :- use_module(library(dict_ext)).
 :- use_module(library(http/json)).
 :- use_module(library(lists)).
+:- use_module(library(md5)).
 :- use_module(library(pairs)).
 :- use_module(library(rdf/rdf_build)).
 :- use_module(library(rdf/rdf_print)).
@@ -28,7 +29,7 @@
 :- use_module(library(uri)).
 :- use_module(library(zlib)).
 
-:- debug(ckan).
+:- debug(scrape_ckan).
 
 :- dynamic
     ckan_format/2.
@@ -45,15 +46,18 @@
 
 
 
-%! ckan_formats is det.
+%! print_formats is det.
 
-ckan_formats :-
+print_formats :-
+  print_formats(current_output).
+
+print_formats(Out) :-
   findall(N-Format, ckan_format(Format, N), Pairs),
   keysort(Pairs, Sorted),
-  maplist(print_ckan_format, Sorted).
+  maplist(print_format(Out), Sorted).
 
-print_ckan_format(N-Format) :-
-  format(user_output, "~a:\t~D\n", [Format,N]).
+print_format(Out, N-Format) :-
+  format(Out, "~a\t~d\n", [Format,N]).
 
 
 
@@ -69,6 +73,7 @@ scrape_formats0 :-
   ).
 
 scrape_formats0(Site) :-
+  debug(scrape_ckan, "Started: ~a", [Site]),
   retractall(ckan_format(_,_)),
   forall(
     ckan_resource(Site, Res),
@@ -80,15 +85,17 @@ scrape_formats0(Site) :-
       ))
     )
   ),
+  md5_hash(Site, Hash, []),
+  file_name_extension(Hash, 'tsv.gz', File),
   setup_call_cleanup(
-    open(Site, write, Out),
-    forall(
-      ckan_format(Format, N),
-      format(Out, "~a,~D\n", [Format,N])
+    gzopen(File, write, Out),
+    (
+      format(Out, "~a\n", [Site]),
+      print_formats(Out)
     ),
     close(Out)
   ),
-  format(user_output, "Finished: ~a\n", [Site]).
+  debug(scrape_ckan, "Finished: ~a\n", [Site]).
 
 
 
@@ -174,9 +181,9 @@ key_predicate_class(X, Y, Z) :-
   key_predicate_class(X, Y, Z).
 
 rdf_assert_deb(M, S, P, O, G) :-
-  (   debugging(ckan)
+  (   debugging(scrape_ckan)
   ->  with_output_to(string(Str), rdf_print_triple(S, P, O)),
-      debug(ckan, "~s", [Str])
+      debug(scrape_ckan, "~s", [Str])
   ;   true
   ),
   rdf_assert(M, S, P, O, G).

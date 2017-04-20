@@ -9,12 +9,33 @@
 
 /** <module> LOD Laundromat
 
+HASH := MD5(URI + " " + ENTRY-PATH)
+
+Archive:
+
+```
+HASH/
+  dirty → dirty.data
+  dirty.json.gz
+  warn.log.gz
+```
+
+Entry:
+
+```
+HASH/
+  clean → clean.nt
+  clean.json.gz
+  warn.log.gz
+```
+
 @author Wouter Beek
 @version 2017/04
 */
 
 :- use_module(library(apply)).
 :- use_module(library(archive)).
+:- use_module(library(check_installation), []).
 :- use_module(library(ckan_api)).
 :- use_module(library(date_time/date_time)).
 :- use_module(library(debug)).
@@ -44,38 +65,37 @@
 :- dynamic
     seed_uri0/1.
 
-/*
-seed_uri0('http://www.ogdcockpit.eu/Spezial:Semantische_Suche/-5B-5BKategorie:Metadaten-5D-5D/-3F%3DBezeichnung-23/-3FQuelle/-3FVersion/-3FFunktion/-3FID/-3FOGD-2DKurzname/-3FCKAN-20Feld/-3FAnzahl/-3FDefinition/-3FErl%C3%A4uterung/-3FBeispiel/-3FON-20A-202270:2010/-3FON-2FEN-2FISO-2019115:2003/-3FRDF-20property/-3FDefinition-20Englisch/format%3Drdf/sort%3DID/mainlabel%3DBezeichnung/offset%3D0').
-seed_uri0('http://dadosabertos.dataprev.gov.br/storage/f/2015-08-21T19%3A44%3A47.494Z/at-liquidados-por-mes.ttl').
-seed_uri0('http://www.portaldocidadao.tce.sp.gov.br/api_rdf_municipios').
-seed_uri0('http://www.portaldocidadao.tce.sp.gov.br/api_rdf_orgaos').
-*/
-seed_uri0('http://api.comprasnet.gov.br/sicaf/v1/consulta/fornecedores.rdf?uf=RN').
+%seed_uri0('http://www.portaldocidadao.tce.sp.gov.br/api_rdf_municipios').
+%seed_uri0('http://www.portaldocidadao.tce.sp.gov.br/api_rdf_orgaos').
+%seed_uri0('http://api.comprasnet.gov.br/sicaf/v1/consulta/fornecedores.rdf?uf=RN').
 seed_uri0('http://www1.siop.planejamento.gov.br/downloads/rdf/loa2000.zip').
-seed_uri0('http://www1.siop.planejamento.gov.br/downloads/rdf/loa2001.zip').
-seed_uri0('http://www1.siop.planejamento.gov.br/downloads/rdf/loa2002.zip').
-seed_uri0('http://www1.siop.planejamento.gov.br/downloads/rdf/loa2003.zip').
-seed_uri0('http://www1.siop.planejamento.gov.br/downloads/rdf/loa2004.zip').
-seed_uri0('http://www1.siop.planejamento.gov.br/downloads/rdf/loa2005.zip').
-seed_uri0('http://www1.siop.planejamento.gov.br/downloads/rdf/loa2006.zip').
-seed_uri0('http://www1.siop.planejamento.gov.br/downloads/rdf/loa2007.zip').
-seed_uri0('http://www1.siop.planejamento.gov.br/downloads/rdf/loa2008.zip').
-seed_uri0('http://www1.siop.planejamento.gov.br/downloads/rdf/loa2009.zip').
-seed_uri0('http://www1.siop.planejamento.gov.br/downloads/rdf/loa2010.zip').
-seed_uri0('http://www1.siop.planejamento.gov.br/downloads/rdf/loa2000.zip').
-seed_uri0('http://www1.siop.planejamento.gov.br/downloads/rdf/loa2012.zip').
-seed_uri0('http://www1.siop.planejamento.gov.br/downloads/rdf/loa2013.zip').
-seed_uri0('http://www1.siop.planejamento.gov.br/downloads/rdf/loa2014.zip').
-seed_uri0('http://www1.siop.planejamento.gov.br/downloads/rdf/loa2015.zip').
-seed_uri0('http://www1.siop.planejamento.gov.br/downloads/rdf/loa2016.zip').
-seed_uri0('http://dadosabertos.dataprev.gov.br/storage/f/2015-09-11T18%3A09%3A51.119Z/sp-reabilitacaoporuf.ttl').
-seed_uri0('http://dadosabertos.dataprev.gov.br/storage/f/2015-09-10T17%3A50%3A30.109Z/sp-servicosocialuf.ttl').
-seed_uri0('https://data.sazp.sk/dataset/sk-ld-inspire-bio-geographical-regions').
-seed_uri0('https://data.sazp.sk/dataset/sk-ld-inspire-species-distribution').
-seed_uri0('https://data.sazp.sk/dataset/sk-ld-environmental-burdens-contaminated-sites').
-seed_uri0('https://data.sazp.sk/dataset').
-seed_uri0('https://data.sazp.sk/dataset/sk-ld-inspire-protected-sites').
-seed_uri0('https://data.sazp.sk/dataset/sk-ld-inspire-corine-land-cover').
+%seed_uri0('http://www1.siop.planejamento.gov.br/downloads/rdf/loa2001.zip').
+%seed_uri0('http://www1.siop.planejamento.gov.br/downloads/rdf/loa2002.zip').
+%seed_uri0('http://www1.siop.planejamento.gov.br/downloads/rdf/loa2003.zip').
+%seed_uri0('http://www1.siop.planejamento.gov.br/downloads/rdf/loa2004.zip').
+%seed_uri0('http://www1.siop.planejamento.gov.br/downloads/rdf/loa2005.zip').
+%seed_uri0('http://www1.siop.planejamento.gov.br/downloads/rdf/loa2006.zip').
+%seed_uri0('http://www1.siop.planejamento.gov.br/downloads/rdf/loa2007.zip').
+%seed_uri0('http://www1.siop.planejamento.gov.br/downloads/rdf/loa2008.zip').
+%seed_uri0('http://www1.siop.planejamento.gov.br/downloads/rdf/loa2009.zip').
+%seed_uri0('http://www1.siop.planejamento.gov.br/downloads/rdf/loa2010.zip').
+%seed_uri0('http://www1.siop.planejamento.gov.br/downloads/rdf/loa2000.zip').
+%seed_uri0('http://www1.siop.planejamento.gov.br/downloads/rdf/loa2012.zip').
+%seed_uri0('http://www1.siop.planejamento.gov.br/downloads/rdf/loa2013.zip').
+%seed_uri0('http://www1.siop.planejamento.gov.br/downloads/rdf/loa2014.zip').
+%seed_uri0('http://www1.siop.planejamento.gov.br/downloads/rdf/loa2015.zip').
+%seed_uri0('http://www1.siop.planejamento.gov.br/downloads/rdf/loa2016.zip').
+%seed_uri0('http://dadosabertos.dataprev.gov.br/storage/f/2015-09-11T18%3A09%3A51.119Z/sp-reabilitacaoporuf.ttl').
+%seed_uri0('http://dadosabertos.dataprev.gov.br/storage/f/2015-09-10T17%3A50%3A30.109Z/sp-servicosocialuf.ttl').
+%seed_uri0('https://data.sazp.sk/dataset/sk-ld-inspire-bio-geographical-regions').
+%seed_uri0('https://data.sazp.sk/dataset/sk-ld-inspire-species-distribution').
+%seed_uri0('https://data.sazp.sk/dataset/sk-ld-environmental-burdens-contaminated-sites').
+%seed_uri0('https://data.sazp.sk/dataset').
+%seed_uri0('https://data.sazp.sk/dataset/sk-ld-inspire-protected-sites').
+%seed_uri0('https://data.sazp.sk/dataset/sk-ld-inspire-corine-land-cover').
+
+:- meta_predicate
+    store_warnings(+, 0).
 
 :- nodebug(http(_)).
 
@@ -105,32 +125,28 @@ clean :-
 clean_uri(BaseUri) :-
   debug(clean, "Start: ~a", [BaseUri]),
   md5_hash(BaseUri, Hash, []),
-  hash_to_dir(Hash, Dir),
-  %store_warnings(Dir, 
-  download(BaseUri, Dir, ArchFile, HttpMediaType),
-  forall(
-    unpack_file(ArchFile, EntryFile),
-    clean_uri(BaseUri, Hash, HttpMediaType, Dir, EntryFile)
+  store_warnings(Hash, download(BaseUri, Hash, ArchFile, HttpMediaType)),
+  % Two cases: (1) download failed, (2) download succeeded.
+  (   var(ArchFile)
+  ->  hash_to_file(Hash, dirty, TmpFile),
+      delete_file(TmpFile)
+  ;   unpack(BaseUri, Hash, HttpMediaType, ArchFile)
   ).
 
-unpack_file(File, EntryFile) :-
-  findall(format(Format), archive_format(Format, true), Opts),
-  archive_open(File, read, Arch, [filter(all)|Opts]),
-  archive_data_stream(Arch, In, [meta_data(L)]),
-  unpack_file_entry(In, File, EntryFile, L).
 
-% @tbd multiple entries
-unpack_file_entry(In, File, File, [_]) :- !,
-  close(In).
-unpack_file_entry(In, File, File, L) :-
-  maplist(writeln, L),
-  gtrace,
-  unpack_file_entry(In, File, File, L).
 
-clean_uri(BaseUri, Hash, HttpMediaType, Dir, File1) :-
+/*
+  store_warnings(Hash, unpack(ArchFile, EntryFiles)),
+  % Step 3: Clean entry files
+  maplist(clean_file(BaseUri, Hash, HttpMediaType), EntryFiles)
+*/
+
+%! clean_file(+BaseUri, +Hash, +MediaType, +File) is det.
+
+clean_file(BaseUri, Hash, HttpMediaType, File1) :-
   ignore(uri_media_type(BaseUri, ExtMediaType)),
   rdf_global_id(bnode:Hash, BNodePrefix),
-  directory_file_path(Dir, clean, File2),
+  hash_to_file(Hash, clean, File2),
   setup_call_cleanup(
     (
       open(File1, read, In),
@@ -152,7 +168,8 @@ clean_uri(BaseUri, Hash, HttpMediaType, Dir, File1) :-
       Dict = _{
         number_of_triples: NumTriples,
         rdf_media_type: MediaType0,
-        stream: StreamDict
+        stream: StreamDict,
+        type: stream
       }
     ),
     (
@@ -161,7 +178,7 @@ clean_uri(BaseUri, Hash, HttpMediaType, Dir, File1) :-
     )
   ),
   rename_file(File2, nt, _),
-  write_json(Dir, 'clean.json', Dict).
+  write_json(Hash, 'clean.json.gz', Dict).
 
 choose_media_type([MediaType], _, _, MediaType) :- !.
 choose_media_type(MediaTypes, HttpMediaType, ExtMediaType, MediaType) :-
@@ -226,21 +243,22 @@ clean_stream(_, _, _, _, _, MediaType) :-
 
 
 
-%! download(+Uri, +Dir, -File, -HttpMediaType) is det.
+%! download(+Uri, +Hash, -File, -HttpMediaType) is det.
+%
+% Step 1: Download archive
 
-download(Uri, Dir, File2, HttpMediaType) :-
-  create_directory(Dir),
-  directory_file_path(Dir, dirty, File1),
+download(Uri, Hash, File2, HttpMediaType) :-
+  hash_to_file(Hash, dirty, File1),
   setup_call_cleanup(
     (
       open(File1, write, Out, [type(binary)]),
       open_uri(Uri, In, HttpDicts)
     ),
     (   var(In)
-    ->  Dict = _{http: HttpDicts}
+    ->  Dict = _{http: HttpDicts, type: uri}
     ;   call_statistics(copy_stream_data(In, Out), walltime, Walltime),
         stream_metadata(In, Out, Walltime, StreamDict),
-        Dict = _{http: HttpDicts, stream: StreamDict}
+        Dict = _{http: HttpDicts, stream: StreamDict, type: uri}
     ),
     (
       close(In),
@@ -253,7 +271,7 @@ download(Uri, Dir, File2, HttpMediaType) :-
   ->  http_parse_header_value(content_type, ContentType, HttpMediaType)
   ;   true
   ),
-  write_json(Dir, 'download.json', Dict).
+  write_json(Hash, 'dirty.json.gz', Dict).
 
 open_uri(Uri, In, []) :-
   uri_components(Uri, uri_components(file,_,_,_,_)), !,
@@ -334,7 +352,7 @@ open_uri2(Uri1, In1, Location, Status, NumRetries, Visited1, In2, Dicts) :-
   ;   open_uri1(Uri2, In2, NumRetries, Visited2, Dicts)
   ).
 % succes
-open_uri2(_, In, _, _, _, [], In, []).
+open_uri2(_, In, _, _, _, _, In, []).
 
 
 
@@ -345,6 +363,54 @@ seed_uri(Uri) :-
   ckan_resource(Site, Res),
   atom_string(Format, Res.format),
   (rdf_format(Format) -> atom_string(Uri, Res.url)).
+
+
+
+%! unpack(+BaseUri, +Hash, +HttpMediaType, +ArchFile) is det.
+%
+% Step 2: Unpack archive file into entry files
+
+unpack(BaseUri, Hash, HttpMediaType, ArchFile) :-
+  findall(format(Format), archive_format(Format, true), Opts),
+  archive_open(ArchFile, read, Arch, [filter(all)|Opts]),
+  forall(
+    archive_data_stream(Arch, In, [meta_data(Dicts)]),
+    unpack_stream(BaseUri, Hash, HttpMediaType, ArchFile, In, Dicts)
+  ).
+
+% raw data
+unpack_stream(BaseUri, Hash, HttpMediaType, File, In, [_]) :- !,
+  close(In),
+  clean_file(BaseUri, Hash, HttpMediaType, File).
+% more unpacking
+unpack_stream(BaseUri, Hash0, HttpMediaType, File, In, [Dict0|Dicts]) :-
+  gtrace,
+  _{
+    filetype: file,
+    filters: Filters,
+    format: Format,
+    mtime: MTime,
+    name: EntryName,
+    permissions: Permissions,
+    size: Size
+  } :< Dict0,
+  atomic_list_concat([BaseUri,EntryName], ' ', Name),
+  md5_hash(Name, Hash, []),
+  call_statistics(copy_stream_data(In, Out), walltime, Walltime),
+  stream_metadata(In, Out, Walltime, StreamDict),
+  Dict = _{
+    filters: Filters,
+    format: Format,
+    mtime: MTime,
+    name: EntryName,
+    parent: Hash0,
+    permissions: Permissions,
+    size: Size,
+    stream: StreamDict,
+    type: entry
+  },
+  write_json(Hash, 'dirty.json.gz', Dict),
+  unpack_stream(BaseUri, Hash, HttpMediaType, File, In, Dicts).
 
 
 
@@ -452,9 +518,18 @@ generalization0(
 
 
 
-%! hash_to_dir(+Hash, -Dir) is det.
+%! hash_to_file(+Hash, +Local, -File) is det.
 
-hash_to_dir(Hash, Dir) :-
+hash_to_file(Hash, Local, File) :-
+  hash_to_directory(Hash, Dir),
+  create_directory(Dir),
+  directory_file_path(Dir, Local, File).
+
+
+
+%! hash_to_directory(+Hash, -Dir) is det.
+
+hash_to_directory(Hash, Dir) :-
   atom_codes(Hash, Cs),
   append([H1,H2], T, Cs),
   atom_codes(Dir1, [H1,H2]),
@@ -483,6 +558,35 @@ rdf_is_graph(G) :-
 rename_file(File1, Ext, File2) :-
   file_name_extension(File1, Ext, File2),
   rename_file(File1, File2).
+
+
+
+%! store_warnings(+Hash, :Goal_0) is det.
+
+store_warnings(Hash, Goal_0) :-
+  hash_to_file(Hash, 'warn.log.gz', File),
+  setup_call_cleanup(
+    gzopen(File, append, Out),
+    (
+      % Catch all warnings and assert them into ‘warn.log.gz’.
+      asserta((
+        user:thread_message_hook(E,Kind,_) :-
+          check_installation:error_kind(Kind),
+          write_error(Out, E)
+      )),
+      (catch(call(Goal_0), E, true) -> true ; E = fail),
+      (var(E) -> true ; write_error(Out, E))
+    ),
+    close(Out)
+  ).
+
+write_error(Out, E) :-
+  error_term(E, ETerm),
+  with_output_to(Out, write_canonical(ETerm)),
+  nl(Out).
+
+error_term(error(ETerm,_), ETerm) :- !.
+error_term(ETerm, ETerm).
 
 
 
@@ -602,12 +706,12 @@ write_literal(Out, V) :-
 
 
 
-%! write_json(+Dir, +Local, +Dict) is det.
+%! write_json(+Hash, +Local, +Dict) is det.
 
-write_json(Dir, Local, Dict) :-
-  directory_file_path(Dir, Local, File),
+write_json(Hash, Local, Dict) :-
+  hash_to_file(Hash, Local, File),
   setup_call_cleanup(
-    open(File, write, Out),
+    gzopen(File, write, Out),
     json_write_dict(Out, Dict),
     close(Out)
   ),
