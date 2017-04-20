@@ -138,41 +138,45 @@ clean_uri(BaseUri) :-
 %! clean_file(+BaseUri, +Hash, +MediaType, +File) is det.
 
 clean_file(BaseUri, Hash, HttpMediaType, File1) :-
+  (Hash == ca059efbaa93cd093014f63bbc27e19f -> gtrace ; true),
   ignore(uri_media_type(BaseUri, ExtMediaType)),
   rdf_global_id(bnode:Hash, BNodePrefix),
   hash_to_file(Hash, clean, File2),
-  setup_call_cleanup(
-    (
-      open(File1, read, In),
-      open(File2, write, Out)
-    ),
-    (
-      rdf_guess(In, MediaTypes),
-      choose_media_type(MediaTypes, HttpMediaType, ExtMediaType, MediaType),
-      Count = count(0),
-      call_statistics(
-        clean_stream(Count, In, Out, BNodePrefix, BaseUri, MediaType),
-        walltime,
-        Walltime
-      ),
-      arg(1, Count, NumTriples),
-      stream_metadata(In, Out, Walltime, StreamDict),
-      MediaType = media(Super/Sub,_),
-      format(string(MediaType0), "~a/~a", [Super,Sub]),
-      Dict = _{
-        number_of_triples: NumTriples,
-        rdf_media_type: MediaType0,
-        stream: StreamDict,
-        type: stream
-      }
-    ),
-    (
-      close(In),
-      close(Out)
-    )
-  ),
-  rename_file(File2, nt, _),
-  write_json(Hash, 'clean.json.gz', Dict).
+  (   setup_call_cleanup(
+        (
+          open(File1, read, In),
+          open(File2, write, Out)
+        ),
+        (
+          rdf_guess(In, MediaTypes),
+          choose_media_type(MediaTypes, HttpMediaType, ExtMediaType, MediaType),
+          Count = count(0),
+          call_statistics(
+            clean_stream(Count, In, Out, BNodePrefix, BaseUri, MediaType),
+            walltime,
+            Walltime
+          ),
+          arg(1, Count, NumTriples),
+          stream_metadata(In, Out, Walltime, StreamDict),
+          MediaType = media(Super/Sub,_),
+          format(string(MediaType0), "~a/~a", [Super,Sub]),
+          Dict = _{
+            number_of_triples: NumTriples,
+            rdf_media_type: MediaType0,
+            stream: StreamDict,
+            type: stream
+          }
+        ),
+        (
+          close(In),
+          close(Out)
+        )
+      )
+  ->  rename_file(File2, nt, _),
+      write_json(Hash, 'clean.json.gz', Dict)
+  ;   delete_file(File2),
+      print_message(warning, non_rdf)
+  ).
 
 choose_media_type([MediaType], _, _, MediaType) :- !.
 choose_media_type(MediaTypes, HttpMediaType, ExtMediaType, MediaType) :-
@@ -580,7 +584,7 @@ store_warnings(Hash, Goal_0) :-
           check_installation:error_kind(Kind),
           write_error(Out, E)
       )),
-      (catch(call(Goal_0), E, true) *-> true ; E = fail),
+      (catch(call(Goal_0), E, true) *-> true ; E = fail(Goal_0)),
       (var(E) -> true ; write_error(Out, E))
     ),
     close(Out)
