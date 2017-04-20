@@ -1,9 +1,7 @@
 :- module(
   clean,
   [
-    clean/0,
-    clean_uri/1, % +Uri
-    seed_uri/1   % -Uri
+    clean_uri/1 % +Uri
   ]
 ).
 
@@ -36,7 +34,6 @@ HASH/
 :- use_module(library(apply)).
 :- use_module(library(archive)).
 :- use_module(library(check_installation), []).
-:- use_module(library(ckan_api)).
 :- use_module(library(date_time/date_time)).
 :- use_module(library(debug)).
 :- use_module(library(dict_ext)).
@@ -65,22 +62,6 @@ HASH/
 
 :- debug(clean).
 
-:- dynamic
-    seed_uri0/1.
-
-%seed_uri0('http://www.portaldocidadao.tce.sp.gov.br/api_rdf_municipios').
-%seed_uri0('http://www.portaldocidadao.tce.sp.gov.br/api_rdf_orgaos').
-%seed_uri0('http://api.comprasnet.gov.br/sicaf/v1/consulta/fornecedores.rdf?uf=RN').
-%seed_uri0('http://www1.siop.planejamento.gov.br/downloads/rdf/loa2000.zip').
-seed_uri0('http://www1.siop.planejamento.gov.br/downloads/rdf/loa2001.zip').
-%seed_uri0('http://dadosabertos.dataprev.gov.br/storage/f/2015-09-10T17%3A50%3A30.109Z/sp-servicosocialuf.ttl').
-%seed_uri0('https://data.sazp.sk/dataset/sk-ld-inspire-bio-geographical-regions').
-%seed_uri0('https://data.sazp.sk/dataset/sk-ld-inspire-species-distribution').
-%seed_uri0('https://data.sazp.sk/dataset/sk-ld-environmental-burdens-contaminated-sites').
-%seed_uri0('https://data.sazp.sk/dataset').
-%seed_uri0('https://data.sazp.sk/dataset/sk-ld-inspire-protected-sites').
-%seed_uri0('https://data.sazp.sk/dataset/sk-ld-inspire-corine-land-cover').
-
 :- meta_predicate
     store_warnings(+, 0).
 
@@ -94,16 +75,6 @@ ssl_verify(_SSL, _ProblemCertificate, _AllCertificates, _FirstCertificate, _Erro
 :- rdf_register_prefix(bnode, 'https://lodlaundromat.org/.well-known/genid/').
 
 
-
-
-
-%! clean is det.
-
-clean :-
-  forall(
-    seed_uri0(Uri),
-    clean_uri(Uri)
-  ).
 
 
 
@@ -345,16 +316,6 @@ open_uri2(_, In, _, _, _, _, In, []).
 
 
 
-%! seed_uri(-Uri) is nondet.
-
-seed_uri(Uri) :-
-  ckan_site_uri(Site),
-  ckan_resource(Site, Res),
-  atom_string(Format, Res.format),
-  (rdf_format(Format) -> atom_string(Uri, Res.url)).
-
-
-
 %! unpack_file(+BaseUri, +Hash, +HttpMediaType, +File) is det.
 %
 % Step 2: Unpack archive file into entry files
@@ -546,13 +507,6 @@ hash_to_directory(Hash, Dir) :-
   atom_codes(Dir1, [H1,H2]),
   atom_codes(Dir2, T),
   atomic_list_concat(['',scratch,wbeek,ll,Dir1,Dir2], /, Dir).
-
-
-
-%! rdf_format(?Format) is nondet.
-
-rdf_format('RDF').
-rdf_format('SPARQL').
 
 
 
