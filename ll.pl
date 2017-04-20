@@ -2,8 +2,9 @@
   ll,
   [
     add_wm/0,
-    add_wms/1,      % +NumWMs
-    seedlist_init/0
+    add_wms/1,       % +NumWMs
+    seedlist_init/0,
+    start_ll/0
   ]
 ).
 
@@ -41,7 +42,7 @@ loop(Idle) :-
   end_seed(Hash),
   loop(Idle).
 loop(Idle) :-
-  sleep(1),
+  sleep(100),
   thread_name(Alias),
   debug(ll, "💤 machine ~a idle ~D", [Alias,Idle]),
   loop(Idle).
@@ -90,17 +91,27 @@ seedlist_init :-
   forall(
     (
       ckan_site_uri(Site),
-      ckan_resource(Site, Res)
+      ckan_resource(Site, Res),
+      atom_string(Format, Res.format),
+      (rdf_format(Format) -> atom_string(Uri, Res.url))
     ),
     (
-      atom_string(Format, Res.format),
-      (rdf_format(Format) -> atom_string(Uri, Res.url)),
-      add_seed(Uri)
+      add_seed(Uri),
+      debug(ll, "Seedpoint: ~a", [Uri])
     )
   ).
 
 rdf_format('RDF').
 rdf_format('SPARQL').
+
+
+
+
+%! start_ll is det.
+
+start_ll :-
+  thread_create(seedlist_init, _, [alias(seedlist),detached(true)]),
+  add_wms(5).
 
 
 
