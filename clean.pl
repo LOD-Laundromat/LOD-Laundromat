@@ -40,6 +40,7 @@ HASH/
 :- use_module(library(date_time/date_time)).
 :- use_module(library(debug)).
 :- use_module(library(dict_ext)).
+:- use_module(library(hdt/hdt_api)).
 :- use_module(library(http/http_cookie)).
 :- use_module(library(http/http_header)).
 :- use_module(library(http/http_open)).
@@ -47,6 +48,7 @@ HASH/
 :- use_module(library(http/json)).
 :- use_module(library(lists)).
 :- use_module(library(md5)).
+:- use_module(library(os_ext)).
 :- use_module(library(rdf)).
 :- use_module(library(semweb/rdf_guess)).
 :- use_module(library(semweb/rdf_http_plugin)).
@@ -55,6 +57,7 @@ HASH/
 :- use_module(library(semweb/rdfa)).
 :- use_module(library(semweb/turtle)).
 :- use_module(library(ssl)).
+:- use_module(library(xsd/xsd_number)).
 :- use_module(library(zlib)).
 
 :- use_module(library(file_ext)).
@@ -68,24 +71,8 @@ HASH/
 %seed_uri0('http://www.portaldocidadao.tce.sp.gov.br/api_rdf_municipios').
 %seed_uri0('http://www.portaldocidadao.tce.sp.gov.br/api_rdf_orgaos').
 %seed_uri0('http://api.comprasnet.gov.br/sicaf/v1/consulta/fornecedores.rdf?uf=RN').
-seed_uri0('http://www1.siop.planejamento.gov.br/downloads/rdf/loa2000.zip').
-%seed_uri0('http://www1.siop.planejamento.gov.br/downloads/rdf/loa2001.zip').
-%seed_uri0('http://www1.siop.planejamento.gov.br/downloads/rdf/loa2002.zip').
-%seed_uri0('http://www1.siop.planejamento.gov.br/downloads/rdf/loa2003.zip').
-%seed_uri0('http://www1.siop.planejamento.gov.br/downloads/rdf/loa2004.zip').
-%seed_uri0('http://www1.siop.planejamento.gov.br/downloads/rdf/loa2005.zip').
-%seed_uri0('http://www1.siop.planejamento.gov.br/downloads/rdf/loa2006.zip').
-%seed_uri0('http://www1.siop.planejamento.gov.br/downloads/rdf/loa2007.zip').
-%seed_uri0('http://www1.siop.planejamento.gov.br/downloads/rdf/loa2008.zip').
-%seed_uri0('http://www1.siop.planejamento.gov.br/downloads/rdf/loa2009.zip').
-%seed_uri0('http://www1.siop.planejamento.gov.br/downloads/rdf/loa2010.zip').
 %seed_uri0('http://www1.siop.planejamento.gov.br/downloads/rdf/loa2000.zip').
-%seed_uri0('http://www1.siop.planejamento.gov.br/downloads/rdf/loa2012.zip').
-%seed_uri0('http://www1.siop.planejamento.gov.br/downloads/rdf/loa2013.zip').
-%seed_uri0('http://www1.siop.planejamento.gov.br/downloads/rdf/loa2014.zip').
-%seed_uri0('http://www1.siop.planejamento.gov.br/downloads/rdf/loa2015.zip').
-%seed_uri0('http://www1.siop.planejamento.gov.br/downloads/rdf/loa2016.zip').
-%seed_uri0('http://dadosabertos.dataprev.gov.br/storage/f/2015-09-11T18%3A09%3A51.119Z/sp-reabilitacaoporuf.ttl').
+seed_uri0('http://www1.siop.planejamento.gov.br/downloads/rdf/loa2001.zip').
 %seed_uri0('http://dadosabertos.dataprev.gov.br/storage/f/2015-09-10T17%3A50%3A30.109Z/sp-servicosocialuf.ttl').
 %seed_uri0('https://data.sazp.sk/dataset/sk-ld-inspire-bio-geographical-regions').
 %seed_uri0('https://data.sazp.sk/dataset/sk-ld-inspire-species-distribution').
@@ -129,6 +116,7 @@ clean_uri(BaseUri) :-
   % Two cases: (1) download failed, (2) download succeeded.
   (   var(ArchFile)
   ->  hash_to_file(Hash, dirty, TmpFile),
+      % Delete the dirty source file.
       delete_file(TmpFile)
   ;   unpack_file(BaseUri, Hash, HttpMediaType, ArchFile)
   ).
@@ -138,7 +126,6 @@ clean_uri(BaseUri) :-
 %! clean_file(+BaseUri, +Hash, +MediaType, +File) is det.
 
 clean_file(BaseUri, Hash, HttpMediaType, File1) :-
-  (Hash == ca059efbaa93cd093014f63bbc27e19f -> gtrace ; true),
   ignore(uri_media_type(BaseUri, ExtMediaType)),
   rdf_global_id(bnode:Hash, BNodePrefix),
   hash_to_file(Hash, clean, File2),
@@ -172,11 +159,15 @@ clean_file(BaseUri, Hash, HttpMediaType, File1) :-
           close(Out)
         )
       )
-  ->  rename_file(File2, nt, _),
+  ->  rename_file(File2, nt, File3),
+      hdt_prepare_file(File3),
+      compress_file(File3),
       write_json(Hash, 'clean.json.gz', Dict)
-  ;   delete_file(File2),
+  ;   File3 = File2,
       print_message(warning, non_rdf)
-  ).
+  ),
+  % Delete the uncompressed clean file.
+  delete_file(File3).
 
 choose_media_type([MediaType], _, _, MediaType) :- !.
 choose_media_type(MediaTypes, HttpMediaType, ExtMediaType, MediaType) :-
@@ -370,11 +361,16 @@ seed_uri(Uri) :-
 
 unpack_file(BaseUri, Hash, HttpMediaType, File) :-
   findall(format(Format), archive_format(Format, true), Opts),
-  archive_open(File, read, Arch, [filter(all)|Opts]),
-  forall(
-    store_warnings(Hash, archive_data_stream(Arch, In, [meta_data(Dicts)])),
-    unpack_stream(BaseUri, Hash, HttpMediaType, File, In, Dicts)
-  ).
+  setup_call_cleanup(
+    archive_open(File, read, Arch, [filter(all)|Opts]),
+    forall(
+      store_warnings(Hash, archive_data_stream(Arch, In, [meta_data(Dicts)])),
+      unpack_stream(BaseUri, Hash, HttpMediaType, File, In, Dicts)
+    ),
+    archive_close(Arch)
+  ),
+  % Delete the archive file.
+  delete_file(File).
 
 
 
@@ -463,6 +459,11 @@ clean_object(O1, O2) :-
   ->  rdf11:write_xml_literal(html, Lex1, Lex2)
   ;   rdf_equal(rdf:'XMLLiteral', D)
   ->  rdf11:write_xml_literal(xml, Lex1, Lex2)
+  ;   rdf_equal(xsd:decimal, D)
+  ->  string_codes(Lex1, Cs1),
+      phrase(decimalLexicalMap(Val), Cs1),
+      phrase(decimalCanonicalMap(Val), Cs2),
+      atom_codes(Lex2, Cs2)
   ;   Lex2 = Lex1
   ),
   catch(
@@ -575,20 +576,26 @@ rename_file(File1, Ext, File2) :-
 
 store_warnings(Hash, Goal_0) :-
   hash_to_file(Hash, 'warn.log.gz', File),
+  Count = count(0),
   setup_call_cleanup(
     gzopen(File, append, Out),
     (
-      % Catch all warnings and assert them into ‘warn.log.gz’.
       asserta((
         user:thread_message_hook(E,Kind,_) :-
           check_installation:error_kind(Kind),
-          write_error(Out, E)
+          write_error(Out, E),
+          arg(1, Count, N1),
+          N2 is N1 + 1,
+          nb_setarg(1, Count, N2)
       )),
       (catch(call(Goal_0), E, true) *-> true ; E = fail(Goal_0)),
       (var(E) -> true ; write_error(Out, E))
     ),
     close(Out)
-  ).
+  ),
+  arg(1, Count, N),
+  % Delete the warnings file if there are no warnings.
+  (N =:= 0, exists_file(File) -> delete_file(File) ; true).
 
 write_error(Out, E) :-
   error_term(E, ETerm),
