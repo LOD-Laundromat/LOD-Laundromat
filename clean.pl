@@ -13,8 +13,8 @@ Archive:
 
 ```
 HASH/
-  dirty → dirty.data
-  dirty.json.gz
+  meta.[hdt,nt.gz]
+  source → source.data
   warn.log.gz
 ```
 
@@ -22,8 +22,8 @@ Entry:
 
 ```
 HASH/
-  clean → clean.nt
-  clean.json.gz
+  data → data.[hdt,nt]
+  meta.[hdt,nt.gz]
   warn.log.gz
 ```
 
@@ -37,11 +37,9 @@ HASH/
 :- use_module(library(date_time/date_time)).
 :- use_module(library(debug)).
 :- use_module(library(dict_ext)).
-:- use_module(library(hdt/hdt_api)).
 :- use_module(library(http/http_cookie)).
 :- use_module(library(http/http_header)).
 :- use_module(library(http/https_open)).
-:- use_module(library(http/json)).
 :- use_module(library(lists)).
 :- use_module(library(md5)).
 :- use_module(library(os_ext)).
@@ -53,10 +51,13 @@ HASH/
 :- use_module(library(semweb/rdfa)).
 :- use_module(library(semweb/turtle)).
 :- use_module(library(thread_ext)).
+:- use_module(library(uuid)).
 :- use_module(library(xsd/xsd_number)).
 :- use_module(library(zlib)).
 
 :- use_module(library(file_ext)).
+:- use_module(library(hdt/hdtio)).
+:- use_module(library(rdf/rdfio)).
 :- use_module(library(uri/uri_ext)).
 
 :- debug(clean).
@@ -67,6 +68,9 @@ HASH/
 :- nodebug(http(_)).
 
 :- rdf_register_prefix(bnode, 'https://lodlaundromat.org/.well-known/genid/').
+:- rdf_register_prefix(llo, 'https://lodlaundromat.org/ontology/').
+:- rdf_register_prefix(llr, 'https://lodlaundromat.org/resource/').
+:- rdf_register_prefix(void, 'http://rdfs.org/ns/void#').
 
 
 
@@ -75,33 +79,34 @@ HASH/
 %! clean_uri(+BaseUri) is det.
 
 clean_uri(BaseUri) :-
-  debug(clean, "Start: ~a", [BaseUri]),
+  debug(clean, "Starting: ~a", [BaseUri]),
   md5_hash(BaseUri, Hash, []),
   store_warnings(Hash, download_uri(BaseUri, Hash, ArchFile, HttpMediaType)),
   % Two cases: (1) download failed, (2) download succeeded.
   (   var(ArchFile)
-  ->  hash_to_file(Hash, dirty, TmpFile),
-      % Delete the dirty source file.
+  ->  hash_to_file(Hash, source, TmpFile),
+      % Delete the source file.
       delete_file(TmpFile)
   ;   atomic_list_concat([a,Hash], :, Alias),
       call_in_thread(
         Alias,
         unpack_file(BaseUri, Hash, HttpMediaType, ArchFile)
       )
-  ).
+  ),
+  debug(clean, "Ended: ~a", [BaseUri]).
 
 
 
-%! clean_file(+BaseUri, +Hash, +MediaType, +File) is det.
+%! clean_file(+BaseUri, +Hash, +MediaType, +EntryFile) is det.
 
-clean_file(BaseUri, Hash, HttpMediaType, File1) :-
+clean_file(BaseUri, Hash, HttpMediaType, EntryFile) :-
   ignore(uri_media_type(BaseUri, ExtMediaType)),
   rdf_global_id(bnode:Hash, BNodePrefix),
-  hash_to_file(Hash, clean, File2),
+  hash_to_file(Hash, data, DataFileTmp),
   (   setup_call_cleanup(
         (
-          open(File1, read, In),
-          open(File2, write, Out)
+          open(EntryFile, read, In),
+          open(DataFileTmp, write, Out)
         ),
         (
           rdf_guess(In, MediaTypes),
@@ -115,28 +120,31 @@ clean_file(BaseUri, Hash, HttpMediaType, File1) :-
           arg(1, Count, NumTriples),
           stream_metadata(In, Out, Walltime, StreamDict),
           MediaType = media(Super/Sub,_),
-          format(string(MediaType0), "~a/~a", [Super,Sub]),
-          Dict = _{
-            number_of_triples: NumTriples,
-            rdf_media_type: MediaType0,
-            stream: StreamDict,
-            type: stream
-          }
+          format(string(MediaType0), "~a/~a", [Super,Sub])
         ),
         (
           close(In),
           close(Out)
         )
       )
-  ->  rename_file(File2, nt, File3),
-      hdt_prepare_file(File3),
-      compress_file(File3),
-      write_json(Hash, 'clean.json.gz', Dict)
-  ;   File3 = File2,
+  ->  rename_file(DataFileTmp, nt, DataFile),
+      finish_ntriples_file(DataFile),
+      hash_to_file(Hash, 'meta.nt', MetaFile),
+      setup_call_cleanup(
+        open(MetaFile, append, Out),
+        (
+          rdf_global_id(llr:Hash, Entry),
+          write_ntriple(Out, Entry, rdf:type, llo:'Cleaning'),
+          write_ntriple(Out, Entry, void:triples, NumTriples^^xsd:nonNegativeInteger),
+          write_ntriple(Out, Entry, llo:rdfMediaType, MediaType0^^xsd:string),
+          write_stream_metadata(Out, Entry, StreamDict)
+        ),
+        close(Out)
+      ),
+      finish_ntriples_file(MetaFile)
+  ;   delete_file(DataFileTmp),
       print_message(warning, non_rdf)
-  ),
-  % Delete the uncompressed clean file.
-  delete_file(File3).
+  ).
 
 choose_media_type([MediaType], _, _, MediaType) :- !.
 choose_media_type(MediaTypes, HttpMediaType, ExtMediaType, MediaType) :-
@@ -213,10 +221,9 @@ download_uri(Uri, Hash, File2, HttpMediaType) :-
       open_uri(Uri, In, HttpDicts)
     ),
     (   var(In)
-    ->  Dict = _{http: HttpDicts, type: uri}
+    ->  true
     ;   call_statistics(copy_stream_data(In, Out), walltime, Walltime),
-        stream_metadata(In, Out, Walltime, StreamDict),
-        Dict = _{http: HttpDicts, stream: StreamDict, type: uri}
+        stream_metadata(In, Out, Walltime, StreamDict)
     ),
     (
       close(In),
@@ -229,7 +236,19 @@ download_uri(Uri, Hash, File2, HttpMediaType) :-
   ->  http_parse_header_value(content_type, ContentType, HttpMediaType)
   ;   true
   ),
-  write_json(Hash, 'dirty.json.gz', Dict).
+  hash_to_file(Hash, 'meta.nt', MetaFile),
+  setup_call_cleanup(
+    open(MetaFile, append, Out),
+    (
+      rdf_global_id(llr:Hash, Source),
+      write_ntriple(Out, Source, rdf:type, llo:'Download'),
+      write_ntriple(Out, Source, llo:source, Uri^^xsd:anyURI),
+      (var(StreamDict) -> true ; write_stream_metadata(Out, Source, StreamDict)),
+      write_http_metadata(Out, Source, HttpDicts)
+    ),
+    close(Out)
+  ),
+  finish_ntriples_file(MetaFile).
 
 open_uri(Uri, In, []) :-
   uri_components(Uri, uri_components(file,_,_,_,_)), !,
@@ -269,10 +288,6 @@ open_uri1(Uri, In2, NumRetries, Visited, [Dict|Dicts]) :-
     walltime: Walltime
   },
   open_uri2(Uri, In1, Location, Status, NumRetries, Visited, In2, Dicts).
-
-term_to_pair(Term, Key-Val2) :-
-  Term =.. [Key,Val1],
-  with_output_to(string(Val2), write_canonical(Val1)).
 
 % authentication error
 open_uri2(_, In, _, Status, _, _, _, []) :-
@@ -362,18 +377,24 @@ unpack_stream(BaseUri, Hash0, HttpMediaType, _, In0, [Dict0,_]) :-
   ),
   close(In0),
   rename_file(File1, data, File2),
-  Dict = _{
-    filters: Filters,
-    format: Format,
-    mtime: MTime,
-    name: EntryName,
-    parent: Hash0,
-    permissions: Permissions,
-    size: Size,
-    stream: StreamDict,
-    type: entry
-  },
-  write_json(Hash, 'dirty.json.gz', Dict),
+  hash_to_file(Hash, 'meta.nt', MetaFile),
+  setup_call_cleanup(
+    open(MetaFile, append, Out),
+    (
+      rdf_global_id(llr:Hash, S),
+      write_ntriple(Out, S, rdf:type, llo:'Unpack'),
+      write_filters_metadata(Out, S, Filters),
+      write_ntriple(Out, S, llo:format, Format^^xsd:string),
+      write_ntriple(Out, S, llo:mtime, MTime^^xsd:float),
+      write_ntriple(Out, S, llo:name, EntryName^^xsd:string),
+      rdf_global_id(llr:Hash0, S0),
+      write_ntriple(Out, S, llo:parent, S0),
+      write_ntriple(Out, S, llo:permissions, Permissions^^xsd:nonNegativeInteger),
+      write_ntriple(Out, S, llo:size, Size^^xsd:float),
+      write_stream_metadata(Out, S, StreamDict)
+    ),
+    close(Out)
+  ),
   atomic_list_concat([e,Hash], :, Alias),
   call_in_thread(Alias, unpack_file(BaseUri, Hash, HttpMediaType, File2)).
 
@@ -466,6 +487,15 @@ clean_tuple(rdf(S,P,O), Quad) :-
 
 
 
+%! finish_ntriples_file(+File) is det.
+
+finish_ntriples_file(File) :-
+  hdt_prepare_file(File),
+  compress_file(File),
+  delete_file(File).
+
+
+
 %! generalization(+MediaType1, +MediaType2) is semidet.
 
 generalization(MediaType, MediaType) :- !.
@@ -508,11 +538,27 @@ hash_to_directory(Hash, Dir) :-
 
 
 
+%! ll_create_bnode(-BNode) is det.
+
+ll_create_bnode(BNode) :-
+  uuid(Local),
+  rdf_global_id(bnode:Local, BNode).
+
+
+
 %! rdf_is_graph(+G) is semidet.
 
 rdf_is_graph(default) :- !.
 rdf_is_graph(G) :-
   rdf_is_iri(G).
+
+
+
+%! rdf_membership_property(+N, -P) is det.
+
+rdf_membership_property(N, P) :-
+  atom_concat('_', N, Local),
+  rdf_global_id(rdf:Local, P).
 
 
 
@@ -559,7 +605,16 @@ error_term(ETerm, ETerm).
 
 
 
-%! stream_metadata(+Stream, -Dict) is det.
+%! stream_metadata(+In, +Out, +Walltime, -Dict) is det.
+
+stream_metadata(In, Out, Walltime, Dict) :-
+  stream_metadata(In, InDict),
+  stream_metadata(Out, OutDict),
+  Dict = _{
+    in: InDict,
+    out: OutDict,
+    walltime: Walltime
+  }.
 
 stream_metadata(Stream, Dict) :-
   stream_property(Stream, position(Pos)),
@@ -576,16 +631,11 @@ stream_metadata(Stream, Dict) :-
 
 
 
-%! stream_metadata(+In, +Out, +Walltime, -Dict) is det.
+%! term_to_pair(+Term, -Pair) is det.
 
-stream_metadata(In, Out, Walltime, Dict) :-
-  stream_metadata(In, InDict),
-  stream_metadata(Out, OutDict),
-  Dict = _{
-    in: InDict,
-    out: OutDict,
-    walltime: Walltime
-  }.
+term_to_pair(Term, Key-Val2) :-
+  Term =.. [Key,Val1],
+  with_output_to(string(Val2), write_canonical(Val1)).
 
 
 
@@ -675,13 +725,80 @@ write_literal(Out, V) :-
 
 
 
-%! write_json(+Hash, +Local, +Dict) is det.
+%! write_filters_metadata(+Out, +S, +Filters) is det.
 
-write_json(Hash, Local, Dict) :-
-  hash_to_file(Hash, Local, File),
-  setup_call_cleanup(
-    gzopen(File, write, Out),
-    json_write_dict(Out, Dict),
-    close(Out)
-  ),
-  debug(clean, "Written: ~a", [File]).
+write_filters_metadata(Out, S, Filters) :-
+  write_filters_metadata(Out, S, 1, Filters).
+
+write_filters_metadata(_, _, _, []) :- !.
+write_filters_metadata(Out, S, N1, [H|T]) :-
+  rdf_membership_property(N1, P),
+  write_ntriple(Out, S, P, H^^xsd:string),
+  N2 is N1 + 1,
+  write_filters_metadata(Out, S, N2, T).
+
+
+
+%! write_http_metadata(+Out, +S, +Dicts) is det.
+
+write_http_metadata(Out, S, Dicts) :-
+  write_http_metadata(Out, S, 1, Dicts).
+
+write_http_metadata(_, _, _, []) :- !.
+write_http_metadata(Out, S, N1, [H|T]) :-
+  _{
+    headers: Dict,
+    status: Status,
+    uri: Uri,
+    version: Version,
+    walltime: Walltime
+  } :< H,
+  rdf_membership_property(N1, P),
+  ll_create_bnode(BNode),
+  write_ntriple(Out, S, P, BNode),
+  write_ntriple(Out, BNode, rdf:type, llo:'HttpRequest'),
+  write_ntriple(Out, BNode, llo:status, Status^^xsd:nonNegativeInteger),
+  write_ntriple(Out, BNode, llo:uri, Uri^^xsd:anyURI),
+  write_ntriple(Out, BNode, llo:version, Version^^xsd:string),
+  write_ntriple(Out, BNode, llo:walltime, Walltime^^xsd:float),
+  write_http_headers_metadata(Out, BNode, Dict),
+  N2 is N1 + 1,
+  write_http_metadata(Out, S, N2, T).
+
+write_http_headers_metadata(Out, S, Dict) :-
+  dict_pairs(Dict, _, Pairs),
+  maplist(write_http_header_metadata(Out, S), Pairs).
+
+write_http_header_metadata(Out, S, Key-Val) :-
+  rdf_global_id(llo:Key, P),
+  write_ntriple(Out, S, P, Val^^xsd:string).
+
+
+
+%! write_stream_metadata(+Out, +S, +Dict) is det.
+
+write_stream_metadata(Out, S, Dict) :-
+  _{
+    in: InDict,
+    out: OutDict,
+    walltime: Walltime
+  } :< Dict,
+  ll_create_bnode(InStream),
+  write_ntriple(Out, S, llo:inputStream, InStream),
+  write_iostream_metadata(Out, InStream, InDict),
+  ll_create_bnode(OutStream),
+  write_ntriple(Out, S, llo:outputStream, OutStream),
+  write_iostream_metadata(Out, OutStream, OutDict),
+  write_ntriple(Out, S, llo:walltime, Walltime^^xsd:float).
+
+write_iostream_metadata(Out, Stream, Dict) :-
+  _{
+    byte_count: NumBytes,
+    char_count: NumChars,
+    line_count: NumLines,
+    newline: Newline
+  } :< Dict,
+  write_ntriple(Out, Stream, llo:numberOfBytes, NumBytes^^xsd:nonNegativeInteger),
+  write_ntriple(Out, Stream, llo:numberOfCharacters, NumChars^^xsd:nonNegativeInteger),
+  write_ntriple(Out, Stream, llo:numberOfLines, NumLines^^xsd:nonNegativeInteger),
+  write_ntriple(Out, Stream, llo:newline, Newline^^xsd:nonNegativeInteger).

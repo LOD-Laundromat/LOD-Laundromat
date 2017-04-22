@@ -42,7 +42,7 @@ loop(Idle) :-
   end_seed(Hash),
   loop(Idle).
 loop(Idle) :-
-  sleep(100),
+  sleep(10),
   thread_name(Alias),
   debug(ll, "💤 machine ~a idle ~D", [Alias,Idle]),
   loop(Idle).
