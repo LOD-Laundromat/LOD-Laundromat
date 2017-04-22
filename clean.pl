@@ -68,6 +68,7 @@ HASH/
 :- nodebug(http(_)).
 
 :- rdf_register_prefix(bnode, 'https://lodlaundromat.org/.well-known/genid/').
+:- rdf_register_prefix(llh, 'https://lodlaundromat.org/http/').
 :- rdf_register_prefix(llo, 'https://lodlaundromat.org/ontology/').
 :- rdf_register_prefix(llr, 'https://lodlaundromat.org/resource/').
 :- rdf_register_prefix(void, 'http://rdfs.org/ns/void#').
@@ -257,7 +258,7 @@ download_uri(Uri, Hash, File, HttpMediaType) :-
     (
       rdf_global_id(llr:Hash, Source),
       write_ntriple(MetaOut, Source, rdf:type, llo:'Download'),
-      write_ntriple(MetaOut, Source, llo:source, Uri^^xsd:anyURI),
+      write_ntriple(MetaOut, Source, llo:uri, Uri^^xsd:anyURI),
       (   var(StreamDict)
       ->  true
       ;   write_stream_metadata(MetaOut, Source, StreamDict)
@@ -789,7 +790,7 @@ write_http_headers_metadata(Out, S, Dict) :-
   maplist(write_http_header_metadata(Out, S), Pairs).
 
 write_http_header_metadata(Out, S, Key-Val) :-
-  rdf_global_id(llo:Key, P),
+  rdf_global_id(llh:Key, P),
   write_ntriple(Out, S, P, Val^^xsd:string).
 
 
