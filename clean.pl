@@ -52,6 +52,7 @@ HASH/
 :- use_module(library(semweb/rdf11)).
 :- use_module(library(semweb/rdfa)).
 :- use_module(library(semweb/turtle)).
+:- use_module(library(thread_ext)).
 :- use_module(library(xsd/xsd_number)).
 :- use_module(library(zlib)).
 
@@ -82,7 +83,11 @@ clean_uri(BaseUri) :-
   ->  hash_to_file(Hash, dirty, TmpFile),
       % Delete the dirty source file.
       delete_file(TmpFile)
-  ;   unpack_file(BaseUri, Hash, HttpMediaType, ArchFile)
+  ;   atomic_list_concat([a,Hash], :, Alias),
+      call_in_thread(
+        Alias,
+        unpack_file(BaseUri, Hash, HttpMediaType, ArchFile)
+      )
   ).
 
 
@@ -369,7 +374,8 @@ unpack_stream(BaseUri, Hash0, HttpMediaType, _, In0, [Dict0,_]) :-
     type: entry
   },
   write_json(Hash, 'dirty.json.gz', Dict),
-  unpack_file(BaseUri, Hash, HttpMediaType, File2).
+  atomic_list_concat([e,Hash], :, Alias),
+  call_in_thread(Alias, unpack_file(BaseUri, Hash, HttpMediaType, File2)).
 
 
 

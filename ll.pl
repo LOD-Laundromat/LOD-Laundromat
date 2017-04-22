@@ -34,7 +34,7 @@ add_wm :-
   max_wm(N0),
   N is N0 + 1,
   atomic_list_concat([m,N], :, Alias),
-  thread_create(loop(0), _, [alias(Alias),detached(false)]).
+  thread_create(loop(0), _, [alias(Alias),detached(true)]).
 
 loop(Idle) :-
   start_seed(Hash, Uri), !,
