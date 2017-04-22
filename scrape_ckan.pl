@@ -1,5 +1,5 @@
 :- module(
-  scape_ckan,
+  scrape_ckan,
   [
     % EVERYTHING
     scrape_ckan/0,
@@ -15,27 +15,28 @@
   ]
 ).
 
-/** <module> Scape CKAN
+/** <module> Scrape CKAN
 
 @author Wouter Beek
 @version 2017/04
 */
 
 :- use_module(library(apply)).
-:- use_module(library(atom_ext)).
 :- use_module(library(ckan_api)).
 :- use_module(library(debug)).
-:- use_module(library(dict_ext)).
 :- use_module(library(lists)).
 :- use_module(library(md5)).
 :- use_module(library(pairs)).
-:- use_module(library(rdf/rdf__io)).
+:- use_module(library(uri)).
+:- use_module(library(zlib)).
+
+:- use_module(library(atom_ext)).
+:- use_module(library(dict_ext)).
 :- use_module(library(rdf/rdf_build)).
 :- use_module(library(rdf/rdf_print)).
 :- use_module(library(rdf/rdf_term)).
+:- use_module(library(rdf/rdfio)).
 :- use_module(library(thread_ext)).
-:- use_module(library(uri)).
-:- use_module(library(zlib)).
 
 :- debug(scrape_ckan).
 
@@ -149,7 +150,7 @@ scrape_ckan(Site, Hash, File) :-
   rdf_global_id(ckan:Local, G),
   rdf_retractall(M, _, _, _, G),
   scrape_site(M, G, Site),
-  rdf_save_file(G, File),
+  write_ntriples(G, File),
   rdf_retractall(M, _, _, _, G),
   debug(scrape_ckan, "Finished: ~a", [Site]).
 
