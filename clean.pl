@@ -110,7 +110,12 @@ clean_file(BaseUri, Hash, HttpMediaType, EntryFile) :-
         ),
         (
           rdf_guess(In, MediaTypes),
-          choose_media_type(MediaTypes, HttpMediaType, ExtMediaType, MediaType),
+          choose_media_type(
+            MediaTypes,
+            HttpMediaType,
+            ExtMediaType,
+            MediaType
+          ),
           Count = count(0),
           call_statistics(
             clean_stream(Count, In, Out, BNodePrefix, BaseUri, MediaType),
@@ -131,15 +136,17 @@ clean_file(BaseUri, Hash, HttpMediaType, EntryFile) :-
       finish_ntriples_file(DataFile),
       hash_to_file(Hash, 'meta.nt', MetaFile),
       setup_call_cleanup(
-        open(MetaFile, append, Out),
+        open(MetaFile, append, MetaOut),
         (
           rdf_global_id(llr:Hash, Entry),
-          write_ntriple(Out, Entry, rdf:type, llo:'Cleaning'),
-          write_ntriple(Out, Entry, void:triples, NumTriples^^xsd:nonNegativeInteger),
-          write_ntriple(Out, Entry, llo:rdfMediaType, MediaType0^^xsd:string),
-          write_stream_metadata(Out, Entry, StreamDict)
+          write_ntriple(MetaOut, Entry, rdf:type, llo:'Cleaning'),
+          write_ntriple(MetaOut, Entry, void:triples,
+                        NumTriples^^xsd:nonNegativeInteger),
+          write_ntriple(MetaOut, Entry, llo:rdfMediaType,
+                        MediaType0^^xsd:string),
+          write_stream_metadata(MetaOut, Entry, StreamDict)
         ),
-        close(Out)
+        close(MetaOut)
       ),
       finish_ntriples_file(MetaFile)
   ;   delete_file(DataFileTmp),
@@ -157,25 +164,29 @@ choose_media_type(L, X, Y, Z) :-
   choose_media_type(L, X, Y, Z).
 
 % N-Quads
-clean_stream(Count, In, Out, BNodePrefix, BaseUri, media(application/'n-quads',_)) :- !,
+clean_stream(Count, In, Out, BNodePrefix, BaseUri,
+             media(application/'n-quads',_)) :- !,
   rdf_process_ntriples(
     In,
     write_clean_tuples(Count, Out),
     [anon_prefix(BNodePrefix),base_uri(BaseUri)]
   ).
 % N-Triples
-clean_stream(Count, In, Out, BNodePrefix, BaseUri, media(application/'n-triples',_)) :- !,
+clean_stream(Count, In, Out, BNodePrefix, BaseUri,
+             media(application/'n-triples',_)) :- !,
   rdf_process_ntriples(
     In,
     write_clean_tuples(Count, Out),
     [anon_prefix(BNodePrefix),base_uri(BaseUri)]
   ).
 % RDF/XML
-clean_stream(Count, In, Out, _BNodePrefix, BaseUri, media(application/'rdf+xml',_)) :- !,
+clean_stream(Count, In, Out, _BNodePrefix, BaseUri,
+             media(application/'rdf+xml',_)) :- !,
   % @tbd blank nodes
   process_rdf(In, write_clean_tuples(Count, Out), [base_uri(BaseUri)]).
 % TriG
-clean_stream(Count, In, Out, BNodePrefix, BaseUri, media(application/trig,_)) :- !,
+clean_stream(Count, In, Out, BNodePrefix, BaseUri,
+             media(application/trig,_)) :- !,
   rdf_process_turtle(
     In,
     write_clean_tuples(Count, Out),
@@ -187,7 +198,8 @@ clean_stream(Count, In, Out, BNodePrefix, BaseUri, media(application/trig,_)) :-
     ]
   ).
 % Turtle
-clean_stream(Count, In, Out, BNodePrefix, BaseUri, media(text/turtle,_)) :- !,
+clean_stream(Count, In, Out, BNodePrefix, BaseUri,
+             media(text/turtle,_)) :- !,
   rdf_process_turtle(
     In,
     write_clean_tuples(Count, Out),
@@ -200,7 +212,10 @@ clean_stream(Count, In, Out, BNodePrefix, BaseUri, media(text/turtle,_)) :- !,
   ).
 % RDFa
 clean_stream(Count, In, Out, BNodePrefix, BaseUri, MediaType) :-
-  memberchk(MediaType, [media(application/'xhtml+xml',_),media(text/html,_)]), !,
+  memberchk(
+    MediaType,
+    [media(application/'xhtml+xml',_),media(text/html,_)]
+  ), !,
   read_rdfa(In, Triples, [anon_prefix(BNodePrefix),base(BaseUri)]),
   maplist(write_clean_tuple(Count, Out), Triples).
 % unsupported Media Type
@@ -213,11 +228,11 @@ clean_stream(_, _, _, _, _, MediaType) :-
 %
 % Step 1: Download archive
 
-download_uri(Uri, Hash, File2, HttpMediaType) :-
-  hash_to_file(Hash, dirty, File1),
+download_uri(Uri, Hash, File, HttpMediaType) :-
+  hash_to_file(Hash, source, FileTmp),
   setup_call_cleanup(
     (
-      open(File1, write, Out, [type(binary)]),
+      open(FileTmp, write, Out, [type(binary)]),
       open_uri(Uri, In, HttpDicts)
     ),
     (   var(In)
@@ -230,7 +245,7 @@ download_uri(Uri, Hash, File2, HttpMediaType) :-
       close(Out)
     )
   ),
-  rename_file(File1, data, File2),
+  rename_file(FileTmp, data, File),
   (   HttpDicts = [HttpDict|_],
       get_dict(content_type, HttpDict.headers, ContentType)
   ->  http_parse_header_value(content_type, ContentType, HttpMediaType)
@@ -238,15 +253,18 @@ download_uri(Uri, Hash, File2, HttpMediaType) :-
   ),
   hash_to_file(Hash, 'meta.nt', MetaFile),
   setup_call_cleanup(
-    open(MetaFile, append, Out),
+    open(MetaFile, append, MetaOut),
     (
       rdf_global_id(llr:Hash, Source),
-      write_ntriple(Out, Source, rdf:type, llo:'Download'),
-      write_ntriple(Out, Source, llo:source, Uri^^xsd:anyURI),
-      (var(StreamDict) -> true ; write_stream_metadata(Out, Source, StreamDict)),
-      write_http_metadata(Out, Source, HttpDicts)
+      write_ntriple(MetaOut, Source, rdf:type, llo:'Download'),
+      write_ntriple(MetaOut, Source, llo:source, Uri^^xsd:anyURI),
+      (   var(StreamDict)
+      ->  true
+      ;   write_stream_metadata(MetaOut, Source, StreamDict)
+      ),
+      write_http_metadata(MetaOut, Source, HttpDicts)
     ),
-    close(Out)
+    close(MetaOut)
   ),
   finish_ntriples_file(MetaFile).
 
@@ -366,7 +384,7 @@ unpack_stream(BaseUri, Hash0, HttpMediaType, _, In0, [Dict0,_]) :-
   } :< Dict0,
   atomic_list_concat([BaseUri,EntryName], ' ', Name),
   md5_hash(Name, Hash, []),
-  hash_to_file(Hash, dirty, File1),
+  hash_to_file(Hash, source, File1),
   setup_call_cleanup(
     open(File1, write, Out, [type(binary)]),
     (
@@ -389,7 +407,8 @@ unpack_stream(BaseUri, Hash0, HttpMediaType, _, In0, [Dict0,_]) :-
       write_ntriple(Out, S, llo:name, EntryName^^xsd:string),
       rdf_global_id(llr:Hash0, S0),
       write_ntriple(Out, S, llo:parent, S0),
-      write_ntriple(Out, S, llo:permissions, Permissions^^xsd:nonNegativeInteger),
+      write_ntriple(Out, S, llo:permissions,
+                    Permissions^^xsd:nonNegativeInteger),
       write_ntriple(Out, S, llo:size, Size^^xsd:float),
       write_stream_metadata(Out, S, StreamDict)
     ),
@@ -798,7 +817,10 @@ write_iostream_metadata(Out, Stream, Dict) :-
     line_count: NumLines,
     newline: Newline
   } :< Dict,
-  write_ntriple(Out, Stream, llo:numberOfBytes, NumBytes^^xsd:nonNegativeInteger),
-  write_ntriple(Out, Stream, llo:numberOfCharacters, NumChars^^xsd:nonNegativeInteger),
-  write_ntriple(Out, Stream, llo:numberOfLines, NumLines^^xsd:nonNegativeInteger),
-  write_ntriple(Out, Stream, llo:newline, Newline^^xsd:nonNegativeInteger).
+  write_ntriple(Out, Stream, llo:numberOfBytes,
+                NumBytes^^xsd:nonNegativeInteger),
+  write_ntriple(Out, Stream, llo:numberOfCharacters,
+                NumChars^^xsd:nonNegativeInteger),
+  write_ntriple(Out, Stream, llo:numberOfLines,
+                NumLines^^xsd:nonNegativeInteger),
+  write_ntriple(Out, Stream, llo:newline, Newline^^xsd:string).
