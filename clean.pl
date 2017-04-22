@@ -40,8 +40,7 @@ HASH/
 :- use_module(library(hdt/hdt_api)).
 :- use_module(library(http/http_cookie)).
 :- use_module(library(http/http_header)).
-:- use_module(library(http/http_open)).
-:- use_module(library(http/http_ssl_plugin)).
+:- use_module(library(http/https_open)).
 :- use_module(library(http/json)).
 :- use_module(library(lists)).
 :- use_module(library(md5)).
@@ -53,7 +52,6 @@ HASH/
 :- use_module(library(semweb/rdf11)).
 :- use_module(library(semweb/rdfa)).
 :- use_module(library(semweb/turtle)).
-:- use_module(library(ssl)).
 :- use_module(library(xsd/xsd_number)).
 :- use_module(library(zlib)).
 
@@ -66,11 +64,6 @@ HASH/
     store_warnings(+, 0).
 
 :- nodebug(http(_)).
-
-:- public
-    ssl_verify/5.
-
-ssl_verify(_SSL, _ProblemCertificate, _AllCertificates, _FirstCertificate, _Error).
 
 :- rdf_register_prefix(bnode, 'https://lodlaundromat.org/.well-known/genid/').
 
