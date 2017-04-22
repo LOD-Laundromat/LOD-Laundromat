@@ -3,6 +3,9 @@
   [
     print_formats/0,
     scrape_formats/0,
+    scrape_formats/1,        % +Site
+    scrape_formats_thread/0,
+    scrape_formats_thread/1, % +Site
     scrape_sites/0
   ]
 ).
@@ -18,7 +21,6 @@
 :- use_module(library(ckan_api)).
 :- use_module(library(debug)).
 :- use_module(library(dict_ext)).
-:- use_module(library(http/json)).
 :- use_module(library(lists)).
 :- use_module(library(md5)).
 :- use_module(library(pairs)).
@@ -62,17 +64,24 @@ print_format(Out, N-Format) :-
 
 
 %! scrape_formats is det.
+%! scrape_formats(+Site) is det.
 
 scrape_formats :-
-  detached_thread(scrape_formats0).
-
-scrape_formats0 :-
   forall(
     ckan_site_uri(Site),
-    scrape_formats0(Site)
+    scrape_formats(Site)
   ).
 
-scrape_formats0(Site) :-
+
+scrape_formats(Site) :-
+  md5_hash(Site, Hash, []),
+  file_name_extension(Hash, 'tsv.gz', File),
+  scrape_formats(Site, File).
+
+scrape_formats(Site, File) :-
+  exists_file(File), !,
+  debug(scrape_ckan, "Skipping site: ~a", [Site]).
+scrape_formats(Site, File) :-
   debug(scrape_ckan, "Started: ~a", [Site]),
   retractall(ckan_format(_,_)),
   forall(
@@ -85,8 +94,6 @@ scrape_formats0(Site) :-
       ))
     )
   ),
-  md5_hash(Site, Hash, []),
-  file_name_extension(Hash, 'tsv.gz', File),
   setup_call_cleanup(
     gzopen(File, write, Out),
     (
@@ -96,6 +103,18 @@ scrape_formats0(Site) :-
     close(Out)
   ),
   debug(scrape_ckan, "Finished: ~a\n", [Site]).
+
+
+
+%! scrape_formats_thread is det.
+%! scrape_formats_thread(+Site) is det.
+
+scrape_formats_thread :-
+  detached_thread(scrape_formats).
+
+
+scrape_formats_thread(Site) :-
+  detached_thread(scrape_formats(Site)).
 
 
 
