@@ -48,8 +48,7 @@
 :- rdf_create_alias(ckan, 'https://triply.cc/ckan/').
 
 :- rdf_meta
-   key_datatype(+, r),
-   rdf_assert_deb(+, r, r, o, r).
+   key_datatype(+, r).
 
 
 
@@ -137,7 +136,7 @@ scrape_ckan :-
 
 scrape_ckan(Site) :-
   md5_hash(Site, Hash, []),
-  file_name_extension(Hash, 'nq.gz', File),
+  file_name_extension(Hash, 'nt.gz', File),
   scrape_ckan(Site, Hash, File).
 
 scrape_ckan(Site, _, File) :-
@@ -155,7 +154,7 @@ scrape_ckan(Site, Hash, File) :-
   debug(scrape_ckan, "Finished: ~a", [Site]).
 
 scrape_site(M, G, I) :-
-  rdf_assert_deb(M, I, rdf:type, ckan:'Site', G),
+  rdf_assert(M, I, rdf:type, ckan:'Site', G),
   forall(ckan_group(I, Dict), assert_pair(M, G, I, containsGroup, Dict)),
   forall(ckan_license(I, Dict), assert_pair(M, G, I, containsLicense, Dict)),
   forall(ckan_organization(I, Dict), assert_pair(M, G, I, containsOrganization, Dict)),
@@ -179,18 +178,20 @@ assert_pair(M, G, I, Key, L) :-
 assert_pair(M, G, I1, Key, Dict) :-
   is_dict(Dict), !,
   dict_pairs(Dict, Pairs1),
-  selectchk(id-Lex, Pairs1, Pairs2),
-  pairs_keys_values(Pairs2, Keys, Vals),
-  atom_string(Id, Lex),
-  key_predicate_class(Key, LocalP, Local),
-  rdf_global_id(ckan:LocalP, P),
-  capitalize_atom(Local, LocalC),
-  rdf_global_id(ckan:LocalC, C),
-  atomic_list_concat([Local,Id], /, LocalI),
-  rdf_global_id(ckan:LocalI, I2),
-  rdf_assert_deb(M, I2, rdf:type, C, G),
-  rdf_assert_deb(M, I1, P, I2, G),
-  maplist(assert_pair(M, G, I2), Keys, Vals).
+  (   selectchk(id-Lex, Pairs1, Pairs2)
+  ->  pairs_keys_values(Pairs2, Keys, Vals),
+      atom_string(Id, Lex),
+      key_predicate_class(Key, LocalP, Local),
+      rdf_global_id(ckan:LocalP, P),
+      capitalize_atom(Local, LocalC),
+      rdf_global_id(ckan:LocalC, C),
+      atomic_list_concat([Local,Id], /, LocalI),
+      rdf_global_id(ckan:LocalI, I2),
+      rdf_assert(M, I2, rdf:type, C, G),
+      rdf_assert(M, I1, P, I2, G),
+      maplist(assert_pair(M, G, I2), Keys, Vals)
+  ;   true
+  ).
 assert_pair(M, G, I, Key, Lex) :-
   rdf_global_id(ckan:Key, P),
   (   catch(xsd_time_string(_, D, Lex), _, fail)
@@ -202,7 +203,7 @@ assert_pair(M, G, I, Key, Lex) :-
   ;   rdf_equal(xsd:string, D)
   ),
   rdf_literal(Lit, D, Lex, _),
-  rdf_assert_deb(M, I, P, Lit, G).
+  rdf_assert(M, I, P, Lit, G).
 
 key_predicate_class(containsGroup, containsGroup, group) :- !.
 key_predicate_class(containsLicense, containsLicense, license) :- !.
@@ -223,23 +224,15 @@ key_predicate_class(X, Y, Z) :-
   gtrace,
   key_predicate_class(X, Y, Z).
 
-rdf_assert_deb(M, S, P, O, G) :-
-  %(   debugging(scrape_ckan)
-  %->  with_output_to(string(Str), rdf_print_triple(S, P, O)),
-  %    debug(scrape_ckan, "~s", [Str])
-  %;   true
-  %),
-  rdf_assert(M, S, P, O, G).
-
 
 
 %! scrape_ckan is det.
 %! scrape_ckan(+Site) is det.
 
 scrape_ckan_thread :-
-  findnsols(25, Site, ckan_site_uri(Site), Sites), % @deb
+  findnsols(20, Site, ckan_site_uri(Site), Sites), % @deb
   maplist(scrape_ckan_thread, Sites).
 
 
 scrape_ckan_thread(Site) :-
-  detached_thread(scrape_ckan(Site)).
+  thread_create(scrape_ckan(Site), _, [alias(Site),detached(true)]).
