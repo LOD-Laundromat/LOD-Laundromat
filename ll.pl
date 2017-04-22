@@ -101,8 +101,11 @@ seedlist_init :-
     )
   ).
 
+rdf_format('HTML+RDFa').
 rdf_format('RDF').
+rdf_format('RDFa').
 rdf_format('SPARQL').
+rdf_format('SPARQL web form').
 
 
 
