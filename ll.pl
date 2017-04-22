@@ -3,6 +3,8 @@
   [
     add_wm/0,
     add_wms/1,       % +NumWMs
+    ckan/1,          % ?File
+    ckan/4,          % ?S, ?P, ?O, ?File
     seedlist_init/0,
     start_ll/0
   ]
@@ -17,12 +19,21 @@
 :- use_module(library(aggregate)).
 :- use_module(library(ckan_api)).
 :- use_module(library(debug)).
+:- use_module(library(semweb/rdf11)).
 :- use_module(library(thread_ext)).
+:- use_module(library(zlib)).
+
+:- use_module(library(hdt/hdt_api)).
 
 :- use_module(clean).
 :- use_module(seedlist).
 
 :- debug(ll).
+
+:- rdf_register_prefix(ckan, 'https://triply.cc/ckan/').
+
+:- rdf_meta
+   ckan(r, r, o, ?).
 
 
 
@@ -60,6 +71,22 @@ add_wms(N1) :-
 
 
 
+%! ckan(?File) is nondet.
+%! ckan(?S, ?P, ?O, ?File) is nondet.
+
+ckan(File) :-
+  absolute_file_name(
+    '*.hdt',
+    File,
+    [access(read),expand(true),solutions(all)]
+  ).
+  
+ckan(S, P, O, File) :-
+  ckan(File),
+  hdt_call_on_file(File, hdt0(S, P, O)).
+
+
+
 %! max_wm(-N) is det.
 %
 % The highest washing machine identifier.
@@ -85,27 +112,26 @@ number_of_wms(NumWMs) :-
 
 
 
-%! seedlist_init is det.
-
 seedlist_init :-
   forall(
     (
-      ckan_site_uri(Site),
-      ckan_resource(Site, Res),
-      atom_string(Format, Res.format),
-      (rdf_format(Format) -> atom_string(Uri, Res.url))
+      ckan(S, ckan:format, Format^^xsd:string, File),
+      rdf_format(Format)
     ),
     (
+      ckan(S, ckan:uri, Uri^^xsd:anyURI, File),
       add_seed(Uri),
       debug(ll, "Seedpoint: ~a", [Uri])
     )
   ).
 
-rdf_format('HTML+RDFa').
-rdf_format('RDF').
-rdf_format('RDFa').
-rdf_format('SPARQL').
-rdf_format('SPARQL web form').
+rdf_format("HTML+RDFa").
+rdf_format("rdf").
+rdf_format("RDF").
+rdf_format("RDFa").
+rdf_format("SPARQL").
+rdf_format("Sparql-query").
+rdf_format("SPARQL web form").
 
 
 

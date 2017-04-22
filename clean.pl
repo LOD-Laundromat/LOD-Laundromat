@@ -507,15 +507,6 @@ clean_tuple(rdf(S,P,O), Quad) :-
 
 
 
-%! finish_ntriples_file(+File) is det.
-
-finish_ntriples_file(File) :-
-  hdt_prepare_file(File),
-  compress_file(File),
-  delete_file(File).
-
-
-
 %! generalization(+MediaType1, +MediaType2) is semidet.
 
 generalization(MediaType, MediaType) :- !.

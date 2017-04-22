@@ -136,8 +136,9 @@ scrape_ckan :-
 
 scrape_ckan(Site) :-
   md5_hash(Site, Hash, []),
-  file_name_extension(Hash, 'nt.gz', File),
-  scrape_ckan(Site, Hash, File).
+  file_name_extension(Hash, nt, File),
+  scrape_ckan(Site, Hash, File),
+  finish_ntriples_file(File).
 
 scrape_ckan(Site, _, File) :-
   exists_file(File), !,
