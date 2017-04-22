@@ -237,12 +237,11 @@ open_uri(Uri, In2, Dicts2) :-
 open_uri1(Uri, In2, NumRetries, Visited, [Dict|Dicts]) :-
   rdf_http_plugin:rdf_accept_header_value(_, Accept),
   call_statistics(
-    http_open(
+    https_open(
       Uri,
       In1,
       [
         authenticate(false),
-        cert_verify_hook(cert_accept_any),
         header(location,Location),
         headers(Headers),
         redirect(false),
