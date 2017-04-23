@@ -69,67 +69,67 @@ scrape_ckan(Site, Hash, File) :-
   atomic_list_concat([graph,Hash], /, Local),
   rdf_global_id(ckan:Local, G),
   rdf_retractall(M, _, _, _, G),
-  scrape_site(M, G, Site, Hash),
+  scrape_site(M, G, Site),
   write_ntriples(G, File, [mode(append)]),
   rdf_retractall(M, _, _, _, G),
   debug(scrape_ckan, "Finished: ~a", [Site]).
 
-scrape_site(M, G, I, Hash) :-
-  rdf_assert(M, I, rdf:type, ckan:'Site', G),
+scrape_site(M, G, Site) :-
+  rdf_assert(M, Site, rdf:type, ckan:'Site', G),
   forall(
-    ckan_group(I, Dict),
+    ckan_group(Site, Dict),
     (
-      assert_pair(M, G, I, containsGroup, Dict),
-      ckan_debug(Hash, group)
+      assert_pair(M, G, Site, containsGroup, Dict),
+      ckan_debug(Site, group)
     )
   ),
   forall(
-    ckan_license(I, Dict),
+    ckan_license(Site, Dict),
     (
-      assert_pair(M, G, I, containsLicense, Dict),
-      ckan_debug(Hash, license)
+      assert_pair(M, G, Site, containsLicense, Dict),
+      ckan_debug(Site, license)
     )
   ),
   forall(
-    ckan_organization(I, Dict),
+    ckan_organization(Site, Dict),
     (
-      assert_pair(M, G, I, containsOrganization, Dict),
-      ckan_debug(Hash, organization)
+      assert_pair(M, G, Site, containsOrganization, Dict),
+      ckan_debug(Site, organization)
     )
   ).
 /*
   forall(
-    ckan_package(I, Dict),
+    ckan_package(Site, Dict),
     (
-      assert_pair(M, G, I, containsPackage, Dict),
-      ckan_debug(Hash, package)
+      assert_pair(M, G, Site, containsPackage, Dict),
+      ckan_debug(Site, package)
     )
   ),
   forall(
-    ckan_resource(I, Dict),
+    ckan_resource(Site, Dict),
     (
-      assert_pair(M, G, I, containsResource, Dict),
-      ckan_debug(Hash, resource)
+      assert_pair(M, G, Site, containsResource, Dict),
+      ckan_debug(Site, resource)
     )
   ),
   forall(
-    ckan_tag(I, Dict),
+    ckan_tag(Site, Dict),
     (
-      assert_pair(M, G, I, containsTag, Dict),
-      ckan_debug(Hash, tag)
+      assert_pair(M, G, Site, containsTag, Dict),
+      ckan_debug(Site, tag)
     )
   ),
   forall(
-    ckan_user(I, Dict),
+    ckan_user(Site, Dict),
     (
-      assert_pair(M, G, I, containsUser, Dict),
-      ckan_debug(Hash, user)
+      assert_pair(M, G, Site, containsUser, Dict),
+      ckan_debug(Site, user)
     )
   ).
 */
 
 ckan_debug(Hash, Type) :-
-  atom_concat(Hash, Type, Flag),
+  atomic_list_concat([Hash,Type], :, Flag),
   flag(Flag, N, N+1),
   debug(scrape_ckan2, "~a: ~D", [Flag,N]).
 
