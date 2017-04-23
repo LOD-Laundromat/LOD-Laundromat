@@ -80,28 +80,29 @@ HASH/
 %! clean_uri(+BaseUri) is det.
 
 clean_uri(BaseUri) :-
-  debug(clean, "Starting: ~a", [BaseUri]),
   md5_hash(BaseUri, Hash, []),
-  store_warnings(Hash, download_uri(BaseUri, Hash, ArchFile, HttpMediaType)),
+  debug(clean, "Starting: ~a ~a", [Hash,BaseUri]),
+  store_warnings(Hash, download_uri(BaseUri, Hash, ArchFile, HttpMT)),
   % Two cases: (1) download failed, (2) download succeeded.
   (   var(ArchFile)
   ->  hash_to_file(Hash, source, TmpFile),
       % Delete the source file.
       delete_file(TmpFile)
   ;   atomic_list_concat([a,Hash], :, Alias),
+      ignore(uri_media_type(BaseUri, ExtMT)),
       call_in_thread(
         Alias,
-        unpack_file(BaseUri, Hash, HttpMediaType, ArchFile)
+        unpack_file(BaseUri, Hash, ExtMT, HttpMT, ArchFile)
       )
   ),
-  debug(clean, "Ended: ~a", [BaseUri]).
+  finish_meta_and_warn(Hash),
+  debug(clean, "Ended: ~a ~a", [Hash,BaseUri]).
 
 
 
-%! clean_file(+BaseUri, +Hash, +MediaType, +EntryFile) is det.
+%! clean_file(+BaseUri, +Hash, +ExtMT, +HttpMT, +EntryFile) is det.
 
-clean_file(BaseUri, Hash, HttpMediaType, EntryFile) :-
-  ignore(uri_media_type(BaseUri, ExtMediaType)),
+clean_file(BaseUri, Hash, ExtMT, HttpMT, EntryFile) :-
   rdf_global_id(bnode:Hash, BNodePrefix),
   hash_to_file(Hash, data, DataFileTmp),
   (   setup_call_cleanup(
@@ -110,23 +111,18 @@ clean_file(BaseUri, Hash, HttpMediaType, EntryFile) :-
           open(DataFileTmp, write, Out)
         ),
         (
-          rdf_guess(In, MediaTypes),
-          choose_media_type(
-            MediaTypes,
-            HttpMediaType,
-            ExtMediaType,
-            MediaType
-          ),
+          rdf_guess(In, MTs),
+          choose_media_type(MTs, HttpMT, ExtMT, MT),
           Count = count(0),
           call_statistics(
-            clean_stream(Count, In, Out, BNodePrefix, BaseUri, MediaType),
+            clean_stream(Count, In, Out, BNodePrefix, BaseUri, MT),
             walltime,
             Walltime
           ),
           arg(1, Count, NumTriples),
           stream_metadata(In, Out, Walltime, StreamDict),
-          MediaType = media(Super/Sub,_),
-          format(string(MediaType0), "~a/~a", [Super,Sub])
+          MT = media(Super/Sub,_),
+          format(string(MT0), "~a/~a", [Super,Sub])
         ),
         (
           close(In),
@@ -143,22 +139,21 @@ clean_file(BaseUri, Hash, HttpMediaType, EntryFile) :-
           write_ntriple(MetaOut, Entry, rdf:type, llo:'Cleaning'),
           write_ntriple(MetaOut, Entry, void:triples,
                         NumTriples^^xsd:nonNegativeInteger),
-          write_ntriple(MetaOut, Entry, llo:rdfMediaType,
-                        MediaType0^^xsd:string),
+          write_ntriple(MetaOut, Entry, llo:rdfMT, MT0^^xsd:string),
           write_stream_metadata(MetaOut, Entry, StreamDict)
         ),
         close(MetaOut)
-      ),
-      finish_hash(Hash)
+      )
   ;   delete_file(DataFileTmp),
       print_message(warning, non_rdf)
   ).
 
-choose_media_type([MediaType], _, _, MediaType) :- !.
-choose_media_type(MediaTypes, HttpMediaType, ExtMediaType, MediaType) :-
-  member(MediaType, MediaTypes),
-  member(MediaType0, [HttpMediaType,ExtMediaType]),
-  generalization(MediaType, MediaType0), !.
+choose_media_type([MT], _, _, MT) :- !.
+choose_media_type(MTs1, HttpMT, ExtMT, MT1) :-
+  exclude(var, [HttpMT,ExtMT], MTs2),
+  member(MT1, MTs1),
+  member(MT2, MTs2),
+  generalization(MT1, MT2), !.
 choose_media_type(L, X, Y, Z) :-
   maplist(writeln, [X,Y|L]),
   gtrace,
@@ -212,24 +207,24 @@ clean_stream(Count, In, Out, BNodePrefix, BaseUri,
     ]
   ).
 % RDFa
-clean_stream(Count, In, Out, BNodePrefix, BaseUri, MediaType) :-
+clean_stream(Count, In, Out, BNodePrefix, BaseUri, MT) :-
   memberchk(
-    MediaType,
+    MT,
     [media(application/'xhtml+xml',_),media(text/html,_)]
   ), !,
   read_rdfa(In, Triples, [anon_prefix(BNodePrefix),base(BaseUri)]),
   maplist(write_clean_tuple(Count, Out), Triples).
 % unsupported Media Type
-clean_stream(_, _, _, _, _, MediaType) :-
-  print_message(warning, unsupported_media_type(MediaType)).
+clean_stream(_, _, _, _, _, MT) :-
+  print_message(warning, unsupported_media_type(MT)).
 
 
 
-%! download_uri(+Uri, +Hash, -File, -HttpMediaType) is det.
+%! download_uri(+Uri, +Hash, -File, -HttpMT) is det.
 %
 % Step 1: Download archive
 
-download_uri(Uri, Hash, File, HttpMediaType) :-
+download_uri(Uri, Hash, File, HttpMT) :-
   hash_to_file(Hash, source, FileTmp),
   setup_call_cleanup(
     (
@@ -249,7 +244,7 @@ download_uri(Uri, Hash, File, HttpMediaType) :-
   rename_file(FileTmp, data, File),
   (   HttpDicts = [HttpDict|_],
       get_dict(content_type, HttpDict.headers, ContentType)
-  ->  http_parse_header_value(content_type, ContentType, HttpMediaType)
+  ->  http_parse_header_value(content_type, ContentType, HttpMT)
   ;   true
   ),
   hash_to_file(Hash, 'meta.nt', MetaFile),
@@ -346,17 +341,17 @@ open_uri2(_, In, _, _, _, _, In, []).
 
 
 
-%! unpack_file(+BaseUri, +Hash, +HttpMediaType, +File) is det.
+%! unpack_file(+BaseUri, +Hash, +ExtMT, +HttpMT, +File) is det.
 %
 % Step 2: Unpack archive file into entry files
 
-unpack_file(BaseUri, Hash, HttpMediaType, File) :-
+unpack_file(BaseUri, Hash, ExtMT, HttpMT, File) :-
   findall(format(Format), archive_format(Format, true), Opts),
   setup_call_cleanup(
     archive_open(File, read, Arch, [filter(all)|Opts]),
     forall(
       store_warnings(Hash, archive_data_stream(Arch, In, [meta_data(Dicts)])),
-      unpack_stream(BaseUri, Hash, HttpMediaType, File, In, Dicts)
+      unpack_stream(BaseUri, Hash, ExtMT, HttpMT, File, In, Dicts)
     ),
     archive_close(Arch)
   ),
@@ -365,14 +360,14 @@ unpack_file(BaseUri, Hash, HttpMediaType, File) :-
 
 
 
-%! unpack_stream(+BaseUri, +Hash, +HttpMediaType, +File, +In, +Dicts) is det.
+%! unpack_stream(+BaseUri, +Hash, +ExtMT, +HttpMT, +File, +In, +Dicts) is det.
 
 % raw data
-unpack_stream(BaseUri, Hash, HttpMediaType, File, In, [_]) :- !,
+unpack_stream(BaseUri, Hash, ExtMT, HttpMT, File, In, [_]) :- !,
   close(In),
-  store_warnings(Hash, clean_file(BaseUri, Hash, HttpMediaType, File)).
+  store_warnings(Hash, clean_file(BaseUri, Hash, ExtMT, HttpMT, File)).
 % more unpacking
-unpack_stream(BaseUri, Hash0, HttpMediaType, _, In0, [Dict0,_]) :-
+unpack_stream(BaseUri, Hash0, ExtMT0, HttpMT, _, In0, [Dict0,_]) :-
   _{
     filetype: file,
     filters: Filters,
@@ -384,39 +379,41 @@ unpack_stream(BaseUri, Hash0, HttpMediaType, _, In0, [Dict0,_]) :-
   } :< Dict0,
   atomic_list_concat([BaseUri,EntryName], ' ', Name),
   md5_hash(Name, Hash, []),
-  hash_to_file(Hash, source, File1),
+  hash_to_file(Hash, source, DataFileTmp),
   setup_call_cleanup(
-    open(File1, write, Out, [type(binary)]),
+    open(DataFileTmp, write, DataOut, [type(binary)]),
     (
-      call_statistics(copy_stream_data(In0, Out), walltime, Walltime),
-      stream_metadata(In0, Out, Walltime, StreamDict)
+      call_statistics(copy_stream_data(In0, DataOut), walltime, Walltime),
+      stream_metadata(In0, DataOut, Walltime, StreamDict)
     ),
-    close(Out)
+    close(DataOut)
   ),
   close(In0),
-  rename_file(File1, data, File2),
-  finish_hash(Hash0),
+  rename_file(DataFileTmp, data, DataFile),
   hash_to_file(Hash, 'meta.nt', MetaFile),
   setup_call_cleanup(
-    open(MetaFile, append, Out),
+    open(MetaFile, append, MetaOut),
     (
       rdf_global_id(llr:Hash, S),
-      write_ntriple(Out, S, rdf:type, llo:'Unpack'),
-      write_filters_metadata(Out, S, Filters),
-      write_ntriple(Out, S, llo:format, Format^^xsd:string),
-      write_ntriple(Out, S, llo:mtime, MTime^^xsd:float),
-      write_ntriple(Out, S, llo:name, EntryName^^xsd:string),
+      write_ntriple(MetaOut, S, rdf:type, llo:'Unpack'),
+      write_filters_metadata(MetaOut, S, Filters),
+      write_ntriple(MetaOut, S, llo:format, Format^^xsd:string),
+      write_ntriple(MetaOut, S, llo:mtime, MTime^^xsd:float),
+      write_ntriple(MetaOut, S, llo:name, EntryName^^xsd:string),
       rdf_global_id(llr:Hash0, S0),
-      write_ntriple(Out, S, llo:parent, S0),
-      write_ntriple(Out, S, llo:permissions,
+      write_ntriple(MetaOut, S, llo:parent, S0),
+      write_ntriple(MetaOut, S, llo:permissions,
                     Permissions^^xsd:nonNegativeInteger),
-      write_ntriple(Out, S, llo:size, Size^^xsd:float),
-      write_stream_metadata(Out, S, StreamDict)
+      write_ntriple(MetaOut, S, llo:size, Size^^xsd:float),
+      write_stream_metadata(MetaOut, S, StreamDict)
     ),
-    close(Out)
+    close(MetaOut)
   ),
+  (file_media_type(EntryName, ExtMT) -> true ; ExtMT = ExtMT0),
   atomic_list_concat([e,Hash], :, Alias),
-  call_in_thread(Alias, unpack_file(BaseUri, Hash, HttpMediaType, File2)).
+  writeln(Hash),
+  call_in_thread(Alias, unpack_file(BaseUri, Hash, ExtMT, HttpMT, DataFile)),
+  finish_meta_and_warn(Hash).
 
 
 
@@ -507,29 +504,76 @@ clean_tuple(rdf(S,P,O), Quad) :-
 
 
 
-%! finish_hash(+Hash) is det.
-%
-% Finish `<HASH>/meta.nt.gz' and `<HASH>/warn.log.gz'.
+%! extensions_to_media_type(+Exts, -MT) is det.
 
-finish_hash(Hash) :-
+extensions_to_media_type(Exts, MT) :-
+  member(Ext1, Exts),
+  (   media_type_ext(MT, Ext1)
+  ;   alt_ext(Ext1, Ext2),
+      media_type_ext(MT, Ext2)
+  ), !.
+
+media_type_ext(media(application/'ld+json',[]), jsonld).
+media_type_ext(media(application/'n-quads',[]), nq).
+media_type_ext(media(application/'n-triples',[]), nt).
+media_type_ext(media(application/'rdf+xml',[]), rdf).
+media_type_ext(media(application/trig,[]), trig).
+media_type_ext(media(application/'xhtml+xml',[]), xhtml).
+media_type_ext(media(text/html,[]), html).
+media_type_ext(media(text/turtle,[]), ttl).
+
+alt_ext(json, jsonld).
+alt_ext(nquads, nq).
+alt_ext(ntriples, nt).
+alt_ext(n3, ttl).
+alt_ext(turtle, ttl).
+
+
+
+%! file_media_type(+File, -MT) is det.
+
+file_media_type(File, MT) :-
+  file_extensions(File, Exts),
+  extensions_to_media_type(Exts, MT).
+
+
+
+%! finish_meta(+Hash) is det.
+
+finish_meta(Hash) :-
   hash_to_file(Hash, 'meta.nt', MetaFile),
-  finish_ntriples_file(MetaFile),
+  finish_ntriples_file(MetaFile).
+
+
+
+%! finish_meta_and_warn(+Hash) is det.
+
+finish_meta_and_warn(Hash) :-
+  finish_meta(Hash),
+  finish_warn(Hash).
+
+
+
+%! finish_warn(+Hash) is det.
+
+finish_warn(Hash) :-
   hash_to_file(Hash, 'warn.log', WarnFile),
   wc(WarnFile, NumLines),
   (   NumLines =:= 0,
       exists_file(WarnFile)
-  ->  delete_file(WarnFile)
+  ->  true
   ;   compress_file(WarnFile)
-  ).
+  ),
+  delete_file(WarnFile).
 
 
 
-%! generalization(+MediaType1, +MediaType2) is semidet.
+%! generalization(+MT1, +MT2) is semidet.
 
-generalization(MediaType, MediaType) :- !.
-generalization(MediaType1, MediaType3) :-
-  generalization0(MediaType1, MediaType2),
-  generalization(MediaType2, MediaType3).
+generalization(MT, MT) :- !.
+generalization(MT1, MT3) :-
+  generalization0(MT1, MT2),
+  generalization(MT2, MT3).
 
 generalization0(
   media(application/trig,Params),
@@ -660,30 +704,11 @@ term_to_pair(Term, Key-Val2) :-
 
 
 
-%! uri_media_type(+Uri, -MediaType) is det.
+%! uri_media_type(+Uri, -MT) is det.
 
-uri_media_type(Uri, MediaType) :-
+uri_media_type(Uri, MT) :-
   uri_file_extensions(Uri, Exts),
-  member(Ext1, Exts),
-  (   media_type_ext(MediaType, Ext1)
-  ;   alt_ext(Ext1, Ext2),
-      media_type_ext(MediaType, Ext2)
-  ), !.
-
-media_type_ext(media(application/'ld+json',[]), jsonld).
-media_type_ext(media(application/'n-quads',[]), nq).
-media_type_ext(media(application/'n-triples',[]), nt).
-media_type_ext(media(application/'rdf+xml',[]), rdf).
-media_type_ext(media(application/trig,[]), trig).
-media_type_ext(media(application/'xhtml+xml',[]), xhtml).
-media_type_ext(media(text/html,[]), html).
-media_type_ext(media(text/turtle,[]), ttl).
-
-alt_ext(json, jsonld).
-alt_ext(nquads, nq).
-alt_ext(ntriples, nt).
-alt_ext(n3, ttl).
-alt_ext(turtle, ttl).
+  extensions_to_media_type(Exts, MT).
 
 
 
