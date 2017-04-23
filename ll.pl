@@ -116,13 +116,10 @@ seedlist_init :-
   forall(
     (
       ckan(S, ckan:format, Format^^xsd:string, File),
-      rdf_format(Format)
+      rdf_format(Format),
+      ckan(S, ckan:url, Uri^^_, File)
     ),
-    (
-      ckan(S, ckan:uri, Uri^^xsd:anyURI, File),
-      add_seed(Uri),
-      debug(ll, "Seedpoint: ~a", [Uri])
-    )
+    add_seed(Uri)
   ).
 
 rdf_format("HTML+RDFa").

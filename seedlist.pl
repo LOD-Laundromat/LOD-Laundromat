@@ -14,9 +14,12 @@
 @version 2017/04
 */
 
+:- use_module(library(debug)).
 :- use_module(library(md5)).
 :- use_module(library(persistency)).
 :- use_module(library(uri)).
+
+:- debug(seedlist).
 
 :- initialization(db_attach('seedlist.data', [])).
 
@@ -36,7 +39,8 @@ add_seed(Uri0) :-
     (   seed(Hash, Uri, _, _, _)
     ->  true
     ;   get_time(Now),
-        assert_seed(Hash, Uri, Now, 0.0, 0.0)
+        assert_seed(Hash, Uri, Now, 0.0, 0.0),
+        debug(seedlist, "Seedpoint added: ~a", [Uri])
     )
   )).
 

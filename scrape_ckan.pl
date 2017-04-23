@@ -5,7 +5,6 @@
     scrape_ckan/0,
     scrape_ckan_thread/0,
     scrape_ckan/1,           % +Site
-    scrape_ckan_thread/1,    % +Site
     % FORMATS
     print_formats/0,
     scrape_formats/0,
@@ -167,10 +166,14 @@ scrape_site(M, G, I) :-
 assert_pair(_, _, _, _, "") :- !.
 assert_pair(_, _, _, _, null) :- !.
 assert_pair(_, _, _, archiver, _) :- !.
+assert_pair(_, _, _, concepts_eurovoc, _) :- !.
 assert_pair(_, _, _, config, _) :- !.
 assert_pair(_, _, _, default_extras, _) :- !.
 assert_pair(_, _, _, extras, _) :- !.
+assert_pair(_, _, _, keywords, _) :- !.
+assert_pair(_, _, _, pids, _) :- !.
 assert_pair(_, _, _, qa, _) :- !.
+assert_pair(_, _, _, relationships_as_object, _) :- !.
 assert_pair(_, _, _, status, _) :- !.
 assert_pair(_, _, _, tracking_summary, _) :- !.
 assert_pair(M, G, I, Key, L) :-
@@ -206,6 +209,7 @@ assert_pair(M, G, I, Key, Lex) :-
   rdf_literal(Lit, D, Lex, _),
   rdf_assert(M, I, P, Lit, G).
 
+key_predicate_class(activity, hasActivity, activity) :- !.
 key_predicate_class(containsGroup, containsGroup, group) :- !.
 key_predicate_class(containsLicense, containsLicense, license) :- !.
 key_predicate_class(containsOrganization, containsOrganization, organization) :- !.
@@ -213,6 +217,7 @@ key_predicate_class(containsPackage, containsPackage, package) :- !.
 key_predicate_class(containsResource, containsResource, resource) :- !.
 key_predicate_class(containsTag, containsTag, tag) :- !.
 key_predicate_class(containsUser, containsUser, user) :- !.
+key_predicate_class(datasets, hasDataset, dataset) :- !.
 key_predicate_class(default_group_dicts, hasGroup, group) :- !.
 key_predicate_class(groups, hasGroup, group) :- !.
 key_predicate_class(individual_resources, hasIndividualResource, individualResource) :- !.
@@ -231,9 +236,5 @@ key_predicate_class(X, Y, Z) :-
 %! scrape_ckan(+Site) is det.
 
 scrape_ckan_thread :-
-  findnsols(20, Site, ckan_site_uri(Site), Sites), % @deb
-  maplist(scrape_ckan_thread, Sites).
-
-
-scrape_ckan_thread(Site) :-
-  thread_create(scrape_ckan(Site), _, [alias(Site),detached(true)]).
+  findall(scrape_ckan(Site), ckan_site_uri(Site), Goals),
+  concurrent(10, Goals, []).
