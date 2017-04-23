@@ -1,16 +1,9 @@
 :- module(
   scrape_ckan,
   [
-    % EVERYTHING
     scrape_ckan/0,
     scrape_ckan_thread/0,
-    scrape_ckan/1,           % +Site
-    % FORMATS
-    print_formats/0,
-    scrape_formats/0,
-    scrape_formats/1,        % +Site
-    scrape_formats_thread/0,
-    scrape_formats_thread/1  % +Site
+    scrape_ckan/1         % +Site
   ]
 ).
 
@@ -38,9 +31,7 @@
 :- use_module(library(thread_ext)).
 
 :- debug(scrape_ckan).
-
-:- dynamic
-    ckan_format/2.
+:- debug(scrape_ckan2).
 
 :- nodebug(http(_)).
 
@@ -50,76 +41,6 @@
    key_datatype(+, r).
 
 
-
-
-
-%! print_formats is det.
-
-print_formats :-
-  print_formats(current_output).
-
-print_formats(Out) :-
-  findall(N-Format, ckan_format(Format, N), Pairs),
-  keysort(Pairs, Sorted),
-  maplist(print_format(Out), Sorted).
-
-print_format(Out, N-Format) :-
-  format(Out, "~a\t~d\n", [Format,N]).
-
-
-
-%! scrape_formats is det.
-%! scrape_formats(+Site) is det.
-
-scrape_formats :-
-  forall(
-    ckan_site_uri(Site),
-    scrape_formats(Site)
-  ).
-
-
-scrape_formats(Site) :-
-  md5_hash(Site, Hash, []),
-  file_name_extension(Hash, 'tsv.gz', File),
-  scrape_formats(Site, File).
-
-scrape_formats(Site, File) :-
-  exists_file(File), !,
-  debug(scrape_ckan, "Skipping site: ~a", [Site]).
-scrape_formats(Site, File) :-
-  debug(scrape_ckan, "Started: ~a", [Site]),
-  retractall(ckan_format(_,_)),
-  forall(
-    ckan_resource(Site, Res),
-    (
-      Format = Res.format,
-      with_mutex(ckan_format, (
-        (retract(ckan_format(Format, N1)) -> N2 is N1 + 1 ; N2 = 1),
-        assert(ckan_format(Format, N2))
-      ))
-    )
-  ),
-  setup_call_cleanup(
-    gzopen(File, write, Out),
-    (
-      format(Out, "~a\n", [Site]),
-      print_formats(Out)
-    ),
-    close(Out)
-  ),
-  debug(scrape_ckan, "Finished: ~a", [Site]).
-
-
-
-%! scrape_formats_thread is det.
-%! scrape_formats_thread(+Site) is det.
-
-scrape_formats_thread :-
-  detached_thread(scrape_formats).
-
-
-scrape_formats_thread(Site) :-
-  detached_thread(scrape_formats(Site)).
 
 
 
@@ -148,20 +69,69 @@ scrape_ckan(Site, Hash, File) :-
   atomic_list_concat([graph,Hash], /, Local),
   rdf_global_id(ckan:Local, G),
   rdf_retractall(M, _, _, _, G),
-  scrape_site(M, G, Site),
-  write_ntriples(G, File),
+  scrape_site(M, G, Site, Hash),
+  write_ntriples(G, File, [mode(append)]),
   rdf_retractall(M, _, _, _, G),
   debug(scrape_ckan, "Finished: ~a", [Site]).
 
-scrape_site(M, G, I) :-
+scrape_site(M, G, I, Hash) :-
   rdf_assert(M, I, rdf:type, ckan:'Site', G),
-  forall(ckan_group(I, Dict), assert_pair(M, G, I, containsGroup, Dict)),
-  forall(ckan_license(I, Dict), assert_pair(M, G, I, containsLicense, Dict)),
-  forall(ckan_organization(I, Dict), assert_pair(M, G, I, containsOrganization, Dict)),
-  forall(ckan_package(I, Dict), assert_pair(M, G, I, containsPackage, Dict)),
-  forall(ckan_resource(I, Dict), assert_pair(M, G, I, containsResource, Dict)),
-  forall(ckan_tag(I, Dict), assert_pair(M, G, I, containsTag, Dict)),
-  forall(ckan_user(I, Dict), assert_pair(M, G, I, containsUser, Dict)).
+  forall(
+    ckan_group(I, Dict),
+    (
+      assert_pair(M, G, I, containsGroup, Dict),
+      ckan_debug(Hash, group)
+    )
+  ),
+  forall(
+    ckan_license(I, Dict),
+    (
+      assert_pair(M, G, I, containsLicense, Dict),
+      ckan_debug(Hash, license)
+    )
+  ),
+  forall(
+    ckan_organization(I, Dict),
+    (
+      assert_pair(M, G, I, containsOrganization, Dict),
+      ckan_debug(Hash, organization)
+    )
+  ).
+/*
+  forall(
+    ckan_package(I, Dict),
+    (
+      assert_pair(M, G, I, containsPackage, Dict),
+      ckan_debug(Hash, package)
+    )
+  ),
+  forall(
+    ckan_resource(I, Dict),
+    (
+      assert_pair(M, G, I, containsResource, Dict),
+      ckan_debug(Hash, resource)
+    )
+  ),
+  forall(
+    ckan_tag(I, Dict),
+    (
+      assert_pair(M, G, I, containsTag, Dict),
+      ckan_debug(Hash, tag)
+    )
+  ),
+  forall(
+    ckan_user(I, Dict),
+    (
+      assert_pair(M, G, I, containsUser, Dict),
+      ckan_debug(Hash, user)
+    )
+  ).
+*/
+
+ckan_debug(Hash, Type) :-
+  atom_concat(Hash, Type, Flag),
+  flag(Flag, N, N+1),
+  debug(scrape_ckan2, "~a: ~D", [Flag,N]).
 
 assert_pair(_, _, _, _, "") :- !.
 assert_pair(_, _, _, _, null) :- !.
@@ -232,8 +202,7 @@ key_predicate_class(X, Y, Z) :-
 
 
 
-%! scrape_ckan is det.
-%! scrape_ckan(+Site) is det.
+%! scrape_ckan_thread is det.
 
 scrape_ckan_thread :-
   findall(scrape_ckan(Site), ckan_site_uri(Site), Goals),
