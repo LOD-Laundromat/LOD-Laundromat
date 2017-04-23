@@ -1,10 +1,12 @@
 :- module(
   ll_api,
   [
-    ll/1,  % ?File
-    llm/1, % ?File
-    ll/4,  % ?S, ?P, ?O, ?File
-    llm/4  % ?S, ?P, ?O, ?File
+    ckan/1, % ?File
+    ckan/4, % ?S, ?P, ?O, ?File
+    ll/1,   % ?File
+    llm/1,  % ?File
+    ll/4,   % ?S, ?P, ?O, ?File
+    llm/4   % ?S, ?P, ?O, ?File
   ]
 ).
 
@@ -20,10 +22,27 @@
 :- use_module(library(semweb/rdf11)).
 
 :- rdf_meta
+   ckan(r, r, o, ?),
    ll(r, r, o, ?),
    llm(r, r, o, ?).
 
 
+
+
+
+%! ckan(?File) is nondet.
+%! ckan(?S, ?P, ?O, ?File) is nondet.
+
+ckan(File) :-
+  absolute_file_name(
+    '*.hdt',
+    File,
+    [access(read),expand(true),solutions(all)]
+  ).
+  
+ckan(S, P, O, File) :-
+  ckan(File),
+  hdt_call_on_file(File, hdt0(S, P, O)).
 
 
 
