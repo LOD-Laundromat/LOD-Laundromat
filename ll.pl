@@ -2,10 +2,9 @@
   ll,
   [
     add_wm/0,
-    add_wms/1,       % +NumWMs
+    add_wms/1,  % +NumWMs
     debug_wm/0,
-    debug_wm/1,      % +Hash
-    seedlist_init/1, % +Approach
+    debug_wm/1, % +Hash
     start_ll/0
   ]
 ).
@@ -17,7 +16,6 @@
 */
 
 :- use_module(library(aggregate)).
-:- use_module(library(ckan_api)).
 :- use_module(library(debug)).
 :- use_module(library(semweb/rdf11)).
 :- use_module(library(thread_ext)).
@@ -26,12 +24,9 @@
 :- use_module(library(hdt/hdt_api)).
 
 :- use_module(clean).
-:- use_module(ll_api).
 :- use_module(seedlist).
 
 :- debug(ll).
-
-:- rdf_register_prefix(ckan, 'https://triply.cc/ckan/').
 
 
 
@@ -104,33 +99,6 @@ max_wm(0).
 
 number_of_wms(NumWMs) :-
   aggregate_all(count, wm_thread_alias(m, _), NumWMs).
-
-
-
-%! seedlist_init(+Approach) is det.
-
-seedlist_init(ckan) :-
-  forall(
-    (
-      ckan(S, ckan:format, Format^^xsd:string, File),
-      rdf_format(Format),
-      ckan(S, ckan:url, Uri^^_, File)
-    ),
-    add_seed(Uri)
-  ).
-seedlist_init(debug) :-
-  forall(
-    seed0(Uri),
-    add_seed(Uri)
-  ).
-
-rdf_format("HTML+RDFa").
-rdf_format("rdf").
-rdf_format("RDF").
-rdf_format("RDFa").
-rdf_format("SPARQL").
-rdf_format("Sparql-query").
-rdf_format("SPARQL web form").
 
 
 
