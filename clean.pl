@@ -226,25 +226,32 @@ clean_stream(_, _, _, _, _, MT) :-
 
 download_uri(Uri, Hash, File, HttpMT) :-
   hash_to_file(Hash, source, FileTmp),
-  setup_call_cleanup(
-    (
-      open(FileTmp, write, Out, [type(binary)]),
-      open_uri(Uri, In, HttpDicts)
+  catch(
+    setup_call_cleanup(
+      (
+        open(FileTmp, write, Out, [type(binary)]),
+        open_uri(Uri, In, HttpDicts)
+      ),
+      (   var(In)
+      ->  true
+      ;   call_statistics(copy_stream_data(In, Out), walltime, Walltime),
+          stream_metadata(In, Out, Walltime, StreamDict)
+      ),
+      (
+        close(In),
+        close(Out)
+      )
     ),
-    (   var(In)
-    ->  true
-    ;   call_statistics(copy_stream_data(In, Out), walltime, Walltime),
-        stream_metadata(In, Out, Walltime, StreamDict)
-    ),
-    (
-      close(In),
-      close(Out)
-    )
+    E,
+    true
   ),
-  rename_file(FileTmp, data, File),
-  (   HttpDicts = [HttpDict|_],
-      get_dict(content_type, HttpDict.headers, ContentType)
-  ->  http_parse_header_value(content_type, ContentType, HttpMT)
+  (   var(E)
+  ->  rename_file(FileTmp, data, File),
+      (   HttpDicts = [HttpDict|_],
+          get_dict(content_type, HttpDict.headers, ContentType)
+      ->  http_parse_header_value(content_type, ContentType, HttpMT)
+      ;   true
+      )
   ;   true
   ),
   hash_to_file(Hash, 'meta.nt', MetaFile),
@@ -258,7 +265,10 @@ download_uri(Uri, Hash, File, HttpMT) :-
       ->  true
       ;   write_stream_metadata(MetaOut, Source, StreamDict)
       ),
-      write_http_metadata(MetaOut, Source, HttpDicts)
+      (   var(HttpDicts)
+      ->  true
+      ;   write_http_metadata(MetaOut, Source, HttpDicts)
+      )
     ),
     close(MetaOut)
   ).
