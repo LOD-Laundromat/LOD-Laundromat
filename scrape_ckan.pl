@@ -60,11 +60,11 @@ scrape_ckan(Site) :-
   scrape_ckan(Site, Hash, File),
   finish_ntriples_file(File).
 
-scrape_ckan(Site, _, File) :-
-  exists_file(File), !,
-  debug(scrape_ckan, "Skipping site: ~a", [Site]).
 scrape_ckan(Site, Hash, File) :-
-  debug(scrape_ckan, "Started: ~a", [Site]),
+  exists_file(File), !,
+  debug(scrape_ckan, "Skipping: ~a ~a", [Hash,Site]).
+scrape_ckan(Site, Hash, File) :-
+  debug(scrape_ckan, "Started: ~a ~a", [Hash,Site]),
   M = trp,
   atomic_list_concat([graph,Hash], /, Local),
   rdf_global_id(ckan:Local, G),
@@ -72,7 +72,7 @@ scrape_ckan(Site, Hash, File) :-
   scrape_site(M, G, Site),
   write_ntriples(G, File, [mode(append)]),
   rdf_retractall(M, _, _, _, G),
-  debug(scrape_ckan, "Finished: ~a", [Site]).
+  debug(scrape_ckan, "Finished: ~a ~a", [Hash,Site]).
 
 scrape_site(M, G, Site) :-
   rdf_assert(M, Site, rdf:type, ckan:'Site', G),

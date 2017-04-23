@@ -1,13 +1,16 @@
 :- module(
   ll_api,
   [
-    ckan/1,   % ?File
-    ckan/4,   % ?S, ?P, ?O, ?File
-    ll/1,     % ?File
-    ll/4,     % ?S, ?P, ?O, ?File
-    ll_doc/2, % -Doc, -NumTriples
-    llm/1,    % ?File
-    llm/4     % ?S, ?P, ?O, ?File
+    ckan/1,       % ?File
+    ckan/4,       % ?S, ?P, ?O, ?File
+    ckan_formats/0,
+    ll/1,         % ?File
+    ll/4,         % ?S, ?P, ?O, ?File
+    ll_doc/2,     % -Doc, -NumTriples
+    ll_triples/0,
+    ll_triples/1, % -NumTriples
+    llm/1,        % ?File
+    llm/4         % ?S, ?P, ?O, ?File
   ]
 ).
 
@@ -17,9 +20,12 @@
 @version 2017/04
 */
 
+:- use_module(library(aggregate)).
+:- use_module(library(apply)).
 :- use_module(library(file_ext)).
 :- use_module(library(hdt/hdt_api)).
 :- use_module(library(lists)).
+:- use_module(library(pairs)).
 :- use_module(library(semweb/rdf11)).
 
 :- rdf_register_prefix(bnode, 'https://lodlaundromat.org/.well-known/genid/').
@@ -54,6 +60,26 @@ ckan(S, P, O, File) :-
 
 
 
+%! ckan_formats is det.
+
+ckan_formats :-
+  findall(
+    Format-dummy,
+    ckan(_, ckan:format, Format^^xsd:string, _),
+    Pairs
+  ),
+  sort(1, @=<, Pairs, SortedPairs),
+  group_pairs_by_key(SortedPairs, JoinedPairs),
+  maplist(number_of_values, JoinedPairs, NumberPairs),
+  transpose_pairs(NumberPairs, InvPairs),
+  keysort(InvPairs, Rows),
+  maplist(writeln, Rows).
+
+number_of_values(Key-Vals, Key-NumVals) :-
+  length(Vals, NumVals).
+
+
+
 %! ll(?File) is nondet.
 %! llm(?File) is nondet.
 
@@ -80,6 +106,23 @@ ll_doc(doc(Uri,Names), NumTriples) :-
       llm(Parent, llo:uri, Uri^^xsd:anyURI, _ParentG)
   ;   llm(Entry, llo:uri, Uri^^xsd:anyURI, EntryG),
       Names = []
+  ).
+
+
+
+%! ll_triples is det.
+%! ll_triples(-NumTriples) is det.
+
+ll_triples :-
+  ll_triples(NumTriples),
+  format(user_output, "~D\n", [NumTriples]).
+
+
+ll_triples(NumTriples) :-
+  aggregate_all(
+    sum(NumTriples),
+    llm(_, void:triples, NumTriples^^xsd:nonNegativeInteger, _),
+    NumTriples
   ).
 
 

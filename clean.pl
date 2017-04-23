@@ -7,6 +7,8 @@
 
 /** <module> LOD Laundromat
 
+@tbd Assert end state / exception in `meta' i.o. `warn'.
+
 HASH := MD5(URI + " " + ENTRY-PATH)
 
 Archive:
@@ -154,10 +156,7 @@ choose_media_type(MTs1, HttpMT, ExtMT, MT1) :-
   member(MT1, MTs1),
   member(MT2, MTs2),
   generalization(MT1, MT2), !.
-choose_media_type(L, X, Y, Z) :-
-  maplist(writeln, [X,Y|L]),
-  gtrace,
-  choose_media_type(L, X, Y, Z).
+choose_media_type(_, _, _, media(application/trig,[])).
 
 % N-Quads
 clean_stream(Count, In, Out, BNodePrefix, BaseUri,
