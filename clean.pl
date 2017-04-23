@@ -139,7 +139,7 @@ clean_file(BaseUri, Hash, ExtMT, HttpMT, EntryFile) :-
           write_ntriple(MetaOut, Entry, rdf:type, llo:'Cleaning'),
           write_ntriple(MetaOut, Entry, void:triples,
                         NumTriples^^xsd:nonNegativeInteger),
-          write_ntriple(MetaOut, Entry, llo:rdfMT, MT0^^xsd:string),
+          write_ntriple(MetaOut, Entry, llo:rdfMediaType, MT0^^xsd:string),
           write_stream_metadata(MetaOut, Entry, StreamDict)
         ),
         close(MetaOut)
@@ -411,7 +411,6 @@ unpack_stream(BaseUri, Hash0, ExtMT0, HttpMT, _, In0, [Dict0,_]) :-
   ),
   (file_media_type(EntryName, ExtMT) -> true ; ExtMT = ExtMT0),
   atomic_list_concat([e,Hash], :, Alias),
-  writeln(Hash),
   call_in_thread(Alias, unpack_file(BaseUri, Hash, ExtMT, HttpMT, DataFile)),
   finish_meta_and_warn(Hash).
 
