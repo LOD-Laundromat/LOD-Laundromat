@@ -96,8 +96,7 @@ scrape_site(M, G, Site) :-
       assert_pair(M, G, Site, containsOrganization, Dict),
       ckan_debug(Site, organization)
     )
-  ).
-/*
+  ),
   forall(
     ckan_package(Site, Dict),
     (
@@ -126,7 +125,6 @@ scrape_site(M, G, Site) :-
       ckan_debug(Site, user)
     )
   ).
-*/
 
 ckan_debug(Hash, Type) :-
   atomic_list_concat([Hash,Type], :, Flag),
@@ -144,6 +142,7 @@ assert_pair(_, _, _, keywords, _) :- !.
 assert_pair(_, _, _, pids, _) :- !.
 assert_pair(_, _, _, qa, _) :- !.
 assert_pair(_, _, _, relationships_as_object, _) :- !.
+assert_pair(_, _, _, relationships_as_subject, _) :- !.
 assert_pair(_, _, _, status, _) :- !.
 assert_pair(_, _, _, tracking_summary, _) :- !.
 assert_pair(M, G, I, Key, L) :-

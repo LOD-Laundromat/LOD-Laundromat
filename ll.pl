@@ -3,6 +3,8 @@
   [
     add_wm/0,
     add_wms/1,       % +NumWMs
+    debug_wm/0,
+    debug_wm/1,      % +Hash
     seedlist_init/1, % +Approach
     start_ll/0
   ]
@@ -67,6 +69,19 @@ add_wms(N1) :-
 
 
 
+%! debug_wm is det.
+%! debug_wm(+Hash) is det.
+
+debug_wm :-
+  loop(0).
+
+% dbe8e9e8dc412990d5a13289a3613bd6
+debug_wm(Hash) :-
+  seed(Hash, Uri, _, _, _),
+  clean_uri(Uri).
+
+
+
 %! max_wm(-N) is det.
 %
 % The highest washing machine identifier.
@@ -101,6 +116,11 @@ seedlist_init(ckan) :-
       rdf_format(Format),
       ckan(S, ckan:url, Uri^^_, File)
     ),
+    add_seed(Uri)
+  ).
+seedlist_init(debug) :-
+  forall(
+    seed0(Uri),
     add_seed(Uri)
   ).
 

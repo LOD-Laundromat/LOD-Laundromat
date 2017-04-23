@@ -34,7 +34,6 @@ HASH/
 :- use_module(library(apply)).
 :- use_module(library(archive)).
 :- use_module(library(check_installation), []).
-:- use_module(library(date_time/date_time)).
 :- use_module(library(debug)).
 :- use_module(library(dict_ext)).
 :- use_module(library(http/http_cookie)).
@@ -42,7 +41,6 @@ HASH/
 :- use_module(library(http/https_open)).
 :- use_module(library(lists)).
 :- use_module(library(md5)).
-:- use_module(library(os_ext)).
 :- use_module(library(rdf)).
 :- use_module(library(semweb/rdf_guess)).
 :- use_module(library(semweb/rdf_http_plugin)).
@@ -50,14 +48,16 @@ HASH/
 :- use_module(library(semweb/rdf11)).
 :- use_module(library(semweb/rdfa)).
 :- use_module(library(semweb/turtle)).
-:- use_module(library(thread_ext)).
 :- use_module(library(uuid)).
 :- use_module(library(xsd/xsd_number)).
 :- use_module(library(zlib)).
 
+:- use_module(library(date_time/date_time)).
 :- use_module(library(file_ext)).
 :- use_module(library(hdt/hdtio)).
+:- use_module(library(os_ext)).
 :- use_module(library(rdf/rdfio)).
+:- use_module(library(thread_ext)).
 :- use_module(library(uri/uri_ext)).
 
 :- debug(clean).
@@ -149,7 +149,7 @@ clean_file(BaseUri, Hash, HttpMediaType, EntryFile) :-
         ),
         close(MetaOut)
       ),
-      finish_ntriples_file(MetaFile)
+      finish_hash(Hash)
   ;   delete_file(DataFileTmp),
       print_message(warning, non_rdf)
   ).
@@ -266,8 +266,7 @@ download_uri(Uri, Hash, File, HttpMediaType) :-
       write_http_metadata(MetaOut, Source, HttpDicts)
     ),
     close(MetaOut)
-  ),
-  finish_ntriples_file(MetaFile).
+  ).
 
 open_uri(Uri, In, []) :-
   uri_components(Uri, uri_components(file,_,_,_,_)), !,
@@ -396,6 +395,7 @@ unpack_stream(BaseUri, Hash0, HttpMediaType, _, In0, [Dict0,_]) :-
   ),
   close(In0),
   rename_file(File1, data, File2),
+  finish_hash(Hash0),
   hash_to_file(Hash, 'meta.nt', MetaFile),
   setup_call_cleanup(
     open(MetaFile, append, Out),
@@ -507,6 +507,23 @@ clean_tuple(rdf(S,P,O), Quad) :-
 
 
 
+%! finish_hash(+Hash) is det.
+%
+% Finish `<HASH>/meta.nt.gz' and `<HASH>/warn.log.gz'.
+
+finish_hash(Hash) :-
+  hash_to_file(Hash, 'meta.nt', MetaFile),
+  finish_ntriples_file(MetaFile),
+  hash_to_file(Hash, 'warn.log', WarnFile),
+  wc(WarnFile, NumLines),
+  (   NumLines =:= 0,
+      exists_file(WarnFile)
+  ->  delete_file(WarnFile)
+  ;   compress_file(WarnFile)
+  ).
+
+
+
 %! generalization(+MediaType1, +MediaType2) is semidet.
 
 generalization(MediaType, MediaType) :- !.
@@ -584,27 +601,20 @@ rename_file(File1, Ext, File2) :-
 %! store_warnings(+Hash, :Goal_0) is det.
 
 store_warnings(Hash, Goal_0) :-
-  hash_to_file(Hash, 'warn.log.gz', File),
-  Count = count(0),
+  hash_to_file(Hash, 'warn.log', File),
   setup_call_cleanup(
-    gzopen(File, append, Out),
+    open(File, append, Out),
     (
       asserta((
         user:thread_message_hook(E,Kind,_) :-
           check_installation:error_kind(Kind),
-          write_error(Out, E),
-          arg(1, Count, N1),
-          N2 is N1 + 1,
-          nb_setarg(1, Count, N2)
+          write_error(Out, E)
       )),
       (catch(call(Goal_0), E, true) *-> true ; E = fail(Goal_0)),
       (var(E) -> true ; write_error(Out, E))
     ),
     close(Out)
-  ),
-  arg(1, Count, N),
-  % Delete the warnings file if there are no warnings.
-  (N =:= 0, exists_file(File) -> delete_file(File) ; true).
+  ).
 
 write_error(Out, E) :-
   error_term(E, ETerm),

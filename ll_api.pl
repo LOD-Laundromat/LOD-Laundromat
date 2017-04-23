@@ -21,6 +21,8 @@
 :- use_module(library(lists)).
 :- use_module(library(semweb/rdf11)).
 
+:- rdf_register_prefix(ckan, 'https://triply.cc/ckan/').
+
 :- rdf_meta
    ckan(r, r, o, ?),
    ll(r, r, o, ?),
