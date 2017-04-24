@@ -204,5 +204,9 @@ key_predicate_class(X, Y, Z) :-
 %! scrape_ckan_thread is det.
 
 scrape_ckan_thread :-
-  findall(scrape_ckan(Site), ckan_site_uri(Site), Goals),
-  concurrent(10, Goals, []).
+  forall(
+    ckan_site_uri(Site),
+    thread_create(scrape_ckan(Site), _, [alias(Site),detached(true)])
+  ).
+  %findall(scrape_ckan(Site), ckan_site_uri(Site), Goals),
+  %concurrent(10, Goals, []).
