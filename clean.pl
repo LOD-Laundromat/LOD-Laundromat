@@ -69,7 +69,7 @@ HASH/
 
 :- nodebug(http(_)).
 
-:- rdf_register_prefix(bnode, 'https://lodlaundromat.org/.well-known/genid/').
+:- rdf_register_prefix(bnode, 'https://lodlaundromat.org/.well-known/genid/', [force(true)]).
 :- rdf_register_prefix(llh, 'https://lodlaundromat.org/http/').
 :- rdf_register_prefix(llo, 'https://lodlaundromat.org/ontology/').
 :- rdf_register_prefix(llr, 'https://lodlaundromat.org/resource/').

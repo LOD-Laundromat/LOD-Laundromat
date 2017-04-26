@@ -28,7 +28,7 @@
 :- use_module(library(pairs)).
 :- use_module(library(semweb/rdf11)).
 
-:- rdf_register_prefix(bnode, 'https://lodlaundromat.org/.well-known/genid/').
+:- rdf_register_prefix(bnode, 'https://lodlaundromat.org/.well-known/genid/', [force(true)]).
 :- rdf_register_prefix(ckan, 'https://triply.cc/ckan/').
 :- rdf_register_prefix(llh, 'https://lodlaundromat.org/http/').
 :- rdf_register_prefix(llo, 'https://lodlaundromat.org/ontology/').
