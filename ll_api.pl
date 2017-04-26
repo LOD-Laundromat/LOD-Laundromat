@@ -28,12 +28,11 @@
 :- use_module(library(pairs)).
 :- use_module(library(semweb/rdf11)).
 
-:- rdf_register_prefix(bnode, 'https://lodlaundromat.org/.well-known/genid/').
-:- rdf_register_prefix(ckan, 'https://triply.cc/ckan/').
+:- rdf_register_prefix(bnode, 'https://lodlaundromat.org/.well-known/genid/', [force(true)]).
+:- rdf_register_prefix(ckan, 'https://lodlaundromat.org/ckan/').
 :- rdf_register_prefix(llh, 'https://lodlaundromat.org/http/').
 :- rdf_register_prefix(llo, 'https://lodlaundromat.org/ontology/').
 :- rdf_register_prefix(llr, 'https://lodlaundromat.org/resource/').
-:- rdf_register_prefix(void, 'http://rdfs.org/ns/void#').
 
 :- rdf_meta
    ckan(r, r, o, ?),

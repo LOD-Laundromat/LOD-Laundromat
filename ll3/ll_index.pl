@@ -59,7 +59,7 @@ create_stat_index_file(Alias, DataFile, StatFile) :-
   hdt_call_on_file(DataFile, create_stat_index(Alias)),
   q_file_graph(DataFile, G),
   rdf_call_to_ntriples(StatFile, rdf_write_stat(Alias, G)),
-  hdt_prepare_file(StatFile, HdtStatFile),
+  rdf2hdt(StatFile, HdtStatFile),
   file_touch_ready(HdtStatFile).
 
 rdf_write_stat(Alias, G, State, Out) :-

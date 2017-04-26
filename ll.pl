@@ -105,7 +105,7 @@ number_of_wms(NumWMs) :-
 %! start_ll is det.
 
 start_ll :-
-  add_wms(5).
+  add_wms(30).
 
 
 

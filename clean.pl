@@ -40,10 +40,11 @@ HASH/
 :- use_module(library(dict_ext)).
 :- use_module(library(http/http_cookie)).
 :- use_module(library(http/http_header)).
-:- use_module(library(http/https_open)).
+:- use_module(library(http/http_open)).
 :- use_module(library(lists)).
 :- use_module(library(md5)).
 :- use_module(library(rdf)).
+:- use_module(library(semweb/rdf_ext)).
 :- use_module(library(semweb/rdf_guess)).
 :- use_module(library(semweb/rdf_http_plugin)).
 :- use_module(library(semweb/rdf_ntriples)).
@@ -54,14 +55,6 @@ HASH/
 :- use_module(library(xsd/xsd_number)).
 :- use_module(library(zlib)).
 
-:- use_module(library(date_time/date_time)).
-:- use_module(library(file_ext)).
-:- use_module(library(hdt/hdtio)).
-:- use_module(library(os_ext)).
-:- use_module(library(rdf/rdfio)).
-:- use_module(library(thread_ext)).
-:- use_module(library(uri/uri_ext)).
-
 :- debug(clean).
 
 :- meta_predicate
@@ -69,7 +62,6 @@ HASH/
 
 :- nodebug(http(_)).
 
-:- rdf_register_prefix(bnode, 'https://lodlaundromat.org/.well-known/genid/').
 :- rdf_register_prefix(llh, 'https://lodlaundromat.org/http/').
 :- rdf_register_prefix(llo, 'https://lodlaundromat.org/ontology/').
 :- rdf_register_prefix(llr, 'https://lodlaundromat.org/resource/').
@@ -283,7 +275,7 @@ open_uri(Uri, In2, Dicts2) :-
 open_uri1(Uri, In2, NumRetries, Visited, [Dict|Dicts]) :-
   rdf_http_plugin:rdf_accept_header_value(_, Accept),
   call_statistics(
-    https_open(
+    http_open(
       Uri,
       In1,
       [
@@ -293,6 +285,7 @@ open_uri1(Uri, In2, NumRetries, Visited, [Dict|Dicts]) :-
         redirect(false),
         request_header(accept,Accept),
         status_code(Status),
+        timeout(60),
         version(Major-Minor)
       ]
     ),
@@ -448,70 +441,6 @@ archive_format(zip, true).
 
 
 
-%! clean_graph(+G1, -G2) is det.
-
-clean_graph(G1, G3) :-
-  rdf11:post_graph(G2, G1),
-  (G2 == user -> G3 = default ; G3 = G2).
-
-
-
-%! clean_object(+O1, -O2) is semidet.
-
-clean_object(O1, O2) :-
-  rdf11:legacy_literal_components(O1, D, Lex1, LTag1), !,
-  (   rdf_equal(rdf:'HTML', D)
-  ->  rdf11:write_xml_literal(html, Lex1, Lex2)
-  ;   rdf_equal(rdf:'XMLLiteral', D)
-  ->  rdf11:write_xml_literal(xml, Lex1, Lex2)
-  ;   rdf_equal(xsd:decimal, D)
-  ->  string_codes(Lex1, Cs1),
-      phrase(decimalLexicalMap(Val), Cs1),
-      phrase(decimalCanonicalMap(Val), Cs2),
-      atom_codes(Lex2, Cs2)
-  ;   Lex2 = Lex1
-  ),
-  catch(
-    (
-      rdf11:post_object(O2, O1),
-      rdf11:pre_object(O2, O3),
-      rdf11:legacy_literal_components(O3, D, Lex3, LTag3)
-    ),
-    E,
-    true
-  ),
-  % Warn for a non-canonical lexical form.
-  (   Lex2 \== Lex3
-  ->  print_message(warning, non_canonical_lexical_form(D,Lex2,Lex3))
-  ;   true
-  ),
-  % Warn for a non-canonical language tag.
-  (   ground(LTag1),
-      LTag1 \== LTag3
-  ->  print_message(warning, non_canonical_language_tag(LTag1))
-  ;   true
-  ),
-  % Warn and fail for an incorrect lexical form.
-  (var(E) -> true ; print_message(warning, E), fail).
-clean_object(O, O).
-
-
-
-%! clean_tuple(+Tuple, -Quad) is det.
-
-clean_tuple(rdf(S,P,O1,G1), rdf(S,P,O2,G2)) :- !,
-  clean_graph(G1, G2),
-  clean_object(O1, O2),
-  (rdf_is_subject(S) -> true ; debug(clean, "BUGGY S ~w", [S]), fail),
-  (rdf_is_predicate(P) -> true ; debug(clean, "BUGGY P ~w", [P]), fail),
-  (rdf_is_object(O2) -> true ; debug(clean, "BUGGY O ~w", [O2]), fail),
-  (rdf_is_graph(G2) -> true ; debug(clean, "BUGGY G ~w", [G2]), fail).
-clean_tuple(rdf(S,P,O), Quad) :-
-  rdf_default_graph(G),
-  clean_tuple(rdf(S,P,O,G), Quad).
-
-
-
 %! extensions_to_media_type(+Exts, -MT) is det.
 
 extensions_to_media_type(Exts, MT) :-
@@ -623,14 +552,6 @@ hash_to_directory(Hash, Dir) :-
 ll_create_bnode(BNode) :-
   uuid(Local),
   rdf_global_id(bnode:Local, BNode).
-
-
-
-%! rdf_is_graph(+G) is semidet.
-
-rdf_is_graph(default) :- !.
-rdf_is_graph(G) :-
-  rdf_is_iri(G).
 
 
 

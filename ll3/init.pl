@@ -23,4 +23,3 @@ tmon :-
 % @tbd Document that ‘ll(idle)’ overrules ‘ll(_)’.
 %:- debug(ll(_)).
 %:- debug(seedlist(_)).
-:- debug(rdf_clean_quad).
