@@ -33,6 +33,7 @@
 :- rdf_register_prefix(llh, 'https://lodlaundromat.org/http/').
 :- rdf_register_prefix(llo, 'https://lodlaundromat.org/ontology/').
 :- rdf_register_prefix(llr, 'https://lodlaundromat.org/resource/').
+:- rdf_register_prefix(void, 'http://rdfs.org/ns/void#').
 
 :- rdf_meta
    ckan(r, r, o, ?),
