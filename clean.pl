@@ -30,7 +30,7 @@ HASH/
 ```
 
 @author Wouter Beek
-@version 2017/04
+@version 2017/04-2017/05
 */
 
 :- use_module(library(apply)).
@@ -41,8 +41,10 @@ HASH/
 :- use_module(library(http/http_cookie)).
 :- use_module(library(http/http_header)).
 :- use_module(library(http/http_open)).
+:- use_module(library(file_ext)).
 :- use_module(library(lists)).
 :- use_module(library(md5)).
+:- use_module(library(option)).
 :- use_module(library(rdf)).
 :- use_module(library(semweb/rdf_ext)).
 :- use_module(library(semweb/rdf_guess)).
@@ -72,52 +74,49 @@ HASH/
 
 
 
-%! clean_uri(+BaseUri) is det.
+%! clean_uri(+Uri) is det.
 
-clean_uri(BaseUri) :-
-  md5_hash(BaseUri, Hash, []),
-  debug(clean, "Starting: ~a ~a", [Hash,BaseUri]),
-  store_warnings(Hash, download_uri(BaseUri, Hash, ArchFile, HttpMT)),
+clean_uri(Uri) :-
+  md5_hash(Uri, Hash, []),
+  debug(clean, "Starting: ~a ~a", [Hash,Uri]),
+  store_warnings(Hash, download_uri(Uri, Hash, ArchFile)),
   % Two cases: (1) download failed, (2) download succeeded.
   (   var(ArchFile)
   ->  hash_to_file(Hash, source, TmpFile),
       % Delete the source file.
       delete_file(TmpFile)
   ;   atomic_list_concat([a,Hash], :, Alias),
-      ignore(uri_media_type(BaseUri, ExtMT)),
       call_in_thread(
         Alias,
-        unpack_file(BaseUri, Hash, ExtMT, HttpMT, ArchFile)
+        unpack_file(Uri, Hash, ArchFile)
       )
   ),
   finish_meta_and_warn(Hash),
-  debug(clean, "Ended: ~a ~a", [Hash,BaseUri]).
+  debug(clean, "Ended: ~a ~a", [Hash,Uri]).
 
 
 
-%! clean_file(+BaseUri, +Hash, +ExtMT, +HttpMT, +EntryFile) is det.
+%! clean_file(+Uri, +Hash, +MediaTypes, +EntryFile) is det.
 
-clean_file(BaseUri, Hash, ExtMT, HttpMT, EntryFile) :-
+clean_file(Uri, Hash, MediaTypes2, EntryFile) :-
   rdf_global_id(bnode:Hash, BNodePrefix),
   hash_to_file(Hash, data, DataFileTmp),
   (   setup_call_cleanup(
         (
-          open(EntryFile, read, In),
+          rdf_open(EntryFile, In, [media_type(MediaType)]),
           open(DataFileTmp, write, Out)
         ),
         (
-          rdf_guess(In, MTs),
-          choose_media_type(MTs, HttpMT, ExtMT, MT),
           Count = count(0),
           call_statistics(
-            clean_stream(Count, In, Out, BNodePrefix, BaseUri, MT),
+            clean_stream(Count, In, Out, BNodePrefix, Uri, MediaType),
             walltime,
             Walltime
           ),
           arg(1, Count, NumTriples),
           stream_metadata(In, Out, Walltime, StreamDict),
-          MT = media(Super/Sub,_),
-          format(string(MT0), "~a/~a", [Super,Sub])
+          MediaType = media(Super/Sub,_),
+          format(string(MediaType0), "~a/~a", [Super,Sub])
         ),
         (
           close(In),
@@ -134,7 +133,7 @@ clean_file(BaseUri, Hash, ExtMT, HttpMT, EntryFile) :-
           write_ntriple(MetaOut, Entry, rdf:type, llo:'Cleaning'),
           write_ntriple(MetaOut, Entry, void:triples,
                         NumTriples^^xsd:nonNegativeInteger),
-          write_ntriple(MetaOut, Entry, llo:rdfMediaType, MT0^^xsd:string),
+          write_ntriple(MetaOut, Entry, llo:rdfMediaType, MediaType0^^xsd:string),
           write_stream_metadata(MetaOut, Entry, StreamDict)
         ),
         close(MetaOut)
@@ -143,68 +142,55 @@ clean_file(BaseUri, Hash, ExtMT, HttpMT, EntryFile) :-
       print_message(warning, non_rdf)
   ).
 
-choose_media_type([MT], _, _, MT) :- !.
-choose_media_type(MTs1, HttpMT, ExtMT, MT1) :-
-  exclude(var, [HttpMT,ExtMT], MTs2),
-  member(MT1, MTs1),
-  member(MT2, MTs2),
-  generalization(MT1, MT2), !.
-choose_media_type(_, _, _, media(application/trig,[])).
-
 % N-Quads
-clean_stream(Count, In, Out, BNodePrefix, BaseUri,
-             media(application/'n-quads',_)) :- !,
+clean_stream(Count, In, Out, BNodePrefix, Uri, media(application/'n-quads',_)) :- !,
   rdf_process_ntriples(
     In,
     write_clean_tuples(Count, Out),
-    [anon_prefix(BNodePrefix),base_uri(BaseUri)]
+    [anon_prefix(BNodePrefix),base_uri(Uri)]
   ).
 % N-Triples
-clean_stream(Count, In, Out, BNodePrefix, BaseUri,
-             media(application/'n-triples',_)) :- !,
+clean_stream(Count, In, Out, BNodePrefix, Uri, media(application/'n-triples',_)) :- !,
   rdf_process_ntriples(
     In,
     write_clean_tuples(Count, Out),
-    [anon_prefix(BNodePrefix),base_uri(BaseUri)]
+    [anon_prefix(BNodePrefix),base_uri(Uri)]
   ).
 % RDF/XML
-clean_stream(Count, In, Out, _BNodePrefix, BaseUri,
-             media(application/'rdf+xml',_)) :- !,
+clean_stream(Count, In, Out, _BNodePrefix, Uri, media(application/'rdf+xml',_)) :- !,
   % @tbd blank nodes
-  process_rdf(In, write_clean_tuples(Count, Out), [base_uri(BaseUri)]).
+  process_rdf(In, write_clean_tuples(Count, Out), [base_uri(Uri)]).
 % TriG
-clean_stream(Count, In, Out, BNodePrefix, BaseUri,
-             media(application/trig,_)) :- !,
+clean_stream(Count, In, Out, BNodePrefix, Uri, media(application/trig,_)) :- !,
   rdf_process_turtle(
     In,
     write_clean_tuples(Count, Out),
     [
       anon_prefix(BNodePrefix),
-      base_uri(BaseUri),
+      base_uri(Uri),
       format(trig),
       resources(iri)
     ]
   ).
 % Turtle
-clean_stream(Count, In, Out, BNodePrefix, BaseUri,
-             media(text/turtle,_)) :- !,
+clean_stream(Count, In, Out, BNodePrefix, Uri, media(text/turtle,_)) :- !,
   rdf_process_turtle(
     In,
     write_clean_tuples(Count, Out),
     [
       anon_prefix(BNodePrefix),
-      base_uri(BaseUri),
+      base_uri(Uri),
       format(turtle),
       resources(iri)
     ]
   ).
 % RDFa
-clean_stream(Count, In, Out, BNodePrefix, BaseUri, MT) :-
+clean_stream(Count, In, Out, BNodePrefix, Uri, MT) :-
   memberchk(
     MT,
     [media(application/'xhtml+xml',_),media(text/html,_)]
   ), !,
-  read_rdfa(In, Triples, [anon_prefix(BNodePrefix),base(BaseUri)]),
+  read_rdfa(In, Triples, [anon_prefix(BNodePrefix),base(Uri)]),
   maplist(write_clean_tuple(Count, Out), Triples).
 % unsupported Media Type
 clean_stream(_, _, _, _, _, MT) :-
@@ -212,22 +198,22 @@ clean_stream(_, _, _, _, _, MT) :-
 
 
 
-%! download_uri(+Uri, +Hash, -File, -HttpMT) is det.
+%! download_uri(+Uri, +Hash, -File) is det.
 %
 % Step 1: Download archive
 
-download_uri(Uri, Hash, File, HttpMT) :-
+download_uri(Uri, Hash, File) :-
   hash_to_file(Hash, source, FileTmp),
   catch(
     setup_call_cleanup(
       (
         open(FileTmp, write, Out, [type(binary)]),
-        open_uri(Uri, In, HttpDicts)
+        rdf_open(Uri, In, [metadata(HttpMetadata)])
       ),
       (   var(In)
       ->  true
       ;   call_statistics(copy_stream_data(In, Out), walltime, Walltime),
-          stream_metadata(In, Out, Walltime, StreamDict)
+          stream_metadata(In, Out, Walltime, StreamMetadata)
       ),
       (
         close(In),
@@ -237,15 +223,7 @@ download_uri(Uri, Hash, File, HttpMT) :-
     E,
     true
   ),
-  (   var(E)
-  ->  rename_file(FileTmp, data, File),
-      (   HttpDicts = [HttpDict|_],
-          get_dict(content_type, HttpDict.headers, ContentType)
-      ->  http_parse_header_value(content_type, ContentType, HttpMT)
-      ;   true
-      )
-  ;   true
-  ),
+  (var(E) -> rename_file(FileTmp, data, File) ; true),
   hash_to_file(Hash, 'meta.nt', MetaFile),
   setup_call_cleanup(
     open(MetaFile, append, MetaOut),
@@ -253,108 +231,31 @@ download_uri(Uri, Hash, File, HttpMT) :-
       rdf_global_id(llr:Hash, Source),
       write_ntriple(MetaOut, Source, rdf:type, llo:'Download'),
       write_ntriple(MetaOut, Source, llo:uri, Uri^^xsd:anyURI),
-      (   var(StreamDict)
+      (   var(StreamMetadata)
       ->  true
-      ;   write_stream_metadata(MetaOut, Source, StreamDict)
+      ;   write_stream_metadata(MetaOut, Source, StreamMetadata)
       ),
-      (   var(HttpDicts)
+      (   var(HttpMetadata)
       ->  true
-      ;   write_http_metadata(MetaOut, Source, HttpDicts)
+      ;   write_http_metadata(MetaOut, Source, HttpMetadata)
       )
     ),
     close(MetaOut)
   ).
 
-open_uri(Uri, In, []) :-
-  uri_components(Uri, uri_components(file,_,_,_,_)), !,
-  uri_file_name(Uri, File),
-  open(File, read, In, [type(binary)]).
-open_uri(Uri, In2, Dicts2) :-
-  open_uri1(Uri, In2, 1, [], Dicts1),
-  reverse(Dicts1, Dicts2).
-
-open_uri1(Uri, In2, NumRetries, Visited, [Dict|Dicts]) :-
-  rdf_http_plugin:rdf_accept_header_value(_, Accept),
-  call_statistics(
-    http_open(
-      Uri,
-      In1,
-      [
-        authenticate(false),
-        header(location,Location),
-        headers(Headers),
-        redirect(false),
-        request_header(accept,Accept),
-        status_code(Status),
-        timeout(60),
-        version(Major-Minor)
-      ]
-    ),
-    walltime,
-    Walltime
-  ),
-  maplist(term_to_pair, Headers, Pairs),
-  dict_pairs(HeadersDict, Pairs),
-  format(string(Version), "~d.~d", [Major,Minor]),
-  Dict = _{
-    headers: HeadersDict,
-    status: Status,
-    uri: Uri,
-    version: Version,
-    walltime: Walltime
-  },
-  open_uri2(Uri, In1, Location, Status, NumRetries, Visited, In2, Dicts).
-
-% authentication error
-open_uri2(_, In, _, Status, _, _, _, []) :-
-  Status =:= 401,
-  close(In),
-  print_message(warning, http_error_code(Status)).
-% non-authentication error
-open_uri2(Uri, In1, _, Status, NumRetries1, Visited, In2, Dicts) :-
-  between(400, 599, Status), !,
-  NumRetries2 is NumRetries1 + 1,
-  (   NumRetries2 >= 5
-  ->  close(In1),
-      Dicts = [],
-      print_message(warning, http_error_code(Status))
-  ;   open_uri1(Uri, In2, NumRetries2, Visited, Dicts)
-  ).
-% redirect
-open_uri2(Uri1, In1, Location, Status, NumRetries, Visited1, In2, Dicts) :-
-  between(300, 399, Status), !,
-  close(In1),
-  uri_resolve(Location, Uri1, Uri2),
-  Visited2 = [Uri2|Visited1],
-  (   length(Visited2, NumVisited),
-      NumVisited >= 5
-  ->  close(In1),
-      Dicts = [],
-      print_message(warning, http_max_redirect(5,Uri2))
-  ;   include(==(Uri2), Visited2, Visited3),
-      length(Visited3, NumRepeats),
-      NumRepeats >= 2
-  ->  close(In1),
-      Dicts = [],
-      print_message(warning, http_redirect_loop(Uri2))
-  ;   open_uri1(Uri2, In2, NumRetries, Visited2, Dicts)
-  ).
-% succes
-open_uri2(_, In, _, _, _, _, In, []).
 
 
-
-%! unpack_file(+BaseUri, +Hash, +ExtMT, +HttpMT, +File) is det.
+%! unpack_file(+Uri, +Hash, +File) is det.
 %
 % Step 2: Unpack archive file into entry files
 
-unpack_file(BaseUri, Hash, ExtMT, HttpMT, File) :-
+unpack_file(Uri, Hash, File) :-
   findall(format(Format), archive_format(Format, true), Opts),
   setup_call_cleanup(
     archive_open(File, read, Arch, [filter(all)|Opts]),
     forall(
       store_warnings(Hash, archive_data_stream(Arch, In, [meta_data(Dicts)])),
-      unpack_stream(BaseUri, Hash, ExtMT, HttpMT, File, In, Dicts)
+      unpack_stream(Uri, Hash, File, In, Dicts)
     ),
     archive_close(Arch)
   ),
@@ -363,14 +264,14 @@ unpack_file(BaseUri, Hash, ExtMT, HttpMT, File) :-
 
 
 
-%! unpack_stream(+BaseUri, +Hash, +ExtMT, +HttpMT, +File, +In, +Dicts) is det.
+%! unpack_stream(+Uri, +Hash, +File, +In, +Dicts) is det.
 
 % raw data
-unpack_stream(BaseUri, Hash, ExtMT, HttpMT, File, In, [_]) :- !,
+unpack_stream(Uri, Hash, File, In, [_]) :- !,
   close(In),
-  store_warnings(Hash, clean_file(BaseUri, Hash, ExtMT, HttpMT, File)).
+  store_warnings(Hash, clean_file(Uri, Hash, File)).
 % more unpacking
-unpack_stream(BaseUri, Hash0, ExtMT0, HttpMT, _, In0, [Dict0,_]) :-
+unpack_stream(Uri, Hash0, _, In0, [Dict0,_]) :-
   _{
     filetype: file,
     filters: Filters,
@@ -380,7 +281,7 @@ unpack_stream(BaseUri, Hash0, ExtMT0, HttpMT, _, In0, [Dict0,_]) :-
     permissions: Permissions,
     size: Size
   } :< Dict0,
-  atomic_list_concat([BaseUri,EntryName], ' ', Name),
+  atomic_list_concat([Uri,EntryName], ' ', Name),
   md5_hash(Name, Hash, []),
   hash_to_file(Hash, source, DataFileTmp),
   setup_call_cleanup(
@@ -412,9 +313,10 @@ unpack_stream(BaseUri, Hash0, ExtMT0, HttpMT, _, In0, [Dict0,_]) :-
     ),
     close(MetaOut)
   ),
-  (file_media_type(EntryName, ExtMT) -> true ; ExtMT = ExtMT0),
+  uri_file_name(EntryNameUri, EntryName),
+  uri_media_type(EntryNameUri, ExtMT)
   atomic_list_concat([e,Hash], :, Alias),
-  call_in_thread(Alias, unpack_file(BaseUri, Hash, ExtMT, HttpMT, DataFile)),
+  call_in_thread(Alias, unpack_file(Uri, Hash, DataFile)),
   finish_meta_and_warn(Hash).
 
 
@@ -439,40 +341,6 @@ archive_format(raw, true).
 archive_format(tar, true).
 archive_format(xar, true).
 archive_format(zip, true).
-
-
-
-%! extensions_to_media_type(+Exts, -MT) is det.
-
-extensions_to_media_type(Exts, MT) :-
-  member(Ext1, Exts),
-  (   media_type_ext(MT, Ext1)
-  ;   alt_ext(Ext1, Ext2),
-      media_type_ext(MT, Ext2)
-  ), !.
-
-media_type_ext(media(application/'ld+json',[]), jsonld).
-media_type_ext(media(application/'n-quads',[]), nq).
-media_type_ext(media(application/'n-triples',[]), nt).
-media_type_ext(media(application/'rdf+xml',[]), rdf).
-media_type_ext(media(application/trig,[]), trig).
-media_type_ext(media(application/'xhtml+xml',[]), xhtml).
-media_type_ext(media(text/html,[]), html).
-media_type_ext(media(text/turtle,[]), ttl).
-
-alt_ext(json, jsonld).
-alt_ext(nquads, nq).
-alt_ext(ntriples, nt).
-alt_ext(n3, ttl).
-alt_ext(turtle, ttl).
-
-
-
-%! file_media_type(+File, -MT) is det.
-
-file_media_type(File, MT) :-
-  file_extensions(File, Exts),
-  extensions_to_media_type(Exts, MT).
 
 
 
@@ -506,28 +374,6 @@ finish_warn(Hash) :-
 
 
 
-%! generalization(+MT1, +MT2) is semidet.
-
-generalization(MT, MT) :- !.
-generalization(MT1, MT3) :-
-  generalization0(MT1, MT2),
-  generalization(MT2, MT3).
-
-generalization0(
-  media(application/trig,Params),
-  media(text/turtle,Params)
-).
-generalization0(
-  media(application/'n-quads',Params),
-  media(application/'n-triples',Params)
-).
-generalization0(
-  media(text/turtle,Params),
-  media(application/'n-triples',Params)
-).
-
-
-
 %! hash_to_file(+Hash, +Local, -File) is det.
 
 hash_to_file(Hash, Local, File) :-
@@ -545,14 +391,6 @@ hash_to_directory(Hash, Dir) :-
   atom_codes(Dir1, [H1,H2]),
   atom_codes(Dir2, T),
   atomic_list_concat(['',scratch,wbeek,ll,Dir1,Dir2], /, Dir).
-
-
-
-%! ll_create_bnode(-BNode) is det.
-
-ll_create_bnode(BNode) :-
-  uuid(Local),
-  rdf_global_id(bnode:Local, BNode).
 
 
 
@@ -611,42 +449,13 @@ stream_metadata(In, Out, Walltime, Dict) :-
     walltime: Walltime
   }.
 
-stream_metadata(Stream, Dict) :-
-  stream_property(Stream, position(Pos)),
-  stream_position_data(byte_count, Pos, NumBytes),
-  stream_position_data(char_count, Pos, NumChars),
-  stream_position_data(line_count, Pos, NumLines),
-  stream_property(Stream, newline(Newline)),
-  Dict = _{
-    byte_count: NumBytes,
-    char_count: NumChars,
-    line_count: NumLines,
-    newline: Newline
-  }.
-
-
-
-%! term_to_pair(+Term, -Pair) is det.
-
-term_to_pair(Term, Key-Val2) :-
-  Term =.. [Key,Val1],
-  with_output_to(string(Val2), write_canonical(Val1)).
-
-
-
-%! uri_media_type(+Uri, -MT) is det.
-
-uri_media_type(Uri, MT) :-
-  uri_file_extensions(Uri, Exts),
-  extensions_to_media_type(Exts, MT).
-
 
 
 %! write_clean_tuple(+Count, +Out, +Tuple) is det.
 
 write_clean_tuple(Count, Out, Tuple) :-
-  clean_tuple(Tuple, rdf(S,P,O,_)), !,
-  write_ntriple0(Out, S, P, O),
+  rdf_clean_tuple(Tuple, rdf(S,P,O,_)), !,
+  rdf_ext:write_ntriple_part0(Out, S, P, O),
   write_eot(Out),
   arg(1, Count, N1),
   N2 is N1 + 1,
@@ -656,48 +465,6 @@ write_clean_tuple(_, _, _).
 
 write_clean_tuples(Count, Out, Tuples, _) :-
   maplist(write_clean_tuple(Count, Out), Tuples).
-
-write_ntriple0(Out, S, P, O) :-
-  write_subject(Out, S),
-  write(Out, ' '),
-  write_predicate(Out, P),
-  write(Out, ' '),
-  write_object(Out, O),
-  write(Out, ' ').
-
-write_eot(Out) :-
-  write(Out, '.\n').
-
-write_graph(Out, G) :-
-  write_iri(Out, G).
-
-write_iri(Out, Iri) :-
-  turtle:turtle_write_uri(Out, Iri).
-
-write_predicate(Out, P) :-
-  write_iri(Out, P).
-
-write_object(Out, S) :-
-  write_subject(Out, S), !.
-write_object(Out, Lit) :-
-  write_literal(Out, Lit).
-
-write_subject(Out, Iri) :-
-  rdf_is_iri(Iri), !,
-  write_iri(Out, Iri).
-
-write_literal(Out, Val^^D) :- !,
-  rdf_lexical_form(Val^^D, Lex^^D),
-  turtle:turtle_write_quoted_string(Out, Lex),
-  write(Out, '^^'),
-  write_iri(Out, D).
-write_literal(Out, Lex@LTag) :- !,
-  turtle:turtle_write_quoted_string(Out, Lex),
-  write(Out, '@'),
-  write(Out, LTag).
-write_literal(Out, V) :-
-  rdf_equal(xsd:string, D),
-  write_literal(Out, V^^D).
 
 
 
@@ -730,7 +497,7 @@ write_http_metadata(Out, S, N1, [H|T]) :-
     walltime: Walltime
   } :< H,
   rdf_membership_property(N1, P),
-  ll_create_bnode(BNode),
+  rdf_create_bnode_iri(BNode),
   write_ntriple(Out, S, P, BNode),
   write_ntriple(Out, BNode, rdf:type, llo:'HttpRequest'),
   write_ntriple(Out, BNode, llo:status, Status^^xsd:nonNegativeInteger),
@@ -759,10 +526,10 @@ write_stream_metadata(Out, S, Dict) :-
     out: OutDict,
     walltime: Walltime
   } :< Dict,
-  ll_create_bnode(InStream),
+  rdf_create_bnode_iri(InStream),
   write_ntriple(Out, S, llo:inputStream, InStream),
   write_iostream_metadata(Out, InStream, InDict),
-  ll_create_bnode(OutStream),
+  rdf_create_bnode_iri(OutStream),
   write_ntriple(Out, S, llo:outputStream, OutStream),
   write_iostream_metadata(Out, OutStream, OutDict),
   write_ntriple(Out, S, llo:walltime, Walltime^^xsd:float).

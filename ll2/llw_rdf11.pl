@@ -7,9 +7,7 @@
 */
 
 :- use_module(library(html/html_ext)).
-:- use_module(library(http/html_write)).
-:- use_module(library(http/http_dispatch)).
-:- use_module(library(http/http_ext)).
+:- use_module(library(http/http_server)).
 
 :- use_module(ll(style/ll_style)).
 
@@ -62,61 +60,61 @@ rdf11_term_iri -->
       h3("IRIs"),
       p([
         "IRIs are represented by Prolog atoms.  Since IRIs contain characters like slash an colon that have special meaning in Prolog IRIs need to be enclosed in single quotes.  ",
-        html_code("'http://example.org'"),
+        code("'http://example.org'"),
         " is an example of an IRI (notice the surrounding single quotes!).  If you know that something is an RDF term, you can check whether it is an IRI with predicate ",
-        html_code("rdf_is_iri/1"),
+        code("rdf_is_iri/1"),
         ".  However, this predicate also succeeds for many atoms that are not RDF terms, e.g., ",
-        html_code("rdf_is_iri(not_an_iri)"),
+        code("rdf_is_iri(not_an_iri)"),
         " succeeds even though ",
-        html_code("not_an_iri"),
+        code("not_an_iri"),
         " does not follow IRI syntax.  If you want to check whether an arbitrary Prolog term is an IRI or not you can use ",
-        html_code("uri_is_global/1"),
+        code("uri_is_global/1"),
         " from module ",
-        html_code("library(uri)"),
+        code("library(uri)"),
         ".  The latter does require some parsing and is therefore slower than ",
-        html_code("rdf_is_iri/1"),
+        code("rdf_is_iri/1"),
         ", which is prefered in situations where you know that the term you are checking is an RDF term."
       ]),
       p([
         "IRIs can become quite long.  Take for instance the following IRI which is used very often in RDF data: ",
-        html_code("'http://www.w3.org/1999/02/22-rdf-syntax-ns#type'"),
+        code("'http://www.w3.org/1999/02/22-rdf-syntax-ns#type'"),
         ".  Clearly it would be ugly to include this lengthy IRI in your Prolog source code and it would be a nuisance to have to type it repeatedly at the Prolog top-level when performing an RDF query.  Therefore IRIs can be compactly represented by compound terms of the form ",
-        html_code("Alias:Local"),
+        code("Alias:Local"),
         ", where ",
-        html_code("Alias"),
+        code("Alias"),
         " stands for a, typically lengthy, IRI prefix and ",
-        html_code("Local"),
+        code("Local"),
         " is the, generally much briefer, IRI suffix that remains.  For our example we can write ",
-        html_code("rdf:type"),
+        code("rdf:type"),
         " instead of ",
-        html_code("'http://www.w3.org/1999/02/22-rdf-syntax-ns#type'"),
+        code("'http://www.w3.org/1999/02/22-rdf-syntax-ns#type'"),
         ", since ",
-        html_code("rdf"),
+        code("rdf"),
         " is the common alias for the IRI prefix ",
-        html_code("'http://www.w3.org/1999/02/22-rdf-syntax-ns#'"),
+        code("'http://www.w3.org/1999/02/22-rdf-syntax-ns#'"),
         ".  A list of common aliases is maintained by the Web site ",
         \external_link('http://prefix.cc'),
         ".  Notice that in the abbreviated notation ",
-        html_code("rdf:type"),
+        code("rdf:type"),
         " we do not need to enclose any part between single quotes, since ",
-        html_code("rdf"),
+        code("rdf"),
         " and ",
-        html_code("type"),
+        code("type"),
         " are both legal Prolog atoms."
       ]),
       p([
         "The RDF 1.1 library predefines several common prefixes (see Table 1).  Other prefixes can be defined with the predicate ",
-        html_code("rdf_register_prefix/2"),
+        code("rdf_register_prefix/2"),
         " which takes an alias and the IRI prefix it abbreviates (in that order).  For instance, suppose we use the IRIs ",
-        html_code("'http://example.org/a'"),
+        code("'http://example.org/a'"),
         " and ",
-        html_code("'http://example.org/b'"),
+        code("'http://example.org/b'"),
         " a lot in our code.  It makes sense to add the directive ",
-        html_code(":- rdf_register_prefix(ex, 'http://example.org/')."),
+        code(":- rdf_register_prefix(ex, 'http://example.org/')."),
         " at the beginning of our program.  We can now write the briefer ",
-        html_code("ex:a"),
+        code("ex:a"),
         " and ",
-        html_code("ex:b"),
+        code("ex:b"),
         " instead."
       ]),
       \table(
@@ -136,21 +134,21 @@ rdf11_term_iri -->
         ])
       ),
       p([
-        html_code("rdf_global_id(-, +)"),
+        code("rdf_global_id(-, +)"),
         " uses the alias that is associated with the longest IRI prefix.  For instance, in the following example alias ",
-        html_code("b"),
+        code("b"),
         " is used since it results in a shorter local name than when alias ",
-        html_code("a"),
+        code("a"),
         " would have been used."
       ]),
-      \html_code("?- rdf_register_prefix(a, 'http://a/').
+      \code("?- rdf_register_prefix(a, 'http://a/').
 ?- rdf_register_prefix(b, 'http://a/b/').
 ?- rdf_global_id(Alias:Local, 'http://a/b/c').
 Alias = b,
 Local = c"),
       p([
         "Compact IRI notation is expanded by concatenating the local name to the namespace, resulting in an absolute IRI.  Since compact IRI expansion is implemented with ",
-        html_code("expand_goal/2"),
+        code("expand_goal/2"),
         " the use of these constructs in compiled code does not incur a performance penalty."
       ])
     ])
@@ -170,7 +168,7 @@ rdf11_term_bnode -->
       h3("Blank nodes"),
       p([
         "A new blank node is created with the predicate ",
-        html_code("rdf_create_bnode/1"),
+        code("rdf_create_bnode/1"),
         "."
       ])
     ])
@@ -208,24 +206,24 @@ rdf11_triple_positional -->
       ]),
       p([
         "When variables are used to denote arbitrary RDF terms in the context of a triple, then the variable names ",
-        html_code("s"),
+        code("s"),
         ", ",
-        html_code("p"),
+        code("p"),
         " and ",
-        html_code("o"),
+        code("o"),
         " are often used to indicate an arbitrary subject, predicate and object term: ",
-        html_code("〈s,p,o〉"),
+        code("〈s,p,o〉"),
         "."
       ]),
       p([
         "Notice that the positional types of a term are determined ",
         em("relative to a triple"),
         ".  Specifically, the positional types of an RDF term may be differ for different triples.  For example, ",
-        html_code("x"),
+        code("x"),
         " is a subject term in triple ",
-        html_code("〈x,p,o〉"),
+        code("〈x,p,o〉"),
         " but a predicate term in triple ",
-        html_code("〈s,x,o〉"),
+        code("〈s,x,o〉"),
         "."
       ])
     ])
@@ -315,13 +313,13 @@ rdf11_semantics_term -->
         " and resources denoted by literals are called ",
         \concept("literal values"),
         ".  This is a rather nutty practice because everything that can be denote by an IRI can also be denote by a literal and vice versa.  For instance the resource denoted by the IRI ",
-        html_code("ex:amsterdam"),
+        code("ex:amsterdam"),
         " can also be denoted by the literal ",
-        html_code("\"Amsterdam\"@en"),
+        code("\"Amsterdam\"@en"),
         ", and the literal ",
-        html_code("\"-1\"^^xsd:integer"),
+        code("\"-1\"^^xsd:integer"),
         " can also be denoted by the IRI ",
-        html_code("ex:minus_one"),
+        code("ex:minus_one"),
         ".  We conclude that ‘referent’ and ‘literal value’ are further synonyms of ‘resource’."
       ]),
       p([

@@ -15,7 +15,7 @@
 @version 2017/04
 */
 
-:- use_module(library(ckan_api)).
+:- use_module(library(ckan_query)).
 :- use_module(library(debug)).
 :- use_module(library(md5)).
 :- use_module(library(persistency)).
@@ -66,56 +66,9 @@ end_seed(Hash) :-
 
 init_seedlist :-
   forall(
-    (
-      ckan(S, ckan:format, Format^^xsd:string, File),
-      rdf_format(Format)
-    ),
-    (
-      ckan(S, ckan:url, Uri^^_, File),
-      add_seed(Uri)
-    )
+    ckan_resource_uri(Uri),
+    add_seed(Uri)
   ).
-
-rdf_format("api/sparql").
-rdf_format("application/n-triples").
-rdf_format("application/rdf xml").
-rdf_format("application/trig").
-rdf_format("application/x-nquads").
-rdf_format("application/x-ntriples").
-rdf_format("application/x-trig").
-rdf_format("example/n3").
-rdf_format("example/ntriples").
-rdf_format("example/rdf+xml").
-rdf_format("example/rdfa").
-rdf_format("example/turtle").
-rdf_format("GZIP::NQUADS").
-rdf_format("gzip::nquads").
-rdf_format("HTML+RDFa").
-rdf_format("linked data").
-rdf_format("mapping/owl").
-rdf_format("mapping/RDFS").
-rdf_format("meta/owl").
-rdf_format("meta/rdf-schema").
-rdf_format("meta/void").
-rdf_format("n-quads").
-rdf_format("n-triples").
-rdf_format("N-Triples").
-rdf_format("OWL").
-rdf_format("owl, ontology, meta/owl").
-rdf_format("rdf").
-rdf_format("RDF").
-rdf_format("rdf-turtle").
-rdf_format("rdf/turtle").
-rdf_format("rdf-xml").
-rdf_format("RDFa").
-rdf_format("SPARQL").
-rdf_format("Sparql-query").
-rdf_format("SPARQL web form").
-rdf_format("text/n3").
-rdf_format("text/rdf+n3").
-rdf_format("text/rdf+ttl").
-rdf_format("text/turtle").
-rdf_format("ttl").
 
 
 

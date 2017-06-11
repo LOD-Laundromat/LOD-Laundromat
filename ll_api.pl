@@ -1,9 +1,6 @@
 :- module(
   ll_api,
   [
-    ckan/1,       % ?File
-    ckan/4,       % ?S, ?P, ?O, ?File
-    ckan_formats/0,
     ll/1,         % ?File
     ll/4,         % ?S, ?P, ?O, ?File
     ll_doc/2,     % -Doc, -NumTriples
@@ -36,47 +33,10 @@
 :- rdf_register_prefix(void, 'http://rdfs.org/ns/void#').
 
 :- rdf_meta
-   ckan(r, r, o, ?),
    ll(r, r, o, ?),
    llm(r, r, o, ?).
 
 
-
-
-
-%! ckan(?File) is nondet.
-%! ckan(?S, ?P, ?O, ?File) is nondet.
-
-ckan(File) :-
-  absolute_file_name(
-    '*.hdt',
-    File,
-    [access(read),expand(true),solutions(all)]
-  ).
-  
-ckan(S, P, O, File) :-
-  ckan(File),
-  hdt_call_on_file(File, hdt0(S, P, O)).
-
-
-
-%! ckan_formats is det.
-
-ckan_formats :-
-  findall(
-    Format-dummy,
-    ckan(_, ckan:format, Format^^xsd:string, _),
-    Pairs
-  ),
-  sort(1, @=<, Pairs, SortedPairs),
-  group_pairs_by_key(SortedPairs, JoinedPairs),
-  maplist(number_of_values, JoinedPairs, NumberPairs),
-  transpose_pairs(NumberPairs, InvPairs),
-  keysort(InvPairs, Rows),
-  maplist(writeln, Rows).
-
-number_of_values(Key-Vals, Key-NumVals) :-
-  length(Vals, NumVals).
 
 
 
