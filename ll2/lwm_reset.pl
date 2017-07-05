@@ -16,7 +16,7 @@ Reset data documents in the triple store.
 :- use_module(library(apply)).
 :- use_module(library(dcg/basics)).
 :- use_module(library(debug)).
-:- use_module(library(filesex)).
+:- use_module(library(file_ext)).
 :- use_module(library(lists)).
 :- use_module(library(settings)).
 :- use_module(library(thread)).

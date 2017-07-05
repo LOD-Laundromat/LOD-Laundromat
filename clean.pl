@@ -125,7 +125,7 @@ clean_file(BaseUri, Hash, ExtMT, HttpMT, EntryFile) :-
         )
       )
   ->  rename_file(DataFileTmp, nt, DataFile),
-      finish_ntriples_file(DataFile),
+      rdf2hdt(DataFile),
       hash_to_file(Hash, 'meta.nt', MetaFile),
       setup_call_cleanup(
         open(MetaFile, append, MetaOut),
@@ -480,7 +480,7 @@ file_media_type(File, MT) :-
 
 finish_meta(Hash) :-
   hash_to_file(Hash, 'meta.nt', MetaFile),
-  finish_ntriples_file(MetaFile).
+  rdf2hdt(MetaFile).
 
 
 
