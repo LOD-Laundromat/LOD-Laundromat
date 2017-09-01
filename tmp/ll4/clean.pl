@@ -62,8 +62,6 @@ HASH/
 :- meta_predicate
     store_warnings(+, 0).
 
-:- nodebug(http(_)).
-
 :- rdf_register_prefix(bnode, 'https://lodlaundromat.org/.well-known/genid/', [force(true)]).
 :- rdf_register_prefix(llh, 'https://lodlaundromat.org/http/').
 :- rdf_register_prefix(llo, 'https://lodlaundromat.org/ontology/').
@@ -77,12 +75,12 @@ HASH/
 %! clean_uri(+Uri) is det.
 
 clean_uri(Uri) :-
-  md5_hash(Uri, Hash, []),
+  md5(Uri, Hash),
   debug(clean, "Starting: ~a ~a", [Hash,Uri]),
   store_warnings(Hash, download_uri(Uri, Hash, ArchFile)),
   % Two cases: (1) download failed, (2) download succeeded.
   (   var(ArchFile)
-  ->  hash_to_file(Hash, source, TmpFile),
+  ->  hash_file(Hash, source, TmpFile),
       % Delete the source file.
       delete_file(TmpFile)
   ;   atomic_list_concat([a,Hash], :, Alias),
@@ -100,7 +98,7 @@ clean_uri(Uri) :-
 
 clean_file(Uri, Hash, MediaTypes2, EntryFile) :-
   rdf_global_id(bnode:Hash, BNodePrefix),
-  hash_to_file(Hash, data, DataFileTmp),
+  hash_file(Hash, data, DataFileTmp),
   (   setup_call_cleanup(
         (
           rdf_open(EntryFile, In, [media_type(MediaType)]),
@@ -125,7 +123,7 @@ clean_file(Uri, Hash, MediaTypes2, EntryFile) :-
       )
   ->  rename_file(DataFileTmp, nt, DataFile),
       finish_ntriples_file(DataFile),
-      hash_to_file(Hash, 'meta.nt', MetaFile),
+      hash_file(Hash, 'meta.nt', MetaFile),
       setup_call_cleanup(
         open(MetaFile, append, MetaOut),
         (
@@ -203,7 +201,7 @@ clean_stream(_, _, _, _, _, MT) :-
 % Step 1: Download archive
 
 download_uri(Uri, Hash, File) :-
-  hash_to_file(Hash, source, FileTmp),
+  hash_file(Hash, source, FileTmp),
   catch(
     setup_call_cleanup(
       (
@@ -224,7 +222,7 @@ download_uri(Uri, Hash, File) :-
     true
   ),
   (var(E) -> rename_file(FileTmp, data, File) ; true),
-  hash_to_file(Hash, 'meta.nt', MetaFile),
+  hash_file(Hash, 'meta.nt', MetaFile),
   setup_call_cleanup(
     open(MetaFile, append, MetaOut),
     (
@@ -283,7 +281,7 @@ unpack_stream(Uri, Hash0, _, In0, [Dict0,_]) :-
   } :< Dict0,
   atomic_list_concat([Uri,EntryName], ' ', Name),
   md5_hash(Name, Hash, []),
-  hash_to_file(Hash, source, DataFileTmp),
+  hash_file(Hash, source, DataFileTmp),
   setup_call_cleanup(
     open(DataFileTmp, write, DataOut, [type(binary)]),
     (
@@ -294,7 +292,7 @@ unpack_stream(Uri, Hash0, _, In0, [Dict0,_]) :-
   ),
   close(In0),
   rename_file(DataFileTmp, data, DataFile),
-  hash_to_file(Hash, 'meta.nt', MetaFile),
+  hash_file(Hash, 'meta.nt', MetaFile),
   setup_call_cleanup(
     open(MetaFile, append, MetaOut),
     (
@@ -347,8 +345,9 @@ archive_format(zip, true).
 %! finish_meta(+Hash) is det.
 
 finish_meta(Hash) :-
-  hash_to_file(Hash, 'meta.nt', MetaFile),
-  finish_ntriples_file(MetaFile).
+  hash_file(Hash, 'meta.nt', NtFile),
+  hash_file(Hash, 'meta.hdt', HdtFile),
+  hdt:hdt_create_from_file(HdtFile, NtFile, []).
 
 
 
@@ -363,7 +362,7 @@ finish_meta_and_warn(Hash) :-
 %! finish_warn(+Hash) is det.
 
 finish_warn(Hash) :-
-  hash_to_file(Hash, 'warn.log', WarnFile),
+  hash_file(Hash, 'warn.log', WarnFile),
   wc(WarnFile, NumLines),
   (   NumLines =:= 0,
       exists_file(WarnFile)
@@ -371,26 +370,6 @@ finish_warn(Hash) :-
   ;   compress_file(WarnFile)
   ),
   delete_file(WarnFile).
-
-
-
-%! hash_to_file(+Hash, +Local, -File) is det.
-
-hash_to_file(Hash, Local, File) :-
-  hash_to_directory(Hash, Dir),
-  create_directory(Dir),
-  directory_file_path(Dir, Local, File).
-
-
-
-%! hash_to_directory(+Hash, -Dir) is det.
-
-hash_to_directory(Hash, Dir) :-
-  atom_codes(Hash, Cs),
-  append([H1,H2], T, Cs),
-  atom_codes(Dir1, [H1,H2]),
-  atom_codes(Dir2, T),
-  atomic_list_concat(['',scratch,wbeek,ll,Dir1,Dir2], /, Dir).
 
 
 
@@ -413,7 +392,7 @@ rename_file(File1, Ext, File2) :-
 %! store_warnings(+Hash, :Goal_0) is det.
 
 store_warnings(Hash, Goal_0) :-
-  hash_to_file(Hash, 'warn.log', File),
+  hash_file(Hash, 'warn.log', File),
   setup_call_cleanup(
     open(File, append, Out),
     (

@@ -1,0 +1,10 @@
+#+TITLE: LOD-Laundromat
+#+AUTHOR: Wouter Beek
+
+* check URI
+* download URI
+* unpack URI
+* recode file
+* guess Media Type
+* parse RDF
+* detect literal errors
