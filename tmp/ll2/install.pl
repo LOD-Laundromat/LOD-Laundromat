@@ -13,7 +13,7 @@ Let's do this!
 
 :- use_module(library(debug)).
 :- use_module(library(error)).
-:- use_module(library(filesex)).
+:- use_module(library(file_ext)).
 :- use_module(library(git)).
 :- use_module(library(lists)).
 :- use_module(library(option)).

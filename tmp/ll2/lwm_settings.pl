@@ -17,7 +17,7 @@ Generic predicates for the LOD Washing Machine.
 @version 2016/01
 */
 
-:- use_module(library(filesex)).
+:- use_module(library(file_ext)).
 :- use_module(library(settings)).
 :- use_module(library(sparql/sparql_db)).
 :- use_module(library(uri)).
