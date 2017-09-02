@@ -4,6 +4,7 @@
 :- reexport(library(ll/ll_seedlist)).
 :- reexport(library(ll/ll_unarchive)).
 
+:- use_module(library(apply)).
 :- use_module(library(debug)).
 
 :- debug(ll).
@@ -18,11 +19,10 @@ end :-
 
 test :-
   tmon,
-  call_loop(ll_download),
-  call_loop(ll_unarchive),
-  call_loop(ll_guess).
+  maplist(call_loop, [ll_download,ll_unarchive,ll_guess,ll_parse]).
 
-test1 :- add_uri('http://ieee.rkbexplorer.com/models/dump.tgz').
+test1 :-
+  add_uri('http://ieee.rkbexplorer.com/models/dump.tgz').
 
 call_loop(Mod:Goal_0) :-
   thread_create(running_loop(Mod:Goal_0), _, [alias(Goal_0),detached(true)]).
