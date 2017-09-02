@@ -3,7 +3,8 @@
   [
     add_uri/1,        % +Uri
     clear_seedlist/0,
-    seed/1,           % -Seed:dict
+    seed/1,           % -Seed
+    seed/2,           % +Hash, -Seed
     seed_add/1,       % +Dict
     seed_merge/1      % +Dict
   ]
@@ -67,9 +68,14 @@ clear_seedlist :-
 
 
 %! seed(-Seed:dict) is nondet.
+%! seed(+Hash:atom, -Seed:dict) is nondet.
 
 seed(Seed) :-
-  rocks(seedlist, _, Seed).
+  seed(_, Seed).
+
+
+seed(Hash, Seed) :-
+  rocks(seedlist, Hash, Seed).
 
 
 
