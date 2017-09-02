@@ -1,19 +1,29 @@
 :- module(
   ll_seedlist,
   [
-    add_seed/3,      % +Hash, +Status, +Dict
-    add_uri/1,       % +Uri
-    clear_seedlist/0
+    add_seed/3,       % +Hash, +Status, +Dict
+    add_uri/1,        % +Uri
+    clear_seedlist/0,
+    seed/1            % -Seed:dict
   ]
 ).
 :- reexport(library(rocks_ext)).
 
 /** <module> LOD Laundromat: Seedlist
 
-Status is either of the following:
-  - added
-  - downloading
-  - downloaded
+entry:
+  - added(dt)
+  - children(list(atom))
+  - parent(atom)
+  - status(oneof([filed,unarchiving]))
+
+uri:
+  - added(dt)
+  - children(list(atom))
+  - parent(atom)
+  - relative(boolean)
+  - status(oneof([added,downloading,filed,unarchiving]))
+  - uri(atom)
 
 @author Wouter Beek
 @version 2017/09
@@ -23,7 +33,6 @@ Status is either of the following:
 :- use_module(library(date_time)).
 :- use_module(library(dict_ext)).
 :- use_module(library(hash_ext)).
-:- use_module(library(lists)).
 :- use_module(library(uri)).
 
 :- at_halt(maplist(rocks_close, [seedlist])).
@@ -33,8 +42,8 @@ Status is either of the following:
 
 merge_dicts(partial, _, New, In, Out) :-
   merge_dicts(New, In, Out).
-merge_dicts(full, _, New, Ins, Out) :-
-  merge_dicts([New|Ins], Out).
+merge_dicts(full, _, Initial, Additions, Out) :-
+  merge_dicts([Initial|Additions], Out).
 
 
 
@@ -43,7 +52,7 @@ merge_dicts(full, _, New, Ins, Out) :-
 
 add_seed(Hash, Status, Dict1) :-
   now(Now),
-  merge_dicts(_{added: Now, status: Status}, Dict1, Dict2),
+  merge_dicts(Hash{added: Now, status: Status}, Dict1, Dict2),
   rocks_put(seedlist, Hash, Dict2).
 
 
@@ -54,7 +63,7 @@ add_uri(Uri1) :-
   uri_normalized(Uri1, Uri2),
   (uri_is_global(Uri2) -> Relative = false ; Relative = true),
   md5(Uri2, Hash),
-  add_seed(Hash, added, _{relative: Relative, uri: Uri2}).
+  add_seed(Hash, added, Hash{relative: Relative, uri: Uri2}).
 
 
 
@@ -62,3 +71,10 @@ add_uri(Uri1) :-
 
 clear_seedlist :-
   rocks_clear(seedlist).
+
+
+
+%! seed(-Seed:dict) is nondet.
+
+seed(Seed) :-
+  rocks(seedlist, _, Seed).
