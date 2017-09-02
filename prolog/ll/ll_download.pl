@@ -15,13 +15,13 @@
 
 
 ll_download :-
-  with_mutex(download, (
+  with_mutex(ll_download, (
     seed(Seed),
     Hash{relative: false, status: added, uri: Uri} :< Seed,
     seed_merge(Hash{status: downloading})
   )),
   ll_download1(Hash, Uri, HttpMeta, ContentMeta),
-  with_mutex(download,
+  with_mutex(ll_download,
     seed_merge(Hash{content: ContentMeta, http: HttpMeta, status: filed})
   ).
 

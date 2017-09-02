@@ -22,7 +22,7 @@ uri:
   - children(list(atom))
   - parent(atom)
   - relative(boolean)
-  - status(oneof([added,downloading,filed,unarchiving]))
+  - status(oneof([added,depleted,downloading,filed,unarchived,unarchiving]))
   - uri(atom)
 
 @author Wouter Beek

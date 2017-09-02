@@ -16,7 +16,7 @@
 :- use_module(library(ll/ll_seedlist)).
 
 ll_unarchive :-
-  with_mutex(unarchive, (
+  with_mutex(ll_unarchive, (
     seed(Seed),
     Hash1{status: filed} :< Seed,
     seed_merge(Hash1{status: unarchiving})
@@ -28,7 +28,7 @@ ll_unarchive :-
   ;   maplist(hash_entry_hash(Hash1), Entries, Children),
       Dict = Hash1{children: Children, status: depleted}
   ),
-  with_mutex(unarchive, seed_merge(Dict)).
+  with_mutex(ll_unarchive, seed_merge(Dict)).
 
 % open dirty file
 ll_unarchive1(Hash1, File, Entry) :-
@@ -136,4 +136,11 @@ ll_unarchive_entry2(Hash1, ArchiveMeta, Hash2, In1, Out) :-
       close(In2)
     )
   ),
-  seed_add(Hash2{archive: ArchiveMeta, content: ContentMeta, parent: Hash1}).
+  seed_add(
+    Hash2{
+      archive: ArchiveMeta,
+      content: ContentMeta,
+      parent: Hash1,
+      status: filed
+    }
+  ).

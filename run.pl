@@ -1,17 +1,31 @@
 :- reexport(library(ll/ll_analysis)).
 :- reexport(library(ll/ll_download)).
+:- reexport(library(ll/ll_guess)).
 :- reexport(library(ll/ll_seedlist)).
 :- reexport(library(ll/ll_unarchive)).
 
 :- use_module(library(debug)).
+
 :- debug(ll).
 
-test :-
-  add_uri('http://ieee.rkbexplorer.com/models/dump.tgz'),
-  ll_download,
-  ll_unarchive,
-  true.
+:- meta_predicate
+    call_loop(0),
+    running_loop(0).
 
 end :-
   clear_seedlist,
   halt.
+
+test :-
+  tmon,
+  call_loop(ll_download),
+  call_loop(ll_unarchive),
+  call_loop(ll_guess).
+
+test1 :- add_uri('http://ieee.rkbexplorer.com/models/dump.tgz').
+
+call_loop(Mod:Goal_0) :-
+  thread_create(running_loop(Mod:Goal_0), _, [alias(Goal_0),detached(true)]).
+
+running_loop(Goal_0) :- Goal_0, !, running_loop(Goal_0).
+running_loop(Goal_0) :- sleep(1), running_loop(Goal_0).
