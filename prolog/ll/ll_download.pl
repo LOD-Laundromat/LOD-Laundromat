@@ -6,9 +6,7 @@
 @version 2017/09
 */
 
-:- use_module(library(hash_ext)).
 :- use_module(library(hash_stream)).
-:- use_module(library(http/http_client2), []).
 :- use_module(library(ll/ll_generics)).
 :- use_module(library(ll/ll_seedlist)).
 
@@ -35,7 +33,7 @@ ll_download1(Hash, Uri, HttpMeta, ContentMeta) :-
 
 ll_download2(Uri, Out, HttpMeta, ContentMeta) :-
   setup_call_cleanup(
-    http_client2:http_open2(Uri, In, [], HttpMeta),
+    rdf_http_open(Uri, In, HttpMeta),
     ll_download3(In, Out, ContentMeta),
     close(In)
   ).
