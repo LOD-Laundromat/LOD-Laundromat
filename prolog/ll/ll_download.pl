@@ -18,19 +18,15 @@ ll_download :-
   with_mutex(download, (
     seed(Seed),
     Hash{relative: false, status: added, uri: Uri} :< Seed,
-    rocks_merge(seedlist, Hash, Hash{status: downloading})
+    seed_merge(Hash{status: downloading})
   )),
   ll_download1(Hash, Uri, HttpMeta, ContentMeta),
   with_mutex(download,
-    rocks_merge(
-      seedlist,
-      Hash,
-      Hash{content: ContentMeta, http: HttpMeta, status: filed}
-    )
+    seed_merge(Hash{content: ContentMeta, http: HttpMeta, status: filed})
   ).
 
 ll_download1(Hash, Uri, HttpMeta, ContentMeta) :-
-  hash_file('/home/wbeek/data/ll', Hash, dirty, File1),
+  hash_file(Hash, dirty, File1),
   setup_call_cleanup(
     open(File1, write, Out1, [type(binary)]),
     ll_download2(Uri, Out1, HttpMeta, ContentMeta),

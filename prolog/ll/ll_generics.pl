@@ -1,8 +1,9 @@
 :- module(
   ll_generics,
   [
-    content_meta/2,   % +In, -Meta
-    hash_entry_hash/3 % +Hash1, +Entry, -Hash2
+    content_meta/2,    % +In, -Meta
+    hash_entry_hash/3, % +Hash1, +Entry, -Hash2
+    hash_file/3        % +Hash, +Local, -File
   ]
 ).
 
@@ -40,3 +41,10 @@ content_meta(In, Meta) :-
 
 hash_entry_hash(Hash1, Entry, Hash2) :-
   md5(Hash1-Entry, Hash2).
+
+
+
+%! hash_file(+Hash:atom, +Local:atom, -File:atom) is det.
+
+hash_file(Hash, Local, File) :-
+  hash_file('/home/wbeek/data/ll', Hash, Local, File).

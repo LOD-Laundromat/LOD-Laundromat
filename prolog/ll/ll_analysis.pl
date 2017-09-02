@@ -1,9 +1,4 @@
-:- module(
-  ll_analysis,
-  [
-    ll_analysis/1 % ?Hash
-  ]
-).
+:- module(ll_analysis, [ll_analysis/0]).
 
 /** <module> LOD Laundromat: Analysis
 
@@ -16,12 +11,19 @@
 
 
 
-ll_analysis(Hash) :-
-  rocks(seedlist, Hash, SeedDict),
-  ll_analysis1(SeedDict).
+ll_analysis :-
+  seed(Seed),
+  forall(ll_analysis1(Seed), true).
 
-ll_analysis1(SeedDict) :-
-  seed{content: ContentMeta, http: HttpMeta} :< SeedDict,
+% HTTP `Content-Type' header
+ll_analysis1(Seed) :-
+  Hash{content: ContentMeta, http: HttpMeta} :< Seed,
   HttpMeta = [HttpDict|_],
   ignore(metadata_content_type([HttpDict], MediaType)),
-  (var(MediaType) -> assertion(ContentMeta.number_of_bytes == 0) ; true).
+  (   var(MediaType)
+  ->  (   ContentMeta.number_of_bytes == 0
+      ->  true
+      ;   print_message(warning, no_content_type_yet_nonempty_body(Hash))
+      )
+  ;   true
+  ).

@@ -1,13 +1,13 @@
 :- module(
   ll_seedlist,
   [
-    add_seed/3,       % +Hash, +Status, +Dict
     add_uri/1,        % +Uri
     clear_seedlist/0,
-    seed/1            % -Seed:dict
+    seed/1,           % -Seed:dict
+    seed_add/1,       % +Dict
+    seed_merge/1      % +Dict
   ]
 ).
-:- reexport(library(rocks_ext)).
 
 /** <module> LOD Laundromat: Seedlist
 
@@ -33,6 +33,7 @@ uri:
 :- use_module(library(date_time)).
 :- use_module(library(dict_ext)).
 :- use_module(library(hash_ext)).
+:- use_module(library(rocks_ext)).
 :- use_module(library(uri)).
 
 :- at_halt(maplist(rocks_close, [seedlist])).
@@ -48,22 +49,13 @@ merge_dicts(full, _, Initial, Additions, Out) :-
 
 
 
-%! add_seed(+Hash:atom, +Status:atom, +Dict:dict) is det.
-
-add_seed(Hash, Status, Dict1) :-
-  now(Now),
-  merge_dicts(Hash{added: Now, status: Status}, Dict1, Dict2),
-  rocks_put(seedlist, Hash, Dict2).
-
-
-
 %! add_uri(+Uri:atom) is det.
 
 add_uri(Uri1) :-
   uri_normalized(Uri1, Uri2),
   (uri_is_global(Uri2) -> Relative = false ; Relative = true),
   md5(Uri2, Hash),
-  add_seed(Hash, added, Hash{relative: Relative, uri: Uri2}).
+  seed_add(Hash{relative: Relative, status: added, uri: Uri2}).
 
 
 
@@ -78,3 +70,21 @@ clear_seedlist :-
 
 seed(Seed) :-
   rocks(seedlist, _, Seed).
+
+
+
+%! seed_add(+Dict:dict) is det.
+
+seed_add(Dict1) :-
+  dict_tag(Dict1, Hash),
+  now(Now),
+  merge_dicts(Hash{added: Now}, Dict1, Dict2),
+  rocks_put(seedlist, Hash, Dict2).
+
+
+
+%! seed_merge(+Dict:dict) is det.
+
+seed_merge(Dict) :-
+  dict_tag(Dict, Hash),
+  rocks_merge(seedlist, Hash, Dict).

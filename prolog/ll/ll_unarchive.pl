@@ -19,36 +19,34 @@ ll_unarchive :-
   with_mutex(unarchive, (
     seed(Seed),
     Hash1{status: filed} :< Seed,
-    rocks_merge(seedlist, Hash1, Hash1{status: unarchiving})
+    seed_merge(Hash1{status: unarchiving})
   )),
-  hash_file('/home/wbeek/data/ll', Hash1, dirty, File),
-  uchardet_file(File, FromEnc),
-  findall(Entry, ll_unarchive1(Hash1, File, FromEnc, Entry), Entries),
+  hash_file(Hash1, dirty, File),
+  findall(Entry, ll_unarchive1(Hash1, File, Entry), Entries),
   (   Entries == [data]
-  ->  T = []
+  ->  Dict = Hash1{status: unarchived}
   ;   maplist(hash_entry_hash(Hash1), Entries, Children),
-      T = [children-Children]
+      Dict = Hash1{children: Children, status: depleted}
   ),
-  dict_pairs(Dict, Hash1, [encoding-FromEnc,status-unarchived|T]),
-  with_mutex(unarchive, rocks_merge(seedlist, Hash1, Dict)).
+  with_mutex(unarchive, seed_merge(Dict)).
 
 % open dirty file
-ll_unarchive1(Hash1, File, FromEnc, Entry) :-
+ll_unarchive1(Hash1, File, Entry) :-
   setup_call_cleanup(
     open(File, read, In),
-    ll_unarchive2(Hash1, FromEnc, In, Entry),
+    ll_unarchive2(Hash1, In, Entry),
     close(In)
   ).
 
 % open archive
-ll_unarchive2(Hash1, FromEnc, In, Entry) :-
+ll_unarchive2(Hash1, In, Entry) :-
   findall(format(Format), stream_ext:archive_format(Format), Formats),
   setup_call_cleanup(
     (
       archive_open(In, Archive, [close_parent(false),filter(all)|Formats]),
       indent_debug(1, ll, "> ~w OPEN ARCHIVE ~w", [In,Archive])
     ),
-    ll_unarchive3(Hash1, FromEnc, Archive, Entry),
+    ll_unarchive3(Hash1, Archive, Entry),
     (
       indent_debug(-1, ll, "< ~w CLOSE ARCHIVE ~w", [Archive,In]),
       archive_close(Archive)
@@ -56,13 +54,13 @@ ll_unarchive2(Hash1, FromEnc, In, Entry) :-
   ).
 
 % open entry
-ll_unarchive3(Hash1, FromEnc, Archive, Entry) :-
+ll_unarchive3(Hash1, Archive, Entry) :-
   archive_data_stream(Archive, In, [meta_data(ArchiveMeta)]), %NONDET
   ArchiveMeta = [Dict|_],
   _{name: Entry} :< Dict,
   indent_debug(1, ll, "> ~w OPEN ENTRY ~w ‘~a’", [Archive,In,Entry]),
   call_cleanup(
-    ll_unarchive4(Hash1, ArchiveMeta, Entry, FromEnc, In),
+    ll_unarchive4(Hash1, ArchiveMeta, Entry, In),
     (
       indent_debug(-1, ll, "< ~w ‘~a’ CLOSE ENTRY ~w", [In,Entry,Archive]),
       close(In)
@@ -70,16 +68,18 @@ ll_unarchive3(Hash1, FromEnc, Archive, Entry) :-
   ).
 
 % recode entry stream
-ll_unarchive4(Hash, _, data, FromEnc, In) :- !,
-  ll_unarchive_data1(Hash, FromEnc, In).
-ll_unarchive4(Hash, ArchiveMeta, Entry, _, In) :-
+ll_unarchive4(Hash, _, data, In) :- !,
+  ll_unarchive_data1(Hash, In).
+ll_unarchive4(Hash, ArchiveMeta, Entry, In) :-
   ll_unarchive_entry1(Hash, ArchiveMeta, Entry, In).
 
 
 
 % DATA %
 
-ll_unarchive_data1(Hash, FromEnc, In1) :-
+ll_unarchive_data1(Hash, In1) :-
+  hash_file(Hash, dirty, File1),
+  uchardet_file(File1, FromEnc),
   setup_call_cleanup(
     recode_stream(FromEnc, In1, In2),
     ll_unarchive_data2(Hash, In1, In2),
@@ -92,11 +92,7 @@ ll_unarchive_data2(Hash, In1, In2) :-
   ll_unarchive_data3(Hash, In2).
 
 ll_unarchive_data3(Hash, In) :-
-  maplist(
-    hash_file('/home/wbeek/data/ll', Hash),
-    [dirty,'dirty.tmp'],
-    [File1,File2]
-  ),
+  maplist(hash_file(Hash), [dirty,'dirty.tmp'], [File1,File2]),
   setup_call_cleanup(
     open(File2, write, Out),
     copy_stream_data(In, Out),
@@ -116,7 +112,7 @@ ll_unarchive_data_close(In1, In2) :-
 % open output file, whose name is based in `Entry'
 ll_unarchive_entry1(Hash1, ArchiveMeta, Entry, In) :-
   hash_entry_hash(Hash1, Entry, Hash2),
-  hash_file('/home/wbeek/data/ll', Hash2, dirty, File),
+  hash_file(Hash2, dirty, File),
   setup_call_cleanup(
     open(File, write, Out),
     ll_unarchive_entry2(Hash1, ArchiveMeta, Hash2, In, Out),
@@ -140,8 +136,4 @@ ll_unarchive_entry2(Hash1, ArchiveMeta, Hash2, In1, Out) :-
       close(In2)
     )
   ),
-  add_seed(
-    Hash2,
-    filed,
-    Hash2{archive: ArchiveMeta, content: ContentMeta, parent: Hash1}
-  ).
+  seed_add(Hash2{archive: ArchiveMeta, content: ContentMeta, parent: Hash1}).
