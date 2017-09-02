@@ -1,6 +1,7 @@
 :- reexport(library(ll/ll_analysis)).
 :- reexport(library(ll/ll_download)).
 :- reexport(library(ll/ll_guess)).
+:- reexport(library(ll/ll_parse)).
 :- reexport(library(ll/ll_seedlist)).
 :- reexport(library(ll/ll_unarchive)).
 

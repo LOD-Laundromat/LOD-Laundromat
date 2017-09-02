@@ -43,7 +43,7 @@ ll_download3(In1, Out, ContentMeta) :-
     open_hash_stream(In1, In2, [algorithm(md5),close_parent(false)]),
     (
       copy_stream_data(In2, Out),
-      content_meta(In2, ContentMeta)
+      stream_meta(In2, ContentMeta)
     ),
     close(In2)
   ).

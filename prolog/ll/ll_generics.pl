@@ -1,11 +1,11 @@
 :- module(
   ll_generics,
   [
-    content_meta/2,    % +In, -Meta
     hash_entry_hash/3, % +Hash1, +Entry, -Hash2
     hash_file/3,       % +Hash, +Local, -File
     rdf_http_open/3,   % +Uri, -In, -HttpMeta
-    seed_base_uri/2    % +Seed, -BaseUri
+    seed_base_uri/2,   % +Seed, -BaseUri
+    stream_meta/2      % +In, -Meta
   ]
 ).
 
@@ -20,25 +20,6 @@
 :- use_module(library(hash_stream)).
 :- use_module(library(http/rfc7231)).
 :- use_module(library(ll/ll_seedlist)).
-
-
-
-%! content_meta(+In:stream, -Meta:dict) is det.
-
-content_meta(In, Meta) :-
-  stream_property(In, position(Position)),
-  stream_position_data(byte_count, Position, NumberOfBytes),
-  stream_position_data(char_count, Position, NumberOfChars),
-  stream_position_data(line_count, Position, NumberOfLines),
-  stream_property(In, newline(Newline)),
-  stream_hash(In, Hash),
-  Meta = content{
-    hash: Hash,
-    newline: Newline,
-    number_of_bytes: NumberOfBytes,
-    number_of_chars: NumberOfChars,
-    number_of_lines: NumberOfLines
-  }.
 
 
 
@@ -84,3 +65,22 @@ seed_base_uri(Seed1, BaseUri) :-
   _{parent: Parent} :< Seed1,
   seed(Parent, Seed2),
   seed_base_uri(Seed2, BaseUri).
+
+
+
+%! stream_meta(+In:stream, -Meta:dict) is det.
+
+stream_meta(In, Meta) :-
+  stream_property(In, position(Position)),
+  stream_position_data(byte_count, Position, NumberOfBytes),
+  stream_position_data(char_count, Position, NumberOfChars),
+  stream_position_data(line_count, Position, NumberOfLines),
+  stream_property(In, newline(Newline)),
+  stream_hash(In, Hash),
+  Meta = content{
+    hash: Hash,
+    newline: Newline,
+    number_of_bytes: NumberOfBytes,
+    number_of_chars: NumberOfChars,
+    number_of_lines: NumberOfLines
+  }.

@@ -14,6 +14,7 @@
 :- use_module(library(hash_stream)).
 :- use_module(library(ll/ll_generics)).
 :- use_module(library(ll/ll_seedlist)).
+:- use_module(library(zlib)).
 
 ll_unarchive :-
   with_mutex(ll_unarchive, (
@@ -92,13 +93,13 @@ ll_unarchive_data2(Hash, In1, In2) :-
   ll_unarchive_data3(Hash, In2).
 
 ll_unarchive_data3(Hash, In) :-
-  maplist(hash_file(Hash), [dirty,'dirty.tmp'], [File1,File2]),
+  maplist(hash_file(Hash), [dirty,'dirty.gz'], [File1,File2]),
   setup_call_cleanup(
-    open(File2, write, Out),
+    gzopen(File2, write, Out, [format(gzip)]),
     copy_stream_data(In, Out),
     close(Out)
   ),
-  rename_file(File2, File1).
+  delete_file(File1).
 
 ll_unarchive_data_close(In, In) :- !.
 ll_unarchive_data_close(In1, In2) :-
@@ -129,7 +130,7 @@ ll_unarchive_entry2(Hash1, ArchiveMeta, Hash2, In1, Out) :-
     ),
     (
       copy_stream_data(In2, Out),
-      content_meta(In2, ContentMeta)
+      stream_meta(In2, ContentMeta)
     ),
     (
       indent_debug(-1, ll, "< ~w CALCULATE HASH ~w", [In2,In1]),
