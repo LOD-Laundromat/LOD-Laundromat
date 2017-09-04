@@ -2,6 +2,12 @@
 
 /** <module> LOD Laundromat: Unarchive
 
+Eligibility criteria: _{status: filed}
+
+Data stream / archive leaf node: _{status: unarchived}
+
+Archive non-leaf node: _{children: Children, sstatus: depleted}
+
 @author Wouter Beek
 @version 2017/09
 */
@@ -137,7 +143,7 @@ ll_unarchive_entry2(Hash1, ArchiveMeta, Hash2, In1, Out) :-
       close(In2)
     )
   ),
-  seed_add(
+  seed_create(
     Hash2{
       archive: ArchiveMeta,
       content: ContentMeta,

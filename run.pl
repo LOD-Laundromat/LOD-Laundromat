@@ -15,7 +15,7 @@
     running_loop(0).
 
 end :-
-  clear_seedlist,
+  clear_all,
   halt.
 
 test :-

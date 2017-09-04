@@ -1,11 +1,13 @@
 :- module(
   ll_generics,
   [
+    hash_directory/2,  % +Hash, -Directory
     hash_entry_hash/3, % +Hash1, +Entry, -Hash2
     hash_file/3,       % +Hash, +Local, -File
     rdf_http_open/3,   % +Uri, -In, -HttpMeta
     seed_base_uri/2,   % +Seed, -BaseUri
-    stream_meta/2      % +In, -Meta
+    stream_meta/2,     % +In, -Meta
+    uri_hash/2         % +Uri, -Hash
   ]
 ).
 
@@ -20,6 +22,14 @@
 :- use_module(library(hash_stream)).
 :- use_module(library(http/rfc7231)).
 :- use_module(library(ll/ll_seedlist)).
+:- use_module(library(uri)).
+
+
+
+%! hash_directory(+Hash:atom, -Directory:atom) is det.
+
+hash_directory(Hash, Dir) :-
+  hash_directory('/home/wbeek/data/ll', Hash, Dir).
 
 
 
@@ -84,3 +94,11 @@ stream_meta(In, Meta) :-
     number_of_chars: NumberOfChars,
     number_of_lines: NumberOfLines
   }.
+
+
+
+%! uri_hash(+Uri:atom, -Hash:atom) is det.
+
+uri_hash(Uri1, Hash) :-
+  uri_normalized(Uri1, Uri2),
+  md5(Uri2, Hash).

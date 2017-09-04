@@ -1,12 +1,15 @@
 :- module(
   ll_seedlist,
   [
-    add_uri/1,        % +Uri
-    clear_seedlist/0,
-    seed/1,           % -Seed
-    seed/2,           % +Hash, -Seed
-    seed_add/1,       % +Dict
-    seed_merge/1      % +Dict
+    add_uri/1,     % +Uri
+    clear_all/0,
+    clear_hash/1,  % +Hash
+    clear_uri/1,   % +Uri
+    reset_uri/1,   % +Uri
+    seed/1,        % -Seed
+    seed/2,        % +Hash, -Seed
+    seed_create/1, % +Dict
+    seed_merge/1   % +Dict
   ]
 ).
 
@@ -33,7 +36,8 @@ uri:
 :- use_module(library(apply)).
 :- use_module(library(date_time)).
 :- use_module(library(dict_ext)).
-:- use_module(library(hash_ext)).
+:- use_module(library(filesex)).
+:- use_module(library(ll/ll_generics)).
 :- use_module(library(rocks_ext)).
 :- use_module(library(uri)).
 
@@ -52,19 +56,50 @@ merge_dicts(full, _, Initial, Additions, Out) :-
 
 %! add_uri(+Uri:atom) is det.
 
-add_uri(Uri1) :-
-  uri_normalized(Uri1, Uri2),
-  (uri_is_global(Uri2) -> Relative = false ; Relative = true),
-  md5(Uri2, Hash),
-  seed_add(Hash{relative: Relative, status: added, uri: Uri2}).
+add_uri(Uri) :-
+  (uri_is_global(Uri) -> Relative = false ; Relative = true),
+  uri_hash(Uri, Hash),
+  (   rocks_key(seedlist, Hash)
+  ->  print_message(informational, existing_seed(Uri,Hash))
+  ;   seed_create(Hash{relative: Relative, status: added, uri: Uri})
+  ).
 
 
 
-%! clear_seedlist is det.
+%! clear_all is det.
 
-clear_seedlist :-
+clear_all :-
   rocks_clear(seedlist).
 
+
+
+%! clear_hash(+Hash:atom) is det.
+
+clear_hash(Hash) :-
+  seed(Hash, Seed),
+  (_{children: Children} :< Seed -> maplist(clear_hash, Children) ; true),
+  hash_directory(Hash, Dir),
+  delete_directory_and_contents(Dir),
+  rocks_delete(seedlist, Hash).
+
+
+
+%! clear_uri(+Uri:atom) is det.
+%
+% Removed all information about the given URI.
+
+clear_uri(Uri) :-
+  uri_hash(Uri, Hash),
+  clear_hash(Hash).
+
+
+
+%! reset_uri(+Uri:atom) is det.
+
+reset_uri(Uri) :-
+  clear_uri(Uri),
+  add_uri(Uri).
+  
 
 
 %! seed(-Seed:dict) is nondet.
@@ -79,9 +114,9 @@ seed(Hash, Seed) :-
 
 
 
-%! seed_add(+Dict:dict) is det.
+%! seed_create(+Dict:dict) is det.
 
-seed_add(Dict1) :-
+seed_create(Dict1) :-
   dict_tag(Dict1, Hash),
   now(Now),
   merge_dicts(Hash{added: Now}, Dict1, Dict2),

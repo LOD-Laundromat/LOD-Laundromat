@@ -36,7 +36,7 @@ ll_parse :-
   content{hash: Hash2} :< ContentMeta,
   hash_file(Hash2, 'clean.nq.gz', File2),
   rename_file(File1, File2),
-  seed_add(Hash2{content: ContentMeta, dirty: Hash1, status: cleaned}),
+  seed_create(Hash2{content: ContentMeta, dirty: Hash1, status: cleaned}),
   with_mutex(ll_parse, seed_merge(Hash1{status: parsed})).
 
 ll_parse1(Hash1, Format, BaseUri, Out1, ContentMeta) :-
