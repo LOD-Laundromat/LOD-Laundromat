@@ -1,7 +1,0 @@
-LOD Laundromat 2
-================
-
-* URI
-* Archive
-* Entry
-* RDF stream
