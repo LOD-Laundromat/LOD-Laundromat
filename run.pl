@@ -3,7 +3,10 @@
 :- reexport(library(ll/ll_guess)).
 :- reexport(library(ll/ll_parse)).
 :- reexport(library(ll/ll_seedlist)).
+:- reexport(library(ll/ll_show)).
 :- reexport(library(ll/ll_unarchive)).
+
+:- reexport(test/test_seeds).
 
 :- use_module(library(apply)).
 :- use_module(library(debug)).
