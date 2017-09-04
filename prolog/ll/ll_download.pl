@@ -39,11 +39,12 @@ ll_download2(Uri, Out, HttpMeta, ContentMeta) :-
   ).
 
 ll_download3(In1, Out, ContentMeta) :-
+  stream_pair(In1, In2, _),
   setup_call_cleanup(
-    open_hash_stream(In1, In2, [algorithm(md5),close_parent(false)]),
+    open_hash_stream(In2, In3, [algorithm(md5),close_parent(false)]),
     (
-      copy_stream_data(In2, Out),
-      stream_meta(In2, ContentMeta)
+      copy_stream_data(In3, Out),
+      stream_meta(In3, ContentMeta)
     ),
-    close(In2)
+    close(In3)
   ).
