@@ -10,12 +10,9 @@
 
 :- use_module(library(apply)).
 :- use_module(library(debug)).
+:- use_module(library(ll/ll_generics)).
 
 :- debug(ll).
-
-:- meta_predicate
-    call_loop(0),
-    running_loop(0).
 
 end :-
   clear_all,
@@ -27,9 +24,3 @@ test :-
 
 test1 :-
   add_uri('http://ieee.rkbexplorer.com/models/dump.tgz').
-
-call_loop(Mod:Goal_0) :-
-  thread_create(running_loop(Mod:Goal_0), _, [alias(Goal_0),detached(true)]).
-
-running_loop(Goal_0) :- Goal_0, !, running_loop(Goal_0).
-running_loop(Goal_0) :- sleep(1), running_loop(Goal_0).

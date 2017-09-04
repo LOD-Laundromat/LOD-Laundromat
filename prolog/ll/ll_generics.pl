@@ -1,6 +1,7 @@
 :- module(
   ll_generics,
   [
+    call_loop/1,       % :Goal_0
     hash_directory/2,  % +Hash, -Directory
     hash_entry_hash/3, % +Hash1, +Entry, -Hash2
     hash_file/3,       % +Hash, +Local, -File
@@ -23,6 +24,19 @@
 :- use_module(library(http/rfc7231)).
 :- use_module(library(ll/ll_seedlist)).
 :- use_module(library(uri)).
+
+:- meta_predicate
+    call_loop(0),
+    running_loop(0).
+
+
+
+
+
+%! call_loop(:Goal_0) is det.
+
+call_loop(Mod:Goal_0) :-
+  thread_create(running_loop(Mod:Goal_0), _, [alias(Goal_0),detached(true)]).
 
 
 
@@ -64,6 +78,17 @@ rdf_media_type(media(text/turtle,[])).
 rdf_media_type(media(application/'n-triples',[])).
 rdf_media_type(media(application/trig,[])).
 rdf_media_type(media(application/'n-quads',[])).
+
+
+
+%! running_loop(:Goal_0) is det.
+
+running_loop(Goal_0) :-
+  Goal_0, !,
+  running_loop(Goal_0).
+running_loop(Goal_0) :-
+  sleep(1),
+  running_loop(Goal_0).
 
 
 
