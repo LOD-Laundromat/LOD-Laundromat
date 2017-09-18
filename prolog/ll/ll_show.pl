@@ -1,7 +1,8 @@
 :- module(
   ll_show,
   [
-    show_uri/1 % +Uri
+    export_uri/1, % +Uri
+    show_uri/1    % +Uri
   ]
 ).
 
@@ -20,21 +21,63 @@
 :- use_module(library(lists)).
 :- use_module(library(ll/ll_generics)).
 :- use_module(library(ll/ll_seedlist)).
+:- use_module(library(stream_ext)).
 
 
+
+
+
+%! export_uri(+Uri:atom) is det.
+%! export_uri(+Uri:atom, +Format:atom) is det.
+%
+% Exports the LOD Laundromat job for the given URI to a PDF file, or
+% to a file in some other Format.
+
+export_uri(Uri) :-
+  export_uri(Uri, pdf).
+
+
+export_uri(Uri, Format) :-
+  uri_hash(Uri, Hash),
+  file_name_extension(Hash, Format, File),
+  seed(Hash, Seed),
+  setup_call_cleanup(
+    graphviz(dot, ProcIn, Format, ProcOut),
+    dot_view(ProcIn, Seed),
+    close(ProcIn)
+  ),
+  setup_call_cleanup(
+    open(File, write, Out),
+    copy_stream_type(ProcOut, Out),
+    close(Out)
+  ).
 
 
 
 %! show_uri(+Uri:atom) is det.
+%! show_uri(+Uri:atom, +Program:atom) is det.
+%
+% Shows the LOD Laundromat job for the given URI in X11, or in some
+% other Program.
 
 show_uri(Uri) :-
+  show_uri(Uri, x11).
+
+
+show_uri(Uri, Program) :-
   uri_hash(Uri, Hash),
   seed(Hash, Seed),
   setup_call_cleanup(
-    graphviz(dot, ProcIn, gtk),
+    graphviz(dot, ProcIn, Program),
     dot_view(ProcIn, Seed),
     close(ProcIn)
   ).
+
+
+
+
+
+% GENERICS %
 
 dot_view(Out, Seed) :-
   _{http: HttpMeta} :< Seed,
@@ -50,7 +93,8 @@ dot_view(Out, Seed) :-
   dot_linked_list(Out, HttpIds2, FirstId-LastId),
   dot_link(Out, SeedId, FirstId),
   % children
-  dict_get(children, Seed, [], Children),
+  dict_get(children, Seed, [], ChildPointers),
+  maplist(seed, ChildPointers, Children),
   maplist(dot_seed(Out), Children, ChildIds),
   maplist(dot_link(Out, LastId), ChildIds),
   % end
