@@ -15,18 +15,9 @@
 
 /** <module> LOD Laundromat: Seedlist
 
-entry:
   - added(dt)
-  - children(list(atom))
-  - parent(atom)
-  - status(oneof([filed,unarchiving]))
-
-uri:
-  - added(dt)
-  - children(list(atom))
-  - parent(atom)
   - relative(boolean)
-  - status(oneof([added,depleted,downloading,filed,unarchived,unarchiving]))
+  - status(atom)
   - uri(atom)
 
 @author Wouter Beek

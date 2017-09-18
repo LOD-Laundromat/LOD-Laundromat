@@ -6,7 +6,7 @@ Eligibility criteria: _{status: filed}
 
 Data stream / archive leaf node: _{status: unarchived}
 
-Archive non-leaf node: _{children: Children, sstatus: depleted}
+Archive non-leaf node: _{children: Children, status: depleted}
 
 @author Wouter Beek
 @version 2017/09

@@ -26,7 +26,7 @@ ll_download :-
   )),
   ll_download1(Hash, Uri, HttpMeta, ContentMeta),
   (   % download failed
-      ContentMeta == _{}
+      var(ContentMeta)
   ->  with_mutex(ll_download, seed_merge(Hash{http: HttpMeta, status: failed}))
   ;   % download succeeded
       with_mutex(ll_download,
