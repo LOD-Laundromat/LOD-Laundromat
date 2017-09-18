@@ -44,8 +44,8 @@ dot_view(Out, Seed) :-
   dot_seed(Out, Seed, SeedId),
   % HTTP
   maplist(dot_hash, HttpMeta, HttpIds1),
-  maplist(http_meta_label, HttpMeta, HttpLabels),
-  maplist(dot_node(Out), HttpIds1, HttpLabels),
+  maplist(http_meta_attrs, HttpMeta, HttpOptions),
+  maplist(dot_node(Out), HttpIds1, HttpOptions),
   reverse(HttpIds1, HttpIds2),
   dot_linked_list(Out, HttpIds2, FirstId-LastId),
   dot_link(Out, SeedId, FirstId),
@@ -86,7 +86,8 @@ http_header_label(Key-Values, Label) :-
   atomics_to_string(Values, "; ", Value),
   format(string(Label), "~s: ~s", [CKey,Value]).
 
-http_meta_label(HttpMeta, Label) :-
+% The second argument is an options list, as expected by dot_node/3.
+http_meta_attrs(HttpMeta, [label(Label),shape(box)]) :-
   http{
     headers: HeadersDict,
     status: Status,
