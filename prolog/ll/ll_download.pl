@@ -56,7 +56,7 @@ ll_download2(CurrentUri, Out, HttpMeta, ContentMeta) :-
     NextUri,
     [metadata(HttpMeta),request_header('Accept'=Accept)]
   ),
-  add_uri(NextUri),
+  (var(NextUri) -> true ; add_uri(NextUri)),
   call_cleanup(
     ll_download3(In, Out, HttpMeta, ContentMeta),
     close(In)
