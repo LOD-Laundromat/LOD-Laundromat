@@ -6,9 +6,9 @@
 @version 2017/09
 */
 
-:- use_module(library(dcg/dcg_ext)).
+:- use_module(library(dict_ext)).
 :- use_module(library(error)).
-:- use_module(library(http/rfc7231)).
+:- use_module(library(http/http_header)).
 :- use_module(library(ll/ll_seedlist)).
 
 
@@ -22,11 +22,26 @@ ll_analysis1(Seed) :-
   Hash{content: ContentMeta, http: HttpMeta} :< Seed,
   HttpMeta = [HttpDict|_],
   (   get_dict('content-type', HttpDict.headers, [ContentType|_])
-  ->  (   atom_phrase('content-type'(_), ContentType)
+  ->  (   http_parse_header_value(content_type, ContentType, _MediaType)
       ->  true
-      ;   type_error(media_type, ContentType)
+      ;   print_message(warning, http_content_type(ContentType))
       )
-  ;   (   ContentMeta.number_of_bytes == 0
+  ;   % If there is no `Content-Type' header, the `Content-Length' --
+      % if present -- must be 0.
+      (   dict_get('content-length', HttpDict.headers, ContentLength)
+      ->  (   atom_number(ContentLength, Length),
+              Length =:= 0
+          ->  true
+          ;   print_message(
+                warning,
+                no_content_type_yet_non_zero_content_length(ContentLength)
+              )
+          )
+      ;   true
+      ),
+      % If there is no `Content-Type' header, the stream _must_ be
+      % empty.
+      (   ContentMeta.number_of_bytes == 0
       ->  true
       ;   print_message(warning, no_content_type_yet_nonempty_body(Hash))
       )

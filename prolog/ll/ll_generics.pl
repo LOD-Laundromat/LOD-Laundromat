@@ -5,7 +5,7 @@
     hash_directory/2,  % +Hash, -Directory
     hash_entry_hash/3, % +Hash1, +Entry, -Hash2
     hash_file/3,       % +Hash, +Local, -File
-    rdf_http_open/3,   % +Uri, -In, -HttpMeta
+    rdf_media_type/1,  % ?MediaType:compound
     seed_base_uri/2,   % +Seed, -BaseUri
     stream_meta/2,     % +In, -Meta
     uri_hash/2         % +Uri, -Hash
@@ -21,7 +21,6 @@
 :- use_module(library(dcg/dcg_ext)).
 :- use_module(library(hash_ext)).
 :- use_module(library(hash_stream)).
-:- use_module(library(http/rfc7231)).
 :- use_module(library(ll/ll_seedlist)).
 :- use_module(library(uri)).
 
@@ -58,15 +57,6 @@ hash_entry_hash(Hash1, Entry, Hash2) :-
 
 hash_file(Hash, Local, File) :-
   hash_file('/home/wbeek/data/ll', Hash, Local, File).
-
-
-
-%! rdf_http_open(+Uri:atom, -In:stream, -HttpMeta:dict) is det.
-
-rdf_http_open(Uri, In, HttpMeta) :-
-  findall(MediaType, rdf_media_type(MediaType), MediaTypes),
-  atom_phrase(accept(MediaTypes), Accept),
-  http_client2:http_open2(Uri, In, [request_header('Accept'=Accept)], HttpMeta).
 
 
 
@@ -112,8 +102,7 @@ stream_meta(In, Meta) :-
   stream_position_data(line_count, Position, NumberOfLines),
   stream_property(In, newline(Newline)),
   stream_hash(In, Hash),
-  Meta = content{
-    hash: Hash,
+  Meta = Hash{
     newline: Newline,
     number_of_bytes: NumberOfBytes,
     number_of_chars: NumberOfChars,

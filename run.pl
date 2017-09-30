@@ -1,6 +1,7 @@
 :- reexport(library(ll/ll_analysis)).
 :- reexport(library(ll/ll_download)).
 :- reexport(library(ll/ll_guess)).
+:- reexport(library(ll/ll_index)).
 :- reexport(library(ll/ll_parse)).
 :- reexport(library(ll/ll_seedlist)).
 :- reexport(library(ll/ll_show)).
@@ -20,7 +21,7 @@ end :-
 
 test :-
   tmon,
-  maplist(call_loop, [ll_download,ll_unarchive,ll_guess,ll_parse]).
+  maplist(call_loop, [ll_download,ll_unarchive,ll_guess,ll_parse,ll_index]).
 
 test1 :-
   add_uri('http://ieee.rkbexplorer.com/models/dump.tgz').

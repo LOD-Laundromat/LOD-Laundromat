@@ -17,7 +17,7 @@ time, it is not possible to define a valid absolute Turtle-family IRI
 :- use_module(library(ll/ll_seedlist)).
 :- use_module(library(ordsets)).
 :- use_module(library(pio)).
-:- use_module(library(semweb/rdf_db)).
+:- use_module(library(semweb/rdf_api)).
 
 :- meta_predicate
     lexical_form_codes(//, ?, ?).

@@ -46,11 +46,14 @@ merge_dicts(full, _, Initial, Additions, Out) :-
 
 
 %! add_uri(+Uri:atom) is det.
+%
+% Add a URI to the seedlist.
 
 add_uri(Uri) :-
   (uri_is_global(Uri) -> Relative = false ; Relative = true),
   uri_hash(Uri, Hash),
-  (   rocks_key(seedlist, Hash)
+  (   % The URI has already been added to the seedlist.
+      rocks_key(seedlist, Hash)
   ->  print_message(informational, existing_seed(Uri,Hash))
   ;   seed_create(Hash{relative: Relative, status: added, uri: Uri})
   ).
@@ -58,6 +61,8 @@ add_uri(Uri) :-
 
 
 %! clear_all is det.
+%
+% Deletes the entire seedlist.
 
 clear_all :-
   rocks_clear(seedlist).

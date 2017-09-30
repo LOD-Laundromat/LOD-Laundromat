@@ -97,7 +97,7 @@ clean_uri(Uri) :-
 %! clean_file(+Uri, +Hash, +MediaTypes, +EntryFile) is det.
 
 clean_file(Uri, Hash, MediaTypes2, EntryFile) :-
-  rdf_global_id(bnode:Hash, BNodePrefix),
+  rdf_global_id('_':Hash, BNodePrefix),
   hash_file(Hash, data, DataFileTmp),
   (   setup_call_cleanup(
         (

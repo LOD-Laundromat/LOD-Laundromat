@@ -1,8 +1,82 @@
 #+TITLE: LOD-Laundromat
 #+AUTHOR: Wouter Beek
 
-* check URI
+* add URI
+
+Adding a new URI to the seed list results in the following
+registration:
+
+#+BEGIN_SRC prolog
+$(URI_HASH){relative: $(BOOL), status: added, uri: $(URI)}
+#+END_SRC
+
+We are storing seedlist registrations in a SWI dictionary
+datastructure.  SWI dictionaries are very similar to the JSON format
+for data exchange.  The main difference is the ~$(HASH)~, which we
+will use to link seedlist registrations to one another.
+
+The value of ~$(HASH)~ is computed in the following way:
+  1. Take the value of ~$(URI)~
+  2. Map uppercase characters that appear in the scheme or host
+     components to their corresponding lowercase characters[fn::See
+     §6.2.2.1 of RFC 3986
+     (https://tools.ietf.org/html/rfc3986#section-6.2.2.1)].
+  3. Map lowercase characters that denote hexadecimal digits within a
+     percent-encoded octet to their corresponding uppercase
+     characters[fn::See §6.2.2.1 of RFC 3986
+     (https://tools.ietf.org/html/rfc3986#section-6.2.2.1)].
+  4. Decode percent-encoded octets that denote unreserved
+     characters[fn::See §6.2.2.2 of RFC 3986
+     (https://tools.ietf.org/html/rfc3986#section-6.2.2.1)].
+  5. Remove the relative path references ~.~ and ~..~ by applying
+     reference resolution[fn::See §6.2.2.3 of RFC 3986
+     (https://tools.ietf.org/html/rfc3986#section-6.2.2.3)].
+  6. Take the MD5 hash.
+
+We allow relative URIs to be added to the seedlist, denoted by the
+Boolean property ~relative~.  We cannot do anything useful with
+relative URIs, because their download location is unknown due to a
+missing host machine name.  Still, we want to be able to quantify how
+often a dataset is erroneously denoted by a relative URI.
+
+The ~status~ property is going to keep track of the URI throughout the
+data cleaning process.  Its initial state is ~added~, which means that
+it is added to the seedlist.
+
+The ~uri~ property stores the URI itself.
+
 * download URI
+This state takes seeds that match the pattern in (1), and changes them
+to match pattern (2) during the download process.  If the download
+fails we only have metadata ~$(HTTP_META)~ about the TCP and/or HTTP
+communication process, resulting in a seed record with pattern (3).
+If the download succeeds, there is also content metadata
+~$(CONTENT_META)~, resulting in a seed record with pattern (4).
+
+#+BEGIN_SRC prolog
+[1] $(URI_HASH){relative: false, status: added, uri: $(URI)}
+[2] $(URI_HASH){relative: false, status: downloading, uri: $(URI)}
+[3] $(URI_HASH){http: $(HTTP_META), relative: false, status: failed, uri: $(URI)}
+[4] $(URI_HASH){content: $(CONTENT_META), http: $(HTTP_META), relative: false, status: filed, uri: $(URI)}
+#+END_SRC
+
+~$(HTTP_META)~ has the following form:
+
+#+BEGIN_SRC prolog
+
+#+END_SRC
+
+~$(CONTENT_META)~ has the following form:
+
+#+BEGIN_SRC prolog
+$(CONTENT_HASH){
+  newline: $(NEWLINE),
+  number_of_bytes: $(NONNEG),
+  number_of_chars: $(NONNEG),
+  number_of_lines: $(NONNEG)
+}
+#+END_SRC
+
 * unpack URI
 * recode file
 * guess Media Type

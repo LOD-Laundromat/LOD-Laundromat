@@ -10,13 +10,15 @@
 :- use_module(library(hash_stream)).
 :- use_module(library(ll/ll_generics)).
 :- use_module(library(ll/ll_seedlist)).
-:- use_module(library(semweb/rdf_db)).
+:- use_module(library(semweb/rdf_api)).
 :- use_module(library(semweb/rdf_ntriples)).
 :- use_module(library(semweb/rdfa)).
 :- use_module(library(semweb/turtle)).
 :- use_module(library(zlib)).
 
-:- rdf_register_prefix(bnode, 'https://lodlaundromat.org/.well-known/genid/').
+:- rdf_register_prefix('_',
+                       'https://lodlaundromat.org/.well-known/genid/',
+                      [force(true)]).
 
 
 
@@ -51,7 +53,7 @@ ll_parse1(Hash1, Format, BaseUri, Out1, ContentMeta) :-
 
 ll_parse2(Hash, Format, BaseUri, Out) :-
   hash_file(Hash, dirty, File),
-  rdf_global_id(bnode:Hash, BNodePrefix),
+  rdf_global_id('_':Hash, BNodePrefix),
   setup_call_cleanup(
     open(File, read, In),
     ll_parse3(Format, In, Out, BNodePrefix, BaseUri),

@@ -12,9 +12,14 @@ If downloading succeeds: _{content: ContentMeta, http: HttpMeta, status:filed}
 @version 2017/09
 */
 
+:- use_module(library(dcg/dcg_ext)).
 :- use_module(library(hash_stream)).
+:- use_module(library(http/http_client2)).
+:- use_module(library(http/rfc7231)).
 :- use_module(library(ll/ll_generics)).
 :- use_module(library(ll/ll_seedlist)).
+
+
 
 
 
@@ -42,9 +47,20 @@ ll_download1(Hash, Uri, HttpMeta, ContentMeta) :-
     close(Out1)
   ).
 
-ll_download2(Uri, Out, HttpMeta, ContentMeta) :-
-  rdf_http_open(Uri, In, HttpMeta),
-  (ll_download3(In, Out, HttpMeta, ContentMeta) -> close(In) ; true).
+ll_download2(CurrentUri, Out, HttpMeta, ContentMeta) :-
+  findall(MediaType, rdf_media_type(MediaType), MediaTypes),
+  atom_phrase(accept(MediaTypes), Accept),
+  http_open2(
+    CurrentUri,
+    In,
+    NextUri,
+    [metadata(HttpMeta),request_header('Accept'=Accept)]
+  ),
+  add_uri(NextUri),
+  call_cleanup(
+    ll_download3(In, Out, HttpMeta, ContentMeta),
+    close(In)
+  ).
 
 ll_download3(In1, Out, HttpMeta, ContentMeta) :-
   HttpMeta = [Dict|_],
