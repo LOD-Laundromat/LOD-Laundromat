@@ -56,8 +56,19 @@ If the download succeeds, there is also content metadata
 #+BEGIN_SRC prolog
 [1] $(URI_HASH){relative: false, status: added, uri: $(URI)}
 [2] $(URI_HASH){relative: false, status: downloading, uri: $(URI)}
-[3] $(URI_HASH){http: $(HTTP_META), relative: false, status: failed, uri: $(URI)}
-[4] $(URI_HASH){content: $(CONTENT_META), http: $(HTTP_META), relative: false, status: filed, uri: $(URI)}
+[3] $(URI_HASH){
+      http: $(HTTP_META),
+      relative: false,
+      status: failed,
+      uri: $(URI)
+    }
+[4] $(URI_HASH){
+      content: $(CONTENT_META),
+      http: $(HTTP_META),
+      relative: false,
+      status: filed,
+      uri: $(URI)
+    }
 #+END_SRC
 
 ~$(HTTP_META)~ has the following form:
@@ -143,5 +154,3 @@ the following steps:
     }
 [4] $(HASH){status: parsed}
 #+END_SRC
-
-* detect literal errors

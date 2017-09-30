@@ -15,11 +15,6 @@
 
 /** <module> LOD Laundromat: Seedlist
 
-  - added(dt)
-  - relative(boolean)
-  - status(atom)
-  - uri(atom)
-
 @author Wouter Beek
 @version 2017/09
 */
@@ -65,6 +60,13 @@ add_uri(Uri) :-
 % Deletes the entire seedlist.
 
 clear_all :-
+  forall(
+    seed(Seed),
+    (
+      Hash{} :< Seed,
+      clear_hash(Hash)
+    )
+  ),
   rocks_clear(seedlist).
 
 
@@ -73,7 +75,7 @@ clear_all :-
 
 clear_hash(Hash) :-
   seed(Hash, Seed),
-  (_{children: Children} :< Seed -> maplist(clear_hash, Children) ; true),
+  (Hash{children: Children} :< Seed -> maplist(clear_hash, Children) ; true),
   hash_directory(Hash, Dir),
   delete_directory_and_contents(Dir),
   rocks_delete(seedlist, Hash).

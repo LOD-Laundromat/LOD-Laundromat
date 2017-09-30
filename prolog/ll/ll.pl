@@ -18,8 +18,6 @@
 :- use_module(library(debug)).
 :- reexport(library(ll/ll_generics)).
 
-:- at_halt(clear_all).
-
 :- debug(ll).
 
 :- initialization
