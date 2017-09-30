@@ -1,14 +1,31 @@
-:- module(test_seeds, [test_seed/1]).
+:- module(
+  ll_sources,
+  [
+    ll_source/1 % -Uri
+  ]
+).
 
-:- use_module(library(ll/ll_seedlist)).
+/** <module> LOD Laundromat: sources for seedpoints
+
+@author Wouter Beek
+@version 2017/09
+*/
+
 :- use_module(library(http/ckan_api)).
+:- use_module(library(ll/ll_seedlist)).
 
 :- discontiguous
     rdf_format/1,
     rdf_format/2.
 
-test_seed(Uri) :-
-  ckan_resource('https://old.datahub.io', Dict),
+
+
+
+
+%! ll_source(-Uri:atom) is nondet.
+
+ll_source(Uri) :-
+  ckan_resource('https://datahub.io', Dict),
   _{format: Format, url: Uri} :< Dict,
   rdf_format(Format).
 
