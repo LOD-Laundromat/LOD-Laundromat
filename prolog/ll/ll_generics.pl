@@ -18,15 +18,25 @@
 @version 2017/09
 */
 
+:- use_module(library(conf_ext)).
 :- use_module(library(dcg/dcg_ext)).
 :- use_module(library(hash_ext)).
 :- use_module(library(hash_stream)).
 :- use_module(library(ll/ll_seedlist)).
+:- use_module(library(settings)).
 :- use_module(library(uri)).
+
+:- initialization
+   conf_json(Dict),
+   get_dict('data-directory', Dict, Dir),
+   set_setting(data_directory, Dir).
 
 :- meta_predicate
     call_loop(0),
     running_loop(0).
+
+:- setting(data_directory, atom, .,
+           "The directory where data files are stored.").
 
 
 
@@ -42,7 +52,8 @@ call_loop(Mod:Goal_0) :-
 %! hash_directory(+Hash:atom, -Directory:atom) is det.
 
 hash_directory(Hash, Dir) :-
-  hash_directory('/home/wbeek/data/ll', Hash, Dir).
+  setting(data_directory, Root),
+  hash_directory(Root, Hash, Dir).
 
 
 
@@ -56,7 +67,8 @@ hash_entry_hash(Hash1, Entry, Hash2) :-
 %! hash_file(+Hash:atom, +Local:atom, -File:atom) is det.
 
 hash_file(Hash, Local, File) :-
-  hash_file('/home/wbeek/data/ll', Hash, Local, File).
+  setting(data_directory, Root),
+  hash_file(Root, Hash, Local, File).
 
 
 
