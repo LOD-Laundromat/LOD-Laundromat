@@ -63,7 +63,13 @@ If the download succeeds, there is also content metadata
 ~$(HTTP_META)~ has the following form:
 
 #+BEGIN_SRC prolog
-
+http{
+  headers: $(HTTP_HEADERS),
+  status: $(STATUS_CODE),
+  uri: $(URI),
+  version: version{major: $(NONNEG), minor: $(NONNEG)},
+  walltime: $(FLOAT)
+}
 #+END_SRC
 
 ~$(CONTENT_META)~ has the following form:
@@ -78,7 +84,64 @@ $(CONTENT_HASH){
 #+END_SRC
 
 * unpack URI
-* recode file
+This state is started for each seed that matches [1].  If the seed
+denotes a downloaded file that is an archive, the resulting seed
+record will include pointer to each directly included ‘child’ file as
+in [3].  Status ~depleted~ denotes that no more files are enclosed
+within this file.  For each child, a new seed record of the form [4]
+is added to the seedlist.
+
+If the seed denotes a downloaded file that contains data, its seed
+record is updated to have status ~unarchived~.  We must determine the
+character encoding of the data file in order to be able to read it.
+Unfortunately, this can only be determined heuristically.  We perform
+the following steps:
+  1. We look for a Unicode Byte Order Marker (BOM), which indicates
+     that the file has Unicode encoding.
+  2. If not BOM is present, we use /unchardet/ in order to guess the
+     encoding.  If the encoding is incompatible with Unicode[fn::An
+     example of a common encoding that is compatible with Unicode is
+     (US-)ASCII.], we recode the entire file using /iconv/.
+
+#+BEGIN_SRC prolog
+[1] $(HASH){status: filed}
+[2] $(HASH){status: unarchiving}
+[3] $(HASH){children: $(CHILD_HASHES), status: depleted}
+[4] $(CHILD_HASH){
+      archive: $(ARCHIVE_META),
+      content: $(CONTENT_META),
+      parent: $(PARENT_HASH),
+      status: filed
+    }
+[5] $(HASH){status: unarchived}
+#+END_SRC
+
 * guess Media Type
+#+BEGIN_SRC prolog
+[1] $(HASH){status: unarchived}
+[2] $(HASH){status: guessing}
+[3] $(HASH){format: $(FORMAT), status: guessed}
+#+END_SRC
+
+~$(FORMAT)~ is one of the following values:
+  1. JSON-LD
+  2. N-Quads
+  3. N-Triples
+  4. RDF/XML
+  5. RDFa
+  6. TriG
+  7. Turtle
+
 * parse RDF
+#+BEGIN_SRC prolog
+[1] $(HASH){format: $(FORMAT), status: guessed}
+[2] $(HASH){status: parsing}
+[3] $(CLEAN_HASH){
+      content: $(CONTENT_META),
+      dirty: $(HASH),
+      status: cleaned
+    }
+[4] $(HASH){status: parsed}
+#+END_SRC
+
 * detect literal errors

@@ -16,9 +16,13 @@
 :- use_module(library(semweb/turtle)).
 :- use_module(library(zlib)).
 
-:- rdf_register_prefix('_',
-                       'https://lodlaundromat.org/.well-known/genid/',
-                      [force(true)]).
+:- rdf_register_prefix(
+     '_',
+     'https://lodlaundromat.org/.well-known/genid/',
+     [force(true)]
+   ).
+
+
 
 
 

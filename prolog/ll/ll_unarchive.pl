@@ -2,12 +2,6 @@
 
 /** <module> LOD Laundromat: Unarchive
 
-Eligibility criteria: _{status: filed}
-
-Data stream / archive leaf node: _{status: unarchived}
-
-Archive non-leaf node: _{children: Children, status: depleted}
-
 @author Wouter Beek
 @version 2017/09
 */
@@ -25,35 +19,35 @@ Archive non-leaf node: _{children: Children, status: depleted}
 ll_unarchive :-
   with_mutex(ll_unarchive, (
     seed(Seed),
-    Hash1{status: filed} :< Seed,
-    seed_merge(Hash1{status: unarchiving})
+    Hash{status: filed} :< Seed,
+    seed_merge(Hash{status: unarchiving})
   )),
-  hash_file(Hash1, dirty, File),
-  findall(Entry, ll_unarchive1(Hash1, File, Entry), Entries),
+  hash_file(Hash, dirty, File),
+  findall(Entry, ll_unarchive1(Hash, File, Entry), Entries),
   (   Entries == [data]
-  ->  Dict = Hash1{status: unarchived}
-  ;   maplist(hash_entry_hash(Hash1), Entries, Children),
-      Dict = Hash1{children: Children, status: depleted}
+  ->  Dict = Hash{status: unarchived}
+  ;   maplist(hash_entry_hash(Hash), Entries, Children),
+      Dict = Hash{children: Children, status: depleted}
   ),
   with_mutex(ll_unarchive, seed_merge(Dict)).
 
 % open dirty file
-ll_unarchive1(Hash1, File, Entry) :-
+ll_unarchive1(Hash, File, Entry) :-
   setup_call_cleanup(
     open(File, read, In),
-    ll_unarchive2(Hash1, In, Entry),
+    ll_unarchive2(Hash, In, Entry),
     close(In)
   ).
 
 % open archive
-ll_unarchive2(Hash1, In, Entry) :-
+ll_unarchive2(Hash, In, Entry) :-
   findall(format(Format), stream_ext:archive_format(Format), Formats),
   setup_call_cleanup(
     (
       archive_open(In, Archive, [close_parent(false),filter(all)|Formats]),
       indent_debug(1, ll, "> ~w OPEN ARCHIVE ~w", [In,Archive])
     ),
-    ll_unarchive3(Hash1, Archive, Entry),
+    ll_unarchive3(Hash, Archive, Entry),
     (
       indent_debug(-1, ll, "< ~w CLOSE ARCHIVE ~w", [Archive,In]),
       archive_close(Archive)
@@ -61,13 +55,13 @@ ll_unarchive2(Hash1, In, Entry) :-
   ).
 
 % open entry
-ll_unarchive3(Hash1, Archive, Entry) :-
+ll_unarchive3(Hash, Archive, Entry) :-
   archive_data_stream(Archive, In, [meta_data(ArchiveMeta)]), %NONDET
   ArchiveMeta = [Dict|_],
   _{name: Entry} :< Dict,
   indent_debug(1, ll, "> ~w OPEN ENTRY ~w ‘~a’", [Archive,In,Entry]),
   call_cleanup(
-    ll_unarchive4(Hash1, ArchiveMeta, Entry, In),
+    ll_unarchive4(Hash, ArchiveMeta, Entry, In),
     (
       indent_debug(-1, ll, "< ~w ‘~a’ CLOSE ENTRY ~w", [In,Entry,Archive]),
       close(In)
