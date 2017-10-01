@@ -60,12 +60,12 @@ add_uri(Uri) :-
 % Deletes the entire seedlist.
 
 clear_all :-
-  forall(
-    seed(Seed),
-    (
-      Hash{} :< Seed,
-      clear_hash(Hash)
-    )
+  repeat,
+  (   seed(Seed)
+  ->  Hash{} :< Seed,
+      clear_hash(Hash),
+      fail
+  ;   !, true
   ),
   delete_empty_directories,
   rocks_clear(seedlist).
