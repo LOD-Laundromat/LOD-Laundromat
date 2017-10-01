@@ -2,6 +2,7 @@
   ll_generics,
   [
     call_loop/1,       % :Goal_0
+    debug_step/4,      % +Flag, +Step, +Uri, +Hash
     hash_directory/2,  % +Hash, -Directory
     hash_entry_hash/3, % +Hash1, +Entry, -Hash2
     hash_file/3,       % +Hash, +Local, -File
@@ -20,6 +21,7 @@
 
 :- use_module(library(conf_ext)).
 :- use_module(library(dcg/dcg_ext)).
+:- use_module(library(debug)).
 :- use_module(library(hash_ext)).
 :- use_module(library(hash_stream)).
 :- use_module(library(ll/ll_seedlist)).
@@ -46,6 +48,16 @@
 
 call_loop(Mod:Goal_0) :-
   thread_create(running_loop(Mod:Goal_0), _, [alias(Goal_0),detached(true)]).
+
+
+
+%! debug_step(+Flag, +Step:pair(atom), +Uri:atom, +Hash:atom) is det.
+
+debug_step(Flag, From-To, Uri, Hash) :-
+  (begin_step(From-To) -> Prefix = "┌─>" ; Prefix = "└─<"),
+  debug(Flag, "~s ~a → ~a ~a (~a)", [Prefix,From,To,Uri,Hash]).
+
+begin_step(added-downloading).
 
 
 
