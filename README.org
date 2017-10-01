@@ -84,7 +84,9 @@ The ~status~ property is going to keep track of the URI throughout the
 data cleaning process.  Its initial state is ~added~, which means that
 it is added to the seedlist.
 
-The ~uri~ property stores the URI itself.
+The ~uri~ property stores the URI itself.  ~interval~ denotes the time
+in between consecutive crawls, expressed in seconds since the epoch.
+~processed~ denotes the time of the last crawl.
 
 #+BEGIN_SRC prolog
 $(URI_HASH){
@@ -92,14 +94,13 @@ $(URI_HASH){
   child: $(HASH),
   interval: $(INTERVAL),
   processed: $(PROCESSED),
-  relative: $(BOOL),
   uri: $(URI)
 }
 #+END_SRC
 
 ** Downloading the file stream
 
-This state takes seeds that match the pattern in (1), and changes them
+This stage takes seeds that match the pattern in (1), and changes them
 to match pattern (2) during the download process.  If the download
 fails we only have metadata ~$(HTTP_META)~ about the TCP and/or HTTP
 communication process, resulting in a seed record with pattern (3).
@@ -133,6 +134,9 @@ $(DOWNLOAD_HASH){
 }
 #+END_SRC
 
+The record includes the ~$(BEGIN)$~ and ~$(END)~ times of the
+download.
+
 ~$(HTTP_META)~ has the following form:
 
 #+BEGIN_SRC prolog
@@ -147,7 +151,7 @@ http{
 
 ** Unpacking the file stream
 
-This state is started for each seed that matches [1].  If the seed
+This stage is started for each seed that matches [1].  If the seed
 denotes a downloaded file that is an archive, the resulting seed
 record will include pointer to each directly included ‘child’ file as
 in [3].  Status ~depleted~ denotes that no more files are enclosed
@@ -166,7 +170,7 @@ the following steps:
      example of a common encoding that is compatible with Unicode is
      (US-)ASCII.], we recode the entire file using /iconv/.
 
-Candidate for unpacking:
+Candidates for the unpacking stage have the following form:
 
 #+BEGIN_SRC prolog
 $(ARCHIVE_HASH){status: filed}
@@ -175,27 +179,24 @@ $(ARCHIVE_HASH){status: filed}
 While unpacking:
 
 #+BEGIN_SRC prolog
-$(ENTRY_HASH){
-  parent: $(ARCHIVE_HASH),
-  status: unarchiving
-}
+$(ENTRY_HASH){parent: $(ARCHIVE_HASH), status: unarchiving}
 #+END_SRC
 
 After unpacking:
 
 #+BEGIN_SRC prolog
-$(HASH){status: unarchived}
+$(ENTRY_HASH){status: unarchived}
 % or
-$(ARCHIVE_HASH){status: depleted}
+$(ARCHIVE_HASH){children: [$(ENTRY_HASH)], status: depleted}
 $(ENTRY_HASH){parent: $(ARCHIVE_HASH), status: filed}
 #+END_SRC
 
 ** Guess the Media Type / RDF serialization format
 
 #+BEGIN_SRC prolog
-$(HASH){status: unarchived}
-$(HASH){status: guessing}
-$(HASH){format: $(FORMAT), status: guessed}
+$(ENTRY_HASH){status: unarchived}
+$(ENTRY_HASH){status: guessing}
+$(ENTRY_HASH){format: $(FORMAT), status: guessed}
 #+END_SRC
 
 ~$(FORMAT)~ is one of the following values:
@@ -210,12 +211,8 @@ $(HASH){format: $(FORMAT), status: guessed}
 ** Parsing the RDF
 
 #+BEGIN_SRC prolog
-$(HASH){format: $(FORMAT), status: guessed}
-$(HASH){status: parsing}
-$(CLEAN_HASH){
-  content: $(CONTENT_META),
-  dirty: $(HASH),
-  status: cleaned
-}
-$(HASH){status: parsed}
+$(ENTRY_HASH){format: $(FORMAT), status: guessed}
+$(ENTRY_HASH){status: parsing}
+$(CLEAN_HASH){dirty: $(ENTRY_HASH), status: cleaned}
+$(ENTRY_HASH){clean: $(CLEAN_HAHS), status: parsed}
 #+END_SRC

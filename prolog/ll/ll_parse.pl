@@ -66,7 +66,11 @@ ll_parse1(Hash1, Format, BaseUri, Out1, Meta2) :-
   ),
   arg(1, Counter, NumberOfTriples),
   arg(2, Counter, NumberOfQuads),
-  merge_dicts(Meta1, _{quads: NumberOfQuads, triples: NumberOfTriples}, Meta2).
+  merge_dicts(
+    Meta1,
+    _{number_of_quads: NumberOfQuads, number_of_triples: NumberOfTriples},
+    Meta2
+  ).
 
 ll_parse2(Hash, Format, BaseUri, Counter, Out) :-
   hash_file(Hash, dirty, File),

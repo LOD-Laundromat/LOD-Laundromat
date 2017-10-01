@@ -21,5 +21,5 @@
 :- debug(ll).
 
 :- initialization
-   (debugging(ll) -> tmon ; true),
+   %(debugging(ll) -> tmon ; true),
    maplist(call_loop, [ll_download,ll_unarchive,ll_guess,ll_parse]).

@@ -36,7 +36,7 @@ ll_guess :-
   ll_guess(File, Format),
   get_time(End),
   debug(ll(guess), "└─< guessed", []),
-  seed_merge(Hash{format: Format, guessing: Begin-End, status: guessed}).
+  seed_merge(Hash{format: Format, status: guessed, timestamp: Begin-End}).
 
 % JSON-LD
 ll_guess(File, jsonld) :-
@@ -178,8 +178,7 @@ iriref_prefix -->
   blank, !,
   {fail}.
 iriref_prefix -->
-  nonblank(Code), !,
-  {char_code(Char, Code), format(user_output, "~a\n", [Char])},
+  nonblank, !,
   iriref_prefix.
 iriref_prefix --> "".
 
