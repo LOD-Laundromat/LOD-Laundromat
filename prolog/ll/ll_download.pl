@@ -23,21 +23,21 @@ ll_download :-
   stale_seed(Uri, Hash1),
   debug(ll(download), "┌─> downloading ~a", [Uri]),
   get_time(Begin),
-  md5(Hash1-Begin, Hash2),
+  md5(Hash1-dummy, Hash2),
   seed_store(Hash2{parent: Hash1, status: downloading}),
   seed_merge(Hash1{children: [Hash2]}),
-  ll_download1(Hash2, Uri, HttpMeta, ContentMeta),
+  catch(ll_download1(Hash2, Uri, HttpMeta, ContentMeta), E, true),
   get_time(End),
-  Dict = Hash2{http: HttpMeta, timestamp: Begin-End},
-  (   % download failed
-      var(ContentMeta)
-  ->  seed_merge(Dict),
-      debug(ll(download), "└─< download failed ~a", [Uri])
-  ;   % download succeeded
-      merge_dicts([Dict,ContentMeta,Hash2{status: filed}], Dict0),
-      seed_merge(Dict0),
+  Dict1 = Hash2{http: HttpMeta, timestamp: Begin-End},
+  (   % download succeeded
+      var(E)
+  ->  merge_dicts([Dict1,ContentMeta,Hash2{status: filed}], Dict2),
       debug(ll(download), "└─< downloaded ~a", [Uri])
-  ).
+  ;   % download failed
+      merge_dicts(Dict1, Hash2{error: E}, Dict2),
+      debug(ll(download), "└─< download failed ~a", [Uri])
+  ),
+  seed_merge(Dict2).
 
 ll_download1(Hash2, Uri, HttpMeta, ContentMeta) :-
   hash_file(Hash2, dirty, File1),

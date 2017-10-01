@@ -35,7 +35,7 @@ ll_parse :-
     Hash1{format: Format, status: guessed} :< Seed,
     seed_merge(Hash1{status: parsing})
   )),
-  debug(ll(parse), "┌─> parsing ~a", [Format]),
+  debug(ll(parse), "┌─> parsing ~a (~a)", [Format,Hash1]),
   get_time(Begin),
   seed_base_uri(Seed, BaseUri),
   hash_file(Hash1, 'clean.nq.gz', File1),

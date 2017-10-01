@@ -152,7 +152,7 @@ uri_hash(Uri1, Hash) :-
 %! uri_last_modified(+Uri:atom, -LastModified:integer) is semidet.
 
 uri_last_modified(Uri, LastModified) :-
-  http_head2(Uri, [metadata(Meta)]),
+  http_head2(Uri, [meta(Meta)]),
   Meta = [Dict|_],
   _{'last-modified': [LastModifiedAtom]} :< Dict.headers,
   parse_time(LastModifiedAtom, rfc_1123, Timestamp),

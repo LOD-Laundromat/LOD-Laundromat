@@ -92,16 +92,26 @@ seed2dot_hash(Out, Hash) :-
   seed(Hash, Dict),
   seed2dot_dict(Out, Dict).
 
+% error
+seed2dot_dict(Out, Dict) :-
+  Hash{
+    error: Error,
+    status: Status
+  } :< Dict, !,
+  format(string(Header), "<B>~a</B>", [Status]),
+  error_label(Error, Label),
+  atomic_concat(n, Hash, Id),
+  dot_node(Out, Id, [label([Header,Label]),shape(box)]).
 % URI seed
 seed2dot_dict(Out, Dict) :-
   Hash1{
     added: _Added,
-    children: [Hash2],
     interval: Interval,
     processed: Processed,
     uri: Uri
   } :< Dict, !,
-  maplist(atomic_concat(n), [Hash1,Hash2], [Id1,Id2]),
+  dict_get(children, Dict, [], Hash2s),
+  maplist(atomic_concat(n), [Hash1|Hash2s], [Id1|Id2s]),
   format(string(Header), "<B>~a</B>", [Uri]),
   maplist(
     property_label,
@@ -109,8 +119,8 @@ seed2dot_dict(Out, Dict) :-
     Labels
   ),
   dot_node(Out, Id1, [label([Header|Labels]),shape(box)]),
-  dot_edge(Out, Id1, Id2, [label("hasCrawl")]),
-  seed2dot_hash(Out, Hash2).
+  maplist({Out,Id1}/[Id2]>>dot_edge(Out, Id1, Id2, [label("hasCrawl")]), Id2s),
+  maplist(seed2dot_hash(Out), Hash2s).
 % Archive
 seed2dot_dict(Out, Dict) :-
   Hash1{
@@ -288,6 +298,12 @@ property_label(processed(Time), Label) :-
 property_label(timestamp(Begin,End), Label) :-
   Duration is End - Begin,
   format(string(Label), "Duration: ~2f sec.", [Duration]).
+
+error_label(error(socket_error(Msg),_), Label) :- !,
+  format(string(Label), "Socket error: ~a", [Msg]).
+error_label(E, _Label) :-
+  gtrace,
+  writeln(E).
 
 http_header_label(Name1-Values, Label) :-
   http_header_name_label(Name1, Name2),

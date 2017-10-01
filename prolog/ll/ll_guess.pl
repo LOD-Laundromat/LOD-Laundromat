@@ -30,7 +30,8 @@ ll_guess :-
     Hash{status: unarchived} :< Seed,
     seed_merge(Hash{status: guessing})
   )),
-  debug(ll(guess), "┌─> guessing", []),
+  (Hash = '6ae04ace87439c4d4d811b278b9a5f1c' -> gtrace ; true),
+  debug(ll(guess), "┌─> guessing (~a)", [Hash]),
   get_time(Begin),
   hash_file(Hash, dirty, File),
   ll_guess(File, Format),
@@ -43,9 +44,16 @@ ll_guess(File, jsonld) :-
   phrase_from_file(jsonld, File), !.
 % N-Quads, N-Triples, TriG, Turtle
 ll_guess(File, Format) :-
-  phrase_from_file(rdf_guess1([nquads,ntriples,trig,turtle], Formats), File),
-  Formats = [Format|T],
-  (T == [] -> true ; print_message(warning, uncertainty(File,Formats))).
+  phrase_from_file(rdf_guess([nquads,ntriples,trig,turtle], Formats), File),
+  (   Formats = [Format]
+  ->  true
+  ;   Formats = [trig,turtle]
+  ->  Format = trig
+  ;   Formats = [nquads,ntriples]
+  ->  Format = nquads
+  ;   gtrace,
+      writeln(Formats)
+  ).
 ll_guess(File, Format) :-
   setup_call_cleanup(
     open(File, read, In),
@@ -84,30 +92,27 @@ json_string_rest -->
   [_],
   json_string_rest.
 
-rdf_guess1([H], [H]) --> !.
-rdf_guess1(L1, L3) -->
-  rdf_guess2(L1, L2), !,
-  rdf_guess1(L2, L3).
-
 % skip blanks
-rdf_guess2(L1, L2) -->
+rdf_guess(L1, L2) -->
   blank, !,
   blanks,
-  rdf_guess2(L1, L2).
+  rdf_guess(L1, L2).
 % N-Quads, N-Triples, TriG, Turtle comment
-rdf_guess2(L1, L2) -->
+rdf_guess(L1, L2) -->
   comment, !,
-  rdf_guess2(L1, L2).
+  rdf_guess(L1, L2).
 % Turtle, TriG base or prefix declaration
-rdf_guess2(L1, L2) -->
+rdf_guess(L1, L2) -->
   ("@base" ; "base" ; "@prefix" ; "prefix"), !,
-  {ord_subtract(L1, [nquads,ntriples], L2)}.
+  {ord_subtract(L1, [nquads,ntriples], L2)},
+  remainder(_).
 % TriG default graph
-rdf_guess2(L1, L2) -->
+rdf_guess(L1, L2) -->
   "{", !,
-  {ord_subtract(L1, [nquads,ntriples,turtle], L2)}.
+  {ord_subtract(L1, [nquads,ntriples,turtle], L2)},
+  remainder(_).
 % N-Quads, N-Triples TriG, Turtle triple or quadruple
-rdf_guess2(L1, L6) -->
+rdf_guess(L1, L6) -->
   subject(L1, L2),
   turtle_blanks,
   predicate(L2, L3), !,
@@ -128,21 +133,25 @@ rdf_guess2(L1, L6) -->
       turtle_blanks,
       "."
   ->  {ord_subtract(L5, [ntriples,trig,turtle], L6)}
-  ).
+  ),
+  remainder(_).
 % TriG, Turtle anonymous blank node
-rdf_guess2(L1, L2) -->
+rdf_guess(L1, L2) -->
   "[", !,
-  {ord_subtract(L1, [nquads,ntriples], L2)}.
+  {ord_subtract(L1, [nquads,ntriples], L2)},
+  remainder(_).
 % TriG, Turtle collection
-rdf_guess2(L1, L2) -->
+rdf_guess(L1, L2) -->
   "(", !,
-  {ord_subtract(L1, [nquads,ntriples], L2)}.
+  {ord_subtract(L1, [nquads,ntriples], L2)},
+  remainder(_).
 % TriG named graph
-rdf_guess2(L1, L3) -->
+rdf_guess(L1, L3) -->
   graph(L1, L2),
   turtle_blanks,
   "{",
-  {ord_subtract(L2, [nquads,ntriples,turtle], L3)}.
+  {ord_subtract(L2, [nquads,ntriples,turtle], L3)},
+  remainder(_).
 
 bnode -->
   "_:",

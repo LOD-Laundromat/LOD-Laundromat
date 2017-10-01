@@ -57,19 +57,19 @@ add_seed(Uri) :-
       rocks_key(seedlist, Hash)
   ->  print_message(informational, existing_seed(Uri,Hash))
   ;   get_time(Now),
-      (   uri_last_modified(Uri, LastModified)
+      (   catch(uri_last_modified(Uri, LastModified), E, fail)
       ->  Interval is Now - LastModified
       ;   setting(default_interval, Interval)
       ),
-      seed_store(
-        Hash{
-          added: Now,
-          interval: Interval,
-          processed: 0.0,
-          relative: Relative,
-          uri: Uri
-        }
-      )
+      Dict1 = Hash{
+        added: Now,
+        interval: Interval,
+        processed: 0.0,
+        relative: Relative,
+        uri: Uri
+      },
+      (var(E) -> Dict2 = Dict1 ; merge_dicts(Dict1, _{error: E}, Dict2)),
+      seed_store(Dict2)
   ).
 
 

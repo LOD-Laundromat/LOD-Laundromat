@@ -22,10 +22,7 @@
 
 
 ll_unarchive :-
-  with_mutex(ll_seedlist, (
-    seed(Dict1),
-    Hash{status: filed} :< Dict1
-  )),
+  with_mutex(ll_seedlist, (seed(Dict1), Hash{status: filed} :< Dict1)),
   seed_merge(Hash{status: unarchiving}),
   findall(Entry, ll_unarchive1(Hash, Entry), Entries),
   (   Entries == [data]
