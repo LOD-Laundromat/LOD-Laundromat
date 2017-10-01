@@ -1,7 +1,8 @@
 :- module(
   ll_sources,
   [
-    ll_source/1 % -Uri
+    ll_source/1, % +Source
+    ll_source/2  % +Source, -Uri
   ]
 ).
 
@@ -11,8 +12,9 @@
 @version 2017/09
 */
 
+:- use_module(library(debug)).
 :- use_module(library(http/ckan_api)).
-:- use_module(library(ll/ll_seedlist)).
+:- use_module(library(zlib)).
 
 :- discontiguous
     rdf_format/1,
@@ -21,12 +23,45 @@
 
 
 
+%! ll_source(+Source:oneof([datahub])) is det.
 
-%! ll_source(-Uri:atom) is nondet.
+ll_source(Source) :-
+  file_name_extension(Source, 'tsv.gz', File),
+  setup_call_cleanup(
+    gzopen(File, write, Out),
+    forall(
+      (
+        ckan_resource_loop('https://datahub.io', Dict),
+        _{format: Format, url: Uri} :< Dict
+      ),
+      format(Out, "~a\t~a\n", [Uri,Format])
+    ),
+    close(Out)
+  ).
 
-ll_source(Uri) :-
+ckan_resource_loop(Uri, Dict) :-
+  catch(ckan_resource(Uri, Dict), E, true),
+  (var(E) -> true ; print_message(warning, E), ckan_resource_loop(Uri, Dict)).
+
+
+
+%! ll_source(+Source:atom, -Uri:atom) is nondet.
+
+ll_source(Local, Uri) :-
+  absolute_file_name(Local, File, [access(read)]),
+  setup_call_cleanup(
+    gzopen(File, read, In),
+    (
+      read_line_to_string(In, Line),
+      split_string(Line, "\t", "", [Uri,Format]),
+      rdf_format(Format)
+    ),
+    close(In)
+  ).
+ll_source(datahub, Uri) :-
   ckan_resource('https://datahub.io', Dict),
   _{format: Format, url: Uri} :< Dict,
+  debug(ll(sources), "~a\t~a", [Format,Uri]),
   rdf_format(Format).
 
 rdf_format(Format) :-

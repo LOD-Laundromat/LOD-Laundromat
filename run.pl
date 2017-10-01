@@ -5,4 +5,4 @@
 :- debug(ll(_)).
 
 test1 :-
-  add_uri('http://ieee.rkbexplorer.com/models/dump.tgz').
+  add_seed('http://ieee.rkbexplorer.com/models/dump.tgz').

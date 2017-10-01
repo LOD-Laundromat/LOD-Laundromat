@@ -3,12 +3,13 @@
 /** <module> LOD Laundromat: Unarchive
 
 @author Wouter Beek
-@version 2017/09
+@version 2017/09-2017/10
 */
 
 :- use_module(library(apply)).
 :- use_module(library(archive)).
 :- use_module(library(debug_ext)).
+:- use_module(library(dict_ext)).
 :- use_module(library(file_ext)).
 :- use_module(library(hash_ext)).
 :- use_module(library(hash_stream)).
@@ -16,26 +17,32 @@
 :- use_module(library(ll/ll_seedlist)).
 :- use_module(library(zlib)).
 
+
+
+
+
 ll_unarchive :-
-  with_mutex(ll_unarchive, (
-    seed(Seed),
-    Hash{status: downloaded} :< Seed,
-    seed_merge(Hash{status: unarchiving})
+  with_mutex(ll_seedlist, (
+    seed(Dict1),
+    Hash1{status: filed} :< Dict1
   )),
-  hash_file(Hash, dirty, File),
-  findall(Entry, ll_unarchive1(Hash, File, Entry), Entries),
+  get_time(Begin),
+  md5(Hash1-Begin, Hash2),
+  seed_store(Hash2{parent: Hash1, status: unarchiving}),
+  seed_merge(Hash1{children: [Hash2]}),
+  findall(Entry, ll_unarchive1(Hash1, Hash2, Entry), Entries),
   (   Entries == [data]
-  ->  Dict = Hash{status: unarchived}
-  ;   maplist(hash_entry_hash(Hash), Entries, Children),
-      Dict = Hash{children: Children, status: depleted}
-  ),
-  with_mutex(ll_unarchive, seed_merge(Dict)).
+  ->  seed_merge(Hash2{status: unarchived})
+  ;   maplist(hash_entry_hash(Hash2), Entries, Children),
+      seed_merge(Hash2{children: Children, status: unarchived})
+  ).
 
 % open dirty file
-ll_unarchive1(Hash, File, Entry) :-
+ll_unarchive1(Hash1, Hash2, Entry) :-
+  hash_file(Hash1, dirty, File),
   setup_call_cleanup(
     open(File, read, In),
-    ll_unarchive2(Hash, In, Entry),
+    ll_unarchive2(Hash2, In, Entry),
     close(In)
   ).
 
@@ -137,11 +144,6 @@ ll_unarchive_entry2(Hash1, ArchiveMeta, Hash2, In1, Out) :-
       close(In2)
     )
   ),
-  seed_create(
-    Hash2{
-      archive: ArchiveMeta,
-      content: ContentMeta,
-      parent: Hash1,
-      status: downloaded
-    }
-  ).
+  Dict1 = Hash2{archive: ArchiveMeta, parent: Hash1, status: filed},
+  merge_dicts(Dict1, ContentMeta, Dict2),
+  seed_store(Dict2).

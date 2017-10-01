@@ -164,6 +164,9 @@ seed2dot_attr(headers, Headers, Attr) :-
   member(Value, Values),
   http_header_name_label(Name, NameLabel),
   format(string(Attr), "~s: ~w", [NameLabel,Value]).
+% interval
+seed2dot_attr(interval, Interval, Attr) :-
+  format(string(Attr), "Interval: ~f", [Interval]).
 % mtime
 seed2dot_attr(mtime, Time, Attr) :-
   format(string(Attr), "Archive mtime: ~f", [Time]).

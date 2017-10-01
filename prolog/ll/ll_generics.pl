@@ -1,31 +1,33 @@
 :- module(
   ll_generics,
   [
-    call_loop/1,       % :Goal_0
-    debug_step/4,      % +Flag, +Step, +Uri, +Hash
+    call_loop/1,        % :Goal_0
     delete_empty_directories/0,
-    hash_directory/2,  % +Hash, -Directory
-    hash_entry_hash/3, % +Hash1, +Entry, -Hash2
-    hash_file/3,       % +Hash, +Local, -File
-    rdf_media_type/1,  % ?MediaType:compound
-    seed_base_uri/2,   % +Seed, -BaseUri
-    stream_meta/2,     % +In, -Meta
-    uri_hash/2         % +Uri, -Hash
+    hash_directory/2,   % +Hash, -Directory
+    hash_entry_hash/3,  % +Hash1, +Entry, -Hash2
+    hash_file/3,        % +Hash, +Local, -File
+    rdf_media_type/1,   % ?MediaType:compound
+    seed_base_uri/2,    % +Seed, -BaseUri
+    stream_meta/2,      % +In, -Meta
+    uri_hash/2,         % +Uri, -Hash
+    uri_last_modified/2 % +Uri, -LastModified
   ]
 ).
+:- reexport(library(debug)).
 
 /** <module> LOD Laundromat: Generics
 
 @author Wouter Beek
-@version 2017/09
+@version 2017/09-2017/10
 */
 
 :- use_module(library(conf_ext)).
+:- use_module(library(date)).
 :- use_module(library(dcg/dcg_ext)).
-:- use_module(library(debug)).
 :- use_module(library(file_ext)).
 :- use_module(library(hash_ext)).
 :- use_module(library(hash_stream)).
+:- use_module(library(http/http_client2)).
 :- use_module(library(ll/ll_seedlist)).
 :- use_module(library(settings)).
 :- use_module(library(uri)).
@@ -33,6 +35,7 @@
 :- initialization
    conf_json(Dict),
    get_dict('data-directory', Dict, Dir),
+   create_directory(Dir),
    set_setting(data_directory, Dir).
 
 :- meta_predicate
@@ -50,16 +53,6 @@
 
 call_loop(Mod:Goal_0) :-
   thread_create(running_loop(Mod:Goal_0), _, [alias(Goal_0),detached(true)]).
-
-
-
-%! debug_step(+Flag, +Step:pair(atom), +Uri:atom, +Hash:atom) is det.
-
-debug_step(Flag, From-To, Uri, Hash) :-
-  (begin_step(From-To) -> Prefix = "┌─>" ; Prefix = "└─<"),
-  debug(Flag, "~s ~a → ~a ~a (~a)", [Prefix,From,To,Uri,Hash]).
-
-begin_step(added-downloading).
 
 
 
@@ -153,3 +146,14 @@ stream_meta(In, Meta) :-
 uri_hash(Uri1, Hash) :-
   uri_normalized(Uri1, Uri2),
   md5(Uri2, Hash).
+
+
+
+%! uri_last_modified(+Uri:atom, -LastModified:integer) is semidet.
+
+uri_last_modified(Uri, LastModified) :-
+  http_head2(Uri, [metadata(Meta)]),
+  Meta = [Dict|_],
+  _{'last-modified': [LastModifiedAtom]} :< Dict.headers,
+  parse_time(LastModifiedAtom, rfc_1123, Timestamp),
+  LastModified is float_integer_part(Timestamp).

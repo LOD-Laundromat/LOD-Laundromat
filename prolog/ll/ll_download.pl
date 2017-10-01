@@ -3,10 +3,12 @@
 /** <module> LOD Laundromat: Download
 
 @author Wouter Beek
-@version 2017/09
+@version 2017/09-2017/10
 */
 
 :- use_module(library(dcg/dcg_ext)).
+:- use_module(library(dict_ext)).
+:- use_module(library(hash_ext)).
 :- use_module(library(hash_stream)).
 :- use_module(library(http/http_client2)).
 :- use_module(library(http/rfc7231)).
@@ -18,26 +20,27 @@
 
 
 ll_download :-
-  with_mutex(ll_download, (
-    seed(Seed),
-    Hash{relative: false, status: added, uri: Uri} :< Seed,
-    seed_merge(Hash{status: downloading})
-  )),
-  debug_step(ll(download), added-downloading, Uri, Hash),
-  ll_download1(Hash, Uri, HttpMeta, ContentMeta),
+  stale_seed(Uri, Hash1),
+  get_time(Begin),
+  md5(Hash1-Begin, Hash2),
+  debug(ll(download), "┌─> downloading ~a", [Uri]),
+  seed_store(Hash2{parent: Hash1, status: downloading}),
+  seed_merge(Hash1{children: [Hash2]}),
+  ll_download1(Hash2, Uri, HttpMeta, ContentMeta),
+  get_time(End),
+  Dict1 = Hash2{http: HttpMeta, timestamp: Begin-End},
   (   % download failed
       var(ContentMeta)
-  ->  with_mutex(ll_download, seed_merge(Hash{http: HttpMeta, status: failed})),
-      debug_step(ll(download), downloading-failed, Uri, Hash)
+  ->  seed_merge(Dict1),
+      debug(ll(download), "└─< download failed ~a", [Uri])
   ;   % download succeeded
-      with_mutex(ll_download,
-        seed_merge(Hash{content: ContentMeta, http: HttpMeta, status: downloaded})
-      ),
-      debug_step(ll(download), downloading-downloaded, Uri, Hash)
+      merge_dicts([Dict1,ContentMeta,Hash2{status: filed}], Dict2),
+      seed_merge(Dict2),
+      debug(ll(download), "└─< downloaded ~a", [Uri])
   ).
 
-ll_download1(Hash, Uri, HttpMeta, ContentMeta) :-
-  hash_file(Hash, dirty, File1),
+ll_download1(Hash2, Uri, HttpMeta, ContentMeta) :-
+  hash_file(Hash2, dirty, File1),
   setup_call_cleanup(
     open(File1, write, Out1, [type(binary)]),
     ll_download2(Uri, Out1, HttpMeta, ContentMeta),
@@ -50,10 +53,9 @@ ll_download2(CurrentUri, Out, HttpMeta, ContentMeta) :-
   http_open2(
     CurrentUri,
     In,
-    NextUri,
-    [metadata(HttpMeta),request_header('Accept'=Accept)]
+    [metadata(HttpMeta),next(NextUri),request_header('Accept'=Accept)]
   ),
-  (var(NextUri) -> true ; add_uri(NextUri)),
+  (var(NextUri) -> true ; add_seed(NextUri)),
   call_cleanup(
     ll_download3(In, Out, HttpMeta, ContentMeta),
     close(In)
