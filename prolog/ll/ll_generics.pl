@@ -3,6 +3,7 @@
   [
     call_loop/1,       % :Goal_0
     debug_step/4,      % +Flag, +Step, +Uri, +Hash
+    delete_empty_directories/0,
     hash_directory/2,  % +Hash, -Directory
     hash_entry_hash/3, % +Hash1, +Entry, -Hash2
     hash_file/3,       % +Hash, +Local, -File
@@ -22,6 +23,7 @@
 :- use_module(library(conf_ext)).
 :- use_module(library(dcg/dcg_ext)).
 :- use_module(library(debug)).
+:- use_module(library(file_ext)).
 :- use_module(library(hash_ext)).
 :- use_module(library(hash_stream)).
 :- use_module(library(ll/ll_seedlist)).
@@ -58,6 +60,17 @@ debug_step(Flag, From-To, Uri, Hash) :-
   debug(Flag, "~s ~a → ~a ~a (~a)", [Prefix,From,To,Uri,Hash]).
 
 begin_step(added-downloading).
+
+
+
+%! delete_empty_directories is det.
+
+delete_empty_directories :-
+  setting(data_directory, Root),
+  forall(
+    directory_path(Root, Path),
+    (is_empty_directory(Path) -> delete_directory(Path) ; true)
+  ).
 
 
 

@@ -67,6 +67,7 @@ clear_all :-
       clear_hash(Hash)
     )
   ),
+  delete_empty_directories,
   rocks_clear(seedlist).
 
 
