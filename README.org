@@ -66,7 +66,7 @@ If the download succeeds, there is also content metadata
       content: $(CONTENT_META),
       http: $(HTTP_META),
       relative: false,
-      status: filed,
+      status: downloaded,
       uri: $(URI)
     }
 #+END_SRC
@@ -115,14 +115,14 @@ the following steps:
      (US-)ASCII.], we recode the entire file using /iconv/.
 
 #+BEGIN_SRC prolog
-[1] $(HASH){status: filed}
+[1] $(HASH){status: downloaded}
 [2] $(HASH){status: unarchiving}
 [3] $(HASH){children: $(CHILD_HASHES), status: depleted}
 [4] $(CHILD_HASH){
       archive: $(ARCHIVE_META),
       content: $(CONTENT_META),
       parent: $(PARENT_HASH),
-      status: filed
+      status: downloaded
     }
 [5] $(HASH){status: unarchived}
 #+END_SRC

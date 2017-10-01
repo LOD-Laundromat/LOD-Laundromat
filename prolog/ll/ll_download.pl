@@ -2,12 +2,6 @@
 
 /** <module> LOD Laundromat: Download
 
-Eligibility for downloading: _{relative: false, status: added, uri: Uri}
-
-If downloading fails: _{http: HttpMeta, status: failed}
-
-If downloading succeeds: _{content: ContentMeta, http: HttpMeta, status:filed}
-
 @author Wouter Beek
 @version 2017/09
 */
@@ -29,14 +23,17 @@ ll_download :-
     Hash{relative: false, status: added, uri: Uri} :< Seed,
     seed_merge(Hash{status: downloading})
   )),
+  debug_step(ll(download), added-downloading, Uri, Hash),
   ll_download1(Hash, Uri, HttpMeta, ContentMeta),
   (   % download failed
       var(ContentMeta)
-  ->  with_mutex(ll_download, seed_merge(Hash{http: HttpMeta, status: failed}))
+  ->  with_mutex(ll_download, seed_merge(Hash{http: HttpMeta, status: failed})),
+      debug_step(ll(download), downloading-failed, Uri, Hash)
   ;   % download succeeded
       with_mutex(ll_download,
-        seed_merge(Hash{content: ContentMeta, http: HttpMeta, status: filed})
-      )
+        seed_merge(Hash{content: ContentMeta, http: HttpMeta, status: downloaded})
+      ),
+      debug_step(ll(download), downloading-downloaded, Uri, Hash)
   ).
 
 ll_download1(Hash, Uri, HttpMeta, ContentMeta) :-

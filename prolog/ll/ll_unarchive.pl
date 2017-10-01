@@ -19,7 +19,7 @@
 ll_unarchive :-
   with_mutex(ll_unarchive, (
     seed(Seed),
-    Hash{status: filed} :< Seed,
+    Hash{status: downloaded} :< Seed,
     seed_merge(Hash{status: unarchiving})
   )),
   hash_file(Hash, dirty, File),
@@ -142,6 +142,6 @@ ll_unarchive_entry2(Hash1, ArchiveMeta, Hash2, In1, Out) :-
       archive: ArchiveMeta,
       content: ContentMeta,
       parent: Hash1,
-      status: filed
+      status: downloaded
     }
   ).
