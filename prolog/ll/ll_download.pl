@@ -21,9 +21,9 @@
 
 ll_download :-
   stale_seed(Uri, Hash1),
+  debug(ll(download), "┌─> downloading ~a", [Uri]),
   get_time(Begin),
   md5(Hash1-Begin, Hash2),
-  debug(ll(download), "┌─> downloading ~a", [Uri]),
   seed_store(Hash2{parent: Hash1, status: downloading}),
   seed_merge(Hash1{children: [Hash2]}),
   ll_download1(Hash2, Uri, HttpMeta, ContentMeta),

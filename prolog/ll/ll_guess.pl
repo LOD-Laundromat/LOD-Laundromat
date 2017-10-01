@@ -30,9 +30,13 @@ ll_guess :-
     Hash{status: unarchived} :< Seed,
     seed_merge(Hash{status: guessing})
   )),
+  debug(ll(guess), "┌─> guessing", []),
+  get_time(Begin),
   hash_file(Hash, dirty, File),
   ll_guess(File, Format),
-  with_mutex(ll_guess, seed_merge(Hash{format: Format, status: guessed})).
+  get_time(End),
+  debug(ll(guess), "└─< guessed", []),
+  seed_merge(Hash{format: Format, guessing: Begin-End, status: guessed}).
 
 % JSON-LD
 ll_guess(File, jsonld) :-

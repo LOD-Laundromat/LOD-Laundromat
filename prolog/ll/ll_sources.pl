@@ -14,6 +14,8 @@
 
 :- use_module(library(debug)).
 :- use_module(library(http/ckan_api)).
+:- use_module(library(http/json)).
+:- use_module(library(http/http_client2)).
 :- use_module(library(zlib)).
 
 :- discontiguous
@@ -48,7 +50,7 @@ ckan_resource_loop(Uri, Dict) :-
 %! ll_source(+Source:atom, -Uri:atom) is nondet.
 
 ll_source(Local, Uri) :-
-  absolute_file_name(Local, File, [access(read)]),
+  absolute_file_name(Local, File, [access(read),file_errors(fail)]), !,
   setup_call_cleanup(
     gzopen(File, read, In),
     (
@@ -63,6 +65,14 @@ ll_source(datahub, Uri) :-
   _{format: Format, url: Uri} :< Dict,
   debug(ll(sources), "~a\t~a", [Format,Uri]),
   rdf_format(Format).
+ll_source(lov, Uri) :-
+  setup_call_cleanup(
+    http_open2('http://lov.okfn.org/dataset/lov/api/v2/vocabulary/list', In),
+    json_read_dict(In, Dicts, [value_string_as(atom)]),
+    close(In)
+  ),
+  member(Dict, Dicts),
+  _{uri: Uri} :< Dict.
 
 rdf_format(Format) :-
   rdf_format(Format, _).

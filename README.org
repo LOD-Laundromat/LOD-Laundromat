@@ -89,6 +89,7 @@ The ~uri~ property stores the URI itself.
 #+BEGIN_SRC prolog
 $(URI_HASH){
   added: $(ADDED),
+  child: $(HASH),
   interval: $(INTERVAL),
   processed: $(PROCESSED),
   relative: $(BOOL),

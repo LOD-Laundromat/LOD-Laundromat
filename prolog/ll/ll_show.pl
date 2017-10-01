@@ -85,17 +85,111 @@ show_uri(Uri, Program) :-
 
 seed2dot(Out, Hash) :-
   format_debug(dot, Out, "digraph g {"),
-  seed2dot_hash_id(Out, Hash, _),
+  seed2dot_hash(Out, Hash),
   format_debug(dot, Out, "}").
 
-seed2dot_hash_id(Out, Hash, Id) :-
-  atomic_concat(n, Hash, Id),
+seed2dot_hash(Out, Hash) :-
   seed(Hash, Dict),
-  dict_pairs(Dict, Pairs),
-  seed2dot_id_pairs(Out, Id, Pairs).
+  seed2dot_dict(Out, Dict).
 
+% URI seed
+seed2dot_dict(Out, Dict) :-
+  Hash1{
+    added: _Added,
+    children: [Hash2],
+    interval: Interval,
+    processed: _Processed,
+    uri: Uri
+  } :< Dict, !,
+  maplist(atomic_concat(n), [Hash1,Hash2], [Id1,Id2]),
+  property_label(interval(Interval), Label),
+  format(string(Header), "<B>~a</B>", [Uri]),
+  dot_node(Out, Id1, [label([Header,Label]),shape(box)]),
+  dot_edge(Out, Id1, Id2, [label("hasCrawl")]),
+  seed2dot_hash(Out, Hash2).
+% Download
+seed2dot_dict(Out, Dict) :-
+  Hash1{
+    http: _Metas,
+    children: Hash2s,
+    newline: Newline,
+    number_of_bytes: N1,
+    number_of_chars: N2,
+    number_of_lines: N3,
+    status: Status,
+    timestamp: Begin-End
+  } :< Dict, !,
+  maplist(
+    property_label,
+    [
+      newline(Newline),
+      number_of_bytes(N1),
+      number_of_chars(N2),
+      number_of_lines(N3),
+      timestamp(Begin,End)
+    ],
+    Labels
+  ),
+  maplist(atomic_concat(n), [Hash1|Hash2s], [Id1|Id2s]),
+  format(string(Header), "<B>~a</B>", [Status]),
+  dot_node(Out, Id1, [label([Header|Labels]),shape(box)]),
+  maplist({Out,Id1}/[Id2]>>dot_edge(Out, Id1, Id2, [label("hasEntry")]), Id2s),
+  maplist(seed, Hash2s, Dict2s),
+  maplist(seed2dot_dict(Out), Dict2s).
+% Dirty RDF
+seed2dot_dict(Out, Dict1) :-
+  Hash1{clean: Hash2, format: Format} :< Dict1, !,
+  maplist(atomic_concat(n), [Hash1,Hash2], [Id1,Id2]),
+  rdf_format_label(Format, Label),
+  dot_node(Out, Id1, [label(Label),shape(box)]),
+  dot_edge(Out, Id1, Id2, [label("hasClean")]),
+  seed(Hash2, Dict2),
+  seed2dot_dict(Out, Dict2).
+% Clean RDF
+seed2dot_dict(Out, Dict) :-
+  Hash{
+    newline: Newline,
+    number_of_bytes: N1,
+    number_of_chars: N2,
+    number_of_lines: N3,
+    quads: N4,
+    timestamp: Begin-End,
+    triples: N5
+  } :< Dict, !,
+  maplist(
+    property_label,
+    [
+      newline(Newline),
+      number_of_bytes(N1),
+      number_of_chars(N2),
+      number_of_lines(N3),
+      timestamp(Begin,End)
+    ],
+    Labels
+  ),
+  N6 is N4 + N5,
+  format(string(Header), "~D statements", [N6]),
+  atomic_concat(n, Hash, Id),
+  dot_node(Out, Id, [label([Header|Labels]),shape(box)]). 
+seed2dot_dict(Out, Dict) :-
+  gtrace,
+  writeln(Dict).
+
+property_label(interval(N), Label) :-
+  format(string(Label), "Interval: ~2f sec.", [N]).
+property_label(newline(Newline), Label) :-
+  format(string(Label), "Newline: ~a", [Newline]).
+property_label(number_of_bytes(N), Label) :-
+  format(string(Label), "Bytes: ~D", [N]).
+property_label(number_of_chars(N), Label) :-
+  format(string(Label), "Characters: ~D", [N]).
+property_label(number_of_lines(N), Label) :-
+  format(string(Label), "Lines: ~D", [N]).
+property_label(timestamp(Begin,End), Label) :-
+  Duration is End - Begin,
+  format(string(Label), "Duration: ~2f sec.", [Duration]).
+/*
 seed2dot_id_pairs(Out, Id, Pairs1) :-
-  maplist(writeln, Pairs1),
   seed2dot_header(Pairs1, Header, Pairs2),
   seed2dot_edges(Out, Id, Pairs2, Pairs3),
   aggregate_all(
@@ -179,7 +273,7 @@ seed2dot_attr(headers, Headers, Attr) :-
 seed2dot_attr(Name, Interval, Attr) :-
   memberchk(Name, [interval,mtime]), !,
   atom_capitalize(Name, CName),
-  format(string(Attr), "~a: ~f", [CName,Interval]).
+  format(string(Attr), "~a: ~2f", [CName,Interval]).
 % newline
 seed2dot_attr(newline, Atom, Attr) :-
   format(string(Attr), "Newline: ~a", [Atom]).
@@ -195,6 +289,9 @@ seed2dot_attr(number_of_lines, N, Attr) :-
 % permissions
 seed2dot_attr(permissions, Permission, Attr) :-
   format(string(Attr), "Archive permissions: ~d", [Permission]).
+% quads
+seed2dot_attr(quads, N, Attr) :-
+  format(string(Attr), "Number of quadruples: ~D", [N]).
 % relative
 seed2dot_attr(relative, Bool, Attr) :-
   bool_string(Bool, String),
@@ -205,7 +302,10 @@ seed2dot_attr(size, Size, Attr) :-
 % timestamp
 seed2dot_attr(timestamp, Begin-End, Attr) :-
   Duration is End - Begin,
-  format(string(Attr), "Duration: ~f seconds", [Duration]).
+  format(string(Attr), "Duration: ~2f seconds", [Duration]).
+% triples
+seed2dot_attr(triples, N, Attr) :-
+  format(string(Attr), "Number of triples: ~D", [N]).
 % uri
 seed2dot_attr(uri, Uri, Attr) :-
   format(string(Attr), "URI: ~a", [Uri]).
@@ -222,6 +322,10 @@ seed2dot_edge(Out, Id1, archive, Dicts1) :-
   maplist(seed2dot_id_pairs(Out), Id2s, Pairss),
   dot_linked_list(Out, Id2s, FirstId2-_LastId2),
   dot_edge(Out, Id1, FirstId2, [label("archive")]).
+% clean: A single link to another node.
+seed2dot_edge(Out, Id1, clean, Hash) :-
+  seed2dot_hash_id(Out, Hash, Id2),
+  dot_edge(Out, Id1, Id2, [label("clean")]).
 % http: A linked list / sequence of nodes.
 seed2dot_edge(Out, Id1, http, Dicts) :-
   maplist(dot_id, Dicts, Id2s),
@@ -236,11 +340,6 @@ seed2dot_edge(Out, Id1, children, Hashes) :-
     {Out,Id1}/[Id2]>>dot_edge(Out, Id1, Id2, [label("has child")]),
     Id2s
   ).
-% dirty, parent: A single link to another node.
-seed2dot_edge(_Out, _Id1, Name, _Hash) :-
-  memberchk(Name, [dirty,parent]).
-  %atomic_concat(n, Hash, Id2),
-  %dot_edge(Out, Id1, Id2, [label(Name)]).
 
 dot_linked_list(Out, [FirstId|Ids], FirstId-LastId) :-
   dot_linked_list_(Out, [FirstId|Ids], LastId).
@@ -249,6 +348,7 @@ dot_linked_list_(_, [LastId], LastId) :- !.
 dot_linked_list_(Out, [Id1,Id2|T], LastId) :-
   dot_edge(Out, Id1, Id2),
   dot_linked_list_(Out, [Id2|T], LastId).
+*/
 
 bool_string(false, "❌").
 bool_string(true, "✓").
@@ -260,3 +360,7 @@ rdf_format(rdfa, application, 'xhtml+xml').
 rdf_format(rdfxml, application, 'rdf+xml').
 rdf_format(trig, application, trig).
 rdf_format(turtle, text, turtle).
+
+rdf_format_label(Format, Label) :-
+  rdf_format(Format, Supertype, Subtype),
+  format(string(Label), "~a/~a", [Supertype,Subtype]).
