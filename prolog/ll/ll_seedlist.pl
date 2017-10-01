@@ -27,6 +27,7 @@
 :- use_module(library(rocks_ext)).
 :- use_module(library(settings)).
 :- use_module(library(uri)).
+:- use_module(library(yall)).
 
 :- at_halt(maplist(rocks_close, [seedlist])).
 
@@ -94,9 +95,10 @@ clear_all :-
 
 clear_hash(Hash) :-
   seed(Hash, Seed),
-  (Hash{children: Children} :< Seed -> maplist(clear_hash, Children) ; true),
+  dict_get(children, Seed, [], Children),
+  maplist([Child]>>ignore(clear_hash(Child)), Children),
   hash_directory(Hash, Dir),
-  delete_directory_and_contents(Dir),
+  (exists_directory(Dir) -> delete_directory_and_contents(Dir) ; true),
   rocks_delete(seedlist, Hash).
 
 

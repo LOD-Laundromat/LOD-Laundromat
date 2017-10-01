@@ -113,17 +113,26 @@ seed2dot_id_pairs(Out, Id, Pairs1) :-
 seed2dot_header(Pairs1, Header, Pairs2) :-
   selectchk(name-Entry, Pairs1, Pairs2), !,
   format(string(Header), "<B>Archive entry: ~a</B>", [Entry]).
-% seed record, HTTP record
-seed2dot_header(Pairs1, Header, Pairs2) :-
-  selectchk(status-Status, Pairs1, Pairs2),
-  (   % Seed status label
-      atom(Status)
-  ->  atom_string(Status, Header0)
-  ;   % HTTP status code
-      http_status_reason(Status, Reason),
-      format(string(Header0), "HTTP status: ~d (~s)", [Status,Reason])
+% HTTP record
+seed2dot_header(Pairs1, Header, Pairs3) :-
+  selectchk(version-Version, Pairs1, Pairs2), !,
+  selectchk(status-Status, Pairs2, Pairs3),
+  _{major: Major, minor: Minor} :< Version,
+  http_status_reason(Status, Reason),
+  format(
+    string(Header0),
+    "HTTP/~d.~d status: ~d (~s)",
+    [Major,Minor,Status,Reason]
   ),
   format(string(Header), "<B>~s</B>", [Header0]).
+% seed record
+seed2dot_header(Pairs1, Header, Pairs2) :-
+  selectchk(uri-Uri, Pairs1, Pairs2), !,
+  format(string(Header), "<B>~a</B>", [Uri]).
+% other records
+seed2dot_header(Pairs1, Header, Pairs2) :-
+  selectchk(status-Status, Pairs1, Pairs2),
+  format(string(Header), "<B>~a</B>", [Status]).
 
 seed2dot_edges(Out, Id, Pairs1, Pairs2) :-
   seed2dot_edges(Out, Id, Pairs1, [], Pairs2).
@@ -135,10 +144,12 @@ seed2dot_edges(Out, Id, [Name-Value|Pairs1], Pairs2, Pairs3) :-
 seed2dot_edges(Out, Id, [Pair|Pairs1], Pairs2, Pairs3) :-
   seed2dot_edges(Out, Id, Pairs1, [Pair|Pairs2], Pairs3).
 
-% added
-seed2dot_attr(added, Added, Attr) :-
+% added, processed
+seed2dot_attr(Name, Added, Attr) :-
+  memberchk(Name, [added,processed]), !,
   dt_label(Added, Label),
-  format(string(Attr), "Added: ~s", [Label]).
+  atom_capitalize(Name, CName),
+  format(string(Attr), "~a: ~s", [CName,Label]).
 % content
 seed2dot_attr(content, Value1, Attr) :-
   dict_pairs(Value1, Pairs),
@@ -150,11 +161,11 @@ seed2dot_attr(filetype, Filetype, Attr) :-
 % filters
 seed2dot_attr(filters, Filters, Attr) :-
   atomics_to_string(Filters, ", ", String),
-  format(string(Attr), "Filters: ~a", [String]).
+  format(string(Attr), "Filters: ~s", [String]).
 % format
 seed2dot_attr(format, Format, Attr) :-
   (   rdf_format(Format, Super, Sub)
-  ->  format(string(Attr), "RDF serialization format: ~a/~a", [Super,Sub])
+  ->  format(string(Attr), "Serialization format: ~a/~a", [Super,Sub])
   ;   format(string(Attr), "Compression format: ~a", [Format])
   ).
 % headers
@@ -164,41 +175,40 @@ seed2dot_attr(headers, Headers, Attr) :-
   member(Value, Values),
   http_header_name_label(Name, NameLabel),
   format(string(Attr), "~s: ~w", [NameLabel,Value]).
-% interval
-seed2dot_attr(interval, Interval, Attr) :-
-  format(string(Attr), "Interval: ~f", [Interval]).
-% mtime
-seed2dot_attr(mtime, Time, Attr) :-
-  format(string(Attr), "Archive mtime: ~f", [Time]).
+% interval, mtime
+seed2dot_attr(Name, Interval, Attr) :-
+  memberchk(Name, [interval,mtime]), !,
+  atom_capitalize(Name, CName),
+  format(string(Attr), "~a: ~f", [CName,Interval]).
 % newline
 seed2dot_attr(newline, Atom, Attr) :-
-  format(string(Attr), "Content/Newline: ~a", [Atom]).
+  format(string(Attr), "Newline: ~a", [Atom]).
 % number of bytes
 seed2dot_attr(number_of_bytes, N, Attr) :-
-  format(string(Attr), "Content/Number of bytes: ~D", [N]).
+  format(string(Attr), "Number of bytes: ~D", [N]).
 % number of characters
 seed2dot_attr(number_of_characters, N, Attr) :-
-  format(string(Attr), "Content/Number of characters: ~D", [N]).
+  format(string(Attr), "Number of characters: ~D", [N]).
 % number of lines
 seed2dot_attr(number_of_lines, N, Attr) :-
-  format(string(Attr), "Content/Number of lines: ~D", [N]).
+  format(string(Attr), "Number of lines: ~D", [N]).
 % permissions
 seed2dot_attr(permissions, Permission, Attr) :-
   format(string(Attr), "Archive permissions: ~d", [Permission]).
 % relative
 seed2dot_attr(relative, Bool, Attr) :-
   bool_string(Bool, String),
-  format(string(Attr), "URI/relative: ~s", [String]).
+  format(string(Attr), "Relative URI: ~s", [String]).
 % size
 seed2dot_attr(size, Size, Attr) :-
   format(string(Attr), "Archive size: ~D", [Size]).
+% timestamp
+seed2dot_attr(timestamp, Begin-End, Attr) :-
+  Duration is End - Begin,
+  format(string(Attr), "Duration: ~f seconds", [Duration]).
 % uri
 seed2dot_attr(uri, Uri, Attr) :-
   format(string(Attr), "URI: ~a", [Uri]).
-% version
-seed2dot_attr(version, Version, Attr) :-
-  _{major: Major, minor: Minor} :< Version,
-  format(string(Attr), "HTTP version: ~d.~d", [Major,Minor]).
 % walltime
 seed2dot_attr(walltime, Walltime, Attr) :-
   format(string(Attr), "Walltime: ~d mili-seconds", [Walltime]).

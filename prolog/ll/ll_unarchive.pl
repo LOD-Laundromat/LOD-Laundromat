@@ -24,25 +24,22 @@
 ll_unarchive :-
   with_mutex(ll_seedlist, (
     seed(Dict1),
-    Hash1{status: filed} :< Dict1
+    Hash{status: filed} :< Dict1
   )),
-  get_time(Begin),
-  md5(Hash1-Begin, Hash2),
-  seed_store(Hash2{parent: Hash1, status: unarchiving}),
-  seed_merge(Hash1{children: [Hash2]}),
-  findall(Entry, ll_unarchive1(Hash1, Hash2, Entry), Entries),
+  seed_merge(Hash{status: unarchiving}),
+  findall(Entry, ll_unarchive1(Hash, Entry), Entries),
   (   Entries == [data]
-  ->  seed_merge(Hash2{status: unarchived})
-  ;   maplist(hash_entry_hash(Hash2), Entries, Children),
-      seed_merge(Hash2{children: Children, status: unarchived})
+  ->  seed_merge(Hash{status: unarchived})
+  ;   maplist(hash_entry_hash(Hash), Entries, Children),
+      seed_merge(Hash{children: Children, status: depleted})
   ).
 
 % open dirty file
-ll_unarchive1(Hash1, Hash2, Entry) :-
-  hash_file(Hash1, dirty, File),
+ll_unarchive1(Hash, Entry) :-
+  hash_file(Hash, dirty, File),
   setup_call_cleanup(
     open(File, read, In),
-    ll_unarchive2(Hash2, In, Entry),
+    ll_unarchive2(Hash, In, Entry),
     close(In)
   ).
 

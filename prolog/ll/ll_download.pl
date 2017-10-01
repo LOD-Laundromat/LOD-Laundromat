@@ -28,14 +28,14 @@ ll_download :-
   seed_merge(Hash1{children: [Hash2]}),
   ll_download1(Hash2, Uri, HttpMeta, ContentMeta),
   get_time(End),
-  Dict1 = Hash2{http: HttpMeta, timestamp: Begin-End},
+  Dict = Hash2{http: HttpMeta, timestamp: Begin-End},
   (   % download failed
       var(ContentMeta)
-  ->  seed_merge(Dict1),
+  ->  seed_merge(Dict),
       debug(ll(download), "└─< download failed ~a", [Uri])
   ;   % download succeeded
-      merge_dicts([Dict1,ContentMeta,Hash2{status: filed}], Dict2),
-      seed_merge(Dict2),
+      merge_dicts([Dict,ContentMeta,Hash2{status: filed}], Dict0),
+      seed_merge(Dict0),
       debug(ll(download), "└─< downloaded ~a", [Uri])
   ).
 

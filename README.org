@@ -88,9 +88,9 @@ The ~uri~ property stores the URI itself.
 
 #+BEGIN_SRC prolog
 $(URI_HASH){
-  added: $(FLOAT),
-  interval: $(FLOAT),
-  processed: $(FLOAT),
+  added: $(ADDED),
+  interval: $(INTERVAL),
+  processed: $(PROCESSED),
   relative: $(BOOL),
   uri: $(URI)
 }
@@ -105,40 +105,30 @@ communication process, resulting in a seed record with pattern (3).
 If the download succeeds, there is also content metadata
 ~$(CONTENT_META)~, resulting in a seed record with pattern (4).
 
-Outdated seed:
+A seed is stale, and therefore a candicate for re-downloading, if
+~$(PROCESSED) + $(INTERVAL) < $(NOW)~
 
-#+BEGIN_SRC prolog
-$(URI_HASH){
-  added: $(FLOAT),
-  interval: $(FLOAT),
-  processed: $(FLOAT),
-  processing: $(BOOL),
-  relative: false,
-  uri: $(URI)
-}
-#+END_SRC
-
-Start downloading:
+While downloading:
 
 #+BEGIN_SRC prolog
 $(DOWNLOAD_HASH){
   parent: $(SEED_HASH),
-  type: download
+  status: downloading
 }
 #+END_SRC
 
-End downloading:
+After downloading:
 
 #+BEGIN_SRC prolog
 $(DOWNLOAD_HASH){
   http: [$(HTTP_META)],
-  newline: $(NEWLINE),
-  number_of_bytes: $(NONNEG),
-  number_of_chars: $(NONNEG),
-  number_of_lines: $(NONNEG)
+  newline: $(NEWLINE),        %
+  number_of_bytes: $(NONNEG), %
+  number_of_chars: $(NONNEG), %
+  number_of_lines: $(NONNEG)  %
   parent: $(SEED_HASH),
-  timestamp: $(BEGIN)-$(END),
-  type: downloaded
+  status: filed,
+  timestamp: $(BEGIN)-$(END)
 }
 #+END_SRC
 
@@ -163,61 +153,68 @@ in [3].  Status ~depleted~ denotes that no more files are enclosed
 within this file.  For each child, a new seed record of the form [4]
 is added to the seedlist.
 
- If the seed denotes a downloaded file that contains data, its seed
- record is updated to have status ~unarchived~.  We must determine the
- character encoding of the data file in order to be able to read it.
- Unfortunately, this can only be determined heuristically.  We perform
- the following steps:
-   1. We look for a Unicode Byte Order Marker (BOM), which indicates
-      that the file has Unicode encoding.
-   2. If not BOM is present, we use /unchardet/ in order to guess the
-      encoding.  If the encoding is incompatible with Unicode[fn::An
-      example of a common encoding that is compatible with Unicode is
-      (US-)ASCII.], we recode the entire file using /iconv/.
+If the seed denotes a downloaded file that contains data, its seed
+record is updated to have status ~unarchived~.  We must determine the
+character encoding of the data file in order to be able to read it.
+Unfortunately, this can only be determined heuristically.  We perform
+the following steps:
+  1. We look for a Unicode Byte Order Marker (BOM), which indicates
+     that the file has Unicode encoding.
+  2. If not BOM is present, we use /unchardet/ in order to guess the
+     encoding.  If the encoding is incompatible with Unicode[fn::An
+     example of a common encoding that is compatible with Unicode is
+     (US-)ASCII.], we recode the entire file using /iconv/.
 
 Candidate for unpacking:
 
 #+BEGIN_SRC prolog
-$(HASH){type: archive}
+$(ARCHIVE_HASH){status: filed}
 #+END_SRC
 
- #+BEGIN_SRC prolog
- [1] $(HASH){status: downloaded}
- [2] $(HASH){status: unarchiving}
- [3] $(HASH){children: $(CHILD_HASHES), status: depleted}
- [4] $(CHILD_HASH){
-       archive: $(ARCHIVE_META),
-       content: $(CONTENT_META),
-       parent: $(PARENT_HASH),
-       status: downloaded
-     }
- [5] $(HASH){status: unarchived}
- #+END_SRC
+While unpacking:
+
+#+BEGIN_SRC prolog
+$(ENTRY_HASH){
+  parent: $(ARCHIVE_HASH),
+  status: unarchiving
+}
+#+END_SRC
+
+After unpacking:
+
+#+BEGIN_SRC prolog
+$(HASH){status: unarchived}
+% or
+$(ARCHIVE_HASH){status: depleted}
+$(ENTRY_HASH){parent: $(ARCHIVE_HASH), status: filed}
+#+END_SRC
 
 ** Guess the Media Type / RDF serialization format
- #+BEGIN_SRC prolog
- [1] $(HASH){status: unarchived}
- [2] $(HASH){status: guessing}
- [3] $(HASH){format: $(FORMAT), status: guessed}
- #+END_SRC
 
- ~$(FORMAT)~ is one of the following values:
-   1. JSON-LD
-   2. N-Quads
-   3. N-Triples
-   4. RDF/XML
-   5. RDFa
-   6. TriG
-   7. Turtle
+#+BEGIN_SRC prolog
+$(HASH){status: unarchived}
+$(HASH){status: guessing}
+$(HASH){format: $(FORMAT), status: guessed}
+#+END_SRC
+
+~$(FORMAT)~ is one of the following values:
+  1. JSON-LD
+  2. N-Quads
+  3. N-Triples
+  4. RDF/XML
+  5. RDFa
+  6. TriG
+  7. Turtle
 
 ** Parsing the RDF
- #+BEGIN_SRC prolog
- [1] $(HASH){format: $(FORMAT), status: guessed}
- [2] $(HASH){status: parsing}
- [3] $(CLEAN_HASH){
-       content: $(CONTENT_META),
-       dirty: $(HASH),
-       status: cleaned
-     }
- [4] $(HASH){status: parsed}
- #+END_SRC
+
+#+BEGIN_SRC prolog
+$(HASH){format: $(FORMAT), status: guessed}
+$(HASH){status: parsing}
+$(CLEAN_HASH){
+  content: $(CONTENT_META),
+  dirty: $(HASH),
+  status: cleaned
+}
+$(HASH){status: parsed}
+#+END_SRC

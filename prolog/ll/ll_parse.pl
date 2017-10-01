@@ -7,6 +7,7 @@
 */
 
 :- use_module(library(apply)).
+:- use_module(library(dict_ext)).
 :- use_module(library(hash_stream)).
 :- use_module(library(ll/ll_generics)).
 :- use_module(library(ll/ll_seedlist)).
@@ -32,6 +33,7 @@ ll_parse :-
     Hash1{format: Format, status: guessed} :< Seed,
     seed_merge(Hash1{status: parsing})
   )),
+  get_time(Begin),
   seed_base_uri(Seed, BaseUri),
   hash_file(Hash1, 'clean.nq.gz', File1),
   setup_call_cleanup(
@@ -39,14 +41,14 @@ ll_parse :-
     ll_parse1(Hash1, Format, BaseUri, Out, ContentMeta),
     close(Out)
   ),
-  content{hash: Hash2} :< ContentMeta,
+  % The content-based hash.
+  dict_tag(ContentMeta, Hash2),
   hash_file(Hash2, 'clean.nq.gz', File2),
   rename_file(File1, File2),
-  get_time(Now),
-  seed_store(
-    Hash2{content: ContentMeta, dirty: Hash1, status: cleaned, timestamp: Now}
-  ),
-  with_mutex(ll_parse, seed_merge(Hash1{status: parsed})).
+  get_time(End),
+  Dict1 = Hash2{dirty: Hash1, status: parsed, timestamp: Begin-End},
+  merge_dicts(Dict1, ContentMeta, Dict2),
+  seed_store(Dict2).
 
 ll_parse1(Hash1, Format, BaseUri, Out1, ContentMeta) :-
   setup_call_cleanup(
