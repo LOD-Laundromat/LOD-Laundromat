@@ -20,13 +20,21 @@
 
 
 ll_download :-
+  % precondition
   stale_seed(Uri, Hash1),
+
   debug(ll(download), "┌─> downloading ~a", [Uri]),
   get_time(Begin),
-  md5(Hash1-dummy, Hash2),
+  md5(Hash1-dummy, Hash2), % TBD: include `Begin' to make scrapes unique
+
+  % within
   seed_store(Hash2{parent: Hash1, status: downloading}),
   seed_merge(Hash1{children: [Hash2]}),
+
+  % operation
   catch(ll_download1(Hash2, Uri, HttpMeta, ContentMeta), E, true),
+
+  % postcondition
   get_time(End),
   Dict1 = Hash2{http: HttpMeta, timestamp: Begin-End},
   (   % download succeeded
@@ -55,7 +63,7 @@ ll_download2(CurrentUri, Out, HttpMeta, ContentMeta) :-
     In,
     [metadata(HttpMeta),next(NextUri),request_header('Accept'=Accept)]
   ),
-  (var(NextUri) -> true ; add_seed(NextUri)),
+  (var(NextUri) -> true ; add_uri(NextUri)),
   call_cleanup(
     ll_download3(In, Out, HttpMeta, ContentMeta),
     close(In)

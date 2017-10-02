@@ -22,12 +22,21 @@
 
 
 ll_unarchive :-
+  % precondition
   with_mutex(ll_seedlist, (seed(Dict1), Hash{status: filed} :< Dict1)),
+
+  % within
   seed_merge(Hash{status: unarchiving}),
+
+  % processing
   findall(Entry, ll_unarchive1(Hash, Entry), Entries),
-  (   Entries == [data]
+
+  % postcondition
+  (   % leaf node
+      Entries == [data]
   ->  seed_merge(Hash{status: unarchived})
-  ;   maplist(hash_entry_hash(Hash), Entries, Children),
+  ;   % non-leaf node
+      maplist(hash_entry_hash(Hash), Entries, Children),
       seed_merge(Hash{children: Children, status: depleted})
   ).
 
@@ -138,6 +147,8 @@ ll_unarchive_entry2(Hash1, ArchiveMeta, Hash2, In1, Out) :-
       close(In2)
     )
   ),
+  % entry that is itself an archive, add it to the store for
+  % processing
   Dict1 = Hash2{archive: ArchiveMeta, parent: Hash1, status: filed},
   merge_dicts(Dict1, ContentMeta, Dict2),
   seed_store(Dict2).

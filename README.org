@@ -4,7 +4,7 @@
 This document describes the design for LOD Laundromat 2, a crawling
 and cleaning infrastructure for Linked Open Data (LOD).
 
-* The scheduler
+* Data discovery
 
 ** Sitemap
 
@@ -40,6 +40,8 @@ and cleaning infrastructure for Linked Open Data (LOD).
 </urlset>
 #+END_SRC
 
+* Job sceduling
+
 * The cleaning process
 
 ** Adding a seedpoint
@@ -48,7 +50,11 @@ Adding a new URI to the seedlist results in the following
 registration:
 
 #+BEGIN_SRC prolog
-$(URI_HASH){relative: $(BOOL), status: added, uri: $(URI)}
+$(URI_HASH){
+  relative: $(BOOL),
+  status: added,
+  uri: $(URI)
+}
 #+END_SRC
 
 We are storing seedlist registrations in a SWI dictionary
@@ -185,10 +191,9 @@ $(ENTRY_HASH){parent: $(ARCHIVE_HASH), status: unarchiving}
 After unpacking:
 
 #+BEGIN_SRC prolog
-$(ENTRY_HASH){status: unarchived}
-% or
-$(ARCHIVE_HASH){children: [$(ENTRY_HASH)], status: depleted}
-$(ENTRY_HASH){parent: $(ARCHIVE_HASH), status: filed}
+$(ENTRY_HASH){status: unarchived} % leaf node
+$(ARCHIVE_HASH){children: [$(ENTRY_HASH)], status: depleted} % non-leaf node
+$(ENTRY_HASH){parent: $(ARCHIVE_HASH), status: filed} % future processing
 #+END_SRC
 
 ** Guess the Media Type / RDF serialization format
@@ -213,6 +218,6 @@ $(ENTRY_HASH){format: $(FORMAT), status: guessed}
 #+BEGIN_SRC prolog
 $(ENTRY_HASH){format: $(FORMAT), status: guessed}
 $(ENTRY_HASH){status: parsing}
-$(CLEAN_HASH){dirty: $(ENTRY_HASH), status: cleaned}
-$(ENTRY_HASH){clean: $(CLEAN_HAHS), status: parsed}
+$(CLEAN_HASH){dirty: $(ENTRY_HASH), status: cleaned} % clean file
+$(ENTRY_HASH){clean: $(CLEAN_HAHS), status: parsed} % dirty file
 #+END_SRC

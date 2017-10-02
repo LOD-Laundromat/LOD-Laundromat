@@ -149,7 +149,8 @@ seed2dot_dict(Out, Dict) :-
   ),
   maplist(atomic_concat(n), [Hash1|Hash2s], [Id1|Id2s]),
   format(string(Header), "<B>~a</B>", [Status]),
-  dot_node(Out, Id1, [label([Header|Labels]),shape(box)]),
+  hash_label(Hash1, Hash1Label),
+  dot_node(Out, Id1, [label([Header,Hash1Label|Labels]),shape(box)]),
   maplist({Out,Id1}/[Id2]>>dot_edge(Out, Id1, Id2, [label("hasEntry")]), Id2s),
   maplist(seed, Hash2s, Dict2s),
   maplist(seed2dot_dict(Out), Dict2s).
@@ -193,7 +194,7 @@ seed2dot_dict(Out, Dict1) :-
         permissions: _Permissions,
         size: Size
       } :< ArchiveDict,
-      format(string(Header), "<B>~a</B>", [Entry]),
+      format(string(Header), "<B>Archive Entry: ~a</B>", [Entry]),
       maplist(
         property_label,
         [
@@ -206,10 +207,11 @@ seed2dot_dict(Out, Dict1) :-
       ),
       format(string(Label), "RDF format: ~s", [RdfFormat2]),
       append([Label|Labels1], Labels2, Labels)
-  ;   format(string(Header), "<B>~s</B>", [RdfFormat2]),
+  ;   format(string(Header), "<B>Raw Data: ~s</B>", [RdfFormat2]),
       Labels = Labels1
   ),
-  dot_node(Out, Id1, [label([Header|Labels]),shape(box)]),
+  hash_label(Hash1, Hash1Label),
+  dot_node(Out, Id1, [label([Header,Hash1Label|Labels]),shape(box)]),
   dot_edge(Out, Id1, Id2, [label("hasClean")]),
   seed2dot_hash(Out, Hash2).
 % Clean RDF
@@ -239,7 +241,8 @@ seed2dot_dict(Out, Dict) :-
   N6 is N4 + N5,
   format(string(Header), "<B>~D statements</B>", [N6]),
   atomic_concat(n, Hash, Id),
-  dot_node(Out, Id, [label([Header|Labels]),shape(box)]). 
+  hash_label(Hash, HashLabel),
+  dot_node(Out, Id, [label([Header,HashLabel|Labels]),shape(box)]). 
 seed2dot_dict(_, Dict) :-
   gtrace,
   writeln(Dict).
@@ -271,6 +274,9 @@ seed2dot_http(Out, Id1, [H|T]) :-
   dot_node(Out, Id2, [label([Header,Label1,Label2|Labels]),shape(box)]),
   dot_edge(Out, Id1, Id2, [label("HTTP")]),
   seed2dot_http(Out, Id2, T).
+
+hash_label(Hash, Label) :-
+  format(string(Label), "~a", [Hash]).
 
 property_label(archive(Format), Label) :-
   format(string(Label), "Archive: ~a", [Format]).
