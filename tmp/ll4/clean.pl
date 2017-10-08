@@ -46,7 +46,8 @@ HASH/
 :- use_module(library(md5)).
 :- use_module(library(option)).
 :- use_module(library(rdf)).
-:- use_module(library(semweb/rdf_ext)).
+:- use_module(library(semweb/rdf_api)).
+:- use_module(library(semweb/rdf_export)).
 :- use_module(library(semweb/rdf_guess)).
 :- use_module(library(semweb/rdf_http_plugin)).
 :- use_module(library(semweb/rdf_ntriples)).
@@ -97,7 +98,7 @@ clean_uri(Uri) :-
 %! clean_file(+Uri, +Hash, +MediaTypes, +EntryFile) is det.
 
 clean_file(Uri, Hash, MediaTypes2, EntryFile) :-
-  rdf_global_id('_':Hash, BNodePrefix),
+  rdf_global_id(bnode:Hash, BNodePrefix),
   hash_file(Hash, data, DataFileTmp),
   (   setup_call_cleanup(
         (
@@ -376,7 +377,7 @@ finish_warn(Hash) :-
 %! rdf_membership_property(+N, -P) is det.
 
 rdf_membership_property(N, P) :-
-  atom_concat('_', N, Local),
+  atom_concat(bnode, N, Local),
   rdf_global_id(rdf:Local, P).
 
 

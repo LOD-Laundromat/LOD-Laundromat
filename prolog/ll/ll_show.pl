@@ -1,8 +1,8 @@
 :- module(
   ll_show,
   [
-    export_uri/1, % +Uri
-    show_uri/1    % +Uri
+    export_uri/1, % ?Uri
+    show_uri/1    % ?Uri
   ]
 ).
 
@@ -33,8 +33,8 @@
 
 
 
-%! export_uri(+Uri:atom) is det.
-%! export_uri(+Uri:atom, +Format:atom) is det.
+%! export_uri(?Uri:atom) is det.
+%! export_uri(?Uri:atom, +Format:atom) is det.
 %
 % Exports the LOD Laundromat job for the given URI to a PDF file, or
 % to a file in some other Format.
@@ -43,6 +43,11 @@ export_uri(Uri) :-
   export_uri(Uri, pdf).
 
 
+export_uri(Uri, Format) :-
+  var(Uri), !,
+  seed(Seed),
+  _{uri: Uri} :< Seed,
+  export_uri(Uri, Format).
 export_uri(Uri, Format) :-
   uri_hash(Uri, Hash),
   file_name_extension(Hash, Format, File),
@@ -59,8 +64,8 @@ export_uri(Uri, Format) :-
 
 
 
-%! show_uri(+Uri:atom) is det.
-%! show_uri(+Uri:atom, +Program:atom) is det.
+%! show_uri(?Uri:atom) is det.
+%! show_uri(?Uri:atom, +Program:atom) is det.
 %
 % Shows the LOD Laundromat job for the given URI in X11, or in some
 % other Program.
@@ -69,6 +74,11 @@ show_uri(Uri) :-
   show_uri(Uri, x11).
 
 
+show_uri(Uri, Format) :-
+  var(Uri), !,
+  seed(Seed),
+  _{uri: Uri} :< Seed,
+  export_uri(Uri, Format).
 show_uri(Uri, Program) :-
   uri_hash(Uri, Hash),
   setup_call_cleanup(
@@ -99,10 +109,11 @@ seed2dot_dict(Out, Dict) :-
     status: Status
   } :< Dict, !,
   format(string(Header), "<B>~a</B>", [Status]),
-  error_label(Error, Label),
+  error_label(Error, ErrorLabel),
   atomic_concat(n, Hash, Id),
-  dot_node(Out, Id, [label([Header,Label]),shape(box)]).
-% URI seed
+  hash_label(Hash, HashLabel),
+  dot_node(Out, Id, [label([Header,HashLabel,ErrorLabel]),shape(box)]).
+% URI
 seed2dot_dict(Out, Dict) :-
   Hash1{
     added: _Added,
@@ -112,16 +123,17 @@ seed2dot_dict(Out, Dict) :-
   } :< Dict, !,
   dict_get(children, Dict, [], Hash2s),
   maplist(atomic_concat(n), [Hash1|Hash2s], [Id1|Id2s]),
-  format(string(Header), "<B>~a</B>", [Uri]),
+  format(string(Header), "<B>URI: ~a</B>", [Uri]),
   maplist(
     property_label,
     [interval(Interval),processed(Processed)],
     Labels
   ),
-  dot_node(Out, Id1, [label([Header|Labels]),shape(box)]),
+  hash_label(Hash1, Hash1Label),
+  dot_node(Out, Id1, [label([Header,Hash1Label|Labels]),shape(box)]),
   maplist({Out,Id1}/[Id2]>>dot_edge(Out, Id1, Id2, [label("hasCrawl")]), Id2s),
   maplist(seed2dot_hash(Out), Hash2s).
-% Archive
+% archive
 seed2dot_dict(Out, Dict) :-
   Hash1{
     http: Dicts1,
@@ -148,13 +160,13 @@ seed2dot_dict(Out, Dict) :-
     Labels
   ),
   maplist(atomic_concat(n), [Hash1|Hash2s], [Id1|Id2s]),
-  format(string(Header), "<B>~a</B>", [Status]),
+  format(string(Header), "<B>Archive: ~a</B>", [Status]),
   hash_label(Hash1, Hash1Label),
   dot_node(Out, Id1, [label([Header,Hash1Label|Labels]),shape(box)]),
   maplist({Out,Id1}/[Id2]>>dot_edge(Out, Id1, Id2, [label("hasEntry")]), Id2s),
   maplist(seed, Hash2s, Dict2s),
   maplist(seed2dot_dict(Out), Dict2s).
-% Entry
+% entry
 seed2dot_dict(Out, Dict1) :-
   Hash1{
     clean: Hash2,
@@ -214,7 +226,7 @@ seed2dot_dict(Out, Dict1) :-
   dot_node(Out, Id1, [label([Header,Hash1Label|Labels]),shape(box)]),
   dot_edge(Out, Id1, Id2, [label("hasClean")]),
   seed2dot_hash(Out, Hash2).
-% Clean RDF
+% clean RDF
 seed2dot_dict(Out, Dict) :-
   Hash{
     newline: Newline,
@@ -239,7 +251,7 @@ seed2dot_dict(Out, Dict) :-
     Labels
   ),
   N6 is N4 + N5,
-  format(string(Header), "<B>~D statements</B>", [N6]),
+  format(string(Header), "<B>Clean RDF: ~D statements</B>", [N6]),
   atomic_concat(n, Hash, Id),
   hash_label(Hash, HashLabel),
   dot_node(Out, Id, [label([Header,HashLabel|Labels]),shape(box)]). 

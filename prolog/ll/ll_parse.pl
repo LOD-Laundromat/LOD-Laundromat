@@ -20,7 +20,7 @@
 :- use_module(library(zlib)).
 
 :- rdf_register_prefix(
-     '_',
+     bnode,
      'https://lodlaundromat.org/.well-known/genid/',
      [force(true)]
    ).
@@ -50,7 +50,7 @@ ll_parse :-
   rename_file(File1, File2),
   seed_merge(Hash1{clean: Hash2, status: parsed}),
   get_time(End),
-  debug(ll(parse), "└─< parsed ~a", [Format]),
+  debug(ll(parse), "└─< parsed ~a (~a)", [Format,Hash2]),
   Dict1 = Hash2{dirty: Hash1, status: generated, timestamp: Begin-End},
   merge_dicts(Dict1, Meta, Dict2),
   seed_store(Dict2).
@@ -74,7 +74,7 @@ ll_parse1(Hash1, Format, BaseUri, Out1, Meta2) :-
 
 ll_parse2(Hash, Format, BaseUri, Counter, Out) :-
   hash_file(Hash, dirty, File),
-  rdf_global_id('_':Hash, BNodePrefix),
+  rdf_global_id(bnode:Hash, BNodePrefix),
   Counter = counter(0,0),
   setup_call_cleanup(
     open(File, read, In),
@@ -122,7 +122,8 @@ ll_parse3(turtle, In, Out, BNodePrefix, BaseUri, Counter) :-
     [anon_prefix(BNodePrefix),base_uri(BaseUri),format(turtle),resources(iri)]
   ).
 
-ll_generate_triple(Out, Counter, rdf(S,P,O)) :-
+ll_generate_triple(Out, Counter, Triple) :-
+  rdf_clean_triple(Triple, rdf(S,P,O)),
   arg(1, Counter, N1),
   N2 is N1 + 1,
   nb_setarg(1, Counter, N2),
@@ -133,7 +134,8 @@ ll_generate_triples(Out, Counter, Triples, _) :-
 
 ll_generate_tuple(Out, Counter, rdf(S,P,O)) :- !,
   ll_generate_triple(Out, Counter, rdf(S,P,O)).
-ll_generate_tuple(Out, Counter, rdf(S,P,O,G)) :-
+ll_generate_tuple(Out, Counter, Quad) :-
+  rdf_clean_quad(Quad, rdf(S,P,O,G)),
   arg(2, Counter, N1),
   N2 is N1 + 1,
   nb_setarg(2, Counter, N2),

@@ -170,7 +170,6 @@ stale_seed(Uri, Hash) :-
   with_mutex(ll_seedlist, (
     seed(Seed),
     Hash{
-      relative: false,
       interval: Interval,
       processed: Processed,
       uri: Uri

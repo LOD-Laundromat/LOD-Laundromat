@@ -20,11 +20,13 @@
 ll_index :-
   with_mutex(ll_index, (
     seed(Seed),
-    Hash{status: parsed} :< Seed,
+    Hash{status: generated} :< Seed,
     seed_merge(Hash{status: indexing})
   )),
+  debug(ll(index), "┌─> indexing (~a)", [Hash]),
   hash_file(Hash, 'clean.nq.gz', RdfFile),
   hash_file(Hash, 'clean.hdt', HdtFile),
   rdf_global_id(base:Hash, BaseUri),
   hdt_create_from_file(HdtFile, RdfFile, [base_uri(BaseUri)]),
+  debug(ll(index), "└─< indexed", []),
   with_mutex(ll_index, seed_merge(Hash{status: indexed})).
