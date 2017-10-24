@@ -15,12 +15,9 @@
 
 :- use_module(library(debug)).
 :- use_module(library(file_ext)).
-:- use_module(library(hdt/hdt_api)).
 :- use_module(library(lists)).
 :- use_module(library(print_ext)).
-:- use_module(library(q/q_fs)).
-:- use_module(library(rdf/rdf__io)).
-:- use_module(library(rdf/rdf_api)).
+:- use_module(library(semweb/hdt11)).
 :- use_module(library(service/rocks_api)).
 :- use_module(library(settings)).
 

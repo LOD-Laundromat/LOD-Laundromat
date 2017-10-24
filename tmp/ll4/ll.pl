@@ -17,11 +17,10 @@
 
 :- use_module(library(aggregate)).
 :- use_module(library(debug)).
+:- use_module(library(semweb/hdt11)).
 :- use_module(library(semweb/rdf11)).
 :- use_module(library(thread_ext)).
 :- use_module(library(zlib)).
-
-:- use_module(library(hdt/hdt_api)).
 
 :- use_module(clean).
 :- use_module(seedlist).

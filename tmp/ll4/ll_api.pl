@@ -20,9 +20,9 @@
 :- use_module(library(aggregate)).
 :- use_module(library(apply)).
 :- use_module(library(file_ext)).
-:- use_module(library(hdt/hdt_api)).
 :- use_module(library(lists)).
 :- use_module(library(pairs)).
+:- use_module(library(semweb/hdt11)).
 :- use_module(library(semweb/rdf11)).
 
 :- rdf_register_prefix(bnode, 'https://lodlaundromat.org/.well-known/genid/', [force(true)]).

@@ -90,7 +90,7 @@ ll_unarchive4(Hash, ArchiveMeta, Entry, In) :-
 
 ll_unarchive_data1(Hash, In1) :-
   hash_file(Hash, dirty, File1),
-  uchardet_file(File1, FromEnc),
+  guess_file_encoding(File1, FromEnc),
   setup_call_cleanup(
     recode_stream(FromEnc, In1, In2),
     ll_unarchive_data2(Hash, In1, In2),

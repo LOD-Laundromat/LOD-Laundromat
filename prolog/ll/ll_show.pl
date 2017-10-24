@@ -9,7 +9,7 @@
 /** <module> LOD Laundromat: Show
 
 @author Wouter Beek
-@version 2017/09
+@version 2017/09-2017/10
 */
 
 :- use_module(library(aggregate)).
@@ -51,16 +51,7 @@ export_uri(Uri, Format) :-
 export_uri(Uri, Format) :-
   uri_hash(Uri, Hash),
   file_name_extension(Hash, Format, File),
-  setup_call_cleanup(
-    graphviz(dot, ProcIn, Format, ProcOut),
-    seed2dot(ProcIn, Hash),
-    close(ProcIn)
-  ),
-  setup_call_cleanup(
-    open(File, write, Out),
-    copy_stream_type(ProcOut, Out),
-    close(Out)
-  ).
+  graphviz_export(dot, Format, File, {Hash}/[Out]>>seed2dot(Out, Hash)).
 
 
 
@@ -81,11 +72,7 @@ show_uri(Uri, Format) :-
   export_uri(Uri, Format).
 show_uri(Uri, Program) :-
   uri_hash(Uri, Hash),
-  setup_call_cleanup(
-    graphviz(dot, ProcIn, Program),
-    seed2dot(ProcIn, Hash),
-    close(ProcIn)
-  ).
+  graphviz_show(dot, gtk, {Hash}/[Out]>>seed2dot(Out, Hash)).
 
 
 

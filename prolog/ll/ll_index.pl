@@ -6,9 +6,9 @@
 @version 2017/09-2017/10
 */
 
-:- use_module(library(hdt)).
 :- use_module(library(ll/ll_generics)).
 :- use_module(library(ll/ll_seedlist)).
+:- use_module(library(semweb/hdt11)).
 :- use_module(library(semweb/rdf_api)).
 
 :- rdf_register_prefix(base, 'https://lodlaundromat.org/header/').
