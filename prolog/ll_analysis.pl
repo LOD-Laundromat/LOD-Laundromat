@@ -9,7 +9,8 @@
 :- use_module(library(dict_ext)).
 :- use_module(library(error)).
 :- use_module(library(http/http_header)).
-:- use_module(library(ll/ll_seedlist)).
+
+:- use_module(ll_seedlist).
 
 
 

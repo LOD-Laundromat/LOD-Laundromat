@@ -3,7 +3,7 @@
 /** <module> LOD Laundromat: Unarchive
 
 @author Wouter Beek
-@version 2017/09-2017/10
+@version 2017/09-2017/11
 */
 
 :- use_module(library(apply)).
@@ -13,9 +13,10 @@
 :- use_module(library(file_ext)).
 :- use_module(library(hash_ext)).
 :- use_module(library(hash_stream)).
-:- use_module(library(ll/ll_generics)).
-:- use_module(library(ll/ll_seedlist)).
 :- use_module(library(zlib)).
+
+:- use_module(ll_generics).
+:- use_module(ll_seedlist).
 
 
 

@@ -3,21 +3,23 @@
 /** <module> LOD Laundromat: Parse RDF
 
 @author Wouter Beek
-@version 2017/09-2017/10
+@version 2017/09-2017/11
 */
 
 :- use_module(library(apply)).
 :- use_module(library(dict_ext)).
 :- use_module(library(hash_stream)).
 :- use_module(library(lists)).
-:- use_module(library(ll/ll_generics)).
-:- use_module(library(ll/ll_seedlist)).
 :- use_module(library(semweb/rdf_api)).
 :- use_module(library(semweb/rdf_export)).
 :- use_module(library(semweb/rdf_ntriples)).
+:- use_module(library(semweb/rdf_prefixes)).
 :- use_module(library(semweb/rdfa)).
 :- use_module(library(semweb/turtle)).
 :- use_module(library(zlib)).
+
+:- use_module(ll_generics).
+:- use_module(ll_seedlist).
 
 :- rdf_register_prefix(
      bnode,

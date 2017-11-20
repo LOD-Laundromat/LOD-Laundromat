@@ -17,19 +17,21 @@
 /** <module> LOD Laundromat: Seedlist
 
 @author Wouter Beek
-@version 2017/09-2017/10
+@version 2017/09-2017/11
 */
 
 :- use_module(library(apply)).
 :- use_module(library(dict_ext)).
 :- use_module(library(error)).
 :- use_module(library(filesex)).
-:- use_module(library(ll/ll_generics)).
+:- use_module(library(http/http_client2)).
 :- use_module(library(rocks_ext)).
 :- use_module(library(settings)).
-:- use_module(library(sitemap)).
-:- use_module(library(uri)).
+:- use_module(library(uri/uri_ext)).
 :- use_module(library(yall)).
+
+:- use_module(ll_generics).
+:- use_module(sitemap).
 
 :- at_halt(maplist(rocks_close, [seedlist])).
 
@@ -60,9 +62,9 @@ add_uri(Uri1) :-
   ).
 add_uri(Uri) :-
   uri_is_global(Uri), !,
-  (   catch(uri_last_modified(Uri, LastModified), _, fail)
+  (   catch(http_lmod(Uri, LMod), _, fail)
   ->  get_time(Now),
-      Interval is Now - LastModified
+      Interval is Now - LMod
   ;   setting(default_interval, Interval)
   ),
   add_uri(Uri, Interval).

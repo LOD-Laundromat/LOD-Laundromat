@@ -3,7 +3,7 @@
 /** <module> LOD Laundromat: Download
 
 @author Wouter Beek
-@version 2017/09-2017/10
+@version 2017/09-2017/11
 */
 
 :- use_module(library(dcg/dcg_ext)).
@@ -12,8 +12,10 @@
 :- use_module(library(hash_stream)).
 :- use_module(library(http/http_client2)).
 :- use_module(library(http/rfc7231)).
-:- use_module(library(ll/ll_generics)).
-:- use_module(library(ll/ll_seedlist)).
+:- use_module(library(semweb/rdf_api)).
+
+:- use_module(ll_generics).
+:- use_module(ll_seedlist).
 
 
 

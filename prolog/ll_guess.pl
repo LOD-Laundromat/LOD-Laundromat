@@ -3,12 +3,14 @@
 /** <module> LOD Laundromat: Guess format
 
 @author Wouter Beek
-@version 2017/09
+@version 2017/09-2017/11
 */
 
-:- use_module(library(ll/ll_generics)).
-:- use_module(library(ll/ll_seedlist)).
+:- use_module(library(semweb/rdf_api)).
 :- use_module(library(semweb/rdf_guess)).
+
+:- use_module(ll_generics).
+:- use_module(ll_seedlist).
 
 ll_guess :-
   with_mutex(ll_guess, (

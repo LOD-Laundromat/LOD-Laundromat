@@ -9,7 +9,7 @@
 /** <module> LOD Laundromat: Show
 
 @author Wouter Beek
-@version 2017/09-2017/10
+@version 2017/09-2017/11
 */
 
 :- use_module(library(aggregate)).
@@ -22,10 +22,12 @@
 :- use_module(library(graph/dot)).
 :- use_module(library(http/http_generic)).
 :- use_module(library(lists)).
-:- use_module(library(ll/ll_generics)).
-:- use_module(library(ll/ll_seedlist)).
 :- use_module(library(stream_ext)).
+:- use_module(library(uri/uri_ext)).
 :- use_module(library(yall)).
+
+:- use_module(ll_generics).
+:- use_module(ll_seedlist).
 
 :- debug(dot).
 
@@ -34,45 +36,29 @@
 
 
 %! export_uri(?Uri:atom) is det.
-%! export_uri(?Uri:atom, +Format:atom) is det.
 %
 % Exports the LOD Laundromat job for the given URI to a PDF file, or
 % to a file in some other Format.
 
 export_uri(Uri) :-
-  export_uri(Uri, pdf).
-
-
-export_uri(Uri, Format) :-
-  var(Uri), !,
-  seed(Seed),
-  _{uri: Uri} :< Seed,
-  export_uri(Uri, Format).
-export_uri(Uri, Format) :-
+  (var(Uri) -> seed(Seed), _{uri: Uri} :< Seed ; true),
   uri_hash(Uri, Hash),
+  Format = pdf,%SETTING
   file_name_extension(Hash, Format, File),
   graphviz_export(dot, Format, File, {Hash}/[Out]>>seed2dot(Out, Hash)).
 
 
 
 %! show_uri(?Uri:atom) is det.
-%! show_uri(?Uri:atom, +Program:atom) is det.
 %
 % Shows the LOD Laundromat job for the given URI in X11, or in some
 % other Program.
 
 show_uri(Uri) :-
-  show_uri(Uri, x11).
-
-
-show_uri(Uri, Format) :-
-  var(Uri), !,
-  seed(Seed),
-  _{uri: Uri} :< Seed,
-  export_uri(Uri, Format).
-show_uri(Uri, Program) :-
+  (var(Uri) -> seed(Seed), _{uri: Uri} :< Seed ; true),
+  Program = gtk,%SETTING
   uri_hash(Uri, Hash),
-  graphviz_show(dot, gtk, {Hash}/[Out]>>seed2dot(Out, Hash)).
+  graphviz_show(dot, Program, {Hash}/[Out]>>seed2dot(Out, Hash)).
 
 
 

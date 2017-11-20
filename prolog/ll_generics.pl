@@ -1,19 +1,12 @@
-:- module(
-  ll_generics,
-  [
-    call_loop/1,        % :Goal_0
-    delete_empty_directories/0,
-    hash_directory/2,   % +Hash, -Directory
-    hash_entry_hash/3,  % +Hash1, +Entry, -Hash2
-    hash_file/3,        % +Hash, +Local, -File
-    rdf_media_type/1,   % ?MediaType:compound
-    seed_base_uri/2,    % +Seed, -BaseUri
-    stream_meta/2,      % +In, -Meta
-    uri_hash/2,         % +Uri, -Hash
-    uri_last_modified/2 % +Uri, -LastModified
-  ]
-).
-:- reexport(library(debug)).
+:- module(ll_generics, [
+     call_loop/1,        % :Goal_0
+     delete_empty_directories/0,
+     hash_directory/2,   % +Hash, -Directory
+     hash_entry_hash/3,  % +Hash1, +Entry, -Hash2
+     hash_file/3,        % +Hash, +Local, -File
+     seed_base_uri/2,    % +Seed, -BaseUri
+     stream_meta/2       % +In, -Meta
+  ]).
 
 /** <module> LOD Laundromat: Generics
 
@@ -28,9 +21,10 @@
 :- use_module(library(hash_ext)).
 :- use_module(library(hash_stream)).
 :- use_module(library(http/http_client2)).
-:- use_module(library(ll/ll_seedlist)).
 :- use_module(library(settings)).
 :- use_module(library(uri)).
+
+:- use_module(ll_seedlist).
 
 :- initialization
    conf_json(Dict),
@@ -90,17 +84,6 @@ hash_file(Hash, Local, File) :-
 
 
 
-%! rdf_media_type(?MediaType:compound) is nondet.
-
-rdf_media_type(media(application/'json-ld',[])).
-rdf_media_type(media(application/'rdf+xml',[])).
-rdf_media_type(media(text/turtle,[])).
-rdf_media_type(media(application/'n-triples',[])).
-rdf_media_type(media(application/trig,[])).
-rdf_media_type(media(application/'n-quads',[])).
-
-
-
 %! running_loop(:Goal_0) is det.
 
 running_loop(Goal_0) :-
@@ -138,22 +121,3 @@ stream_meta(In, Meta) :-
     number_of_chars: NumberOfChars,
     number_of_lines: NumberOfLines
   }.
-
-
-
-%! uri_hash(+Uri:atom, -Hash:atom) is det.
-
-uri_hash(Uri1, Hash) :-
-  uri_normalized(Uri1, Uri2),
-  md5(Uri2, Hash).
-
-
-
-%! uri_last_modified(+Uri:atom, -LastModified:integer) is semidet.
-
-uri_last_modified(Uri, LastModified) :-
-  http_head2(Uri, [meta(Meta)]),
-  Meta = [Dict|_],
-  _{'last-modified': [LastModifiedAtom]} :< Dict.headers,
-  parse_time(LastModifiedAtom, rfc_1123, Timestamp),
-  LastModified is float_integer_part(Timestamp).
