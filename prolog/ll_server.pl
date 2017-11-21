@@ -6,6 +6,7 @@
 :- use_module(library(rocks_ext)).
 :- use_module(library(settings)).
 
+:- use_module(ll_cloud).
 :- use_module(ll_seedlist).
 
 :- html_meta
@@ -23,26 +24,27 @@ html:author("Frank van Harmelen").
 
 :- set_setting(html:google_analytics_id, 'UA-51130014-1').
 
+% /
 ll_handler(Request) :-
   rest_method(Request, ll_method).
 
-
+% /: GET,HEAD
 ll_method(Method, MediaTypes) :-
   http_is_get(Method),
   rest_media_type(MediaTypes, ll_media_type).
 
-
-ll_media_type(text/html) :-
+% /: GET,HEAD: text/html
+ll_media_type(media(text/html,_)) :-
   reply_html_page(
     ll(_,["Overview"]),
     [],
     [
-      \laundromat_intro,
-      \basket_intro,
-      \wardrobe_intro,
-      \analytics_intro,
-      \metadata_intro,
-      \about_intro
+      \laundromat_intro%,
+      %\basket_intro,
+      %\wardrobe_intro,
+      %\analytics_intro,
+      %\metadata_intro,
+      %\about_intro
     ]
   ).
 
@@ -180,7 +182,7 @@ image_resource(wouter_beek, "Picture of Wouter Beek", jpg).
 
 % HTML STYLE %
 
-user:head(hdt(Page,Subtitles), Content_0) -->
+user:head(ll(Page,Subtitles), Content_0) -->
   {atomics_to_string(["LOD Laundromat"|Subtitles], " ― ", Title)},
   html(
     head([
@@ -198,20 +200,20 @@ user:head(hdt(Page,Subtitles), Content_0) -->
     ])
   ).
 
-user:body(hdt(_,_), Content_0) -->
+user:body(ll(_,_), Content_0) -->
   html(body([\navbar("LOD Laundromat", \menu, \counter)|Content_0])).
 
 counter -->
   {
-    rocks_get(llw, number_of_documents, NumDocs),
-    rocks_get(llw, number_of_tuples, NumTuples)
+    number_of_datasets(NumDatasets),
+    number_of_triples(NumTriples)
   },
   html(
     p(class='navbar-text', [
       "(",
-      \html_thousands(NumDocs),
-      " docs with ",
-      \html_thousands(NumTuples),
-      " stmts)"
+      \html_thousands(NumDatasets),
+      " datasets with ",
+      \html_thousands(NumTriples),
+      " triples)"
     ])
   ).

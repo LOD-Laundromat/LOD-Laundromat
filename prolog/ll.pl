@@ -1,8 +1,8 @@
 :- module(ll, []).
 :- reexport(ll_analysis).
+:- reexport(ll_cloud).
 :- reexport(ll_download).
 :- reexport(ll_guess).
-:- reexport(ll_index).
 :- reexport(ll_parse).
 :- reexport(ll_seedlist).
 :- reexport(ll_show).
@@ -23,4 +23,4 @@
 
 :- initialization
    %(debugging(ll) -> tmon ; true),
-   maplist(call_loop, [ll_download,ll_unarchive,ll_guess,ll_parse,ll_index]).
+   maplist(call_loop, [ll_download,ll_unarchive,ll_guess,ll_parse,ll_store]).

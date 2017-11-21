@@ -55,7 +55,7 @@ HASH/
 :- use_module(library(semweb/rdfa)).
 :- use_module(library(semweb/turtle)).
 :- use_module(library(uuid)).
-:- use_module(library(xsd/xsd_number)).
+:- use_module(library(xml/xsd_number)).
 :- use_module(library(zlib)).
 
 :- debug(clean).
