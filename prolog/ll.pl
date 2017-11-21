@@ -3,11 +3,10 @@
 /** <module> LOD Laundromat
 
 @author Wouter Beek
-@version 2017/09
+@version 2017/09-2017/11
 */
 
 :- use_module(library(apply)).
-:- use_module(library(debug)).
 
 :- use_module(ll_analysis).
 :- use_module(ll_cloud).
@@ -19,8 +18,5 @@
 :- use_module(ll_show).
 :- use_module(ll_unarchive).
 
-:- debug(ll).
-
 :- initialization
-   %(debugging(ll) -> tmon ; true),
    maplist(call_loop, [ll_download,ll_unarchive,ll_guess,ll_parse,ll_store]).

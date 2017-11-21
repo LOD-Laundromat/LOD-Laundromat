@@ -56,11 +56,11 @@ ll_unarchive2(Hash, In, Entry) :-
   setup_call_cleanup(
     (
       archive_open(In, Archive, [close_parent(false),filter(all)|Formats]),
-      indent_debug(1, ll, "> ~w OPEN ARCHIVE ~w", [In,Archive])
+      indent_debug(1, ll(unarchive), "> ~w OPEN ARCHIVE ~w", [In,Archive])
     ),
     ll_unarchive3(Hash, Archive, Entry),
     (
-      indent_debug(-1, ll, "< ~w CLOSE ARCHIVE ~w", [Archive,In]),
+      indent_debug(-1, ll(unarchive), "< ~w CLOSE ARCHIVE ~w", [Archive,In]),
       archive_close(Archive)
     )
   ).
@@ -70,11 +70,11 @@ ll_unarchive3(Hash, Archive, Entry) :-
   archive_data_stream(Archive, In, [meta_data(ArchiveMeta)]), %NONDET
   ArchiveMeta = [Dict|_],
   _{name: Entry} :< Dict,
-  indent_debug(1, ll, "> ~w OPEN ENTRY ~w ‘~a’", [Archive,In,Entry]),
+  indent_debug(1, ll(unarchive), "> ~w OPEN ENTRY ~w ‘~a’", [Archive,In,Entry]),
   call_cleanup(
     ll_unarchive4(Hash, ArchiveMeta, Entry, In),
     (
-      indent_debug(-1, ll, "< ~w ‘~a’ CLOSE ENTRY ~w", [In,Entry,Archive]),
+      indent_debug(-1, ll(unarchive), "< ~w ‘~a’ CLOSE ENTRY ~w", [In,Entry,Archive]),
       close(In)
     )
   ).
@@ -100,7 +100,7 @@ ll_unarchive_data1(Hash, In1) :-
 
 ll_unarchive_data2(_, In, In) :- !.
 ll_unarchive_data2(Hash, In1, In2) :-
-  indent_debug(1, ll, "> ~w RECODE ~w", [In1,In2]),
+  indent_debug(1, ll(unarchive), "> ~w RECODE ~w", [In1,In2]),
   ll_unarchive_data3(Hash, In2).
 
 ll_unarchive_data3(Hash, In) :-
@@ -114,7 +114,7 @@ ll_unarchive_data3(Hash, In) :-
 
 ll_unarchive_data_close(In, In) :- !.
 ll_unarchive_data_close(In1, In2) :-
-  indent_debug(-1, ll, "< ~w RECODE ~w", [In1,In2]),
+  indent_debug(-1, ll(unarchive), "< ~w RECODE ~w", [In1,In2]),
   close(In2).
 
 
@@ -137,14 +137,14 @@ ll_unarchive_entry2(Hash1, ArchiveMeta, Hash2, In1, Out) :-
   setup_call_cleanup(
     (
       open_hash_stream(In1, In2, [algorithm(md5),close_parent(false)]),
-      indent_debug(1, ll, "> ~w CALCULATE HASH ~w", [In1,In2])
+      indent_debug(1, ll(unarchive), "> ~w CALCULATE HASH ~w", [In1,In2])
     ),
     (
       copy_stream_data(In2, Out),
       stream_meta(In2, ContentMeta)
     ),
     (
-      indent_debug(-1, ll, "< ~w CALCULATE HASH ~w", [In2,In1]),
+      indent_debug(-1, ll(unarchive), "< ~w CALCULATE HASH ~w", [In2,In1]),
       close(In2)
     )
   ),

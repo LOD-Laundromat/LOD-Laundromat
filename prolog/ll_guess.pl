@@ -21,8 +21,8 @@ ll_guess :-
   debug(ll(guess), "┌─> guessing (~a)", [Hash]),
   get_time(Begin),
   hash_file(Hash, dirty, File),
-  rdf_guess(File, [MT], [peek_size('∞')]),
-  rdf_media_type_format(MT, Format),
+  rdf_guess_file(File, MediaType),
+  rdf_media_type_format(MediaType, Format),
   get_time(End),
   debug(ll(guess), "└─< guessed ~a", [Format]),
   seed_merge(Hash{format: Format, status: guessed, timestamp: Begin-End}).

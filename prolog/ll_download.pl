@@ -24,7 +24,6 @@
 ll_download :-
   % precondition
   stale_seed(Uri, Hash1),
-
   debug(ll(download), "┌─> downloading ~a", [Uri]),
   get_time(Begin),
   md5(Hash1-dummy, Hash2), % TBD: include `Begin' to make scrapes unique

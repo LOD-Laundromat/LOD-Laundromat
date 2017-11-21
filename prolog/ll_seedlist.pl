@@ -156,6 +156,8 @@ seed_merge(Dict) :-
 
 
 %! seed_store(+Dict:dict) is det.
+%
+% Adds a new seed based on the given Dict.
 
 seed_store(Dict) :-
   dict_tag(Dict, Hash),
@@ -165,7 +167,7 @@ seed_store(Dict) :-
 
 %! stale_seed(-Uri:atom, -Hash) is nondet.
 %
-% Pop a stale seed for processing (i.e., downloading).
+% Pop a stale seed for processing (starting with downloading).
 
 stale_seed(Uri, Hash) :-
   get_time(Now),

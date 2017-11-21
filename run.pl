@@ -7,8 +7,5 @@
 :- use_module(prolog/ll_seedlist).
 :- use_module(prolog/ll_server).
 
-:- use_module(library(debug)).
-:- debug(ll(_)).
-
 test :-
   add_uri('http://ieee.rkbexplorer.com/models/dump.tgz').
