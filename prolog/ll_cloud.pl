@@ -17,6 +17,7 @@
 :- use_module(library(debug)).
 :- use_module(library(tapir)).
 
+:- use_module(ll_seedlist).
 :- use_module(ll_generics).
 
 

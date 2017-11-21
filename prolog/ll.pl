@@ -1,12 +1,4 @@
 :- module(ll, []).
-:- reexport(ll_analysis).
-:- reexport(ll_cloud).
-:- reexport(ll_download).
-:- reexport(ll_guess).
-:- reexport(ll_parse).
-:- reexport(ll_seedlist).
-:- reexport(ll_show).
-:- reexport(ll_unarchive).
 
 /** <module> LOD Laundromat
 
@@ -17,7 +9,15 @@
 :- use_module(library(apply)).
 :- use_module(library(debug)).
 
+:- use_module(ll_analysis).
+:- use_module(ll_cloud).
+:- use_module(ll_download).
 :- use_module(ll_generics).
+:- use_module(ll_guess).
+:- use_module(ll_parse).
+:- use_module(ll_seedlist).
+:- use_module(ll_show).
+:- use_module(ll_unarchive).
 
 :- debug(ll).
 
