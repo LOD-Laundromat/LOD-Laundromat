@@ -56,6 +56,7 @@ export_uri(Uri) :-
 
 show_uri(Uri) :-
   (var(Uri) -> seed(Seed), _{uri: Uri} :< Seed ; true),
+  print_message(informational, show_uri(Uri)),
   Program = gtk,%SETTING
   uri_hash(Uri, Hash),
   graphviz_show(dot, Program, {Hash}/[Out]>>seed2dot(Out, Hash)).
@@ -290,6 +291,8 @@ property_label(timestamp(Begin,End), Label) :-
   Duration is End - Begin,
   format(string(Label), "Duration: ~2f sec.", [Duration]).
 
+error_label(error(http_status(Status)), Label) :- !,
+  format(string(Label), "HTTP status code ~d", [Status]).
 error_label(error(socket_error(Msg),_), Label) :- !,
   format(string(Label), "Socket error: ~a", [Msg]).
 error_label(E, _Label) :-
