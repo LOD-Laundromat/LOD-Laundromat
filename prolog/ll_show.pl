@@ -19,7 +19,7 @@
 :- use_module(library(dcg/dcg_ext)).
 :- use_module(library(debug_ext)).
 :- use_module(library(dict_ext)).
-:- use_module(library(graph/dot)).
+:- use_module(library(graph/gv)).
 :- use_module(library(http/http_generic)).
 :- use_module(library(lists)).
 :- use_module(library(stream_ext)).
@@ -45,7 +45,7 @@ export_uri(Uri) :-
   uri_hash(Uri, Hash),
   Format = pdf,%SETTING
   file_name_extension(Hash, Format, File),
-  graphviz_export(dot, Format, File, {Hash}/[Out]>>seed2dot(Out, Hash)).
+  gv_export(dot, Format, File, {Hash}/[Out]>>seed2dot(Out, Hash)).
 
 
 
@@ -59,7 +59,7 @@ show_uri(Uri) :-
   print_message(informational, show_uri(Uri)),
   Program = gtk,%SETTING
   uri_hash(Uri, Hash),
-  graphviz_show(dot, Program, {Hash}/[Out]>>seed2dot(Out, Hash)).
+  gv_show(dot, Program, {Hash}/[Out]>>seed2dot(Out, Hash)).
 
 
 
@@ -144,7 +144,7 @@ seed2dot_dict(Out, Dict) :-
 seed2dot_dict(Out, Dict1) :-
   Hash1{
     clean: Hash2,
-    format: RdfFormat1,
+    format: Ext,
     newline: Newline,
     number_of_bytes: N1,
     number_of_chars: N2,
@@ -163,7 +163,7 @@ seed2dot_dict(Out, Dict1) :-
     Labels1
   ),
   maplist(atomic_concat(n), [Hash1,Hash2], [Id1,Id2]),
-  rdf_format_label(RdfFormat1, RdfFormat2),
+  extension_label(Ext, Label),
   (   dict_get(http, Dict1, Dicts1)
   ->  reverse(Dicts1, Dicts2),
       seed2dot_http(Out, Id1, Dicts2)
@@ -191,9 +191,9 @@ seed2dot_dict(Out, Dict1) :-
         ],
         Labels2
       ),
-      format(string(Label), "RDF format: ~s", [RdfFormat2]),
+      format(string(Label), "RDF format: ~s", [Label]),
       append([Label|Labels1], Labels2, Labels)
-  ;   format(string(Header), "<B>Raw Data: ~s</B>", [RdfFormat2]),
+  ;   format(string(Header), "<B>Raw Data: ~s</B>", [Label]),
       Labels = Labels1
   ),
   hash_label(Hash1, Hash1Label),
@@ -306,15 +306,3 @@ http_header_label(Name1-Values, Label) :-
 
 bool_string(false, "❌").
 bool_string(true, "✓").
-
-rdf_format(jsonld, application, 'json-ld').
-rdf_format(nquads, application, 'n-quads').
-rdf_format(ntriples, application, 'n-triples').
-rdf_format(rdfa, application, 'xhtml+xml').
-rdf_format(rdfxml, application, 'rdf+xml').
-rdf_format(trig, application, trig).
-rdf_format(turtle, text, turtle).
-
-rdf_format_label(Format, Label) :-
-  rdf_format(Format, Supertype, Subtype),
-  format(string(Label), "~a/~a", [Supertype,Subtype]).

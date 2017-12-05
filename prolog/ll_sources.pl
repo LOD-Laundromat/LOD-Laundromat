@@ -9,13 +9,14 @@
 /** <module> LOD Laundromat: sources for seedpoints
 
 @author Wouter Beek
-@version 2017/09
+@version 2017/09-2017/12
 */
 
 :- use_module(library(debug)).
 :- use_module(library(http/ckan_api)).
 :- use_module(library(http/json)).
 :- use_module(library(http/http_client2)).
+:- use_module(library(string_ext)).
 :- use_module(library(zlib)).
 
 :- discontiguous
@@ -80,7 +81,7 @@ ll_source(lov, Uri) :-
 
 rdf_format0(Format1) :-
   string_lower(Format1, Format2),
-  split_string(Format2, "", " ", [Format]),
+  string_strip(Format2, " ", Format),
   Format \== "",
   (   rdf_format(Format)
   ->  true
@@ -238,6 +239,7 @@ other_format("search").
 other_format("spreadsheet").
 other_format("sql").
 other_format("sqlite").
+other_format("svg",                  image/'svg+xml').
 other_format("tab").
 other_format("tar",                  application/'x-tar').
 other_format("tar.gz",               application/'x-tar').

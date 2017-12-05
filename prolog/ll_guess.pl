@@ -3,9 +3,10 @@
 /** <module> LOD Laundromat: Guess format
 
 @author Wouter Beek
-@version 2017/09-2017/11
+@version 2017/09-2017/12
 */
 
+:- use_module(library(media_type)).
 :- use_module(library(semweb/rdf_api)).
 :- use_module(library(semweb/rdf_guess)).
 
@@ -25,7 +26,7 @@ ll_guess :-
   ->  true
   ;   print_message(warning,ll_guess(Hash))
   ),
-  (rdf_media_type_format(MediaType, Format) -> true ; gtrace),
+  (media_type_extension(MediaType, Ext) -> true ; gtrace),
   get_time(End),
-  debug(ll(guess), "└─< guessed ~a", [Format]),
-  seed_merge(Hash{format: Format, status: guessed, timestamp: Begin-End}).
+  debug(ll(guess), "└─< guessed ~a", [Ext]),
+  seed_merge(Hash{format: Ext, status: guessed, timestamp: Begin-End}).

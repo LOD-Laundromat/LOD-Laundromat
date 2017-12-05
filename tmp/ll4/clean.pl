@@ -36,6 +36,7 @@ HASH/
 :- use_module(library(apply)).
 :- use_module(library(archive)).
 :- use_module(library(check_installation), []).
+:- use_module(library(dcg/dcg_ext)).
 :- use_module(library(debug)).
 :- use_module(library(dict_ext)).
 :- use_module(library(http/http_cookie)).
@@ -44,6 +45,7 @@ HASH/
 :- use_module(library(file_ext)).
 :- use_module(library(lists)).
 :- use_module(library(md5)).
+:- use_module(library(media_type)).
 :- use_module(library(option)).
 :- use_module(library(rdf)).
 :- use_module(library(semweb/rdf_api)).
@@ -114,8 +116,7 @@ clean_file(Uri, Hash, MediaTypes2, EntryFile) :-
           ),
           arg(1, Count, NumTriples),
           stream_metadata(In, Out, Walltime, StreamDict),
-          MediaType = media(Super/Sub,_),
-          format(string(MediaType0), "~a/~a", [Super,Sub])
+          string_phrase(media_type(MediaType), MediaType0)
         ),
         (
           close(In),

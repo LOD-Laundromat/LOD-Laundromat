@@ -3,7 +3,7 @@
 /** <module> LOD Laundromat: Download
 
 @author Wouter Beek
-@version 2017/09-2017/11
+@version 2017/09-2017/12
 */
 
 :- use_module(library(dcg/dcg_ext)).
@@ -11,7 +11,6 @@
 :- use_module(library(hash_ext)).
 :- use_module(library(hash_stream)).
 :- use_module(library(http/http_client2)).
-:- use_module(library(http/rfc7231)).
 :- use_module(library(semweb/rdf_api)).
 
 :- use_module(ll_generics).
@@ -58,7 +57,7 @@ ll_download1(Hash2, Uri, HttpMeta, ContentMeta) :-
 
 ll_download2(CurrentUri, Out, HttpMeta, ContentMeta) :-
   findall(MediaType, rdf_media_type(MediaType), MediaTypes),
-  atom_phrase(accept(MediaTypes), Accept),
+  http_accept_value(MediaTypes, Accept),
   http_open2(
     CurrentUri,
     In,

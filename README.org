@@ -221,3 +221,8 @@ $(ENTRY_HASH){status: parsing}
 $(CLEAN_HASH){dirty: $(ENTRY_HASH), status: cleaned} % clean file
 $(ENTRY_HASH){clean: $(CLEAN_HAHS), status: parsed} % dirty file
 #+END_SRC
+* Running
+
+#+BEGIN_SRC sh
+$ swipl debug.pl --port=3020 --conf=conf.json --interactive
+#+END_SRC
