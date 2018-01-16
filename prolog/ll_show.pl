@@ -69,15 +69,15 @@ show_uri(Uri) :-
 
 seed2dot(Out, Hash) :-
   format_debug(dot, Out, "digraph g {"),
-  seed2dot_hash(Out, Hash),
+  seed2gv_hash(Out, Hash),
   format_debug(dot, Out, "}").
 
-seed2dot_hash(Out, Hash) :-
+seed2gv_hash(Out, Hash) :-
   seed(Hash, Dict),
-  seed2dot_dict(Out, Dict).
+  seed2gv_dict(Out, Dict).
 
 % error
-seed2dot_dict(Out, Dict) :-
+seed2gv_dict(Out, Dict) :-
   Hash{
     error: Error,
     status: Status
@@ -86,9 +86,9 @@ seed2dot_dict(Out, Dict) :-
   error_label(Error, ErrorLabel),
   atomic_concat(n, Hash, Id),
   hash_label(Hash, HashLabel),
-  dot_node(Out, Id, [label([Header,HashLabel,ErrorLabel]),shape(box)]).
+  gv_node(Out, Id, [label([Header,HashLabel,ErrorLabel]),shape(box)]).
 % URI
-seed2dot_dict(Out, Dict) :-
+seed2gv_dict(Out, Dict) :-
   Hash1{
     added: _Added,
     interval: Interval,
@@ -104,11 +104,11 @@ seed2dot_dict(Out, Dict) :-
     Labels
   ),
   hash_label(Hash1, Hash1Label),
-  dot_node(Out, Id1, [label([Header,Hash1Label|Labels]),shape(box)]),
-  maplist({Out,Id1}/[Id2]>>dot_edge(Out, Id1, Id2, [label("hasCrawl")]), Id2s),
-  maplist(seed2dot_hash(Out), Hash2s).
+  gv_node(Out, Id1, [label([Header,Hash1Label|Labels]),shape(box)]),
+  maplist({Out,Id1}/[Id2]>>gv_edge(Out, Id1, Id2, [label("hasCrawl")]), Id2s),
+  maplist(seed2gv_hash(Out), Hash2s).
 % archive
-seed2dot_dict(Out, Dict) :-
+seed2gv_dict(Out, Dict) :-
   Hash1{
     http: Dicts1,
     children: Hash2s,
@@ -121,7 +121,7 @@ seed2dot_dict(Out, Dict) :-
   } :< Dict, !,
   atomic_concat(n, Hash1, Id1),
   reverse(Dicts1, Dicts2),
-  seed2dot_http(Out, Id1, Dicts2),
+  seed2gv_http(Out, Id1, Dicts2),
   maplist(
     property_label,
     [
@@ -136,12 +136,12 @@ seed2dot_dict(Out, Dict) :-
   maplist(atomic_concat(n), [Hash1|Hash2s], [Id1|Id2s]),
   format(string(Header), "<B>Archive: ~a</B>", [Status]),
   hash_label(Hash1, Hash1Label),
-  dot_node(Out, Id1, [label([Header,Hash1Label|Labels]),shape(box)]),
-  maplist({Out,Id1}/[Id2]>>dot_edge(Out, Id1, Id2, [label("hasEntry")]), Id2s),
+  gv_node(Out, Id1, [label([Header,Hash1Label|Labels]),shape(box)]),
+  maplist({Out,Id1}/[Id2]>>gv_edge(Out, Id1, Id2, [label("hasEntry")]), Id2s),
   maplist(seed, Hash2s, Dict2s),
-  maplist(seed2dot_dict(Out), Dict2s).
+  maplist(seed2gv_dict(Out), Dict2s).
 % entry
-seed2dot_dict(Out, Dict1) :-
+seed2gv_dict(Out, Dict1) :-
   Hash1{
     clean: Hash2,
     format: Ext,
@@ -166,7 +166,7 @@ seed2dot_dict(Out, Dict1) :-
   extension_label(Ext, Label),
   (   dict_get(http, Dict1, Dicts1)
   ->  reverse(Dicts1, Dicts2),
-      seed2dot_http(Out, Id1, Dicts2)
+      seed2gv_http(Out, Id1, Dicts2)
   ;   true
   ),
   (   dict_get(archive, Dict1, ArchiveDicts)
@@ -197,11 +197,11 @@ seed2dot_dict(Out, Dict1) :-
       Labels = Labels1
   ),
   hash_label(Hash1, Hash1Label),
-  dot_node(Out, Id1, [label([Header,Hash1Label|Labels]),shape(box)]),
-  dot_edge(Out, Id1, Id2, [label("hasClean")]),
-  seed2dot_hash(Out, Hash2).
+  gv_node(Out, Id1, [label([Header,Hash1Label|Labels]),shape(box)]),
+  gv_edge(Out, Id1, Id2, [label("hasClean")]),
+  seed2gv_hash(Out, Hash2).
 % clean RDF
-seed2dot_dict(Out, Dict) :-
+seed2gv_dict(Out, Dict) :-
   Hash{
     newline: Newline,
     number_of_bytes: N1,
@@ -228,13 +228,13 @@ seed2dot_dict(Out, Dict) :-
   format(string(Header), "<B>Clean RDF: ~D statements</B>", [N6]),
   atomic_concat(n, Hash, Id),
   hash_label(Hash, HashLabel),
-  dot_node(Out, Id, [label([Header,HashLabel|Labels]),shape(box)]). 
-seed2dot_dict(_, Dict) :-
+  gv_node(Out, Id, [label([Header,HashLabel|Labels]),shape(box)]). 
+seed2gv_dict(_, Dict) :-
   gtrace,
   writeln(Dict).
 
-seed2dot_http(_, _, []) :- !.
-seed2dot_http(Out, Id1, [H|T]) :-
+seed2gv_http(_, _, []) :- !.
+seed2gv_http(Out, Id1, [H|T]) :-
   _{
     headers: Headers,
     status: Status,
@@ -256,10 +256,10 @@ seed2dot_http(Out, Id1, [H|T]) :-
   ),
   dict_pairs(Headers, Pairs),
   maplist(http_header_label, Pairs, Labels),
-  dot_id(H, Id2),
-  dot_node(Out, Id2, [label([Header,Label1,Label2|Labels]),shape(box)]),
-  dot_edge(Out, Id1, Id2, [label("HTTP")]),
-  seed2dot_http(Out, Id2, T).
+  gv_id(H, Id2),
+  gv_node(Out, Id2, [label([Header,Label1,Label2|Labels]),shape(box)]),
+  gv_edge(Out, Id1, Id2, [label("HTTP")]),
+  seed2gv_http(Out, Id2, T).
 
 hash_label(Hash, Label) :-
   format(string(Label), "~a", [Hash]).

@@ -57,11 +57,10 @@ ll_download1(Hash2, Uri, HttpMeta, ContentMeta) :-
 
 ll_download2(CurrentUri, Out, HttpMeta, ContentMeta) :-
   findall(MediaType, rdf_media_type(MediaType), MediaTypes),
-  http_accept_value(MediaTypes, Accept),
   http_open2(
     CurrentUri,
     In,
-    [metadata(HttpMeta),next(NextUri),request_header('Accept'=Accept)]
+    [accept(MediaTypes),metadata(HttpMeta),next(NextUri)]
   ),
   (var(NextUri) -> true ; add_uri(NextUri)),
   call_cleanup(
