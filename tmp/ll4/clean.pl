@@ -36,9 +36,9 @@ HASH/
 :- use_module(library(apply)).
 :- use_module(library(archive)).
 :- use_module(library(check_installation), []).
-:- use_module(library(dcg/dcg_ext)).
+:- use_module(library(dcg_ext)).
 :- use_module(library(debug)).
-:- use_module(library(dict_ext)).
+:- use_module(library(dict)).
 :- use_module(library(http/http_cookie)).
 :- use_module(library(http/http_header)).
 :- use_module(library(http/http_open)).
@@ -478,7 +478,7 @@ write_http_metadata(Out, S, N1, [H|T]) :-
     walltime: Walltime
   } :< H,
   rdf_membership_property(N1, P),
-  rdf_create_well_known_iri(BNode),
+  rdf_bnode_iri(BNode),
   write_ntriple(Out, S, P, BNode),
   write_ntriple(Out, BNode, rdf:type, llo:'HttpRequest'),
   write_ntriple(Out, BNode, llo:status, Status^^xsd:nonNegativeInteger),
@@ -507,10 +507,10 @@ write_stream_metadata(Out, S, Dict) :-
     out: OutDict,
     walltime: Walltime
   } :< Dict,
-  rdf_create_well_known_iri(InStream),
+  rdf_bnode_iri(InStream),
   write_ntriple(Out, S, llo:inputStream, InStream),
   write_iostream_metadata(Out, InStream, InDict),
-  rdf_create_well_known_iri(OutStream),
+  rdf_bnode_iri(OutStream),
   write_ntriple(Out, S, llo:outputStream, OutStream),
   write_iostream_metadata(Out, OutStream, OutDict),
   write_ntriple(Out, S, llo:walltime, Walltime^^xsd:float).

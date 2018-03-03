@@ -7,7 +7,7 @@
 */
 
 :- use_module(library(apply)).
-:- use_module(library(dict_ext)).
+:- use_module(library(dict)).
 :- use_module(library(hash_stream)).
 :- use_module(library(lists)).
 :- use_module(library(semweb/rdf_api)).

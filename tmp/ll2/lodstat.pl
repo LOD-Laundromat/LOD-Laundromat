@@ -22,9 +22,9 @@
 :- use_module(library(assoc_ext)).
 :- use_module(library(call_ext)).
 :- use_module(library(csv)).
-:- use_module(library(dcg/dcg_ext)).
-:- use_module(library(dcg/dcg_table)).
-:- use_module(library(dict_ext)).
+:- use_module(library(dcg_ext)).
+:- use_module(library(dcg_table)).
+:- use_module(library(dict)).
 :- use_module(library(file_ext)).
 :- use_module(library(lists)).
 :- use_module(library(lodcli/lodcli)).

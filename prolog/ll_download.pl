@@ -6,8 +6,8 @@
 @version 2017/09-2017/12
 */
 
-:- use_module(library(dcg/dcg_ext)).
-:- use_module(library(dict_ext)).
+:- use_module(library(dcg_ext)).
+:- use_module(library(dict)).
 :- use_module(library(hash_ext)).
 :- use_module(library(hash_stream)).
 :- use_module(library(http/http_client2)).

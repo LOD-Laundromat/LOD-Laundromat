@@ -6,11 +6,7 @@
     clear_hash/1, % +Hash
     clear_seed/1, % +Uri
     reset_seed/1, % +Uri
-    seed/1,       % -Seed
-    seed/2,       % +Hash, -Seed
-    seed_merge/1, % +Dict
-    seed_store/1, % +Dict
-    stale_seed/2  % -Uri, -Hash
+    seed_merge/1  % +Dict
   ]
 ).
 
@@ -21,30 +17,17 @@
 */
 
 :- use_module(library(apply)).
-:- use_module(library(dict_ext)).
 :- use_module(library(error)).
 :- use_module(library(filesex)).
-:- use_module(library(http/http_client2)).
-:- use_module(library(rocks_ext)).
 :- use_module(library(settings)).
-:- use_module(library(uri/uri_ext)).
 :- use_module(library(yall)).
+
+:- use_module(library(dict)).
+:- use_module(library(http/http_client2)).
+:- use_module(library(uri_ext)).
 
 :- use_module(ll_generics).
 :- use_module(sitemap).
-
-:- at_halt(maplist(rocks_close, [seedlist])).
-
-:- initialization
-   rocks_init(seedlist, [key(atom),merge(ll_seedlist:merge_dicts),value(term)]).
-
-:- setting(default_interval, float, 86400.0,
-           "The default interval for recrawling.").
-
-merge_dicts(partial, _, New, In, Out) :-
-  merge_dicts(New, In, Out).
-merge_dicts(full, _, Initial, Additions, Out) :-
-  merge_dicts([Initial|Additions], Out).
 
 
 
@@ -59,31 +42,6 @@ add_uri(Uri1) :-
   forall(
     sitemap_uri_interval(Uri1, Uri2, Interval),
     add_uri(Uri2, Interval)
-  ).
-add_uri(Uri) :-
-  uri_is_global(Uri), !,
-  (   catch(http_lmod(Uri, LMod), _, fail)
-  ->  get_time(Now),
-      Interval is Now - LMod
-  ;   setting(default_interval, Interval)
-  ),
-  add_uri(Uri, Interval).
-add_uri(Uri) :-
-  type_error(absolute_uri, Uri).
-
-add_uri(Uri, Interval) :-
-  uri_hash(Uri, Hash),
-  (   % The URI has already been added to the seedlist.
-      rocks_key(seedlist, Hash)
-  ->  print_message(informational, existing_seed(Uri,Hash))
-  ;   get_time(Now),
-      Dict = Hash{
-        added: Now,
-        interval: Interval,
-        processed: 0.0,
-        uri: Uri
-      },
-      seed_store(Dict)
   ).
 
 
@@ -135,49 +93,8 @@ reset_seed(Uri) :-
   
 
 
-%! seed(-Seed:dict) is nondet.
-%! seed(+Hash:atom, -Seed:dict) is nondet.
-
-seed(Seed) :-
-  seed(_, Seed).
-
-
-seed(Hash, Seed) :-
-  rocks(seedlist, Hash, Seed).
-
-
-
 %! seed_merge(+Dict:dict) is det.
 
 seed_merge(Dict) :-
   dict_tag(Dict, Hash),
   with_mutex(ll_seedlist, rocks_merge(seedlist, Hash, Dict)).
-
-
-
-%! seed_store(+Dict:dict) is det.
-%
-% Adds a new seed based on the given Dict.
-
-seed_store(Dict) :-
-  dict_tag(Dict, Hash),
-  rocks_put(seedlist, Hash, Dict).
-
-
-
-%! stale_seed(-Uri:atom, -Hash) is nondet.
-%
-% Pop a stale seed for processing (starting with downloading).
-
-stale_seed(Uri, Hash) :-
-  get_time(Now),
-  with_mutex(ll_seedlist, (
-    seed(Seed),
-    Hash{
-      interval: Interval,
-      processed: Processed,
-      uri: Uri
-    } :< Seed,
-    Processed + Interval < Now,
-    rocks_merge(seedlist, Hash, Hash{processed: Now})
-  )).

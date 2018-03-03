@@ -28,7 +28,7 @@ The following debug flags are defined:
 
 :- use_module(library(call_ext)).
 :- use_module(library(debug)).
-:- use_module(library(dict_ext)).
+:- use_module(library(dict)).
 :- use_module(library(file_ext)).
 :- use_module(library(lists)).
 :- use_module(library(pair_ext)).

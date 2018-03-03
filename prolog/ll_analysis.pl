@@ -6,7 +6,7 @@
 @version 2017/09
 */
 
-:- use_module(library(dict_ext)).
+:- use_module(library(dict)).
 :- use_module(library(error)).
 :- use_module(library(http/http_header)).
 

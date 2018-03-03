@@ -13,10 +13,12 @@
 */
 
 :- use_module(library(apply)).
-:- use_module(library(http/http_client2)).
 :- use_module(library(sgml)).
-:- use_module(library(uri/uri_ext)).
 :- use_module(library(xpath)).
+
+:- use_module(library(http/http_client2)).
+:- use_module(library(uri_ext)).
+
 
 
 

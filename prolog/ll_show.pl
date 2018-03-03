@@ -14,17 +14,18 @@
 
 :- use_module(library(aggregate)).
 :- use_module(library(apply)).
-:- use_module(library(atom_ext)).
-:- use_module(library(date_time)).
-:- use_module(library(dcg/dcg_ext)).
-:- use_module(library(debug_ext)).
-:- use_module(library(dict_ext)).
-:- use_module(library(graph/gv)).
 :- use_module(library(http/http_generic)).
 :- use_module(library(lists)).
-:- use_module(library(stream_ext)).
-:- use_module(library(uri/uri_ext)).
 :- use_module(library(yall)).
+
+:- use_module(library(atom_ext)).
+:- use_module(library(date_time)).
+:- use_module(library(dcg)).
+:- use_module(library(debug_ext)).
+:- use_module(library(dict)).
+:- use_module(library(graph/gv)).
+:- use_module(library(stream_ext)).
+:- use_module(library(uri_ext)).
 
 :- use_module(ll_generics).
 :- use_module(ll_seedlist).

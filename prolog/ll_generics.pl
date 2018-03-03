@@ -16,7 +16,7 @@
 
 :- use_module(library(conf_ext)).
 :- use_module(library(date)).
-:- use_module(library(dcg/dcg_ext)).
+:- use_module(library(dcg_ext)).
 :- use_module(library(file_ext)).
 :- use_module(library(hash_ext)).
 :- use_module(library(hash_stream)).
