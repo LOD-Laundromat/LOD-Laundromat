@@ -30,8 +30,10 @@ lod_cloud_portray(Blob, Options) :-
   Type \== reserved_symbol,
   write_term('BLOB'(Type), Options).
 
-:- setting(lod_laundromat:data_directory, any, _,
+:- setting(ll:data_directory, any, _,
            "The directory where data is temporarily stored and where error logs are kept.").
+:- setting(ll:seedlist_url, any, _,
+           "The URL where the seedlist is hosted.").
 
 
 
@@ -56,10 +58,12 @@ init_ll :-
   % Count-by-one for thread aliases.
   flag(number_of_workers, _, 1),
   conf_json(Conf),
+  _{url: Url} :< Conf.seedlist,
+  set_setting(ll:seedlist_url, Url),
   _{directory: Dir} :< Conf.data,
   create_directory(Dir),
-  set_setting(lod_laundromat:data_directory, Dir),
-  (debugging(lod_laundromat) -> true ; init_log(Dir)).
+  set_setting(ll:data_directory, Dir),
+  (debugging(ll) -> true ; init_log(Dir)).
 
 init_log(Dir) :-
   init_out_log(Dir),

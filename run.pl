@@ -4,10 +4,8 @@
 :- use_module(library(http/ckan_api)).
 :- use_module(library(pp)).
 
-:- use_module(library(ll/ckan_seedlist)).
 %:- use_module(library(ll/ll_debug)).
 :- use_module(library(ll/ll_init)).
-:- use_module(library(ll/ll_seedlist)).
 :- use_module(library(ll/ll_workers)).
 
 run :-

@@ -2,7 +2,8 @@
   ll_workers,
   [
     add_worker/0,
-    add_workers/1 % +N
+    add_workers/1, % +N
+    next_seed/1    % -Seed
   ]
 ).
 
@@ -12,7 +13,12 @@
 @version 2018
 */
 
+:- use_module(library(http/json)).
+:- use_module(library(settings)).
+
+:- use_module(library(http/http_client2)).
 :- use_module(library(thread_ext)).
+:- use_module(library(uri_ext)).
 
 :- use_module(library(ll/ll_dataset)).
 
@@ -28,7 +34,7 @@ add_worker :-
   thread_create(worker_loop, _, [alias(Alias),at_exit(work_ends)]).
 
 worker_loop :-
-  with_mutex(seedlist, stale_seed(Seed)), !,
+  with_mutex(seedlist, next_seed(Seed)), !,
   _{name: DName} :< Seed,
   thread_create(ll_dataset(Seed), Id, [alias(DName),at_exit(work_ends)]),
   thread_join(Id, Status),
@@ -56,3 +62,15 @@ add_workers(N) :-
     between(1, N, _),
     add_worker
   ).
+
+
+
+%! next_seed(-Seed:dict) is det.
+
+next_seed(Seed) :-
+  setting(ll:seedlist_url, Uri0),
+  uri_comp_set(query, Uri0, [page(1),page_size(1),stale(true)], Uri),
+  http_open2(Uri, In, [accept(json),status_code(Status)]),
+  assertion(Status =:= 200),
+  json_read_dict(In, Seeds),
+  Seeds = [Seed].
