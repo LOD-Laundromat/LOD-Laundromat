@@ -1,4 +1,4 @@
-#+TITLE: LOD-Laundromat 2
+#+TITLE: LOD-Laundromat 2: Cleaning other people's dirty data
 #+AUTHOR: Wouter Beek
 
 This document describes the design for LOD Laundromat 2, a crawling

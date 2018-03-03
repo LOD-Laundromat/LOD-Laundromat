@@ -1,0 +1,17 @@
+{
+  "data": {
+    "directory": "DIRECTORY"
+  },
+  "rocks": {
+    "directory": "DIRECTORY"
+  },
+  "tapir": {
+    "sites": {
+      "SITE": {
+        "host": "HOST",
+        "token": "TOKEN",
+        "user": "USER",
+      }
+    }
+  }
+}

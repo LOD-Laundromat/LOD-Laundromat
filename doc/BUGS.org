@@ -1,0 +1,170 @@
+* terminal
+Bugs that appear in the terminal.
+
+** TODO iconv
+#+BEGIN_SRC
+/usr/bin/iconv: conversion stopped due to problem in writing the output
+Warning: [Thread 84] Thread running "handle_err(<stream>(0x7f4c783795c0))" died on exception: Process "/usr/bin/iconv": exit status: 1
+#+END_SRC
+
+parser can stop (legitimately) before end of stream
+
+input encoding does not conform
+
+** TODO foreign predicates do not clear exceptions
+#+BEGIN_SRC prolog
+Thread 69 (southampton-ac-uk-stats): foreign predicate archive:archive_close/1 did not clear exception:
+        error(timeout_error(read,<stream>(0x7f4cd01663e0)),context(archive:archive_close/1,_7212))
+Thread 79 (w3c-wordnet): foreign predicate system:close/1 did not clear exception:
+        error(io_error(read,<stream>(0x7f4ca851b270)),context(system:close/1,Invalid argument))
+Thread 53 (bibliographica-org-bnb-export): foreign predicate archive:archive_close/1 did not clear exception:
+        error(timeout_error(read,<stream>(0x7f4d00014970)),context(archive:archive_close/1,_2702))
+Thread 61 (the-european-library-open-dataset): foreign predicate system:close/1 did not clear exception:
+        error(io_error(read,<stream>(0x7f4cf13a7df0)),context(system:close/1,Invalid argument))
+#+END_SRC
+
+Very difficult to reproduce/debug.
+
+** DONE ImageMagick stdout
+Not really a bug, but it looks ugly.
+
+#+BEGIN_SRC
+-=>/tmp/magick-8462ry07a_Fp8qpn PNG 1878x2607 1878x2607+0+0 8-bit sRGB 782KB 0.000u 0:00.000
+#+END_SRC
+
+Add a verbosity option to ~is_image/[1,2]~.
+
+* log
+Bugs that appear in the log file.
+
+** DONE HTTP header obsolete line folding
+Datasets: ~dbpedia-el~
+
+Incorrect HTTP headers were not processed correctly by ~http_client2~,
+e.g., ones that use obsolete line folding.
+
+** TODO Illegal UTF-8 continuation
+Dataset: ~'datos-bcn-cl'~
+
+** DONE incorrect lexical form: `rdf:langString'
+Dataset: ~dbpedia~
+
+#+BEGIN_SRC prolog
+incorrect_lexical_form('http://www.w3.org/1999/02/22-rdf-syntax-ns#langString', 'Berlin')
+#+END_SRC
+
+Language-tagged strings with no language tag are bugs, so emit a
+warning and fail the cleaning process for triples in which they
+appear.
+
+** DONE mtree
+Even though this is disabled in ~archive_open/2~.
+
+Datasets: ~amon~, ~'connectivity-of-lod-datasets'~,
+~education-data-gov-uk~
+
+#+BEGIN_SRC prolog
+error(archive_error(2, 'Missing type keyword in mtree specification'), _)
+#+END_SRC
+
+I've sent the following reproducible case to Jan:
+
+#+BEGIN_SRC prolog
+:- use_module(library(apply)).
+:- use_module(library(archive)).
+:- use_module(library(http/http_open)).
+
+test :-
+  http_open(
+    'http://imash.leeds.ac.uk/tmp/AMOn+.zip',
+    In1,
+    [status_code(Status)]
+  ),
+  assertion(Status =:= 200),
+  findall(format(Format), format(Format), Formats),
+  call_cleanup(
+    setup_call_cleanup(
+      archive_open(In1, Archive, [filter(all)|Formats]),
+      forall(
+        archive_data_stream(Archive, In2, [meta_data(Dicts)]),
+        call_cleanup(
+          maplist(writeln, Dicts),
+          close(In2)
+        )
+      ),
+      archive_close(Archive)
+    ),
+    close(In1)
+  ).
+
+format('7zip').
+format(ar).
+format(cab).
+format(cpio).
+format(empty).
+format(gnutar).
+format(iso9660).
+format(lha).
+%format(mtree).
+format(rar).
+format(raw).
+format(tar).
+format(xar).
+format(zip).
+#+END_SRC
+
+** DONE Instantiation error in ~read_string/3~
+
+Datasets: ~deustoentrepreneurship~, ~'dkh-deusto-knowledge-hub'~, ~doi~
+
+#+BEGIN_SRC prolog
+error(instantiation_error, context(system:read_string/3, _))
+#+END_SRC
+
+Could be be ~http_metadata_status/3~?
+
+** DONE atom_number/2 type_error
+
+Dataset: ~'energy-efficiency'~
+
+#+BEGIN_SRC prolog
+error(type_error(atom, 261649.99999999997), context(system:atom_number/2, _))
+#+END_SRC
+
+Solved by using ~catch/3~.
+
+** DONE Triply upload
+
+Dataset: ~'german-labor-law-thesaurus'~
+
+#+BEGIN_SRC prolog
+error(tapir_upload(_{code:400, files:[], message:'Could not extract any statements from your uploaded files', serverError:'Could not extract any statements from your uploaded files'}), _)
+#+END_SRC
+
+Next time, leave the job open in Triply.
+
+** DONE Connection reset write parsing N-Triples
+
+Dataset: ~geohive~
+
+Multiple times:
+#+BEGIN_SRC prolog
+error(io_error(read, '<stream>(0x7f4d2c05a3c0)'), context(rdf_ntriples:read_ntuple/2, 'Connection reset by peer'))
+#+END_SRC
+
+This could be legitimate, e.g., when the other end goes offline.
+** DONE Existence error during upload
+
+#+BEGIN_SRC json
+{
+  "code": 500,
+  "files": [],
+  "message": "Something went wrong...",
+  "serverError": "ENOENT: no such file or directory, stat '/home/triply/data/hdts/ad7022c4b1f71c1cdcb507b7b02486ad/hdt'"
+}
+#+END_SRC
+
+Dataset: ~english-heritage-evidence-thesaurus~
+
+Added an issue about this to Redmine
+(https://issues.triply.cc/issues/1108).
