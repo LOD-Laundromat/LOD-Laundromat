@@ -44,11 +44,15 @@ known_error(incorrect_lexical_form('http://www.w3.org/2001/XMLSchema#dateTime',_
 known_error(incorrect_lexical_form('http://www.w3.org/2001/XMLSchema#decimal',_)).
 known_error(incorrect_lexical_form('http://www.w3.org/2001/XMLSchema#double',_)).
 known_error(incorrect_lexical_form('http://www.w3.org/2001/XMLSchema#float',_)).
+known_error(incorrect_lexical_form('http://www.w3.org/2001/XMLSchema#gDay',_)).
+known_error(incorrect_lexical_form('http://www.w3.org/2001/XMLSchema#gMonth',_)).
+known_error(incorrect_lexical_form('http://www.w3.org/2001/XMLSchema#gMonthDay',_)).
 known_error(incorrect_lexical_form('http://www.w3.org/2001/XMLSchema#gYear',_)).
 known_error(incorrect_lexical_form('http://www.w3.org/2001/XMLSchema#int',_)).
 known_error(incorrect_lexical_form('http://www.w3.org/2001/XMLSchema#integer',_)).
 known_error(incorrect_lexical_form('http://www.w3.org/2001/XMLSchema#nonNegativeInteger',_)).
 known_error(incorrect_lexical_form('http://www.w3.org/2001/XMLSchema#time',_)).
+known_error(missing_language_tag(_LTag)).
 known_error(non_canonical_language_tag(_LTag)).
 known_error(no_image(_Url)).
 known_error(non_canonical_lexical_form('http://www.w3.org/2001/XMLSchema#dateTime',_,_)).
@@ -56,6 +60,7 @@ known_error(non_canonical_lexical_form('http://www.w3.org/2001/XMLSchema#decimal
 known_error(non_canonical_lexical_form('http://www.w3.org/2001/XMLSchema#double',_,_)).
 known_error(non_canonical_lexical_form('http://www.w3.org/2001/XMLSchema#float',_,_)).
 known_error(non_canonical_lexical_form('http://www.w3.org/2001/XMLSchema#int',_,_)).
+known_error(non_canonical_lexical_form('http://www.w3.org/2001/XMLSchema#integer',_,_)).
 known_error(rdf(non_rdf_format(_Uri-_Entry,_Content))).
 known_error(rdf(redefined_id(_Term))).
 known_error(rdf(unparsed(_Dom))).

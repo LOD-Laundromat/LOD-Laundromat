@@ -37,14 +37,35 @@ Add a verbosity option to ~is_image/[1,2]~.
 * log
 Bugs that appear in the log file.
 
+** TODO Language tag quality issue
+Dataset: ~'getty-aat'~
+
+Serd checks for the syntactic conformance of language tags.  We should do so too.
+
+Example: ~"Regeibat"@qqq-002~
+
+** TODO I/O error & EOS
+Dataset: ~'connectivity-of-lod-datasets'~
+
+#+BEGIN_SRC prolog
+error(io_error(read, '<stream>(0x7f326410d360)'), context(system:at_end_of_stream/1, 'Invalid argument'))
+#+END_SRC
+
+** TODO I/O error & connection reset by peer
+Dataset: ~geohive~
+
+#+BEGIN_SRC prolog
+io_error(read, '<stream>(0x7f3304124e40)'), context(rdf_ntriples:read_ntuple/2, 'Connection reset by peer'))
+#+END_SRC
+
 ** DONE HTTP header obsolete line folding
 Datasets: ~dbpedia-el~
 
 Incorrect HTTP headers were not processed correctly by ~http_client2~,
 e.g., ones that use obsolete line folding.
 
-** TODO Illegal UTF-8 continuation
-Dataset: ~'datos-bcn-cl'~
+** TODO Illegal UTF-8 continuations
+Dataset: ~'datos-bcn-cl'~, ~loius-linking-italian-university-statistics~
 
 ** DONE incorrect lexical form: `rdf:langString'
 Dataset: ~dbpedia~
