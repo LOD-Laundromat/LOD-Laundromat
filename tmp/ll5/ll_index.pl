@@ -8,7 +8,6 @@
 
 :- use_module(library(semweb/hdt_api)).
 :- use_module(library(semweb/rdf_api)).
-:- use_module(library(semweb/rdf_prefixes)).
 
 :- use_module(ll_generics).
 :- use_module(ll_seedlist).

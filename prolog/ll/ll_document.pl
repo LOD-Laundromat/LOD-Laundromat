@@ -187,13 +187,12 @@ download_from_entry_stream(Name, Dir, Uri-Entry, In) :-
       print_message(warning, rdf(non_rdf_format(Uri-Entry,Content)))
   ).
 
-dataset_entry_bnode_prefix(OName-DName, Entry, BNodePrefix3) :-
+dataset_entry_bnode_prefix(OName-DName, Entry, BNodePrefix) :-
   atomic_list_concat([OName,DName], /, Name),
   % The IRI prefix for Skolemized blank nodes in this dataset.
-  rdf_bnode_iri(Name, BNodePrefix1),
+  rdf_bnode_prefix(Name, BNodePrefix0),
   % The IRI prefix for Skolemized blank nodes in this entry.
-  uri_resolve(Entry, BNodePrefix1, BNodePrefix2),
-  atom_terminator(BNodePrefix2, 0'/, BNodePrefix3).
+  uri_resolve(Entry, BNodePrefix0, BNodePrefix).
 
 download_rdf(Uri, In, BNodePrefix, MediaType, Out) :-
   format(Out, "<~a> {\n", [Uri]),

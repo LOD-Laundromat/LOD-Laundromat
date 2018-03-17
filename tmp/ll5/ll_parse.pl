@@ -13,7 +13,6 @@
 :- use_module(library(semweb/rdf_api)).
 :- use_module(library(semweb/rdf_export)).
 :- use_module(library(semweb/rdf_ntriples)).
-:- use_module(library(semweb/rdf_prefixes)).
 :- use_module(library(semweb/rdfa)).
 :- use_module(library(semweb/turtle)).
 :- use_module(library(zlib)).
