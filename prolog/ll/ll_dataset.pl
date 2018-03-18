@@ -18,6 +18,7 @@
 */
 
 :- use_module(library(apply)).
+:- use_module(library(debug)).
 :- use_module(library(lists)).
 :- use_module(library(readutil)).
 :- use_module(library(settings)).
@@ -67,7 +68,8 @@ ll_dataset(Seed) :-
       Files2 == []
   ->  true
   ;   create_organization(OName),
-      dataset_upload(OName, DName, Properties)
+      dataset_upload(OName, DName, Properties),
+      debug(ll, "DONE ~a ~a", [OName,DName])
   ),
   delete_directory_and_contents(Dir3).
 
