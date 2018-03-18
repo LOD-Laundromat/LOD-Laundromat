@@ -12,7 +12,7 @@
 */
 
 :- use_module(library(debug)).
-:- use_module(library(uri)).
+:- use_module(library(settings)).
 
 :- use_module(library(archive_ext)).
 :- use_module(library(atom_ext)).
@@ -29,6 +29,7 @@
 :- use_module(library(sw/rdf_guess)).
 :- use_module(library(sw/rdf_media_type)).
 :- use_module(library(sw/rdf_term)).
+:- use_module(library(uri_ext)).
 :- use_module(library(xml_ext)).
 
 %! ll_document_debug(?OName:atom, ?DName:atom, ?Url:atom, ?Entry:atom) is nondet.
@@ -52,10 +53,8 @@
 %).
 
 :- initialization
-   set_setting(
-     rdf_term:bnode_prefix,
-     'https://lodlaundromat.org/.well-known/genid/'
-   ).
+   set_setting(rdf_term:bnode_prefix_scheme, http),
+   set_setting(rdf_term:bnode_prefix_authority, 'lodlaundromat.org').
 
 
 
@@ -94,7 +93,7 @@ download_from_archive(Name, Dir, Uri, MediaType, Archive) :-
 
 download_from_archive_stream(OName-DName, Dir, Uri, MediaType, [Meta|_], In) :-
   _{name: Entry} :< Meta,
-  debug(lod_laundromat, "~a ~a", [Uri,Entry]),
+  debug(ll, "~a ~a", [Uri,Entry]),
   \+ ll_document_skip(OName, DName, Uri, Entry),
   (ll_document_debug(OName, DName, Uri, Entry) -> gtrace ; true),
   peek_string(In, 10 000, String),
@@ -159,7 +158,7 @@ download_from_entry(Name, Dir, Uri-Entry, Encoding, In1) :-
     close(In2)
   ).
 
-download_from_entry_stream(Name, Dir, Uri-Entry, In) :-
+download_from_entry_stream(OName-DName, Dir, Uri-Entry, In) :-
   % After recoding, the stream needs to be peeked again.  Not only
   % because the stream can have changed (which could be detected with
   % (==)/2, but also because the same stream can have different
@@ -171,7 +170,7 @@ download_from_entry_stream(Name, Dir, Uri-Entry, In) :-
           % message.
           (string_prefix(String, 100, Content) -> true ; Content = String),
           print_message(warning, rdf(unsupported_format(MediaType,Content)))
-      ;   dataset_entry_bnode_prefix(Name, Entry, BNodePrefix),
+      ;   bnode_prefix_([OName,DName,Entry], BNodePrefix),
           md5(Uri-Entry, Base),
           file_name_extension(Base, 'trig.gz', File),
           directory_file_path(Dir, File, Path),
@@ -187,12 +186,10 @@ download_from_entry_stream(Name, Dir, Uri-Entry, In) :-
       print_message(warning, rdf(non_rdf_format(Uri-Entry,Content)))
   ).
 
-dataset_entry_bnode_prefix(OName-DName, Entry, BNodePrefix) :-
-  atomic_list_concat([OName,DName], /, Name),
-  % The IRI prefix for Skolemized blank nodes in this dataset.
-  rdf_bnode_prefix(Name, BNodePrefix0),
-  % The IRI prefix for Skolemized blank nodes in this entry.
-  uri_resolve(Entry, BNodePrefix0, BNodePrefix).
+bnode_prefix_(Segments, BNodePrefix) :-
+  setting(rdf_term:bnode_prefix_scheme, Scheme),
+  setting(rdf_term:bnode_prefix_authority, Auth),
+  uri_comps(BNodePrefix, uri(Scheme,Auth,['.well-known',genid|Segments],_,_)).
 
 download_rdf(Uri, In, BNodePrefix, MediaType, Out) :-
   format(Out, "<~a> {\n", [Uri]),

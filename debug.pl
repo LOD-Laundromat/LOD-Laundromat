@@ -1,17 +1,8 @@
 :- use_module(library(debug)).
+:- use_module(library(thread_ext)).
 
 :- [run].
 
-:- tmon.
+:- debug(ll).
 
-init_debug :-
-  debug(dot),
-  debug(ll),
-  debug(ll(download)),
-  debug(ll(guess)),
-  debug(ll(index)),
-  debug(ll(parse)),
-  debug(ll(store)).
-:- init_debug.
-
-%:- dmon.
+:- thread_monitor.

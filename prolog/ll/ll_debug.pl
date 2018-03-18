@@ -15,7 +15,7 @@
 
 :- use_module(library(ll/ll_dataset)).
 
-:- debug(lod_laundromat).
+:- debug(ll).
 
 
 

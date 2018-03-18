@@ -41,7 +41,7 @@
 ll_dataset(Seed) :-
   _{documents: Urls, name: DName, organization: Org} :< Seed,
   _{name: OName} :< Org,
-  setting(lod_laundromat:data_directory, Dir1),
+  setting(ll:data_directory, Dir1),
   directory_file_path(Dir1, OName, Dir2),
   directory_file_path(Dir2, DName, Dir3),
   create_directory(Dir3),

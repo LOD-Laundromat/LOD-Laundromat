@@ -33,7 +33,7 @@ add_worker :-
   thread_create(worker_loop, _, [alias(Alias),at_exit(work_ends)]).
 
 worker_loop :-
-  with_mutex(seedlist, next_seed(Seed)), !,
+  next_seed(Seed), !,
   _{name: DName} :< Seed,
   thread_create(ll_dataset(Seed), Id, [alias(DName),at_exit(work_ends)]),
   thread_join(Id, Status),
@@ -72,7 +72,7 @@ next_seed(Seed) :-
   http_open2(Uri, In, [accept(json),status_code(Status)]),
   call_cleanup(
     (   Status =:= 200
-    ->  json_read_dict(In, Seeds),
+    ->  json_read_dict(In, Seeds, [value_string_as(atom)]),
         Seeds = [Seed]
     ;   print_message(warning, seedlist_offline(Uri))
     ),
