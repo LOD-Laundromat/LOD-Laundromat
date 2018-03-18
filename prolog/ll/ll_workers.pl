@@ -2,8 +2,7 @@
   ll_workers,
   [
     add_worker/0,
-    add_workers/1, % +N
-    next_seed/1    % -Seed
+    add_workers/1 % +N
   ]
 ).
 
@@ -71,6 +70,11 @@ next_seed(Seed) :-
   setting(ll:seedlist_url, Uri0),
   uri_comp_set(query, Uri0, [page(1),page_size(1),stale(true)], Uri),
   http_open2(Uri, In, [accept(json),status_code(Status)]),
-  assertion(Status =:= 200),
-  json_read_dict(In, Seeds),
-  Seeds = [Seed].
+  call_cleanup(
+    (   Status =:= 200
+    ->  json_read_dict(In, Seeds),
+        Seeds = [Seed]
+    ;   print_message(warning, seedlist_offline(Uri))
+    ),
+    close(In)
+  ).

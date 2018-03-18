@@ -2,8 +2,8 @@
   "data": {
     "directory": "DIRECTORY"
   },
-  "rocks": {
-    "directory": "DIRECTORY"
+  "seedlist": {
+    "url": "URL"
   },
   "tapir": {
     "sites": {
