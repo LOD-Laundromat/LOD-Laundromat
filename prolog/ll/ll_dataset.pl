@@ -57,18 +57,13 @@ ll_dataset(Seed) :-
   directory_file_path(Dir3, '*.trig.gz', Wildcard),
   expand_file_name(Wildcard, Files1),
   include(is_nonempty_file, Files1, Files2),
-  L1 = [
-    accessLevel-public,
-    files-Files2,
-    name-DName
-  ],
-  dataset_image(Dir3, Seed, L1, L2),
-  dict_pairs(Properties, L2),
   (   % Do not upload empty datasets.
       Files2 == []
   ->  true
-  ;   create_organization(OName),
-      dataset_upload(OName, DName, Properties),
+  ;   Properties1 = _{accessLevel: public, files: Files2, name: DName},
+      dataset_image(Dir3, Seed, Properties1, Properties2),
+      create_organization(OName),
+      dataset_upload(OName, DName, Properties2),
       debug(ll, "DONE ~a ~a", [OName,DName])
   ),
   delete_directory_and_contents(Dir3).
@@ -76,9 +71,9 @@ ll_dataset(Seed) :-
 create_organization(Name) :-
   account(Name, _), !.
 create_organization(Name) :-
-  organization_create(wouter, Name, _{}, _).
+  organization_create(_, Name, _{}, _).
 
-dataset_image(Dir, Seed, T, L) :-
+dataset_image(Dir, Seed, Properties1, Properties2) :-
   _{image: Url1} :< Seed,
   % We download the URL prior to determining whether it is an image,
   % because we may not be able to download the same image a second
@@ -107,11 +102,11 @@ dataset_image(Dir, Seed, T, L) :-
         is_image(In2),
         close(In2)
       )
-  ->  L = [avatar-File|T]
-  ;   print_message(warning, no_image(Url1)),
-      L = T
+  ->  Properties2 = Properties1.put(_{avatar: File})
+  ;   print_message(warning, not_an_image(Url1)),
+      Properties2 = Properties1
   ).
-dataset_image(_, _, T, T).
+dataset_image(_, _, Properties, Properties).
 
 is_nonempty_file(File) :-
   setup_call_cleanup(
