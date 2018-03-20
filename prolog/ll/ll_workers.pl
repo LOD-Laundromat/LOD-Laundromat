@@ -34,7 +34,8 @@ add_worker :-
 
 worker_loop :-
   next_seed(Seed), !,
-  _{name: DName} :< Seed,
+  _{dataset: Dataset} :< Seed,
+  _{name: DName} :< Dataset,
   thread_create(ll_dataset(Seed), Id, [alias(DName),at_exit(work_ends)]),
   thread_join(Id, Status),
   (Status == true -> true ; print_message(warning, worker_dies(Status))),
@@ -64,18 +65,14 @@ add_workers(N) :-
 
 
 
-%! next_seed(-Seed:dict) is det.
+%! next_seed(-Seed:dict) is semidet.
 
 next_seed(Seed) :-
   setting(ll:seedlist_scheme, Scheme),
   setting(ll:seedlist_authority, Auth),
   uri_comps(Uri, uri(Scheme,Auth,[seed],_,_)),
-  http_open2(Uri, In, [accept(json),method(patch),status_code(Status)]),
+  http_open2(Uri, In, [accept(json),failure(404),method(patch)]),
   call_cleanup(
-    (   Status =:= 200
-    ->  json_read_dict(In, Seeds, [value_string_as(atom)]),
-        Seeds = [Seed]
-    ;   print_message(warning, seedlist_offline(Uri))
-    ),
+    json_read_dict(In, Seed, [value_string_as(atom)]),
     close(In)
   ).

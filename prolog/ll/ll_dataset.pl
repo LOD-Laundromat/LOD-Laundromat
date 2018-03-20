@@ -40,7 +40,8 @@
 %! ll_dataset(+Seed:dict) is det.
 
 ll_dataset(Seed) :-
-  _{documents: Urls, name: DName, organization: Org} :< Seed,
+  _{dataset: Dataset, documents: Urls, organization: Org} :< Seed,
+  _{name: DName} :< Dataset,
   _{name: OName} :< Org,
   setting(ll:data_directory, Dir1),
   directory_file_path(Dir1, OName, Dir2),

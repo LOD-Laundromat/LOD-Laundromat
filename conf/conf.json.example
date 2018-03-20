@@ -3,7 +3,8 @@
     "directory": "DIRECTORY"
   },
   "seedlist": {
-    "url": "URL"
+    "authority": "AUTHORITY",
+    "scheme": "SCHEME"
   },
   "tapir": {
     "sites": {
