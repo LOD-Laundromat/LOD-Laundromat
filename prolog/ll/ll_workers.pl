@@ -67,9 +67,10 @@ add_workers(N) :-
 %! next_seed(-Seed:dict) is det.
 
 next_seed(Seed) :-
-  setting(ll:seedlist_url, Uri0),
-  uri_comp_set(query, Uri0, [page(1),page_size(1),stale(true)], Uri),
-  http_open2(Uri, In, [accept(json),status_code(Status)]),
+  setting(ll:seedlist_scheme, Scheme),
+  setting(ll:seedlist_authority, Auth),
+  uri_comps(Uri, uri(Scheme,Auth,[seed],_,_)),
+  http_open2(Uri, In, [accept(json),method(patch),status_code(Status)]),
   call_cleanup(
     (   Status =:= 200
     ->  json_read_dict(In, Seeds, [value_string_as(atom)]),

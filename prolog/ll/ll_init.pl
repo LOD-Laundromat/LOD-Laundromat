@@ -32,8 +32,10 @@ lod_cloud_portray(Blob, Options) :-
 
 :- setting(ll:data_directory, any, _,
            "The directory where data is temporarily stored and where error logs are kept.").
-:- setting(ll:seedlist_url, any, _,
-           "The URL where the seedlist is hosted.").
+:- setting(ll:seedlist_authority, any, _,
+           "The URI authority of the seedlist endpoint.").
+:- setting(ll:seedlist_scheme, oneof([http,https]), https,
+           "The URI scheme of the seedlist endpoint.").
 
 
 
@@ -58,8 +60,9 @@ init_ll :-
   % Count-by-one for thread aliases.
   flag(number_of_workers, _, 1),
   conf_json(Conf),
-  _{url: Url} :< Conf.seedlist,
-  set_setting(ll:seedlist_url, Url),
+  _{authority: Auth, scheme: Scheme} :< Conf.seedlist,
+  set_setting(ll:seedlist_authority, Auth),
+  set_setting(ll:seedlist_scheme, Scheme),
   _{directory: Dir} :< Conf.data,
   create_directory(Dir),
   set_setting(ll:data_directory, Dir),
