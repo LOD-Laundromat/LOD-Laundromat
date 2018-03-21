@@ -2,7 +2,7 @@
   ll_workers,
   [
     add_worker/0,
-    add_workers/1 % +N
+    add_workers/1 % +NumWorkers
   ]
 ).
 
@@ -32,6 +32,7 @@ add_worker :-
   format(atom(Alias), 'worker-~d', [N]),
   thread_create(worker_loop, _, [alias(Alias),at_exit(work_ends)]).
 
+% Something to do.
 worker_loop :-
   next_seed(Seed), !,
   _{dataset: Dataset} :< Seed,
@@ -40,7 +41,10 @@ worker_loop :-
   thread_join(Id, Status),
   (Status == true -> true ; print_message(warning, worker_dies(Status))),
   worker_loop.
-worker_loop.
+% Nothing to do.
+worker_loop :-
+  sleep(10),
+  worker_loop.
 
 work_ends :-
   thread_self_property(status(Status)),
@@ -52,7 +56,7 @@ work_ends :-
 
 
 
-%! add_workers(+N:nonneg) is det.
+%! add_workers(+NumWorkers:nonneg) is det.
 %
 % Wrapper that allows multiple workers (add_worker/0) to be created at
 % once.

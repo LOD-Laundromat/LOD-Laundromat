@@ -17,6 +17,7 @@
 
 :- use_module(library(conf_ext)).
 :- use_module(library(file_ext)).
+:- use_module(library(ll/ll_workers)).
 :- use_module(library(tapir)).
 :- use_module(library(thread_ext)).
 :- use_module(library(write_ext)).
@@ -66,7 +67,9 @@ init_ll :-
   _{directory: Dir} :< Conf.data,
   create_directory(Dir),
   set_setting(ll:data_directory, Dir),
-  (debugging(ll) -> true ; init_log(Dir)).
+  (debugging(ll) -> true ; init_log(Dir)),
+  _{workers: NumWorkers} :< Conf,
+  add_workers(NumWorkers).
 
 init_log(Dir) :-
   init_out_log(Dir),
