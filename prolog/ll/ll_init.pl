@@ -1,11 +1,6 @@
-:- module(
-  ll_init,
-  [
-    clear_wardrobe/0
-  ]
-).
+:- module(ll_init, []).
 
-/** <module> Initializes a scraping activity
+/** <module> LOD Laundromat initialization
 
 @author Wouter Beek
 @version 2018
@@ -39,19 +34,6 @@ lod_cloud_portray(Blob, Options) :-
            "The URI scheme of the seedlist endpoint.").
 
 
-
-
-
-%! clear_wardrobe is det.
-%
-% Delete all data currently stored in the wardrobe.
-
-clear_wardrobe :-
-  tapir:user_(Site, User),
-  forall(
-    dataset(Site, User, Dataset, _),
-    dataset_delete(Site, User, Dataset)
-  ).
 
 
 
