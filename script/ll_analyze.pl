@@ -1,5 +1,5 @@
 :- module(
-  analyze,
+  ll_analyze,
   [
     empty/2,
     test/1,
@@ -8,7 +8,7 @@
   ]
 ).
 
-/** <module> Analyze
+/** <module> Analyze LOD Laundromat error logs
 
 @author Wouter Beek
 @version 2018
