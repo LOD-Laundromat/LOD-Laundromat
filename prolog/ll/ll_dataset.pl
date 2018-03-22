@@ -7,12 +7,6 @@
 
 /** <module> LOD Laundromat: Scrape an individual dataset
 
-@tbd Dataset and organization names can be very long, e.g., in CKAN
-     repositories.  We cannot ellipse long names, since that would
-     collapse distinct names.  We therefore take a hash of the full
-     name, using a hashing algorithm that ensures a limited length
-     size.
-
 @author Wouter Beek
 @version 2018
 */
@@ -20,6 +14,7 @@
 :- use_module(library(apply)).
 :- use_module(library(debug)).
 :- use_module(library(lists)).
+:- use_module(library(process)).
 :- use_module(library(readutil)).
 :- use_module(library(settings)).
 :- use_module(library(zlib)).
@@ -61,20 +56,28 @@ ll_dataset(Seed) :-
   (   % Do not upload empty datasets.
       Files2 == []
   ->  true
-  ;   Properties1 = _{accessLevel: public, files: Files2, name: DName},
-      dataset_image(Dir3, Seed, Properties1, Properties2),
-      create_organization(OName),
-      dataset_upload(OName, DName, Properties2),
+  ;   (   account(OName, _)
+      ->  true
+      ;   organization_create(_, OName, _{}, _)
+      ),
+      (   dataset(OName, DName, _)
+      ->  dataset_delete(OName, DName)
+      ;   true
+      ),
+      maplist(file_arg, Files2, T),
+      setting(ll:script, Script),
+      process_create(path(node), [Script,DName|T], []),
+      (   dataset_image(Dir3, Seed, Image)
+      ->  dataset_property(OName, DName, avatar(Image), _)
+      ;   true
+      ),
       debug(ll, "DONE ~a ~a", [OName,DName])
   ),
   delete_directory_and_contents(Dir3).
 
-create_organization(Name) :-
-  account(Name, _), !.
-create_organization(Name) :-
-  organization_create(_, Name, _{}, _).
+file_arg(File, file(File)).
 
-dataset_image(Dir, Seed, Properties1, Properties2) :-
+dataset_image(Dir, Seed, File) :-
   _{image: Url1} :< Seed,
   % We download the URL prior to determining whether it is an image,
   % because we may not be able to download the same image a second
@@ -103,11 +106,9 @@ dataset_image(Dir, Seed, Properties1, Properties2) :-
         is_image(In2),
         close(In2)
       )
-  ->  Properties2 = Properties1.put(_{avatar: File})
-  ;   print_message(warning, not_an_image(Url1)),
-      Properties2 = Properties1
+  ->  true
+  ;   print_message(warning, not_an_image(Url1))
   ).
-dataset_image(_, _, Properties, Properties).
 
 is_nonempty_file(File) :-
   setup_call_cleanup(
