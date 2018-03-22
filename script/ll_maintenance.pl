@@ -22,17 +22,13 @@
 % Delete all data currently stored in the LOD Laundromat.
 
 ll_clear :-
-  tapir:user_(Site, User),
   % Remove all datasets.
   forall(
-    dataset(Site, User, Dataset, _),
-    dataset_delete(Site, User, Dataset)
+    dataset(_, Dataset, _),
+    dataset_delete(_, Dataset)
   ),
   % Remove all organizations.
   forall(
-    (
-      account(Account, Dict),
-      _{type: org} :< Dict
-    ),
-    organization_delete(wouter, Account)
+    organization(Organization),
+    organization_delete(_, Organization)
   ).
