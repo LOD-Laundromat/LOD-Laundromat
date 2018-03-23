@@ -2,6 +2,10 @@
   "data": {
     "directory": "DIRECTORY"
   },
+  "login": {
+    "password": "PASSWORD",
+    "user": "USER"
+  },
   "seedlist": {
     "authority": "AUTHORITY",
     "scheme": "SCHEME"

@@ -38,7 +38,7 @@ ll_dataset(Seed) :-
   _{dataset: Dataset, documents: Urls, organization: Org} :< Seed,
   _{name: DName} :< Dataset,
   _{name: OName} :< Org,
-  setting(ll:data_directory, Dir1),
+  setting(ll_init:temporary_directory, Dir1),
   directory_file_path(Dir1, OName, Dir2),
   directory_file_path(Dir2, DName, Dir3),
   create_directory(Dir3),
@@ -65,8 +65,8 @@ ll_dataset(Seed) :-
       ;   true
       ),
       maplist(file_arg, Files2, T),
-      setting(ll:script, Script),
-      process_create(path(node), [Script,DName|T], []),
+      setting(ll_init:script, Script),
+      process_create(path(node), [Script,OName,DName|T], []),
       (   dataset_image(Dir3, Seed, Image)
       ->  dataset_property(OName, DName, avatar(Image), _)
       ;   true

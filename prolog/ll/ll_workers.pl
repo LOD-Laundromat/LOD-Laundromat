@@ -12,6 +12,7 @@
 @version 2018
 */
 
+:- use_module(library(apply)).
 :- use_module(library(http/json)).
 :- use_module(library(settings)).
 
@@ -72,10 +73,16 @@ add_workers(N) :-
 %! next_seed(-Seed:dict) is semidet.
 
 next_seed(Seed) :-
-  setting(ll:seedlist_scheme, Scheme),
-  setting(ll:seedlist_authority, Auth),
+  maplist(
+    ll_init:setting,
+    [authority,password,scheme,user],
+    [Auth,Password,Scheme,User]
+  ),
   uri_comps(Uri, uri(Scheme,Auth,[seed],_,_)),
-  http_open2(Uri, In, [accept(json),failure(404),method(patch)]),
+  http_open2(Uri, In, [accept(json),
+                       authorization(basic(User,Password)),
+                       failure(404),
+                       method(patch)]),
   call_cleanup(
     json_read_dict(In, Seed, [value_string_as(atom)]),
     close(In)
