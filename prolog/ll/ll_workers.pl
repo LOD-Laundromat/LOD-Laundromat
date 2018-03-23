@@ -35,12 +35,14 @@ add_worker :-
 
 % Something to do.
 worker_loop :-
-  next_seed(Seed), !,
+  start_seed(Seed), !,
   _{dataset: Dataset} :< Seed,
   _{name: DName} :< Dataset,
   thread_create(ll_dataset(Seed), Id, [alias(DName),at_exit(work_ends)]),
   thread_join(Id, Status),
   (Status == true -> true ; print_message(warning, worker_dies(Status))),
+  _{hash: Hash} :< Seed,
+  end_seed(Hash),
   worker_loop.
 % Nothing to do.
 worker_loop :-
@@ -70,20 +72,38 @@ add_workers(N) :-
 
 
 
-%! next_seed(-Seed:dict) is semidet.
+%! end_seed(+Hash:atom) is det.
 
-next_seed(Seed) :-
+end_seed(Hash) :-
+  request_([hash(Hash)], _).
+
+
+
+%! start_seed(-Seed:dict) is semidet.
+
+start_seed(Seed) :-
+  request_([], Seed).
+
+
+
+
+
+% GENERICS %
+
+%! request_(+Query:list(compound), -Dict:dict) is det.
+
+request_(Query, Dict) :-
   maplist(
     ll_init:setting,
     [authority,password,scheme,user],
     [Auth,Password,Scheme,User]
   ),
-  uri_comps(Uri, uri(Scheme,Auth,[seed],_,_)),
+  uri_comps(Uri, uri(Scheme,Auth,[seed],Query,_)),
   http_open2(Uri, In, [accept(json),
                        authorization(basic(User,Password)),
                        failure(404),
                        method(patch)]),
   call_cleanup(
-    json_read_dict(In, Seed, [value_string_as(atom)]),
+    json_read_dict(In, Dict, [value_string_as(atom)]),
     close(In)
   ).
