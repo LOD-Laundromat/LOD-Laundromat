@@ -24,11 +24,11 @@
 ll_clear :-
   % Remove all datasets.
   forall(
-    dataset(_, Dataset, _),
-    dataset_delete(_, Dataset)
+    dataset(User, Dataset, _),
+    dataset_delete(User, Dataset)
   ),
   % Remove all organizations.
   forall(
-    organization(Organization),
+    organization(Organization, _),
     organization_delete(_, Organization)
   ).
