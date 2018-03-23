@@ -1,2 +1,2 @@
 #!/bin/bash
-nice swipl run.pl -- --conf=conf.json
+nice swipl test.pl -- --conf=conf.json
