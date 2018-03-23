@@ -11,6 +11,7 @@
 @version 2018
 */
 
+:- use_module(library(ll/ll_seeder)).
 :- use_module(library(tapir)).
 
 
@@ -31,4 +32,12 @@ ll_clear :-
   forall(
     organization(Organization, _),
     organization_delete(_, Organization)
+  ),
+  % Remove all seeds.
+  forall(
+    seed(Seed),
+    (
+      _{hash: Hash} :< Seed,
+      delete_seed(Hash)
+    )
   ).

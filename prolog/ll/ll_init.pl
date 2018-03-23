@@ -50,24 +50,29 @@ init_ll :-
   % Count-by-one for thread aliases.
   flag(number_of_workers, _, 1),
   conf_json(Conf),
-  % Seedlist location.
-  _{authority: Auth, scheme: Scheme} :< Conf.seedlist,
-  maplist(set_setting, [authority,scheme], [Auth,Scheme]),
-  % Seedlist credentials.
-  _{login: Login} :< Conf,
-  _{password: Password, user: User} :< Login,
-  maplist(set_setting, [password,user], [Password,User]),
-  % Temporary directory.
+  % seedlist
+  _{
+    authority: Auth,
+    password: Password,
+    scheme: Scheme,
+    user: User
+  } :< Conf.seedlist,
+  maplist(
+    set_setting,
+    [authority,password,scheme,user],
+    [Auth,Password,Scheme,User]
+  ),
+  % temporary directory
   _{directory: Dir} :< Conf.data,
   create_directory(Dir),
   set_setting(temporary_directory, Dir),
-  % Error and output logs.
+  % error and output logs
   (debugging(ll) -> true ; init_log(Dir)),
   % Triply client script.
   _{tapir: Tapir} :< Conf,
   _{client: Script} :< Tapir,
   set_setting(script, Script),
-  % Number of workers.
+  % number of workers
   _{workers: NumWorkers} :< Conf,
   add_workers(NumWorkers).
 
