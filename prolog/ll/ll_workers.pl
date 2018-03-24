@@ -75,14 +75,14 @@ add_workers(N) :-
 %! end_seed(+Hash:atom) is det.
 
 end_seed(Hash) :-
-  request_([hash(Hash)], _).
+  request_([seed,processing], [hash(Hash)], _).
 
 
 
 %! start_seed(-Seed:dict) is semidet.
 
 start_seed(Seed) :-
-  request_([], Seed).
+  request_([seed,stale], [], Seed).
 
 
 
@@ -90,15 +90,15 @@ start_seed(Seed) :-
 
 % GENERICS %
 
-%! request_(+Query:list(compound), -Dict:dict) is det.
+%! request_(+Segments:list(atom), +Query:list(compound), -Dict:dict) is det.
 
-request_(Query, Dict) :-
+request_(Segments, Query, Dict) :-
   maplist(
     ll_init:setting,
     [authority,password,scheme,user],
     [Auth,Password,Scheme,User]
   ),
-  uri_comps(Uri, uri(Scheme,Auth,[seed],Query,_)),
+  uri_comps(Uri, uri(Scheme,Auth,Segments,Query,_)),
   http_open2(Uri, In, [accept(json),
                        authorization(basic(User,Password)),
                        failure(404),
