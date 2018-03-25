@@ -17,10 +17,10 @@
 :- use_module(library(settings)).
 
 :- use_module(library(http/http_client2)).
+:- use_module(library(ll/ll_dataset)).
+:- use_module(library(ll/ll_seeder)).
 :- use_module(library(thread_ext)).
 :- use_module(library(uri_ext)).
-
-:- use_module(library(ll/ll_dataset)).
 
 
 
@@ -68,42 +68,4 @@ add_workers(N) :-
   forall(
     between(1, N, _),
     add_worker
-  ).
-
-
-
-%! end_seed(+Hash:atom) is det.
-
-end_seed(Hash) :-
-  request_([seed,processing], [hash(Hash)], _).
-
-
-
-%! start_seed(-Seed:dict) is semidet.
-
-start_seed(Seed) :-
-  request_([seed,stale], [], Seed).
-
-
-
-
-
-% GENERICS %
-
-%! request_(+Segments:list(atom), +Query:list(compound), -Dict:dict) is det.
-
-request_(Segments, Query, Dict) :-
-  maplist(
-    ll_init:setting,
-    [authority,password,scheme,user],
-    [Auth,Password,Scheme,User]
-  ),
-  uri_comps(Uri, uri(Scheme,Auth,Segments,Query,_)),
-  http_open2(Uri, In, [accept(json),
-                       authorization(basic(User,Password)),
-                       failure(404),
-                       method(patch)]),
-  call_cleanup(
-    json_read_dict(In, Dict, [value_string_as(atom)]),
-    close(In)
   ).

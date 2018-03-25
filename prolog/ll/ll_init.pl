@@ -27,18 +27,10 @@ lod_cloud_portray(Blob, Options) :-
   Type \== reserved_symbol,
   write_term('BLOB'(Type), Options).
 
-:- setting(authority, any, _,
-           "The URI authority component of the seedlist endpoint.").
-:- setting(password, any, _,
-           "The password for accessing the seedlist endpoint.").
-:- setting(scheme, oneof([http,https]), https,
-           "The URI scheme component of the seedlist endpoint.").
 :- setting(script, any, _,
            "Location of the Triply Client script.").
 :- setting(temporary_directory, any, _,
            "The directory where clean data is temporarily stored and where logs are kept.").
-:- setting(user, any, _,
-           "The user name for accessing the seedlist endpoint.").
 
 
 
@@ -50,18 +42,6 @@ init_ll :-
   % Count-by-one for thread aliases.
   flag(number_of_workers, _, 1),
   conf_json(Conf),
-  % seedlist
-  _{
-    authority: Auth,
-    password: Password,
-    scheme: Scheme,
-    user: User
-  } :< Conf.seedlist,
-  maplist(
-    set_setting,
-    [authority,password,scheme,user],
-    [Auth,Password,Scheme,User]
-  ),
   % temporary directory
   create_directory(Conf.'data-directory'),
   set_setting(temporary_directory, Conf.'data-directory'),
