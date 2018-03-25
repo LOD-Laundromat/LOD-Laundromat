@@ -56,14 +56,9 @@ ll_dataset(Seed) :-
   (   % Do not upload empty datasets.
       Files2 == []
   ->  true
-  ;   (   account(OName, _)
-      ->  true
-      ;   organization_create(_, OName, _{}, _)
-      ),
-      (   dataset(OName, DName, _)
-      ->  dataset_delete(OName, DName)
-      ;   true
-      ),
+  ;   % Create the organization, unless it already exists.
+      ignore(organization_create(_, OName, _{}, _)),
+      ignore(dataset_create(OName, DName, _{}, _)),
       maplist(file_arg, Files2, T),
       setting(ll_init:script, Script),
       process_create(path(node), [Script,OName,DName|T], []),
