@@ -1,7 +1,8 @@
 :- module(
   ll_maintenance,
   [
-    ll_clear/0
+    ll_clear/0,
+    ll_reset_processing_seeds/0
   ]
 ).
 
@@ -40,4 +41,14 @@ ll_clear :-
       _{hash: Hash} :< Seed,
       delete_seed(Hash)
     )
+  ).
+
+
+
+%! ll_reset_processing_seeds is det.
+
+ll_reset_processing_seeds :-
+  forall(
+    processing_seed(Seed),
+    delete_seed(Seed.hash)
   ).
