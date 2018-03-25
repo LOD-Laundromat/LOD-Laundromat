@@ -66,14 +66,12 @@ init_ll :-
   create_directory(Conf.'data-directory'),
   set_setting(temporary_directory, Conf.'data-directory'),
   % error and output logs
-  (debugging(ll) -> true ; init_log(Dir)),
+  (debugging(ll) -> true ; init_log(Conf.'data-directory')),
   % Triply client script.
-  _{tapir: Tapir} :< Conf,
-  _{client: Script} :< Tapir,
+  _{client: Script} :< Conf.tapir,
   set_setting(script, Script),
   % number of workers
-  _{workers: NumWorkers} :< Conf,
-  add_workers(NumWorkers).
+  add_workers(Conf.workers).
 
 init_log(Dir) :-
   init_out_log(Dir),
