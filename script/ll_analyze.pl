@@ -100,11 +100,10 @@ empty(Uri, Dict) :-
   uri_components(Uri, uri_components(https,Host,Path,_,_)).
 
 status :-
-  tapir:user_(Site, User),
   aggregate_all(
     sum(N),
     (
-      dataset(Site, User, _, Dict),
+      dataset(_, _, Dict),
       _{statements: N} :< Dict
     ),
     N
