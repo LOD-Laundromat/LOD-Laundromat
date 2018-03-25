@@ -1,7 +1,7 @@
 :- module(
   ll_document,
   [
-    ll_document/3 % +Directory, +Name, +Uri
+    ll_document/3 % +Directory, +Hash, +Uri
   ]
 ).
 
@@ -32,26 +32,6 @@
 :- use_module(library(uri_ext)).
 :- use_module(library(xml_ext)).
 
-%! ll_document_debug(?OName:atom, ?DName:atom, ?Url:atom, ?Entry:atom) is nondet.
-%
-% Gives the ability to debug a specific dataset/file/entry.
-
-%! ll_document_skip(?OName:atom, ?DName:atom, ?Url:atom, ?Entry:atom) is nondet.
-%
-% Gives the ability to skip specific entries in a large archive, in
-% order to sooner arrive at a ll_document_debug/4 instance.
-
-:- dynamic
-    ll_document_debug/4,
-    ll_document_skip/4.
-
-%ll_document_debug(
-%  something,
-%  'dbpedia-el',
-%  'http://el.dbpedia.org/data/Linux.n3',
-%  data
-%).
-
 :- initialization
    set_setting(rdf_term:bnode_prefix_scheme, http),
    set_setting(rdf_term:bnode_prefix_authority, 'lodlaundromat.org').
@@ -60,9 +40,9 @@
 
 
 
-%! ll_document(+Directory:atom, +Name:pair(atom), +Uri:atom) is det.
+%! ll_document(+Directory:atom, +Hash:atom, +Uri:atom) is det.
 
-ll_document(Dir, Name, Uri0) :-
+ll_document(Dir, Hash, Uri0) :-
   % Make sure that non-ASCII Unicode characters are percent encoded.
   uri_normalized(Uri0, Uri),
   http_open2(Uri, In, [failure(-1),metadata(Metas)]),
@@ -70,35 +50,33 @@ ll_document(Dir, Name, Uri0) :-
     (
       % Use a dummy value in case the Media Type cannot be determined.
       call_default_value(MediaType, http_metadata_content_type(Metas), null),
-      download_from_uri(Name, Dir, Uri, MediaType, In)
+      download_from_uri(Hash, Dir, Uri, MediaType, In)
     ),
     close(In)
   ).
 
-download_from_uri(Name, Dir, Uri, MediaType, In) :-
+download_from_uri(Hash, Dir, Uri, MediaType, In) :-
   setup_call_cleanup(
     archive_open(In, Archive),
-    download_from_archive(Name, Dir, Uri, MediaType, Archive),
+    download_from_archive(Hash, Dir, Uri, MediaType, Archive),
     archive_close(Archive)
   ).
 
-download_from_archive(Name, Dir, Uri, MediaType, Archive) :-
+download_from_archive(Hash, Dir, Uri, MediaType, Archive) :-
   forall(
     archive_data_stream(Archive, In, [meta_data(Metas)]),
     call_cleanup(
-      download_from_archive_stream(Name, Dir, Uri, MediaType, Metas, In),
+      download_from_archive_stream(Hash, Dir, Uri, MediaType, Metas, In),
       close(In)
     )
   ).
 
-download_from_archive_stream(OName-DName, Dir, Uri, MediaType, [Meta|_], In) :-
+download_from_archive_stream(Hash, Dir, Uri, MediaType, [Meta|_], In) :-
   _{name: Entry} :< Meta,
   debug(ll, "~a ~a", [Uri,Entry]),
-  \+ ll_document_skip(OName, DName, Uri, Entry),
-  (ll_document_debug(OName, DName, Uri, Entry) -> gtrace ; true),
   peek_string(In, 10 000, String),
   guess_encoding(MediaType, String, Encoding),
-  download_from_entry(OName-DName, Dir, Uri-Entry, Encoding, In).
+  download_from_entry(Hash, Dir, Uri-Entry, Encoding, In).
 
 guess_encoding(MediaType, String, Encoding) :-
   ignore(xml_encoding_(String, EncodingXml)),
@@ -146,19 +124,19 @@ generalize_encoding(ascii, utf8) :- !.
 generalize_encoding(unknown, _Var) :- !.
 generalize_encoding(Encoding, Encoding).
 
-download_from_entry(Name, Dir, Uri-Entry, unknown, In) :- !,
-  download_from_entry_stream(Name, Dir, Uri-Entry, In).
-download_from_entry(Name, Dir, Uri-Entry, Encoding, In) :-
+download_from_entry(Hash, Dir, Uri-Entry, unknown, In) :- !,
+  download_from_entry_stream(Hash, Dir, Uri-Entry, In).
+download_from_entry(Hash, Dir, Uri-Entry, Encoding, In) :-
   recode_stream(Encoding, In), !,
-  download_from_entry_stream(Name, Dir, Uri-Entry, In).
-download_from_entry(Name, Dir, Uri-Entry, Encoding, In1) :-
+  download_from_entry_stream(Hash, Dir, Uri-Entry, In).
+download_from_entry(Hash, Dir, Uri-Entry, Encoding, In1) :-
   setup_call_cleanup(
     recode_stream(Encoding, In1, In2),
-    download_from_entry_stream(Name, Dir, Uri-Entry, In2),
+    download_from_entry_stream(Hash, Dir, Uri-Entry, In2),
     close(In2)
   ).
 
-download_from_entry_stream(OName-DName, Dir, Uri-Entry, In) :-
+download_from_entry_stream(Hash, Dir, Uri-Entry, In) :-
   % After recoding, the stream needs to be peeked again.  Not only
   % because the stream can have changed (which could be detected with
   % (==)/2, but also because the same stream can have different
@@ -170,7 +148,7 @@ download_from_entry_stream(OName-DName, Dir, Uri-Entry, In) :-
           % message.
           (string_prefix(String, 100, Content) -> true ; Content = String),
           print_message(warning, rdf(unsupported_format(MediaType,Content)))
-      ;   bnode_prefix_([OName,DName,Entry], BNodePrefix),
+      ;   bnode_prefix_([Hash,Entry], BNodePrefix),
           md5(Uri-Entry, Base),
           file_name_extension(Base, 'trig.gz', File),
           directory_file_path(Dir, File, Path),

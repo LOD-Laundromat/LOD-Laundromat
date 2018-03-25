@@ -35,17 +35,16 @@
 %! ll_dataset(+Seed:dict) is det.
 
 ll_dataset(Seed) :-
-  _{dataset: Dataset, documents: Urls, organization: Org} :< Seed,
-  _{name: DName} :< Dataset,
-  _{name: OName} :< Org,
+  _{name: DName} :< Seed.dataset,
+  _{name: OName} :< Seed.organization,
   setting(ll_init:temporary_directory, Dir1),
   directory_file_path(Dir1, OName, Dir2),
   directory_file_path(Dir2, DName, Dir3),
   create_directory(Dir3),
   forall(
-    member(Url, Urls),
+    member(Url, Seed.documents),
     catch(
-      ll_document(Dir3, OName-DName, Url),
+      ll_document(Dir3, Seed.hash, Url),
       E,
       print_message(warning, E)
     )

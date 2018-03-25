@@ -84,8 +84,10 @@ known_error_(error(http_status(400,_Msg),_Uri)).
 known_error_(error(http_status(404,_Msg),_Uri)).
 known_error_(error(http_status(406,_Msg),_Uri)).
 known_error_(error(http_status(500,_Msg),_Uri)).
+known_error_(error(io_error(read,_Stream),_Context)). % TBD: ?
 known_error_(error(socket_error('Connection timed out'),_)).
 known_error_(error(socket_error('Host not found'),_)).
+known_error_(error(syntax_error('EOF in string'),_Stream)).
 known_error_(error(syntax_error('Illegal character in uriref'),_Stream)).
 known_error_(error(syntax_error('Illegal control character in uriref'),_Stream)).
 known_error_(error(syntax_error('illegal escape'),_Stream)).

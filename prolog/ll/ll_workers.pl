@@ -36,13 +36,10 @@ add_worker :-
 % Something to do.
 worker_loop :-
   start_seed(Seed), !,
-  _{dataset: Dataset} :< Seed,
-  _{name: DName} :< Dataset,
-  thread_create(ll_dataset(Seed), Id, [alias(DName),at_exit(work_ends)]),
+  thread_create(ll_dataset(Seed), Id, [alias(Seed.hash),at_exit(work_ends)]),
   thread_join(Id, Status),
   (Status == true -> true ; print_message(warning, worker_dies(Status))),
-  _{hash: Hash} :< Seed,
-  end_seed(Hash),
+  end_seed(Seed.hash),
   worker_loop.
 % Nothing to do.
 worker_loop :-
