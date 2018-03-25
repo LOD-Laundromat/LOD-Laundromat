@@ -63,9 +63,8 @@ init_ll :-
     [Auth,Password,Scheme,User]
   ),
   % temporary directory
-  _{directory: Dir} :< Conf.data,
-  create_directory(Dir),
-  set_setting(temporary_directory, Dir),
+  create_directory(Conf.'data-directory'),
+  set_setting(temporary_directory, Conf.'data-directory'),
   % error and output logs
   (debugging(ll) -> true ; init_log(Dir)),
   % Triply client script.

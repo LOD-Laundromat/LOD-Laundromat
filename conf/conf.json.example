@@ -1,7 +1,5 @@
 {
-  "data": {
-    "directory": "DIRECTORY"
-  },
+  "data-directory": "DIRECTORY",
   "seedlist": {
     "authority": "AUTHORITY",
     "password": "PASSWORD",
