@@ -40,9 +40,9 @@
 
 
 
-%! ll_document(+Directory:atom, +Hash:atom, +Uri:atom) is det.
+%! ll_document(+Hash:atom, +Directory:atom, +Uri:atom) is det.
 
-ll_document(Dir, Hash, Uri0) :-
+ll_document(Hash, Dir, Uri0) :-
   % Make sure that non-ASCII Unicode characters are percent encoded.
   uri_normalized(Uri0, Uri),
   http_open2(Uri, In, [failure(-1),metadata(Metas)]),
@@ -71,12 +71,12 @@ download_from_archive(Hash, Dir, Uri, MediaType, Archive) :-
     )
   ).
 
-download_from_archive_stream(Hash, Dir, Uri, MediaType, [Meta|_], In) :-
+download_from_archive_stream(Hash1, Dir, Uri, MediaType, [Meta|_], In) :-
   _{name: Entry} :< Meta,
-  debug(ll, "~a ~a", [Uri,Entry]),
+  md5(Hash1-Entry, Hash2),
   peek_string(In, 10 000, String),
   guess_encoding(MediaType, String, Encoding),
-  download_from_entry(Hash, Dir, Uri-Entry, Encoding, In).
+  download_from_entry(Hash2, Dir, Uri, Encoding, In).
 
 guess_encoding(MediaType, String, Encoding) :-
   ignore(xml_encoding_(String, EncodingXml)),
@@ -124,19 +124,19 @@ generalize_encoding(ascii, utf8) :- !.
 generalize_encoding(unknown, _Var) :- !.
 generalize_encoding(Encoding, Encoding).
 
-download_from_entry(Hash, Dir, Uri-Entry, unknown, In) :- !,
-  download_from_entry_stream(Hash, Dir, Uri-Entry, In).
-download_from_entry(Hash, Dir, Uri-Entry, Encoding, In) :-
+download_from_entry(Hash, Dir, Uri, unknown, In) :- !,
+  download_from_entry_stream(Hash, Dir, Uri, In).
+download_from_entry(Hash, Dir, Uri, Encoding, In) :-
   recode_stream(Encoding, In), !,
-  download_from_entry_stream(Hash, Dir, Uri-Entry, In).
-download_from_entry(Hash, Dir, Uri-Entry, Encoding, In1) :-
+  download_from_entry_stream(Hash, Dir, Uri, In).
+download_from_entry(Hash, Dir, Uri, Encoding, In1) :-
   setup_call_cleanup(
     recode_stream(Encoding, In1, In2),
-    download_from_entry_stream(Hash, Dir, Uri-Entry, In2),
+    download_from_entry_stream(Hash, Dir, Uri, In2),
     close(In2)
   ).
 
-download_from_entry_stream(Hash, Dir, Uri-Entry, In) :-
+download_from_entry_stream(Hash, Dir, Uri, In) :-
   % After recoding, the stream needs to be peeked again.  Not only
   % because the stream can have changed (which could be detected with
   % (==)/2, but also because the same stream can have different
@@ -148,10 +148,9 @@ download_from_entry_stream(Hash, Dir, Uri-Entry, In) :-
           % message.
           (string_prefix(String, 100, Content) -> true ; Content = String),
           print_message(warning, rdf(unsupported_format(MediaType,Content)))
-      ;   bnode_prefix_([Hash,Entry], BNodePrefix),
-          md5(Uri-Entry, Base),
-          file_name_extension(Base, 'trig.gz', File),
+      ;   file_name_extension(Hash, 'trig.gz', File),
           directory_file_path(Dir, File, Path),
+          bnode_prefix([Hash], BNodePrefix),
           setup_call_cleanup(
             gzopen(Path, write, Out),
             download_rdf(Uri, In, BNodePrefix, MediaType, Out),
@@ -161,10 +160,10 @@ download_from_entry_stream(Hash, Dir, Uri-Entry, In) :-
   ;   % The entire peeked string can be too long for a warning
       % message.
       (string_prefix(String, 100, Content) -> true ; Content = String),
-      print_message(warning, rdf(non_rdf_format(Uri-Entry,Content)))
+      print_message(warning, rdf(non_rdf_format(Hash,Content)))
   ).
 
-bnode_prefix_(Segments, BNodePrefix) :-
+bnode_prefix(Segments, BNodePrefix) :-
   setting(rdf_term:bnode_prefix_scheme, Scheme),
   setting(rdf_term:bnode_prefix_authority, Auth),
   uri_comps(BNodePrefix, uri(Scheme,Auth,['.well-known',genid|Segments],_,_)).
