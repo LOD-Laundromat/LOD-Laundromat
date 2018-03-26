@@ -45,7 +45,8 @@
 ll_document(Hash, Dir, Uri0) :-
   % Make sure that non-ASCII Unicode characters are percent encoded.
   uri_normalized(Uri0, Uri),
-  http_open2(Uri, In, [failure(-1),metadata(Metas)]),
+  % TBD: Assert (HTTP) metadata into LOD-Seedlist.
+  http_open2(Uri, In, [failure(-1),metadata(Metas),success('2xx')]),
   call_cleanup(
     (
       % Use a dummy value in case the Media Type cannot be determined.
