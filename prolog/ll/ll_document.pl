@@ -1,7 +1,7 @@
 :- module(
   ll_document,
   [
-    ll_document/3 % +Directory, +Hash, +Uri
+    ll_document/3 % +Hash, +Directory, +Uri
   ]
 ).
 

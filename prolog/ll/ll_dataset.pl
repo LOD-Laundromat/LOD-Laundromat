@@ -37,19 +37,18 @@
 ll_dataset(Seed) :-
   _{name: DName} :< Seed.dataset,
   _{name: OName} :< Seed.organization,
-  setting(ll_init:temporary_directory, Dir1),
-  directory_file_path(Dir1, OName, Dir2),
-  directory_file_path(Dir2, DName, Dir3),
-  create_directory(Dir3),
+  setting(ll_init:temporary_directory, Dir0),
+  directory_file_path(Dir0, Seed.hash, Dir),
+  create_directory(Dir),
   forall(
     member(Uri, Seed.documents),
     catch(
-      ll_document(Dir3, Seed.hash, Uri),
+      ll_document(Seed.hash, Dir, Uri),
       E,
       print_message(warning, E)
     )
   ),
-  directory_file_path(Dir3, '*.trig.gz', Wildcard),
+  directory_file_path(Dir, '*.trig.gz', Wildcard),
   expand_file_name(Wildcard, Files1),
   include(is_nonempty_file, Files1, Files2),
   (   % Do not upload empty datasets.
@@ -61,11 +60,11 @@ ll_dataset(Seed) :-
       maplist(file_arg, Files2, T),
       setting(ll_init:script, Script),
       process_create(path(node), [Script,OName,DName|T], []),
-      upload_image(Dir3, Seed),
+      upload_image(Dir, Seed),
       upload_license(Seed),
       debug(ll, "DONE ~a ~a", [OName,DName])
   ),
-  delete_directory_and_contents(Dir3).
+  delete_directory_and_contents(Dir).
 
 dataset_image(Dir, Seed, File) :-
   _{image: Url1} :< Seed,
