@@ -3,6 +3,6 @@
 
 :- debug(ll).
 
-:- [run].
+:- [test].
 
 :- thread_monitor.
