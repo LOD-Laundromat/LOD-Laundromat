@@ -118,7 +118,7 @@ known_error_(non_canonical_lexical_form('http://www.w3.org/2001/XMLSchema#double
 known_error_(non_canonical_lexical_form('http://www.w3.org/2001/XMLSchema#float',_,_)).
 %known_error_(non_canonical_lexical_form('http://www.w3.org/2001/XMLSchema#int',_,_)).
 %known_error_(non_canonical_lexical_form('http://www.w3.org/2001/XMLSchema#integer',_,_)).
-known_error_(rdf(non_rdf_format(_Uri-_Entry,_Content))).
+known_error_(rdf(non_rdf_format(_Hash,_Content))).
 %known_error_(rdf(redefined_id(_Term))).
 known_error_(rdf(unexpected(_Tag, _Parser))). % TBD: Enable this after looking into RSS.
 %known_error_(rdf(unparsed(_Dom))).

@@ -121,3 +121,62 @@ upload_license(Seed) :-
   get_dict(license, Seed.dataset, License), !,
   dataset_property(Seed.organization.name, Seed.dataset.name, license(License), _).
 upload_license(_).
+
+
+
+%! normalize_license(+Url:atom, -Label:atom) is nondet.
+%
+% License URLs that cannot be mapped:
+%   - ε
+%   - http://data.surrey.ca/pages/open-government-licence-surrey
+%   - http://portal.opendata.dk/dataset/open-data-dk-licens
+%   - http://www.data.gouv.fr/license-Ouverte-Open-license
+%   - http://www.nationalarchives.gov.uk/doc/non-commercial-government-licence/
+%   - http://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/
+%   - https://creativecommons.org/licenses/by/3.0/at/deed.de
+%   - https://www.agesic.gub.uy/innovaportal/file/6327/1/licencia-de-datos-abiertos.pdf
+
+normalize_license(Url, Label) :-
+  license_(Prefix, Label),
+  atom_prefix(Url, Prefix), !.
+normalize_license(Url, 'None') :-
+  print_message(warning, unsupported_license(Url)).
+
+% CC0
+license_('http://creativecommons.org/publicdomain/zero/1.0', 'CC0').
+license_('http://www.opendefinition.org/licenses/cc-zero', 'CC0').
+license_('https://creativecommons.org/publicdomain/zero/1.0', 'CC0').
+
+/*
+% CC-BY
+license_('http://creativecommons.org/licenses/by/', 'CC-BY').
+license_('http://www.opendefinition.org/licenses/cc-by', 'CC-BY').
+license_('https://creativecommons.org/licenses/by/', 'CC-BY').
+*/
+
+/*
+% CC-BY-NC
+license_('http://creativecommons.org/licenses/by-nc/', 'CC-BY-NC').
+*/
+
+% CC-BY-SA
+license_('http://creativecommons.org/licenses/by-sa/', 'CC-BY-SA').
+license_('http://www.opendefinition.org/licenses/cc-by-sa', 'CC-BY-SA').
+license_('https://creativecommons.org/licenses/by-sa/3.0/', 'CC-BY-SA').
+
+% GFDL
+license_('http://www.opendefinition.org/licenses/gfdl', 'GFDL').
+
+% ODC-BY
+license_('http://www.opendefinition.org/licenses/odc-by', 'ODC-By').
+
+% ODC-ODBL
+license_('http://www.opendefinition.org/licenses/odc-odbl', 'ODC-ODbL').
+
+/*
+% OGL
+license_('http://reference.data.gov.uk/id/open-government-licence', 'OGL').
+*/
+
+% PDDL
+license_('http://www.opendefinition.org/licenses/odc-pddl', 'ODC-PDDL').
