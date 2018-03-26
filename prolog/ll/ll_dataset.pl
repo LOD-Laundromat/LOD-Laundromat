@@ -118,13 +118,14 @@ upload_image(Dir, Seed) :-
 upload_image(_, _).
 
 upload_license(Seed) :-
-  get_dict(license, Seed.dataset, License), !,
-  dataset_property(Seed.organization.name, Seed.dataset.name, license(License), _).
+  get_dict(license, Seed.dataset, Url), !,
+  normalize_license(Url, Label),
+  dataset_property(Seed.organization.name, Seed.dataset.name, license(Label), _).
 upload_license(_).
 
 
 
-%! normalize_license(+Url:atom, -Label:atom) is nondet.
+%! normalize_license(+Url:atom, -Label:atom) is det.
 %
 % License URLs that cannot be mapped:
 %   - ε
