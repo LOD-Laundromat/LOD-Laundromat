@@ -2,6 +2,9 @@
   ll_maintenance,
   [
     ll_clear/0,
+    ll_clear_datasets/0,
+    ll_clear_organizations/0,
+    ll_clear_seeds/0,
     ll_reset_processing_seeds/0,
     ll_reset_seeds/0
   ]
@@ -25,17 +28,35 @@
 % Delete all data currently stored in the LOD Laundromat.
 
 ll_clear :-
-  % Remove all datasets.
+  ll_clear_datasets,
+  ll_clear_organizations,
+  ll_clear_seeds.
+
+
+
+%! ll_clear_datasets is det.
+
+ll_clear_datasets :-
   forall(
     dataset(User, Dataset, _),
     dataset_delete(User, Dataset)
-  ),
-  % Remove all organizations.
+  ).
+
+
+
+%! ll_clear_organizations is det.
+
+ll_clear_organizations :-
   forall(
     organization(Organization, _),
     organization_delete(_, Organization)
-  ),
-  % Remove all seeds.
+  ).
+
+
+
+%! ll_clear_seeds is det.
+
+ll_clear_seeds :-
   forall(
     seed(Seed),
     delete_seed(Seed)

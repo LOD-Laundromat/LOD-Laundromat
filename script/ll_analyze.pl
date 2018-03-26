@@ -75,7 +75,7 @@ error_(Dataset-Error, In) :-
 
 print_errors :-
   forall(
-    error(_-Error),
+    catch(error(_-Error), _, fail),
     (known_error_(Error, Flag) -> flag(Flag, N, N+1) ; true)
   ),
   format("---\n"),
