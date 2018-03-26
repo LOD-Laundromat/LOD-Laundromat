@@ -42,9 +42,9 @@ ll_dataset(Seed) :-
   directory_file_path(Dir2, DName, Dir3),
   create_directory(Dir3),
   forall(
-    member(Url, Seed.documents),
+    member(Uri, Seed.documents),
     catch(
-      ll_document(Dir3, Seed.hash, Url),
+      ll_document(Dir3, Seed.hash, Uri),
       E,
       print_message(warning, E)
     )
@@ -61,15 +61,11 @@ ll_dataset(Seed) :-
       maplist(file_arg, Files2, T),
       setting(ll_init:script, Script),
       process_create(path(node), [Script,OName,DName|T], []),
-      (   dataset_image(Dir3, Seed, Image)
-      ->  dataset_property(OName, DName, avatar(Image), _)
-      ;   true
-      ),
+      upload_image(Dir3, Seed),
+      upload_license(Seed),
       debug(ll, "DONE ~a ~a", [OName,DName])
   ),
   delete_directory_and_contents(Dir3).
-
-file_arg(File, file(File)).
 
 dataset_image(Dir, Seed, File) :-
   _{image: Url1} :< Seed,
@@ -104,6 +100,8 @@ dataset_image(Dir, Seed, File) :-
   ;   print_message(warning, not_an_image(Url1))
   ).
 
+file_arg(File, file(File)).
+
 is_nonempty_file(File) :-
   setup_call_cleanup(
     gzopen(File, read, In),
@@ -114,3 +112,13 @@ is_nonempty_file(File) :-
     ),
     close(In)
   ).
+
+upload_image(Dir, Seed) :-
+  dataset_image(Dir, Seed, Image), !,
+  dataset_property(Seed.organization.name, Seed.dataset.name, avatar(Image), _).
+upload_image(_, _).
+
+upload_license(Seed) :-
+  get_dict(license, Seed.dataset, License), !,
+  dataset_property(Seed.organization.name, Seed.dataset.name, license(License), _).
+upload_license(_).
