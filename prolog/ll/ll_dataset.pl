@@ -28,6 +28,12 @@
 
 :- use_module(library(ll/ll_document)).
 
+:- dynamic
+    debug_hash/1.
+
+%debug_hash('4cd198eba288de77ad3406c556ca2e07').
+%debug_hash('5541542e841e267a86ce2ee301c1ea00').
+
 
 
 
@@ -40,6 +46,7 @@ ll_dataset(Seed) :-
   setting(ll_init:temporary_directory, Dir0),
   directory_file_path(Dir0, Seed.hash, Dir),
   create_directory(Dir),
+  (debug_hash(Seed.hash) -> gtrace ; true),
   forall(
     member(Uri, Seed.documents),
     catch(
@@ -120,7 +127,11 @@ upload_image(_, _).
 upload_license(Seed) :-
   get_dict(license, Seed.dataset, Url), !,
   normalize_license(Url, Label),
-  dataset_property(Seed.organization.name, Seed.dataset.name, license(Label), _).
+  (   % TBD: TAPIR cannot upload the `None' license.
+      Label == 'None'
+  ->  true
+  ;   dataset_property(Seed.organization.name, Seed.dataset.name, license(Label), _)
+  ).
 upload_license(_).
 
 
@@ -143,10 +154,10 @@ normalize_license(Url, Label) :-
 normalize_license(Url, 'None') :-
   print_message(warning, unsupported_license(Url)).
 
-% CC0
-license_('http://creativecommons.org/publicdomain/zero/1.0', 'CC0').
-license_('http://www.opendefinition.org/licenses/cc-zero', 'CC0').
-license_('https://creativecommons.org/publicdomain/zero/1.0', 'CC0').
+% CC0 1.0
+license_('http://creativecommons.org/publicdomain/zero/1.0', 'CC0 1.0').
+license_('http://www.opendefinition.org/licenses/cc-zero', 'CC0 1.0').
+license_('https://creativecommons.org/publicdomain/zero/1.0', 'CC0 1.0').
 
 /*
 % CC-BY
