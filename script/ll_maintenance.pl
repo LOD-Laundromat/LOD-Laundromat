@@ -37,10 +37,7 @@ ll_clear :-
   % Remove all seeds.
   forall(
     seed(Seed),
-    (
-      _{hash: Hash} :< Seed,
-      delete_seed(Hash)
-    )
+    delete_seed(Seed)
   ).
 
 
@@ -52,5 +49,5 @@ ll_clear :-
 ll_reset_processing_seeds :-
   forall(
     processing_seed(Seed),
-    delete_seed(Seed.hash)
+    delete_seed(Seed)
   ).

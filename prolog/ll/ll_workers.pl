@@ -39,7 +39,7 @@ worker_loop :-
   thread_create(ll_dataset(Seed), Id, [alias(Seed.hash),at_exit(work_ends)]),
   thread_join(Id, Status),
   (Status == true -> true ; print_message(warning, worker_dies(Status))),
-  end_seed(Seed.hash),
+  end_seed(Seed),
   worker_loop.
 % Nothing to do.
 worker_loop :-
