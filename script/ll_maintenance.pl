@@ -2,7 +2,8 @@
   ll_maintenance,
   [
     ll_clear/0,
-    ll_reset_processing_seeds/0
+    ll_reset_processing_seeds/0,
+    ll_reset_seeds/0
   ]
 ).
 
@@ -50,4 +51,14 @@ ll_reset_processing_seeds :-
   forall(
     processing_seed(Seed),
     delete_seed(Seed)
+  ).
+
+
+
+%! ll_reset_seeds is det.
+
+ll_reset_seeds :-
+  forall(
+    seed(Seed),
+    reset_seed(Seed)
   ).

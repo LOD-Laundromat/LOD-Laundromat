@@ -76,10 +76,7 @@ error_(Dataset-Error, In) :-
 print_errors :-
   forall(
     error(_-Error),
-    (   known_error_(Error, Flag)
-    ->  flag(Flag, N, N+1)
-    ;   format("~w\n", [Error])
-    )
+    (known_error_(Error, Flag) -> flag(Flag, N, N+1) ; true)
   ),
   format("---\n"),
   forall(
@@ -119,7 +116,6 @@ unknown_error(Error) :-
 known_error_(error(archive_error(2, 'Missing type keyword in mtree specification'),_), mtree).
 known_error_(error(domain_error(http_encoding,identity),_), http_encoding).
 known_error_(error(domain_error(set_cookie,_Value),_), http_cookie).
-%%%%known_error_(error(domain_error(url,_),_)). % TBD: ?
 known_error_(error(existence_error(turtle_prefix,_Prefix),_Stream), ttl_prefix).
 known_error_(error(http_status(400,_Msg),_Uri), http_client_bad_request).
 known_error_(error(http_status(401,_Msg),_Uri), http_client_unauthorized).
@@ -130,7 +126,6 @@ known_error_(error(http_status(410,_Msg),_Uri), http_client_gone).
 known_error_(error(http_status(500,_Msg),_Uri), http_server_internal_error).
 known_error_(error(http_status(502,_Msg),_Uri), http_server_bad_gateway).
 known_error_(error(http_status(503,_Msg),_Uri), http_server_unavailable).
-%%%%known_error_(error(io_error(read,_Stream),_Context)). % TBD: ?
 known_error_(io_warning(_Stream,'Illegal UTF-8 continuation'), illegal_utf8).
 known_error_(error(socket_error('Connection refused'),_), connection_refused).
 known_error_(error(socket_error('Connection reset by peer'),_), connection_reset).
@@ -160,8 +155,8 @@ known_error_(incorrect_lexical_form('http://www.w3.org/2001/XMLSchema#dateTime',
 known_error_(incorrect_lexical_form('http://www.w3.org/2001/XMLSchema#decimal',_), decimal).
 known_error_(incorrect_lexical_form('http://www.w3.org/2001/XMLSchema#double',_), double).
 known_error_(incorrect_lexical_form('http://www.w3.org/2001/XMLSchema#float',_), float).
-%known_error_(incorrect_lexical_form('http://www.w3.org/2001/XMLSchema#gDay',_)).
-%known_error_(incorrect_lexical_form('http://www.w3.org/2001/XMLSchema#gMonth',_)).
+known_error_(incorrect_lexical_form('http://www.w3.org/2001/XMLSchema#gDay',_), gDay).
+known_error_(incorrect_lexical_form('http://www.w3.org/2001/XMLSchema#gMonth',_), gMonth).
 known_error_(incorrect_lexical_form('http://www.w3.org/2001/XMLSchema#gMonthDay',_), gMonthDay).
 known_error_(incorrect_lexical_form('http://www.w3.org/2001/XMLSchema#gYear',_), gYear).
 known_error_(incorrect_lexical_form('http://www.w3.org/2001/XMLSchema#int',_), int).
@@ -170,17 +165,16 @@ known_error_(incorrect_lexical_form('http://www.w3.org/2001/XMLSchema#nonNegativ
 known_error_(incorrect_lexical_form('http://www.w3.org/2001/XMLSchema#time',_), time).
 known_error_(missing_language_tag(_LTag), missing_ltag).
 known_error_(non_canonical_language_tag(_LTag), noncan_langString).
-%known_error_(no_image(_Url)).
 known_error_(non_canonical_lexical_form('http://www.w3.org/2001/XMLSchema#boolean',_,_), noncan_boolean).
 known_error_(non_canonical_lexical_form('http://www.w3.org/2001/XMLSchema#dateTime',_,_), noncan_dateTime).
 known_error_(non_canonical_lexical_form('http://www.w3.org/2001/XMLSchema#decimal',_,_), noncan_decimal).
 known_error_(non_canonical_lexical_form('http://www.w3.org/2001/XMLSchema#double',_,_), noncan_double).
 known_error_(non_canonical_lexical_form('http://www.w3.org/2001/XMLSchema#float',_,_), noncan_float).
 known_error_(non_canonical_lexical_form('http://www.w3.org/2001/XMLSchema#int',_,_), noncan_int).
-%known_error_(non_canonical_lexical_form('http://www.w3.org/2001/XMLSchema#integer',_,_)).
+known_error_(non_canonical_lexical_form('http://www.w3.org/2001/XMLSchema#integer',_,_), noncan_integer).
 known_error_(rdf(non_rdf_format(_Hash,_Content)), non_rdf).
 known_error_(rdf(redefined_id(_Term)), redefined_id).
-known_error_(rdf(unexpected(_Tag, _Parser)), rdfxml_tag). % TBD: Enable this after looking into RSS.
+known_error_(rdf(unexpected(_Tag, _Parser)), rdfxml_tag).
 known_error_(rdf(unparsed(_Dom)), rdfxml_unparsed).
 known_error_(rdf(unsupported_format(_MediaType,_Content)), rdf_support).
 known_error_(sgml(sgml_parser(_Parser),_File,_Line,_Msg), rdfxml_sgml).
