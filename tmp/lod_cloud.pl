@@ -37,9 +37,6 @@
 :- dynamic
     user:clean_triple_hook/6.
 
-http:encoding_filter('x-gzip', In0, In) :-
-  http:encoding_filter(gzip, In0, In).
-
 :- initialization
    flag(number_of_workers, _, 1),
    conf_json(Conf),
@@ -102,7 +99,6 @@ user:clean_triple_hook('cia-world-factbook', Out, BNodePrefix, S, factbook:large
 
 triply_options('cia-world-factbook', _{
   avatar: 'img/cia-world-factbook.jpg',
-  description: "The World Factbook provides information on the history, people, government, economy, geography, communications, transportation, military, and transnational issues for 267 world entities.  Our Reference tab includes: maps of the major world regions, as well as Flags of the World, a Physical Map of the World, a Political Map of the World, a World Oceans map, and a Standard Time Zones of the World map.",
   prefixes: [
     'agriculture-product'-'http://www.daml.org/2001/12/factbook/agricultureProducts#',
     commodity-'http://www.daml.org/2001/12/factbook/commodities#',
@@ -120,13 +116,10 @@ triply_options('cia-world-factbook', _{
   ]
 }).
 triply_options(citeseer, _{
-  avatar: 'img/citeseer.png',
-  description: "This is one of several semantic repositories that contains and publishes RDF linked data and co-reference information, forming the underlying distributed storage model behind the RKB Explorer initiative.  This repository contains data from CiteSeer (Research Index)."
+  avatar: 'img/citeseer.png'
 }).
 triply_options('dbtune-classical', _{
   avatar: 'img/dbtune-classical.jpg',
-  description: "A set of resources describes concepts and individuals related to the canon of Western Classical Music.  The data is aggregated and to hand curated by Chris Cannam at Queen Mary University of London.  It includes information about composers, compositions, performers, relationships of influence, and other data.  The intention is to provide a Linked Data resource that provides references to existing information sources.",
-  %license: 'https://creativecommons.org/licenses/by-nc-sa/3.0/',
   prefixes: [
     classical-'http://dbtune.org/classical/resource/type/',
     dbr-'http://dbpedia.org/resource/',
@@ -134,12 +127,10 @@ triply_options('dbtune-classical', _{
   ]
 }).
 triply_options('open-course-ware', _{
-  avatar: 'img/open-course-ware.jpg',
-  description: "Some of the MIT OpenCourseWare Material RDF-ized by the SIMILE Team."
+  avatar: 'img/open-course-ware.jpg'
 }).
 triply_options(wordnet, _{
   avatar: "img/wordnet.jpg",
-  description: "WordNet is a large lexical database of English.  Nouns, verbs, adjectives and adverbs are grouped into sets of cognitive synonyms (synsets), each expressing a distinct concept.  Synsets are interlinked by means of conceptual-semantic and lexical relations.  WordNet's structure makes it a useful tool for computational linguistics and natural language processing.",
   prefixes: [
     def-'http://www.cogsci.princeton.edu/~wn/schema/',
     concept-'http://www.cogsci.princeton.edu/~wn/concept#',
@@ -148,14 +139,12 @@ triply_options(wordnet, _{
 }).
 triply_options('w3c-technical-reports', _{
   avatar: "img/w3c.png",
-  description: "",
   prefixes: [
     doc-'http://www.w3.org/2000/10/swap/pim/doc#',
     graph-'http://simile.mit.edu/repository/datasets/w3c-tr/data/',
     pim-'http://www.w3.org/2000/10/swap/pim/contact#'
   ]
 }).
-triply_options(_, _{}).
 
 
 
