@@ -41,8 +41,6 @@
 %! ll_dataset(+Seed:dict) is det.
 
 ll_dataset(Seed) :-
-  _{name: DName} :< Seed.dataset,
-  _{name: OName} :< Seed.organization,
   setting(ll_init:temporary_directory, Dir0),
   directory_file_path(Dir0, Seed.hash, Dir),
   create_directory(Dir),
@@ -62,19 +60,23 @@ ll_dataset(Seed) :-
       Files2 == []
   ->  true
   ;   % Create the organization, unless it already exists.
-      ignore(organization_create(_, OName, _{}, _)),
-      ignore(dataset_create(OName, DName, _{}, _)),
+      ignore(organization_create(_, Seed.organization.name, _{}, _)),
+      ignore(dataset_create(Seed.organization.name, Seed.dataset.name, _{}, _)),
       maplist(file_arg, Files2, T),
       setting(ll_init:script, Script),
-      process_create(path(node), [Script,OName,DName|T], []),
+      process_create(
+        path(node),
+        [Script,Seed.organization.name,Seed.dataset.name|T],
+        []
+      ),
       upload_image(Dir, Seed),
       upload_license(Seed),
-      debug(ll, "DONE ~a ~a", [OName,DName])
+      debug(ll, "DONE ~a ~a", [Seed.organization.name,Seed.dataset.name])
   ),
   delete_directory_and_contents(Dir).
 
 dataset_image(Dir, Seed, File) :-
-  _{image: Url1} :< Seed,
+  _{image: Url1} :< Seed.dataset,
   % We download the URL prior to determining whether it is an image,
   % because we may not be able to download the same image a second
   % time.
