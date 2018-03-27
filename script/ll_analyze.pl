@@ -156,6 +156,7 @@ known_error_(error(syntax_error('Unexpected newline in short string'),_Stream), 
 known_error_(error(timeout_error(read,_Stream),_Context), timeout).
 known_error_(http(max_redirect(_N,_Uris)), http_max_redirect).
 known_error_(http(no_content_type,_Uri), http_no_content_type).
+% HTTP redirection loops can co-occur with 3xx status codes.
 known_error_(http(redirect_loop(_Uri)), http_redirect_loop).
 % incorrect literal
 known_error_(incorrect_lexical_form('http://www.w3.org/2001/XMLSchema#date',_), date).
