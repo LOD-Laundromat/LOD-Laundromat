@@ -47,9 +47,9 @@ ll_document(Hash, Dir, Uri0) :-
   uri_normalized(Uri0, Uri),
   % TBD: Assert (HTTP) metadata into LOD-Seedlist.
   http_open2(Uri, In, [failure(-1),metadata(Metas)]),
-  (   Metas = [Meta|_],
-      _{status: Status} :< Meta,
-      between(200, 299, Status)
+  Metas = [Meta|_],
+  _{status: Status} :< Meta,
+  (   between(200, 299, Status)
   ->  call_cleanup(
         (
           % Use a dummy value in case the Media Type cannot be determined.
@@ -58,7 +58,7 @@ ll_document(Hash, Dir, Uri0) :-
         ),
         close(In)
       )
-  ;   throw(error(http_status(Status)))
+  ;   print_message(warning, http_status(Status,Uri))
   ).
 
 download_from_uri(Hash, Dir, Uri, MediaType, In) :-
