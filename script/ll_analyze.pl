@@ -113,10 +113,12 @@ unknown_error(Error) :-
   Error = _-Error0,
   \+ known_error_(Error0, _).
 
+% archive error
 known_error_(error(archive_error(2, 'Missing type keyword in mtree specification'),_), mtree).
 known_error_(error(domain_error(http_encoding,identity),_), http_encoding).
 known_error_(error(domain_error(set_cookie,_Value),_), http_cookie).
 known_error_(error(existence_error(turtle_prefix,_Prefix),_Stream), ttl_prefix).
+% HTTP status
 known_error_(error(http_status(400,_Msg),_Uri), http_client_bad_request).
 known_error_(error(http_status(401,_Msg),_Uri), http_client_unauthorized).
 known_error_(error(http_status(403,_Msg),_Uri), http_client_forbidden).
@@ -127,6 +129,7 @@ known_error_(error(http_status(500,_Msg),_Uri), http_server_internal_error).
 known_error_(error(http_status(502,_Msg),_Uri), http_server_bad_gateway).
 known_error_(error(http_status(503,_Msg),_Uri), http_server_unavailable).
 known_error_(io_warning(_Stream,'Illegal UTF-8 continuation'), illegal_utf8).
+% socket error
 known_error_(error(socket_error('Connection refused'),_), connection_refused).
 known_error_(error(socket_error('Connection reset by peer'),_), connection_reset).
 known_error_(error(socket_error('Connection timed out'),_), connection_timed_out).
@@ -134,6 +137,8 @@ known_error_(error(socket_error('Host not found'),_), host_not_found).
 known_error_(error(socket_error('No Data'),_), no_data).
 known_error_(error(socket_error('No Recovery'),_), no_recovery).
 known_error_(error(socket_error('No route to host'),_), no_route_to_host).
+known_error_(error(socket_error('Try Again'),_), try_again).
+% syntax error
 known_error_(error(syntax_error('End of statement expected'),_Stream), eos_expected).
 known_error_(error(syntax_error('EOF in string'),_Stream), eof_in_string).
 known_error_(error(syntax_error('Expected ":"'),_Stream), expected_colon).
@@ -146,10 +151,13 @@ known_error_(error(syntax_error('PN_PREFIX expected'),_Stream), pn_prefix_expect
 known_error_(error(syntax_error('predicate expected'),_Stream), predicate_expected).
 known_error_(error(syntax_error('subject expected'),_Stream), subject_expected).
 known_error_(error(syntax_error('subject not followed by whitespace'),_Stream), subject_whitespace).
+known_error_(error(syntax_error('Unexpected "." (missing object)'),_Stream), missing_object).
+known_error_(error(syntax_error('Unexpected newline in short string'),_Stream), newline_in_short_string).
 known_error_(error(timeout_error(read,_Stream),_Context), timeout).
 known_error_(http(max_redirect(_N,_Uris)), http_max_redirect).
 known_error_(http(no_content_type,_Uri), http_no_content_type).
 known_error_(http(redirect_loop(_Uri)), http_redirect_loop).
+% incorrect literal
 known_error_(incorrect_lexical_form('http://www.w3.org/2001/XMLSchema#date',_), date).
 known_error_(incorrect_lexical_form('http://www.w3.org/2001/XMLSchema#dateTime',_), dateTime).
 known_error_(incorrect_lexical_form('http://www.w3.org/2001/XMLSchema#decimal',_), decimal).
@@ -164,6 +172,7 @@ known_error_(incorrect_lexical_form('http://www.w3.org/2001/XMLSchema#integer',_
 known_error_(incorrect_lexical_form('http://www.w3.org/2001/XMLSchema#nonNegativeInteger',_), nonNegativeInteger).
 known_error_(incorrect_lexical_form('http://www.w3.org/2001/XMLSchema#time',_), time).
 known_error_(missing_language_tag(_LTag), missing_ltag).
+% non-canonical literal
 known_error_(non_canonical_language_tag(_LTag), noncan_langString).
 known_error_(non_canonical_lexical_form('http://www.w3.org/2001/XMLSchema#boolean',_,_), noncan_boolean).
 known_error_(non_canonical_lexical_form('http://www.w3.org/2001/XMLSchema#dateTime',_,_), noncan_dateTime).
