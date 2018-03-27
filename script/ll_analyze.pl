@@ -115,7 +115,7 @@ unknown_error(Error) :-
 
 % archive error
 known_error_(error(archive_error(2, 'Missing type keyword in mtree specification'),_Context), mtree).
-knwon_error_(error(archive_error(104, 'Truncated input file (needed 444997632 bytes, only 0 available)'),_Context), trancated_archive).
+known_error_(error(archive_error(104, 'Truncated input file (needed 444997632 bytes, only 0 available)'),_Context), trancated_archive).
 known_error_(error(domain_error(http_encoding,identity),_Context), http_encoding).
 known_error_(error(domain_error(set_cookie,_Value),_Context), http_cookie).
 known_error_(error(domain_error(url,_Url),_Context), url).
