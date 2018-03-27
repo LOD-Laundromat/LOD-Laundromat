@@ -3,6 +3,10 @@
 
 :- debug(ll).
 
-:- [test].
+:- use_module(library(ll/ll_dataset)).
+:- use_module(library(ll/ll_init)).
+:- use_module(library(ll/ll_seeder)).
 
-:- thread_monitor.
+ll_debug(Hash) :-
+  seed_by_hash(Hash, Seed),
+  ll_dataset(Seed).

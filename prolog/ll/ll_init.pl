@@ -39,19 +39,23 @@ lod_cloud_portray(Blob, Options) :-
 %! init_ll is det.
 
 init_ll :-
-  % Count-by-one for thread aliases.
+  % count-by-one for thread aliases
   flag(number_of_workers, _, 1),
   conf_json(Conf),
   % temporary directory
   create_directory(Conf.'data-directory'),
   set_setting(temporary_directory, Conf.'data-directory'),
-  % error and output logs
-  (debugging(ll) -> true ; init_log(Conf.'data-directory')),
-  % Triply client script.
+  % Triply client script
   _{client: Script} :< Conf.tapir,
   set_setting(script, Script),
-  % number of workers
-  add_workers(Conf.workers).
+  % unless under debug mode
+  (    debugging(ll)
+  ->   true
+  ;    % error and output logs
+       init_log(Conf.'data-directory'),
+       % number of workers
+       add_workers(Conf.workers)
+  ).
 
 init_log(Dir) :-
   init_out_log(Dir),
