@@ -202,6 +202,7 @@ known_error_(non_canonical_lexical_form('http://www.w3.org/2001/XMLSchema#float'
 known_error_(non_canonical_lexical_form('http://www.w3.org/2001/XMLSchema#int',_,_), noncan_int).
 known_error_(non_canonical_lexical_form('http://www.w3.org/2001/XMLSchema#integer',_,_), noncan_integer).
 known_error_(non_canonical_lexical_form('http://www.w3.org/2001/XMLSchema#nonNegativeInteger',_,_), noncan_nonNegativeInteger).
+known_error_(not_an_image(_Url), no_image).
 known_error_(rdf(non_rdf_format(_Hash,_Content)), non_rdf).
 known_error_(rdf(redefined_id(_Term)), redefined_id).
 known_error_(rdf(unexpected(_Tag, _Parser)), rdfxml_tag).

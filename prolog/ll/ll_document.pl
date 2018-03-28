@@ -12,11 +12,9 @@
 */
 
 :- use_module(library(apply)).
-:- use_module(library(debug)).
 :- use_module(library(settings)).
 
 :- use_module(library(archive_ext)).
-:- use_module(library(atom_ext)).
 :- use_module(library(default)).
 :- use_module(library(hash_ext)).
 :- use_module(library(http/http_client2)).
@@ -29,6 +27,7 @@
 :- use_module(library(sw/rdf_export)).
 :- use_module(library(sw/rdf_guess)).
 :- use_module(library(sw/rdf_media_type)).
+:- use_module(library(sw/rdf_prefix)).
 :- use_module(library(sw/rdf_term)).
 :- use_module(library(uri_ext)).
 :- use_module(library(xml_ext)).
@@ -37,7 +36,7 @@
    set_setting(rdf_term:bnode_prefix_scheme, http),
    set_setting(rdf_term:bnode_prefix_authority, 'lodlaundromat.org').
 
-:- maplist(rdf_register_prefix, [
+:- maplist(rdf_assert_prefix, [
      dcat-'http://www.w3.org/ns/dcat#',
      void-'http://rdfs.org/ns/void#'
    ]).
@@ -220,8 +219,7 @@ clean_tuple(Out, BNodePrefix, rdf(S0,P0,O0)) :- !,
   ),
   (   rdf_prefix_memberchk(P, [dcat:downloadURL,void:dataDump]),
       rdf_term_url(O, Uri)
-  ->  assert_dump_url(Uri),
-      format("[ADD] ~a\n", [Uri])
+  ->  assert_dump_url(Uri)
   ;   true
   ).
 clean_tuple(Out, BNodePrefix, rdf(S,P,O,_)) :-
