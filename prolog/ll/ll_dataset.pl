@@ -96,14 +96,11 @@ dataset_image(Dir, Seed, File) :-
       )
     ),
     close(Out)
-  ), !,
-  (   setup_call_cleanup(
-        open(File, read, In2, [type(binary)]),
-        is_image(In2),
-        close(In2)
-      )
-  ->  true
-  ;   print_message(warning, not_an_image(Url1))
+  ),
+  setup_call_cleanup(
+    open(File, read, In2, [type(binary)]),
+    is_image(In2),
+    close(In2)
   ).
 
 is_nonempty_file(File) :-
