@@ -115,6 +115,7 @@ unknown_error(Error) :-
 
 % archive error
 known_error_(error(archive_error(2, 'Missing type keyword in mtree specification'),_Context), mtree).
+known_error_(error(archive_error(29, 'Missing type keyword in mtree specification'),_Context), mtree).
 known_error_(error(archive_error(104, 'Truncated input file (needed 444997632 bytes, only 0 available)'),_Context), trancated_archive).
 known_error_(error(domain_error(http_encoding,identity),_Context), http_encoding).
 known_error_(error(domain_error(set_cookie,_Value),_Context), http_cookie).
@@ -131,6 +132,7 @@ known_error_(error(socket_error('No Recovery'),_), no_recovery).
 known_error_(error(socket_error('No route to host'),_), no_route_to_host).
 known_error_(error(socket_error('Try Again'),_), try_again).
 % syntax error
+known_error_(error(syntax_error('end-of-line expected'),_Stream), eol_expected).
 known_error_(error(syntax_error('End of statement expected'),_Stream), eos_expected).
 known_error_(error(syntax_error('EOF in string'),_Stream), eof_in_string).
 known_error_(error(syntax_error('Expected ":"'),_Stream), expected_colon).
@@ -143,6 +145,7 @@ known_error_(error(syntax_error('Illegal control character in uriref'),_Stream),
 known_error_(error(syntax_error('illegal escape'),_Stream), illegal_escape).
 known_error_(error(syntax_error('Illegal IRIREF'),_Stream), illegal_iriref).
 known_error_(error(syntax_error('Invalid @prefix directive'),_Stream), invalid_prefix_directive).
+known_error_(error(syntax_error('newline in string'),_Stream), newline_in_string).
 known_error_(error(syntax_error('PN_PREFIX expected'),_Stream), pn_prefix_expected).
 known_error_(error(syntax_error('predicate expected'),_Stream), predicate_expected).
 known_error_(error(syntax_error('predicate not followed by whitespace'),_Stream), predicate_whitespace).
@@ -185,7 +188,8 @@ known_error_(incorrect_lexical_form('http://www.w3.org/2001/XMLSchema#int',_), i
 known_error_(incorrect_lexical_form('http://www.w3.org/2001/XMLSchema#integer',_), integer).
 known_error_(incorrect_lexical_form('http://www.w3.org/2001/XMLSchema#nonNegativeInteger',_), nonNegativeInteger).
 known_error_(incorrect_lexical_form('http://www.w3.org/2001/XMLSchema#time',_), time).
-known_error_(io_warning(_Stream,'Illegal UTF-8 continuation'), illegal_utf8).
+known_error_(io_warning(_Stream,'Illegal UTF-8 continuation'), illegal_utf8_continuation).
+known_error_(io_warning(_Stream,'Illegal UTF-8 start'), illegal_utf8_start).
 known_error_(missing_language_tag(_LTag), missing_ltag).
 % non-canonical literal
 known_error_(non_canonical_language_tag(_LTag), noncan_langString).
