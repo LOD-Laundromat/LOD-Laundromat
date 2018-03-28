@@ -1,7 +1,7 @@
 :- module(
   ll_document,
   [
-    ll_document/3 % +Hash, +Directory, +Uri
+    ll_document/3 % +Out, +Hash, +Uri
   ]
 ).
 
@@ -40,9 +40,9 @@
 
 
 
-%! ll_document(+Hash:atom, +Directory:atom, +Uri:atom) is det.
+%! ll_document(+Out:stream, +Hash:atom, +Directory:atom, +Uri:atom) is det.
 
-ll_document(Hash, Dir, Uri0) :-
+ll_document(Out, Hash, Uri0) :-
   % Make sure that non-ASCII Unicode characters are percent encoded.
   uri_normalized(Uri0, Uri),
   % TBD: Assert (HTTP) metadata into LOD-Seedlist.
@@ -54,35 +54,35 @@ ll_document(Hash, Dir, Uri0) :-
         (
           % Use a dummy value in case the Media Type cannot be determined.
           call_default_value(MediaType, http_metadata_content_type(Metas), null),
-          download_from_uri(Hash, Dir, Uri, MediaType, In)
+          download_from_uri(Out, Hash, Uri, MediaType, In)
         ),
         close(In)
       )
   ;   print_message(warning, http(status(Status),Uri))
   ).
 
-download_from_uri(Hash, Dir, Uri, MediaType, In) :-
+download_from_uri(Out, Hash, Uri, MediaType, In) :-
   setup_call_cleanup(
     archive_open(In, Archive),
-    download_from_archive(Hash, Dir, Uri, MediaType, Archive),
+    download_from_archive(Out, Hash, Uri, MediaType, Archive),
     archive_close(Archive)
   ).
 
-download_from_archive(Hash, Dir, Uri, MediaType, Archive) :-
+download_from_archive(Out, Hash, Uri, MediaType, Archive) :-
   forall(
     archive_data_stream(Archive, In, [meta_data(Metas)]),
     call_cleanup(
-      download_from_archive_stream(Hash, Dir, Uri, MediaType, Metas, In),
+      download_from_archive_stream(Out, Hash, Uri, MediaType, Metas, In),
       close(In)
     )
   ).
 
-download_from_archive_stream(Hash1, Dir, Uri, MediaType, [Meta|_], In) :-
+download_from_archive_stream(Out, Hash1, Uri, MediaType, [Meta|_], In) :-
   _{name: Entry} :< Meta,
   md5(Hash1-Entry, Hash2),
   peek_string(In, 10 000, String),
   guess_encoding(MediaType, String, Encoding),
-  download_from_entry(Hash2, Dir, Uri, Encoding, In).
+  download_from_entry(Out, Hash2, Uri, Encoding, In).
 
 guess_encoding(MediaType, String, Encoding) :-
   ignore(xml_encoding_(String, EncodingXml)),
@@ -130,19 +130,19 @@ generalize_encoding(ascii, utf8) :- !.
 generalize_encoding(unknown, _Var) :- !.
 generalize_encoding(Encoding, Encoding).
 
-download_from_entry(Hash, Dir, Uri, unknown, In) :- !,
-  download_from_entry_stream(Hash, Dir, Uri, In).
-download_from_entry(Hash, Dir, Uri, Encoding, In) :-
+download_from_entry(Out, Hash, Uri, unknown, In) :- !,
+  download_from_entry_stream(Out, Hash, Uri, In).
+download_from_entry(Out, Hash, Uri, Encoding, In) :-
   recode_stream(Encoding, In), !,
-  download_from_entry_stream(Hash, Dir, Uri, In).
-download_from_entry(Hash, Dir, Uri, Encoding, In1) :-
+  download_from_entry_stream(Out, Hash, Uri, In).
+download_from_entry(Out, Hash, Uri, Encoding, In1) :-
   setup_call_cleanup(
     recode_stream(Encoding, In1, In2),
-    download_from_entry_stream(Hash, Dir, Uri, In2),
+    download_from_entry_stream(Out, Hash, Uri, In2),
     close(In2)
   ).
 
-download_from_entry_stream(Hash, Dir, Uri, In) :-
+download_from_entry_stream(Out, Hash, Uri, In) :-
   % After recoding, the stream needs to be peeked again.  Not only
   % because the stream can have changed (which could be detected with
   % (==)/2, but also because the same stream can have different
@@ -154,13 +154,12 @@ download_from_entry_stream(Hash, Dir, Uri, In) :-
           % message.
           (string_prefix(String, 100, Content) -> true ; Content = String),
           print_message(warning, rdf(unsupported_format(MediaType,Content)))
-      ;   file_name_extension(Hash, 'trig.gz', File),
-          directory_file_path(Dir, File, Path),
-          bnode_prefix([Hash], BNodePrefix),
-          setup_call_cleanup(
-            gzopen(Path, write, Out),
-            download_rdf(Uri, In, BNodePrefix, MediaType, Out),
-            close(Out)
+      ;   bnode_prefix([Hash], BNodePrefix),
+          rdf_deref_stream(
+            Uri,
+            In,
+            clean_tuples(Out),
+            [bnode_prefix(BNodePrefix),media_type(MediaType)]
           )
       )
   ;   % The entire peeked string can be too long for a warning
@@ -173,16 +172,6 @@ bnode_prefix(Segments, BNodePrefix) :-
   setting(rdf_term:bnode_prefix_scheme, Scheme),
   setting(rdf_term:bnode_prefix_authority, Auth),
   uri_comps(BNodePrefix, uri(Scheme,Auth,['.well-known',genid|Segments],_,_)).
-
-download_rdf(Uri, In, BNodePrefix, MediaType, Out) :-
-  format(Out, "<~a> {\n", [Uri]),
-  rdf_deref_stream(
-    Uri,
-    In,
-    clean_tuples(Out),
-    [bnode_prefix(BNodePrefix),media_type(MediaType)]
-  ),
-  format(Out, "}\n", []).
 
 clean_tuples(Out, BNodePrefix, Tuples, _) :-
   maplist(clean_tuple(Out, BNodePrefix), Tuples).

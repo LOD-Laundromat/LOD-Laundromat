@@ -45,21 +45,23 @@ ll_dataset(Seed) :-
   directory_file_path(Dir0, Seed.hash, Dir),
   create_directory(Dir),
   (debug_hash(Seed.hash) -> gtrace ; true),
-  forall(
-    member(Uri, Seed.documents),
-    catch(
-      ll_document(Seed.hash, Dir, Uri),
-      E,
-      print_message(warning, E)
-    )
+  directory_file_path(Dir, Hash, Base),
+  file_name_extension(Base, 'nt.gz', File),
+  setup_call_cleanup(
+    gzopen(File, write, Out),
+    forall(
+      member(Uri, Seed.documents),
+      catch(
+        ll_document(Out, Seed.hash, Uri),
+        E,
+        print_message(warning, E)
+      )
+    ),
+    close(Out)
   ),
-  directory_file_path(Dir, '*.trig.gz', Wildcard),
-  expand_file_name(Wildcard, Files1),
-  include(is_nonempty_file, Files1, Files2),
   (   % Do not upload empty datasets.
-      Files2 == []
-  ->  true
-  ;   % Create the organization, unless it already exists.
+      is_nonempty_file(File)
+  ->  % Create the organization, unless it already exists.
       ignore(organization_create(_, Seed.organization.name, _{}, _)),
       ignore(dataset_create(Seed.organization.name, Seed.dataset.name, _{}, _)),
       maplist(file_arg, Files2, T),
@@ -72,6 +74,7 @@ ll_dataset(Seed) :-
       upload_image(Dir, Seed),
       upload_license(Seed),
       debug(ll, "DONE ~a ~a", [Seed.organization.name,Seed.dataset.name])
+  ;   true
   ),
   delete_directory_and_contents(Dir).
 

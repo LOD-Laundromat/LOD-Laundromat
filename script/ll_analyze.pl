@@ -172,6 +172,7 @@ known_error_(http(status(500),_Uri), http_server_internal_error).
 known_error_(http(status(502),_Uri), http_server_bad_gateway).
 known_error_(http(status(503),_Uri), http_server_unavailable).
 known_error_(http(status(504),_Uri), http_server_gateway_timeout).
+known_error_(http(status(522),_Uri), http_server_cloudflare_connection_timeout).
 % incorrect literal
 known_error_(incorrect_lexical_form('http://www.w3.org/1999/02/22-rdf-syntax-ns#XMLLiteral',_), 'XMLLiteral').
 known_error_(incorrect_lexical_form('http://www.w3.org/2001/XMLSchema#date',_), date).
