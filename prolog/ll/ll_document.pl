@@ -1,7 +1,7 @@
 :- module(
   ll_document,
   [
-    ll_document/3 % +Out, +Hash, +Uri
+    ll_documents/2 % +Out, +Seed
   ]
 ).
 
@@ -11,6 +11,7 @@
 @version 2017-2018
 */
 
+:- use_module(library(apply)).
 :- use_module(library(debug)).
 :- use_module(library(settings)).
 
@@ -36,7 +37,43 @@
    set_setting(rdf_term:bnode_prefix_scheme, http),
    set_setting(rdf_term:bnode_prefix_authority, 'lodlaundromat.org').
 
+:- maplist(rdf_register_prefix, [
+     dcat-'http://www.w3.org/ns/dcat#',
+     void-'http://rdfs.org/ns/void#'
+   ]).
 
+:- thread_local
+   dump_url/2.
+
+
+
+
+
+%! ll_documents(+Out:stream, +Seed:dict) is det.
+
+ll_documents(Out, Seed) :-
+  maplist(assert_dump_url, Seed.documents),
+  ll_documents_loop(Out, Seed.hash).
+
+ll_documents_loop(Out, Hash) :-
+  dump_url(Uri, false), !,
+  catch(
+    ll_document(Out, Hash, Uri),
+    E,
+    print_message(warning, E)
+  ),
+  update_dump_url(Uri),
+  ll_documents_loop(Out, Hash).
+ll_documents_loop(_, _).
+
+assert_dump_url(Uri) :-
+  dump_url(Uri, _), !.
+assert_dump_url(Uri) :-
+  assertz(dump_url(Uri,false)).
+
+update_dump_url(Uri) :-
+  retract(dump_url(Uri,false)),
+  assertz(dump_url(Uri,true)).
 
 
 
@@ -180,6 +217,17 @@ clean_tuple(Out, BNodePrefix, rdf(S0,P0,O0)) :- !,
   (   rdf_clean_triple(BNodePrefix, rdf(S0,P0,O0), rdf(S,P,O))
   ->  rdf_write_triple(Out, BNodePrefix, S, P, O)
   ;   true
+  ),
+  (   rdf_prefix_memberchk(P, [dcat:downloadURL,void:dataDump]),
+      rdf_term_url(O, Uri)
+  ->  assert_dump_url(Uri),
+      format("[ADD] ~a\n", [Uri])
+  ;   true
   ).
 clean_tuple(Out, BNodePrefix, rdf(S,P,O,_)) :-
   clean_tuple(Out, BNodePrefix, rdf(S,P,O)).
+
+rdf_term_url(Literal, Uri) :-
+  rdf_is_literal(Literal), !,
+  rdf_literal_lexical_form(Literal, Uri).
+rdf_term_url(Uri, Uri).

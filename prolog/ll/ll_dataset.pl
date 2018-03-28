@@ -45,18 +45,11 @@ ll_dataset(Seed) :-
   directory_file_path(Dir0, Seed.hash, Dir),
   create_directory(Dir),
   (debug_hash(Seed.hash) -> gtrace ; true),
-  directory_file_path(Dir, Hash, Base),
+  directory_file_path(Dir, Seed.hash, Base),
   file_name_extension(Base, 'nt.gz', File),
   setup_call_cleanup(
     gzopen(File, write, Out),
-    forall(
-      member(Uri, Seed.documents),
-      catch(
-        ll_document(Out, Seed.hash, Uri),
-        E,
-        print_message(warning, E)
-      )
-    ),
+    ll_documents(Out, Seed),
     close(Out)
   ),
   (   % Do not upload empty datasets.
@@ -64,13 +57,13 @@ ll_dataset(Seed) :-
   ->  % Create the organization, unless it already exists.
       ignore(organization_create(_, Seed.organization.name, _{}, _)),
       ignore(dataset_create(Seed.organization.name, Seed.dataset.name, _{}, _)),
-      maplist(file_arg, Files2, T),
       setting(ll_init:script, Script),
       process_create(
         path(node),
-        [Script,Seed.organization.name,Seed.dataset.name|T],
+        [Script,Seed.organization.name,Seed.dataset.name,file(File)],
         []
       ),
+      upload_description(Seed),
       upload_image(Dir, Seed),
       upload_license(Seed),
       debug(ll, "DONE ~a ~a", [Seed.organization.name,Seed.dataset.name])
@@ -79,7 +72,9 @@ ll_dataset(Seed) :-
   delete_directory_and_contents(Dir).
 
 dataset_image(Dir, Seed, File) :-
-  _{image: Url1} :< Seed.dataset,
+  (   get_dict(image, Seed.dataset, Url1)
+  ;   get_dict(image, Seed.organization, Url1)
+  ),
   % We download the URL prior to determining whether it is an image,
   % because we may not be able to download the same image a second
   % time.
@@ -111,8 +106,6 @@ dataset_image(Dir, Seed, File) :-
   ;   print_message(warning, not_an_image(Url1))
   ).
 
-file_arg(File, file(File)).
-
 is_nonempty_file(File) :-
   setup_call_cleanup(
     gzopen(File, read, In),
@@ -123,6 +116,11 @@ is_nonempty_file(File) :-
     ),
     close(In)
   ).
+
+upload_description(Seed) :-
+  get_dict(description, Seed.dataset, Desc), !,
+  dataset_property(Seed.organization.name, Seed.dataset.name, description(Desc), _).
+upload_description(_).
 
 upload_image(Dir, Seed) :-
   dataset_image(Dir, Seed, Image), !,
