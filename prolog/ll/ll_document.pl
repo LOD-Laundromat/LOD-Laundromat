@@ -58,7 +58,7 @@ ll_document(Hash, Dir, Uri0) :-
         ),
         close(In)
       )
-  ;   print_message(warning, http_status(Status,Uri))
+  ;   print_message(warning, http(status(Status),Uri))
   ).
 
 download_from_uri(Hash, Dir, Uri, MediaType, In) :-

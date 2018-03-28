@@ -120,18 +120,6 @@ known_error_(error(domain_error(http_encoding,identity),_Context), http_encoding
 known_error_(error(domain_error(set_cookie,_Value),_Context), http_cookie).
 known_error_(error(domain_error(url,_Url),_Context), url).
 known_error_(error(existence_error(turtle_prefix,_Prefix),_Stream), ttl_prefix).
-% HTTP status
-known_error_(error(http_status(302,_Msg),_Uri), http_redirect_no_content).
-known_error_(error(http_status(400,_Msg),_Uri), http_client_bad_request).
-known_error_(error(http_status(401,_Msg),_Uri), http_client_unauthorized).
-known_error_(error(http_status(403,_Msg),_Uri), http_client_forbidden).
-known_error_(error(http_status(404,_Msg),_Uri), http_client_not_found).
-known_error_(error(http_status(406,_Msg),_Uri), http_client_not_acceptable).
-known_error_(error(http_status(410,_Msg),_Uri), http_client_gone).
-known_error_(error(http_status(500,_Msg),_Uri), http_server_internal_error).
-known_error_(error(http_status(502,_Msg),_Uri), http_server_bad_gateway).
-known_error_(error(http_status(503,_Msg),_Uri), http_server_unavailable).
-known_error_(error(http_status(504,_Msg),_Uri), http_server_gateway_timeout).
 known_error_(error(io_error(read,_Stream),_Context), io_error).
 % socket error
 known_error_(error(socket_error('Connection refused'),_), connection_refused).
@@ -168,6 +156,19 @@ known_error_(http(max_redirect(_N,_Uris)), http_max_redirect).
 known_error_(http(no_content_type,_Uri), http_no_content_type).
 % HTTP redirection loops can co-occur with 3xx status codes.
 known_error_(http(redirect_loop(_Uri)), http_redirect_loop).
+% HTTP status
+known_error_(http(status(301),_Uri), http_redirect_moved_permanently).
+known_error_(http(status(302),_Uri), http_redirect_no_content).
+known_error_(http(status(400),_Uri), http_client_bad_request).
+known_error_(http(status(401),_Uri), http_client_unauthorized).
+known_error_(http(status(403),_Uri), http_client_forbidden).
+known_error_(http(status(404),_Uri), http_client_not_found).
+known_error_(http(status(406),_Uri), http_client_not_acceptable).
+known_error_(http(status(410),_Uri), http_client_gone).
+known_error_(http(status(500),_Uri), http_server_internal_error).
+known_error_(http(status(502),_Uri), http_server_bad_gateway).
+known_error_(http(status(503),_Uri), http_server_unavailable).
+known_error_(http(status(504),_Uri), http_server_gateway_timeout).
 % incorrect literal
 known_error_(incorrect_lexical_form('http://www.w3.org/1999/02/22-rdf-syntax-ns#XMLLiteral',_), 'XMLLiteral').
 known_error_(incorrect_lexical_form('http://www.w3.org/2001/XMLSchema#date',_), date).
