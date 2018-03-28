@@ -13,6 +13,7 @@
 
 :- use_module(library(apply)).
 :- use_module(library(debug)).
+:- use_module(library(lists)).
 :- use_module(library(process)).
 :- use_module(library(readutil)).
 :- use_module(library(settings)).
@@ -21,7 +22,6 @@
 :- use_module(library(dict)).
 :- use_module(library(file_ext)).
 :- use_module(library(http/http_client2)).
-:- use_module(library(list_ext)).
 :- use_module(library(media_type)).
 :- use_module(library(tapir)).
 :- use_module(library(uri_ext)).
@@ -56,15 +56,13 @@ ll_dataset(Seed) :-
   directory_file_path(Dir, '*.trig.gz', Wildcard),
   expand_file_name(Wildcard, Files1),
   include(is_nonempty_file, Files1, Files2),
-  % TBD: Limit to prevent scalability issues.
-  list_truncate(Files2, 100, Files3),
   (   % Do not upload empty datasets.
-      Files3 == []
+      Files2 == []
   ->  true
   ;   % Create the organization, unless it already exists.
       ignore(organization_create(_, Seed.organization.name, _{}, _)),
       ignore(dataset_create(Seed.organization.name, Seed.dataset.name, _{}, _)),
-      maplist(file_arg, Files3, T),
+      maplist(file_arg, Files2, T),
       setting(ll_init:script, Script),
       process_create(
         path(node),
