@@ -65,13 +65,11 @@ ll_clear_seeds :-
 
 
 %! ll_reset_processing_seeds is det.
-%
-% TBD: Do not delete these seeds, but put them back to being stale.
 
 ll_reset_processing_seeds :-
   forall(
     processing_seed(Seed),
-    delete_seed(Seed)
+    reset_seed(Seed)
   ).
 
 
