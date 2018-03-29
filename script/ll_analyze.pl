@@ -75,8 +75,12 @@ error_(Dataset-Error, In) :-
 
 print_errors :-
   forall(
-    catch(error(_-Error), _, fail),
-    (known_error_(Error, Flag) -> flag(Flag, N, N+1) ; true)
+    error(_-Error),
+    (
+      flag(number_of_erros, M, M+1),
+      (M mod 1 000 000 =:= 0 -> format("~D\n", [M]) ; true),
+      (known_error_(Error, Flag) -> flag(Flag, N, N+1) ; true)
+    )
   ),
   format("---\n"),
   forall(
