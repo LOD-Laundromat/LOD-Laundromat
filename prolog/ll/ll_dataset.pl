@@ -13,6 +13,7 @@
 
 :- use_module(library(apply)).
 :- use_module(library(debug)).
+:- use_module(library(http/json)).
 :- use_module(library(lists)).
 :- use_module(library(process)).
 :- use_module(library(readutil)).
@@ -52,7 +53,7 @@ ll_dataset(Seed) :-
   file_name_extension(Base, 'nt.gz', File),
   setup_call_cleanup(
     gzopen(File, write, Out),
-    ll_documents(Out, Seed),
+    ll_documents(Out, Seed, Meta),
     close(Out)
   ),
   (   % Do not upload empty datasets.
@@ -69,6 +70,7 @@ ll_dataset(Seed) :-
       upload_description(Seed),
       upload_image(Dir, Seed),
       upload_license(Seed),
+      upload_metadata(Dir, Seed, Meta),
       debug(ll, "DONE ~a ~a", [Seed.organization.name,Seed.dataset.name])
   ;   true
   ),
@@ -136,6 +138,15 @@ upload_license(Seed) :-
   ;   dataset_property(Seed.organization.name, Seed.dataset.name, license(Label), _)
   ).
 upload_license(_).
+
+upload_metadata(Dir, Seed, Meta) :-
+  directory_file_path(Dir, 'metadata.json', File),
+  setup_call_cleanup(
+    open(File, write, Out),
+    json_write_dict(Out, Meta),
+    close(Out)
+  ),
+  file(Seed.organization.name, Seed.dataset.name, _, File).
 
 
 

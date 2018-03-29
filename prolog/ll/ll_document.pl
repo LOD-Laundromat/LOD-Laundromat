@@ -1,7 +1,7 @@
 :- module(
   ll_document,
   [
-    ll_documents/2 % +Out, +Seed
+    ll_documents/3 % +Out, +Seed, -Metadata
   ]
 ).
 
@@ -15,6 +15,7 @@
 :- use_module(library(settings)).
 
 :- use_module(library(archive_ext)).
+:- use_module(library(dict)).
 :- use_module(library(default)).
 :- use_module(library(hash_ext)).
 :- use_module(library(http/http_client2)).
@@ -48,22 +49,23 @@
 
 
 
-%! ll_documents(+Out:stream, +Seed:dict) is det.
+%! ll_documents(+Out:stream, +Seed:dict, -Metadata:dict) is det.
 
-ll_documents(Out, Seed) :-
+ll_documents(Out, Seed, Meta) :-
   maplist(assert_dump_url, Seed.documents),
-  ll_documents_loop(Out, Seed.hash).
+  ll_documents_loop(Out, Seed.hash, [], L),
+  Meta = _{documents: L, hash: Seed.hash}.
 
-ll_documents_loop(Out, Hash) :-
+ll_documents_loop(Out, Hash, T, L) :-
   dump_url(Uri, false), !,
   catch(
-    ll_document(Out, Hash, Uri),
+    ll_document(Out, Hash, Uri, H),
     E,
     print_message(warning, E)
   ),
   update_dump_url(Uri),
-  ll_documents_loop(Out, Hash).
-ll_documents_loop(_, _).
+  ll_documents_loop(Out, Hash, [H|T], L).
+ll_documents_loop(_, _, L, L).
 
 assert_dump_url(Uri) :-
   dump_url(Uri, _), !.
@@ -76,49 +78,57 @@ update_dump_url(Uri) :-
 
 
 
-%! ll_document(+Out:stream, +Hash:atom, +Directory:atom, +Uri:atom) is det.
+%! ll_document(+Out:stream, +Hash:atom, +Directory:atom, +Uri:atom,
+%!             -DocMetadata:dict) is det.
 
-ll_document(Out, Hash, Uri0) :-
+ll_document(Out, Hash, Uri0, DocMeta) :-
   % Make sure that non-ASCII Unicode characters are percent encoded.
   uri_normalized(Uri0, Uri),
   % TBD: Assert (HTTP) metadata into LOD-Seedlist.
-  http_open2(Uri, In, [failure(-1),metadata(Metas),success('2xx')]),
-  Metas = [Meta|_],
-  _{status: Status} :< Meta,
+  http_open2(Uri, In, [failure(-1),metadata(HttpMetas),success('2xx')]),
+  HttpMetas = [HttpMeta|_],
+  _{status: Status} :< HttpMeta,
   (   between(200, 299, Status)
   ->  call_cleanup(
         (
           % Use a dummy value in case the Media Type cannot be determined.
-          call_default_value(MediaType, http_metadata_content_type(Metas), null),
-          download_from_uri(Out, Hash, Uri, MediaType, In)
+          call_default_value(MediaType, http_metadata_content_type(HttpMetas), null),
+          download_from_uri(Out, Hash, Uri, MediaType, In, EntryMetas)
         ),
         close(In)
       )
   ;   print_message(warning, http(status(Status),Uri))
-  ).
+  ),
+  DocMeta = _{http: HttpMetas, entries: EntryMetas, uri: Uri0}.
 
-download_from_uri(Out, Hash, Uri, MediaType, In) :-
+download_from_uri(Out, Hash, Uri, MediaType, In, EntryMetas) :-
   setup_call_cleanup(
-    archive_open(In, Archive),
-    download_from_archive(Out, Hash, Uri, MediaType, Archive),
-    archive_close(Archive)
+    archive_open(In, Arch),
+    download_from_archive(Out, Hash, Uri, MediaType, Arch, EntryMetas),
+    archive_close(Arch)
   ).
 
-download_from_archive(Out, Hash, Uri, MediaType, Archive) :-
-  forall(
-    archive_data_stream(Archive, In, [meta_data(Metas)]),
-    call_cleanup(
-      download_from_archive_stream(Out, Hash, Uri, MediaType, Metas, In),
-      close(In)
-    )
+download_from_archive(Out, Hash, Uri, MediaType, Arch, EntryMetas) :-
+  findall(
+    EntryMeta,
+    (
+      archive_data_stream(Arch, In, [meta_data(ArchMetas)]),
+      call_cleanup(
+        download_from_archive_stream(Out, Hash, Uri, MediaType, ArchMetas, In, EntryMeta),
+        close(In)
+      )
+    ),
+    EntryMetas
   ).
 
-download_from_archive_stream(Out, Hash1, Uri, MediaType, [Meta|_], In) :-
-  _{name: Entry} :< Meta,
+download_from_archive_stream(Out, Hash1, Uri, MediaType, ArchMetas, In, Meta2) :-
+  ArchMetas = [ArchMeta|_],
+  _{name: Entry} :< ArchMeta,
   md5(Hash1-Entry, Hash2),
   peek_string(In, 10 000, String),
   guess_encoding(MediaType, String, Encoding),
-  download_from_entry(Out, Hash2, Uri, Encoding, In).
+  download_from_entry(Out, Hash2, Uri, Encoding, In, Meta1),
+  Meta2 = Meta1.put(_{archive: ArchMeta, encoding: Encoding}).
 
 guess_encoding(MediaType, String, Encoding) :-
   ignore(xml_encoding_(String, EncodingXml)),
@@ -166,38 +176,38 @@ generalize_encoding(ascii, utf8) :- !.
 generalize_encoding(unknown, _Var) :- !.
 generalize_encoding(Encoding, Encoding).
 
-download_from_entry(Out, Hash, Uri, unknown, In) :- !,
-  download_from_entry_stream(Out, Hash, Uri, In).
-download_from_entry(Out, Hash, Uri, Encoding, In) :-
+download_from_entry(Out, Hash, Uri, unknown, In, Meta) :- !,
+  download_from_entry_stream(Out, Hash, Uri, In, Meta).
+download_from_entry(Out, Hash, Uri, Encoding, In, Meta) :-
   recode_stream(Encoding, In), !,
-  download_from_entry_stream(Out, Hash, Uri, In).
-download_from_entry(Out, Hash, Uri, Encoding, In1) :-
+  download_from_entry_stream(Out, Hash, Uri, In, Meta).
+download_from_entry(Out, Hash, Uri, Encoding, In1, Meta) :-
   setup_call_cleanup(
     recode_stream(Encoding, In1, In2),
-    download_from_entry_stream(Out, Hash, Uri, In2),
+    download_from_entry_stream(Out, Hash, Uri, In2, Meta),
     close(In2)
   ).
 
-download_from_entry_stream(Out, Hash, Uri, In) :-
+download_from_entry_stream(Out, Hash, Uri, In, Meta) :-
   % After recoding, the stream needs to be peeked again.  Not only
   % because the stream can have changed (which could be detected with
   % (==)/2, but also because the same stream can have different
   % settings now.
   peek_string(In, 10 000, String),
   (   rdf_guess_string(String, MediaType)
-  ->  (   rdfa_media_type(MediaType)
-      ->  % The entire peeked string can be too long for a warning
-          % message.
-          (string_prefix(String, 100, Content) -> true ; Content = String),
-          print_message(warning, rdf(unsupported_format(MediaType,Content)))
-      ;   bnode_prefix([Hash], BNodePrefix),
-          rdf_deref_stream(
-            Uri,
-            In,
-            clean_tuples(Out),
-            [bnode_prefix(BNodePrefix),media_type(MediaType)]
-          )
-      )
+  ->  bnode_prefix([Hash], BNodePrefix),
+      RdfMeta = _{
+        number_of_datadumps: 0,
+        number_of_quadruples: 0,
+        number_of_triples: 0
+      },
+      rdf_deref_stream(
+        Uri,
+        In,
+        clean_tuples(RdfMeta, Out),
+        [bnode_prefix(BNodePrefix),media_type(MediaType)]
+      ),
+      Meta = RdfMeta.put(_{'serialization-format': MediaType})
   ;   % The entire peeked string can be too long for a warning
       % message.
       (string_prefix(String, 100, Content) -> true ; Content = String),
@@ -209,21 +219,27 @@ bnode_prefix(Segments, BNodePrefix) :-
   setting(rdf_term:bnode_prefix_authority, Auth),
   uri_comps(BNodePrefix, uri(Scheme,Auth,['.well-known',genid|Segments],_,_)).
 
-clean_tuples(Out, BNodePrefix, Tuples, _) :-
-  maplist(clean_tuple(Out, BNodePrefix), Tuples).
+clean_tuples(Meta, Out, BNodePrefix, Tuples, _) :-
+  maplist(clean_tuple(Meta, Out, BNodePrefix), Tuples).
 
-clean_tuple(Out, BNodePrefix, rdf(S0,P0,O0)) :- !,
+clean_tuple(Meta, Out, BNodePrefix, rdf(S,P,O)) :- !,
+  nb_increment_dict(Meta, number_of_triples),
+  clean_triple_(Meta, Out, BNodePrefix, rdf(S,P,O)).
+clean_tuple(Meta, Out, BNodePrefix, rdf(S,P,O,_)) :-
+  nb_increment_dict(Meta, number_of_quadruples),
+  clean_triple_(Meta, Out, BNodePrefix, rdf(S,P,O)).
+
+clean_triple_(Meta, Out, BNodePrefix, rdf(S0,P0,O0)) :-
   (   rdf_clean_triple(BNodePrefix, rdf(S0,P0,O0), rdf(S,P,O))
   ->  rdf_write_triple(Out, BNodePrefix, S, P, O)
   ;   true
   ),
   (   rdf_prefix_memberchk(P, [dcat:downloadURL,void:dataDump]),
       rdf_term_url(O, Uri)
-  ->  assert_dump_url(Uri)
+  ->  assert_dump_url(Uri),
+      nb_increment_dict(Meta, number_of_datadumps)
   ;   true
   ).
-clean_tuple(Out, BNodePrefix, rdf(S,P,O,_)) :-
-  clean_tuple(Out, BNodePrefix, rdf(S,P,O)).
 
 rdf_term_url(Literal, Uri) :-
   rdf_is_literal(Literal), !,
