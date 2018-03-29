@@ -49,8 +49,7 @@ ll_dataset(Seed) :-
   directory_file_path(Dir0, Seed.hash, Dir),
   create_directory(Dir),
   (debug_hash(Seed.hash) -> gtrace ; true),
-  directory_file_path(Dir, Seed.hash, Base),
-  file_name_extension(Base, 'nt.gz', File),
+  directory_file_path(Dir, 'clean.nt.gz', File),
   setup_call_cleanup(
     gzopen(File, write, Out),
     ll_documents(Out, Seed, Meta),
