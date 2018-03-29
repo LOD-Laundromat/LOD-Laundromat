@@ -18,6 +18,9 @@
 :- use_module(library(thread_ext)).
 :- use_module(library(write_ext)).
 
+:- dynamic
+    ll:skip_error/1.
+
 :- initialization
    init_ll.
 
@@ -26,6 +29,14 @@ lod_cloud_portray(Blob, Options) :-
   \+ atom(Blob),
   Type \== reserved_symbol,
   write_term('BLOB'(Type), Options).
+
+:- multifile
+    ll:skip_error/1.
+
+% Do not record errors for datatype IRIs whose parser and generator
+% are not standards-compliant: `rdf:HTML' and `rdf:XMLLiteral'.
+ll:skip_error(non_canonical_lexical_form('http://www.w3.org/1999/02/22-rdf-syntax-ns#HTML',_,_)).
+ll:skip_error(non_canonical_lexical_form('http://www.w3.org/1999/02/22-rdf-syntax-ns#XMLLiteral',_,_)).
 
 :- setting(script, any, _,
            "Location of the Triply Client script.").
@@ -50,7 +61,7 @@ init_ll :-
   set_setting(script, Script),
   % unless under debug mode
   (    debugging(ll)
-  ->   true
+  ->   skip_debug_errors
   ;    % error and output logs
        init_log(Conf.'data-directory'),
        % number of workers
@@ -72,7 +83,7 @@ init_err_log(Dir) :-
     user:message_hook(E1, Kind, _) :-
       memberchk(Kind, [error,warning]),
       thread_self_property(alias(Alias)),
-      (   skip_error(E1)
+      (   ll:skip_error(E1)
       ->  true
       ;   replace_blobs(E1, E2),
           format(
@@ -84,7 +95,9 @@ init_err_log(Dir) :-
   )),
   asserta(user:at_halt(close(Out))).
 
-% Do not record errors for datatype IRIs whose parser and generator
-% are not standards-compliant: `rdf:HTML' and `rdf:XMLLiteral'.
-skip_error(non_canonical_lexical_form('http://www.w3.org/1999/02/22-rdf-syntax-ns#HTML',_,_)).
-skip_error(non_canonical_lexical_form('http://www.w3.org/1999/02/22-rdf-syntax-ns#XMLLiteral',_,_)).
+skip_debug_errors :-
+  asserta((
+    user:message_hook(E, Kind, _) :-
+      memberchk(Kind, [error,warning]),
+      ll:skip_error(E)
+  )).
