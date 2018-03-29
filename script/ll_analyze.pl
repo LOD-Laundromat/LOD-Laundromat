@@ -1,7 +1,7 @@
 :- module(
   ll_analyze,
   [
-    empty_dataset/2, % -Dataset, -Dict
+    empty_dataset/2, % -Name, -Dict
     error/1,         % -Error
     print_errors/0,
     print_status/0,
@@ -41,12 +41,17 @@
 
 
 
-%! empty_dataset(-Dataset:atom, -Dict:dict) is nondet.
+%! empty_dataset(-Name:compound, -Dict:dict) is nondet.
+%
+% Enumerated datasets with zero statements.  These may be due to a
+% buggy upload.
 
-empty_dataset(Dataset, Dict) :-
-  dataset(_, Dataset, Dict),
+empty_dataset(OName/DName, Dict) :-
+  dataset(_, _, Dict),
   _{openJobs: [], statements: N} :< Dict,
-  N =< 0.
+  N =< 0,
+  OName = Dict.owner.accountName,
+  DName = Dict.name.
 
 
 
