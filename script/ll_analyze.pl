@@ -135,6 +135,7 @@ known_error_(error(socket_error('Try Again'),_), try_again).
 known_error_(error(syntax_error('end-of-line expected'),_Stream), eol_expected).
 known_error_(error(syntax_error('End of statement expected'),_Stream), eos_expected).
 known_error_(error(syntax_error('EOF in string'),_Stream), eof_in_string).
+known_error_(error(syntax_error('EOF in uriref'),_Stream), eof_in_uri).
 known_error_(error(syntax_error('Expected ":"'),_Stream), expected_colon).
 known_error_(error(syntax_error('Expected "]"'),_Stream), expected_bracket).
 known_error_(error(syntax_error('Expected ":" after "_"'),_Stream), expected_bnode).
@@ -144,6 +145,7 @@ known_error_(error(syntax_error('Illegal character in uriref'),_Stream), illegal
 known_error_(error(syntax_error('Illegal control character in uriref'),_Stream), illegal_control_char_uriref).
 known_error_(error(syntax_error('illegal escape'),_Stream), illegal_escape).
 known_error_(error(syntax_error('Illegal IRIREF'),_Stream), illegal_iriref).
+known_error_(error(syntax_error('Invalid @base directive'),_Stream), invalid_base_directive).
 known_error_(error(syntax_error('Invalid @prefix directive'),_Stream), invalid_prefix_directive).
 known_error_(error(syntax_error('newline in string'),_Stream), newline_in_string).
 known_error_(error(syntax_error('PN_PREFIX expected'),_Stream), pn_prefix_expected).
@@ -173,6 +175,7 @@ known_error_(http(status(502),_Uri), http_server_bad_gateway).
 known_error_(http(status(503),_Uri), http_server_unavailable).
 known_error_(http(status(504),_Uri), http_server_gateway_timeout).
 known_error_(http(status(522),_Uri), http_server_cloudflare_connection_timeout).
+known_error_(http(status(523),_Uri), http_server_cloudflare_origin_is_unreachable).
 % incorrect literal
 known_error_(incorrect_lexical_form('http://www.w3.org/1999/02/22-rdf-syntax-ns#XMLLiteral',_), 'XMLLiteral').
 known_error_(incorrect_lexical_form('http://www.w3.org/2001/XMLSchema#date',_), date).

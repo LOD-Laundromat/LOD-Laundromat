@@ -34,6 +34,9 @@
 %debug_hash('4cd198eba288de77ad3406c556ca2e07').
 %debug_hash('5541542e841e267a86ce2ee301c1ea00').
 
+% Set global stack to 10GB for larger datasets.
+:- set_prolog_stack(global, limit(10*10**9)).
+
 
 
 
