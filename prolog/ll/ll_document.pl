@@ -181,7 +181,7 @@ download_from_entry(Out, Hash, Uri, unknown, In, Meta) :- !,
 download_from_entry(Out, Hash, Uri, Encoding, In, Meta) :-
   recode_stream(Encoding, In), !,
   download_from_entry_stream(Out, Hash, Uri, In, Meta).
-download_from_entry(Out, Hash, Uri, _Encoding, In1, Meta) :-
+download_from_entry(Out, Hash, Uri, Encoding, In1, Meta) :-
   setup_call_cleanup(
     recode_stream(Encoding, In1, In2),
     download_from_entry_stream(Out, Hash, Uri, In2, Meta),
