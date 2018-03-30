@@ -182,12 +182,11 @@ download_from_entry(Out, Hash, Uri, Encoding, In, Meta) :-
   recode_stream(Encoding, In), !,
   download_from_entry_stream(Out, Hash, Uri, In, Meta).
 download_from_entry(Out, Hash, Uri, _Encoding, In1, Meta) :-
-  In2 = In1,
-  %setup_call_cleanup(
-  %  recode_stream(Encoding, In1, In2),
+  setup_call_cleanup(
+    recode_stream(Encoding, In1, In2),
     download_from_entry_stream(Out, Hash, Uri, In2, Meta),
-  %  close(In2)
-  %).
+    close(In2)
+  ).
 
 download_from_entry_stream(Out, Hash, Uri, In, Meta) :-
   % After recoding, the stream needs to be peeked again.  Not only
