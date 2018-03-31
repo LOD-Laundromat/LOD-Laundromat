@@ -19,23 +19,24 @@
 
 :- use_module(library(aggregate)).
 :- use_module(library(apply)).
+:- use_module(library(csv)).
+:- use_module(library(lists)).
+:- use_module(library(yall)).
+
 :- use_module(library(assoc_ext)).
 :- use_module(library(call_ext)).
-:- use_module(library(csv)).
-:- use_module(library(dcg_ext)).
+:- use_module(library(dcg)).
 :- use_module(library(dcg_table)).
 :- use_module(library(dict)).
 :- use_module(library(file_ext)).
-:- use_module(library(lists)).
 :- use_module(library(lodcli/lodcli)).
 :- use_module(library(pair_ext)).
 :- use_module(library(pool)).
 :- use_module(library(print_ext)).
-:- use_module(library(semweb/hdt11)).
+:- use_module(library(semweb/hdt_db)).
 :- use_module(library(solution_sequences)).
 :- use_module(library(string_ext)).
 :- use_module(library(thread_ext)).
-:- use_module(library(yall)).
 
 
 

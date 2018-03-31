@@ -1,11 +1,16 @@
 :- module(
   ll_document,
   [
-    ll_documents/3 % +Out, +Seed, -Metadata
+    ll_document/2 % +Hash, +Uri
   ]
 ).
 
 /** <module> LOD Laundromat: Scrape one document
+
+1. download: url → file [md5(url)]
+2. decompress: file → file [md5(md5(url)-entry)]
+3. recode: file → file
+4. clean: dirty → clean.nq.gz, meta.log.gz
 
 @author Wouter Beek
 @version 2017-2018
@@ -19,6 +24,7 @@
 :- use_module(library(default)).
 :- use_module(library(hash_ext)).
 :- use_module(library(http/http_client2)).
+:- use_module(library(ll/ll_generics)).
 :- use_module(library(media_type)).
 :- use_module(library(settings)).
 :- use_module(library(stream_ext)).
@@ -37,53 +43,66 @@
    set_setting(rdf_term:bnode_prefix_scheme, http),
    set_setting(rdf_term:bnode_prefix_authority, 'lodlaundromat.org').
 
-:- maplist(rdf_assert_prefix, [
-     dcat-'http://www.w3.org/ns/dcat#',
-     void-'http://rdfs.org/ns/void#'
-   ]).
-
-:- thread_local
-   dump_url/2.
 
 
 
 
+%! ll_document(+Hash:atom, +Uri:atom) is det.
 
-%! ll_documents(+Out:stream, +Seed:dict, -Metadata:dict) is det.
+ll_document(Hash, Uri) :-
+  hash_directory(Hash, Dir),
+  catch(download(Dir, Uri, File, Meta), E, true),
+  (   var(E)
+  ->  decompress(File, Files),
+      maplist(ll_entry, Files)
+  ;   Meta = _{error: E}
+  ),
+  store_metadata(Meta).
 
-ll_documents(Out, Seed, Meta) :-
-  maplist(assert_dump_url, Seed.documents),
-  ll_documents_loop(Out, Seed.hash, [], L),
-  Meta = _{documents: L, hash: Seed.hash}.
+ll_entry(File1) :-
+  recode(File1, File2),
+  parse(File2).
 
-ll_documents_loop(Out, Hash, T, L) :-
-  dump_url(Uri, false), !,
+download(Dir, Uri, File, Meta2) :-
+  directory_file_name(Dir, dirty, File),
+  setup_call_cleanup(
+    open(File, write, Out),
+    download_stream(Out, Uri, Meta1),
+    close_metadata(Out, OutMeta)
+  ),
+  Meta2 = Meta1.put(_{write: OutMeta}).
+
+download_stream(Out, Uri, Meta) :-
+  http_open2(Uri, In, [failure(-1),metadata(HttpMetas),success('2xx')]),
+  HttpMetas = [HttpMeta|_],
+  between(200, 299, HttpMeta.status)
+  call_cleanup(
+    copy_data_stream(In, Out),
+    close_metadata(In, InMeta)
+  ),
+  Meta = _{http: HttpMetas, read: InMeta}.
+
+% ---
+
+  DocMeta = _{http: HttpMetas, entries: EntryMetas, uri: Uri0}.
   catch(
     ll_document(Out, Hash, Uri, H),
     E,
     print_message(warning, E)
   ),
-  update_dump_url(Uri),
-  ll_documents_loop(Out, Hash, [H|T], L).
-ll_documents_loop(_, _, L, L).
-
-assert_dump_url(Uri) :-
-  dump_url(Uri, _), !.
-assert_dump_url(Uri) :-
-  assertz(dump_url(Uri,false)).
-
-update_dump_url(Uri) :-
-  retract(dump_url(Uri,false)),
-  assertz(dump_url(Uri,true)).
+  setup_call_cleanup(
+    gzopen(File, write, Out),
+    ll_documents(Out, Seed, Meta),
+    close(Out)
+  ),
+  Meta = _{documents: L, hash: Seed.hash}.
 
 
 
 %! ll_document(+Out:stream, +Hash:atom, +Directory:atom, +Uri:atom,
 %!             -DocMetadata:dict) is det.
 
-ll_document(Out, Hash, Uri0, DocMeta) :-
-  % Make sure that non-ASCII Unicode characters are percent encoded.
-  uri_normalized(Uri0, Uri),
+ll_document(Out, Hash, Uri, DocMeta) :-
   % TBD: Assert (HTTP) metadata into LOD-Seedlist.
   http_open2(Uri, In, [failure(-1),metadata(HttpMetas),success('2xx')]),
   HttpMetas = [HttpMeta|_],
@@ -224,24 +243,22 @@ clean_tuples(Meta, Out, BNodePrefix, Tuples, _) :-
 
 clean_tuple(Meta, Out, BNodePrefix, rdf(S,P,O)) :- !,
   nb_increment_dict(Meta, number_of_triples),
-  clean_triple_(Meta, Out, BNodePrefix, rdf(S,P,O)).
+  clean_triple_(Out, BNodePrefix, rdf(S,P,O)).
 clean_tuple(Meta, Out, BNodePrefix, rdf(S,P,O,_)) :-
   nb_increment_dict(Meta, number_of_quadruples),
-  clean_triple_(Meta, Out, BNodePrefix, rdf(S,P,O)).
+  clean_triple_(Out, BNodePrefix, rdf(S,P,O)).
 
-clean_triple_(Meta, Out, BNodePrefix, rdf(S0,P0,O0)) :-
+clean_triple_(Out, BNodePrefix, rdf(S0,P0,O0)) :-
   (   rdf_clean_triple(BNodePrefix, rdf(S0,P0,O0), rdf(S,P,O))
   ->  rdf_write_triple(Out, BNodePrefix, S, P, O)
   ;   true
-  ),
-  (   rdf_prefix_memberchk(P, [dcat:downloadURL,void:dataDump]),
-      rdf_term_url(O, Uri)
-  ->  assert_dump_url(Uri),
-      nb_increment_dict(Meta, number_of_datadumps)
-  ;   true
   ).
 
-rdf_term_url(Literal, Uri) :-
-  rdf_is_literal(Literal), !,
-  rdf_literal_lexical_form(Literal, Uri).
-rdf_term_url(Uri, Uri).
+upload_metadata(Dir, Seed, Meta) :-
+  directory_file_path(Dir, 'metadata.json', File),
+  setup_call_cleanup(
+    open(File, write, Out),
+    json_write_dict(Out, Meta),
+    close(Out)
+  ),
+  file(Seed.organization.name, Seed.dataset.name, _, File).

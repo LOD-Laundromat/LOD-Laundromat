@@ -17,7 +17,7 @@
 :- use_module(library(settings)).
 
 :- use_module(library(http/http_client2)).
-:- use_module(library(ll/ll_dataset)).
+:- use_module(library(ll/ll_document)).
 :- use_module(library(ll/ll_seeder)).
 :- use_module(library(thread_ext)).
 :- use_module(library(uri_ext)).
@@ -36,7 +36,11 @@ add_worker :-
 % Something to do.
 worker_loop :-
   start_seed(Seed), !,
-  thread_create(ll_dataset(Seed), Id, [alias(Seed.hash),at_exit(work_ends)]),
+  thread_create(
+    ll_document(Seed.hash, Seed.url),
+    Id,
+    [alias(Seed.hash),at_exit(work_ends)]
+  ),
   thread_join(Id, Status),
   (Status == true -> true ; print_message(warning, worker_dies(Status))),
   end_seed(Seed),
@@ -65,4 +69,16 @@ add_workers(N) :-
   forall(
     between(1, N, _),
     add_worker
+  ).
+
+
+
+%! end_seed(+Seed:dict) is det.
+
+end_seed(Seed) :-
+  seedlist_request_(
+    [seed,processing],
+    [hash(Seed.hash)],
+    close,
+    [failure(404),method(patch)]
   ).

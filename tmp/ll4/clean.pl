@@ -36,29 +36,30 @@ HASH/
 :- use_module(library(apply)).
 :- use_module(library(archive)).
 :- use_module(library(check_installation), []).
-:- use_module(library(dcg_ext)).
 :- use_module(library(debug)).
-:- use_module(library(dict)).
 :- use_module(library(http/http_cookie)).
 :- use_module(library(http/http_header)).
 :- use_module(library(http/http_open)).
-:- use_module(library(file_ext)).
 :- use_module(library(lists)).
-:- use_module(library(md5)).
-:- use_module(library(media_type)).
 :- use_module(library(option)).
 :- use_module(library(rdf)).
-:- use_module(library(semweb/rdf_api)).
-:- use_module(library(semweb/rdf_export)).
-:- use_module(library(semweb/rdf_guess)).
 :- use_module(library(semweb/rdf_http_plugin)).
 :- use_module(library(semweb/rdf_ntriples)).
 :- use_module(library(semweb/rdf11)).
 :- use_module(library(semweb/rdfa)).
 :- use_module(library(semweb/turtle)).
 :- use_module(library(uuid)).
-:- use_module(library(xml/xsd_number)).
 :- use_module(library(zlib)).
+
+:- use_module(library(dcg)).
+:- use_module(library(dict)).
+:- use_module(library(file_ext)).
+:- use_module(library(hash_ext)).
+:- use_module(library(media_type)).
+:- use_module(library(semweb/rdf_api)).
+:- use_module(library(semweb/rdf_export)).
+:- use_module(library(semweb/rdf_guess)).
+:- use_module(library(xml/xsd_number)).
 
 :- debug(clean).
 

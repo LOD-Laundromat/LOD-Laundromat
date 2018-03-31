@@ -54,16 +54,6 @@ ll_clear_organizations :-
 
 
 
-%! ll_clear_seeds is det.
-
-ll_clear_seeds :-
-  forall(
-    seed(Seed),
-    delete_seed(Seed)
-  ).
-
-
-
 %! ll_reset_processing_seeds is det.
 
 ll_reset_processing_seeds :-

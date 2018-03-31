@@ -33,9 +33,10 @@ the LOD Laundromat's washing machine.
 @version 2015/11, 2016/01
 */
 
-:- use_module(library(dcg_ext)).
-:- use_module(library(list_ext)).
 :- use_module(library(option)).
+
+:- use_module(library(dcg)).
+:- use_module(library(list_ext)).
 :- use_module(library(sparql/query/sparql_query)).
 :- use_module(library(sparql/query/sparql_query_build)).
 

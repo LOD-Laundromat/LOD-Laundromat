@@ -24,14 +24,14 @@ Prints debug messages for the LOD Washing Machine.
 */
 
 :- use_module(library(apply)).
+:- use_module(library(debug)).
+
 :- use_module(library(counter)).
-:- use_module(library(dcg/basics)).
-:- use_module(library(dcg_ext)).
+:- use_module(library(dcg)).
 :- use_module(library(dcg_cardinal)).
 :- use_module(library(dcg_content)).
 :- use_module(library(dcg_pl)).
 :- use_module(library(default)).
-:- use_module(library(debug)).
 :- use_module(library(lodapi/lodapi_generics)).
 
 
