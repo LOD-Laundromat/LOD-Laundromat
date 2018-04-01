@@ -17,6 +17,7 @@
     touch_hash_file/2,     % +Hash, +Local
     write_meta/3,          % +Hash, +PLocal, +Lex
     write_meta_archive/2,  % +Hash, +Metadata
+    write_meta_encoding/2, % +Hash, +Encodings
     write_meta_error/2,    % +Hash, +Error
     write_meta_http/2,     % +Hash, +Metadata
     write_meta_now/2,      % +Hash, +PLocal
@@ -272,13 +273,13 @@ touch_hash_file(Hash, Local) :-
 
 %! write_meta(+Hash:atom, :Goal_3) is det.
 
-write_meta(Hash, PLocal, Goal_1) :-
+write_meta(Hash, PLocal, Goal_3) :-
   rdf_global_id(id:Hash, S),
   rdf_global_id(def:PLocal, P),
   hash_file(Hash, 'meta.nt', File),
   setup_call_cleanup(
     open(File, append, Out),
-    call(Goal_1, Out, S, P),
+    call(Goal_3, Out, S, P),
     close(Out)
   ).
 
@@ -319,6 +320,19 @@ write_meta_archive_item(Item, Meta, Out) :-
   rdf_write_triple(Out, Item, def:name, literal(type(xsd:string,Meta.name))),
   rdf_write_triple(Out, Item, def:permissions, literal(type(xsd:positiveInteger,Permissions))),
   rdf_write_triple(Out, Item, def:permissions, literal(type(xsd:float,Size))).
+
+
+
+%! write_meta_encoding(+Hash:atom, +Encodings:list(atom)) is det.
+
+write_meta_encoding(Hash, Encodings) :-
+  write_meta(Hash, encoding, write_meta_encoding_(Encodings)).
+
+write_meta_encoding_([GuessEnc,HttpEnc,XmlEnc,Enc], Out, S, P) :-
+  rdf_write_triple(Out, S, P, literal(type(xsd:string,Enc))),
+  (var(GuessEnc) -> true ; write_write_triple(Out, S, def:uchardet, literal(type(xsd:string,GuessEnc)))),
+  (var(HttpEnc) -> true ; write_write_triple(Out, S, def:httpEncoding, literal(type(xsd:string,HttpEnc)))),
+  (var(XmlEnc) -> true ; write_write_triple(Out, S, def:xmlEncoding, literal(type(xsd:string,XmlEnc)))).
 
 
 

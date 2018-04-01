@@ -44,7 +44,7 @@ recode_file(Hash, MediaType) :-
   ignore(media_type_encoding(MediaType, HttpEnc)),
   guess_file_encoding(File, GuessEnc),
   choose_encoding(GuessEnc, HttpEnc, XmlEnc, Enc),
-  warn_encoding(GuessEnc, HttpEnc, XmlEnc, Enc),
+  write_meta_encoding(Hash, [GuessEnc,HttpEnc,XmlEnc,Enc]),
   recode_to_utf8(Hash, File, Enc).
 
 % 1. XML header
