@@ -75,15 +75,15 @@ bnode_prefix(Segments, BNodePrefix) :-
 clean_tuples(Meta, Out, BNodePrefix, Tuples, _) :-
   maplist(clean_tuple(Meta, Out, BNodePrefix), Tuples).
 
-clean_tuple(Meta, Out, BNodePrefix, rdf(S,P,O)) :- !,
-  nb_increment_dict(Meta, number_of_triples),
-  clean_triple_(Out, BNodePrefix, rdf(S,P,O)).
-clean_tuple(Meta, Out, BNodePrefix, rdf(S,P,O,_)) :-
-  nb_increment_dict(Meta, number_of_quadruples),
-  clean_triple_(Out, BNodePrefix, rdf(S,P,O)).
-
-clean_triple_(Out, BNodePrefix, rdf(S0,P0,O0)) :-
+clean_tuple(Meta, Out, BNodePrefix, rdf(S0,P0,O0)) :- !,
   (   rdf_clean_triple(BNodePrefix, rdf(S0,P0,O0), rdf(S,P,O))
-  ->  rdf_write_triple(Out, BNodePrefix, S, P, O)
+  ->  rdf_write_triple(Out, BNodePrefix, S, P, O),
+      nb_increment_dict(Meta, number_of_triples)
+  ;   true
+  ).
+clean_tuple(Meta, Out, BNodePrefix, rdf(S0,P0,O0,G0)) :-
+  (   rdf_clean_quad(BNodePrefix, rdf(S0,P0,O0,G0), rdf(S,P,O,G))
+  ->  rdf_write_quad(Out, BNodePrefix, S, P, O, G),
+      nb_increment_dict(Meta, number_of_quadruples)
   ;   true
   ).

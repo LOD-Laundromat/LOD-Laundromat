@@ -61,10 +61,10 @@ init_ll :-
     ]
   ),
   % worker threads
-  run_loop(ll_download, Conf.workers.download),
-  run_loop(ll_decompress, Conf.workers.decompress),
-  run_loop(ll_recode, Conf.workers.recode),
-  run_loop(ll_parse, Conf.workers.parse),
+  run_loop(ll_download:ll_download, Conf.workers.download),
+  run_loop(ll_decompress:ll_decompress, Conf.workers.decompress),
+  run_loop(ll_recode:ll_recode, Conf.workers.recode),
+  run_loop(ll_parse:ll_parse, Conf.workers.parse),
   % unless under debug mode
   (    debugging(ll)
   ->   true

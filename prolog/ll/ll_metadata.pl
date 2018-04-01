@@ -38,8 +38,8 @@
     write_meta(+, 1).
 
 :- rdf_meta
-   rdf_meta_triple(+, r, o),
-   rdf_meta_triple(+, r, r, o).
+   write_meta_triple(+, r, o),
+   write_meta_triple(+, r, r, o).
 
 
 
@@ -85,21 +85,21 @@ write_meta(Hash, Goal_1) :-
 
 write_meta_archive(Hash, L) :-
   rdf_global_id(id:Hash, S),
-  write_meta(Hash, write_meta_archive_list(S, L)).
+  write_meta(Hash, write_meta_archive_list1(S, L)).
 
-write_meta_archive_list(S, L, Out) :-
+write_meta_archive_list1(S, L, Out) :-
   rdf_bnode_iri(O),
   rdf_write_triple(Out, S, def:archive, O),
-  write_meta_archive_list(O, L, Out).
+  write_meta_archive_list2(O, L, Out).
 
-write_meta_archive_list(Node, [H|T], Out) :-
+write_meta_archive_list2(Node, [H|T], Out) :-
   rdf_bnode_iri(First),
   rdf_write_triple(Out, Node, rdf:first, First),
   write_meta_archive_item(First, H, Out),
   (   T == []
   ->  rdf_equal(Next, rdf:type)
   ;   rdf_bnode_iri(Next),
-      write_meta_http_list(Next, T, Out)
+      write_meta_http_list2(Next, T, Out)
   ),
   rdf_write_triple(Out, Node, rdf:next, Next).
 
@@ -146,21 +146,21 @@ write_meta_error(Hash, E) :-
 
 write_meta_http(Hash, L) :-
   rdf_global_id(id:Hash, S),
-  write_meta(Hash, write_meta_http_list(S, L)).
+  write_meta(Hash, write_meta_http_list1(S, L)).
 
-write_meta_http_list(S, L, Out) :-
+write_meta_http_list1(S, L, Out) :-
   rdf_bnode_iri(O),
   rdf_write_triple(Out, S, def:http, O),
-  write_meta_http_list(O, L, Out).
+  write_meta_http_list2(O, L, Out).
 
-write_meta_http_list(Node, [H|T], Out) :-
+write_meta_http_list2(Node, [H|T], Out) :-
   rdf_bnode_iri(First),
   rdf_write_triple(Out, Node, rdf:first, First),
   write_meta_http_item(First, H, Out),
   (   T == []
   ->  rdf_equal(Next, rdf:nil)
   ;   rdf_bnode_iri(Next),
-      write_meta_http_list(Next, T, Out)
+      write_meta_http_list2(Next, T, Out)
   ),
   rdf_write_triple(Out, Node, rdf:next, Next).
 
