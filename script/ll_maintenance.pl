@@ -1,6 +1,7 @@
 :- module(
   ll_maintenance,
   [
+    delete_empty_directories/0,
     ll_clear/0,
     ll_clear_datasets/0,
     ll_clear_organizations/0,
@@ -20,6 +21,17 @@
 :- use_module(library(tapir)).
 
 
+
+
+
+%! delete_empty_directories is det.
+
+delete_empty_directories :-
+  setting(ll:data_directory, Dir0),
+  forall(
+    directory_path(Dir0, Dir),
+    (is_empty_directory(Dir) -> delete_directory(Dir) ; true)
+  ).
 
 
 

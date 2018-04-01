@@ -8,6 +8,7 @@
     write_meta_error/2,    % +Hash, +Error
     write_meta_http/2,     % +Hash, +Metadata
     write_meta_now/2,      % +Hash, +PLocal
+    write_meta_triple/3,   % +Hash, ?P, ?O
     write_meta_triple/4    % +Hash, ?S, ?P, ?O
   ]
 ).
@@ -19,6 +20,7 @@
 */
 
 :- use_module(library(apply)).
+:- use_module(library(yall)).
 
 :- use_module(library(dict)).
 :- use_module(library(ll/ll_generics)).
@@ -34,6 +36,10 @@
 
 :- meta_predicate
     write_meta(+, 1).
+
+:- rdf_meta
+   rdf_meta_triple(+, r, o),
+   rdf_meta_triple(+, r, r, o).
 
 
 
@@ -186,7 +192,13 @@ write_meta_now_(S, P, Out) :-
 
 
 
+%! write_meta_triple(+Hash:atom, +P:iri, +O:rdf_term) is det.
 %! write_meta_triple(+Hash:atom, +S:rdf_nonliteral, +P:iri, +O:rdf_term) is det.
+
+write_meta_triple(Hash, P, O) :-
+  rdf_global_id(id:Hash, S),
+  write_meta_triple(Hash, S, P, O).
+
 
 write_meta_triple(Hash, S, P, O) :-
   write_meta(Hash, {S,P,O}/[Out]>>rdf_write_triple(Out, S, P, O)).

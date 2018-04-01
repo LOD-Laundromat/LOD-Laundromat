@@ -87,6 +87,6 @@ decompress_entry(Hash1, Entry, In) :-
     copy_stream_data(In, Out),
     close_metadata(Hash2, decompressWrite, Out)
   ),
-  write_meta_triple(Hash1, id:Hash1, def:hasEntry, id:Hash2),
-  write_meta_triple(Hash2, id:Hash2, def:hasArchive, id:Hash1),
+  write_meta_triple(Hash1, def:hasEntry, id:Hash2),
+  write_meta_triple(Hash2, def:hasArchive, id:Hash1),
   touch_hash_file(Hash1, downloaded).

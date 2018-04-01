@@ -35,7 +35,7 @@
 :- initialization
    init_ll_analyze.
 
-:- setting(temporary_directory, any, _, "").
+:- setting(ll:data_directory, any, _, "").
 
 
 
@@ -58,7 +58,7 @@ empty_dataset(OName/DName, Dict) :-
 %! error(-Error:pair(atom,compound)) is nondet.
 
 error(Error) :-
-  setting(temporary_directory, Dir),
+  setting(ll:data_directory, Dir),
   directory_file_path(Dir, 'err.log.gz', File),
   call_stream_file(File, error_(Error)).
 
@@ -231,4 +231,4 @@ known_error_(unsupported_license(_License), license).
 
 init_ll_analyze :-
   conf_json(Conf),
-  set_setting(temporary_directory, Conf.'data-directory').
+  set_setting(ll:data_directory, Conf.'data-directory').

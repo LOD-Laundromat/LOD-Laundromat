@@ -1,1 +1,1 @@
-:- use_module(library(ll/ll_loop)).
+:- use_module(library(ll/ll_init)).
