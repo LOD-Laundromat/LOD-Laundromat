@@ -4,11 +4,13 @@
     call_loop/1,           % :Goal_0
     close_metadata/2,      % +Out, -Metadata
     delete_empty_directories/0,
+    failure_success/4,     % +Hash, +Local, ?Term, +E
     find_hash_directory/2, % -Directory, -Hash
     find_hash_file/3,      % +Local, -Hash, -File
     hash_directory/2,      % +Hash, -Directory
     hash_entry_hash/3,     % +Hash1, +Entry, -Hash2
     hash_file/3,           % +Hash, +Local, -File
+    read_term_from_file/2, % +File, -Term
     seed_base_uri/2,       % +Seed, -BaseUri
     seedlist_request/4,    % +Segments, ?Query, :Goal_1, +Options
     stale_seed/1,          % -Seed
@@ -109,6 +111,27 @@ delete_empty_directories :-
 
 
 
+%! failure_success(+Hash:atom, +Local:atom, ?Term:term, +E:compound) is det.
+
+% success
+failure_success(Hash, Local, Term, E) :-
+  var(E), !,
+  (   var(Term)
+  ->  touch_hash_file(Hash, Local)
+  ;   hash_file(Hash, Local, File),
+      setup_call_cleanup(
+        open(File, write, Out),
+        format(Out, "~W\n", [Term,[quoted(true)]]),
+        close(Out)
+      )
+  ).
+
+% failure
+failure_success(Hash, _, E) :-
+  write_meta_error(Hash, E).
+
+
+
 %! find_hash_directory(-Directory:atom, -Hash:atom) is nondet.
 
 find_hash_directory(Dir2, Hash) :-
@@ -149,6 +172,20 @@ hash_file(Hash, Local, File) :-
   setting(data_directory, Dir),
   hash_file(Dir, Hash, Local, File).
 
+
+
+%! read_term_from_file(+File:atom, -Term:term) is semidet.
+
+read_term_from_file(File, Term) :-
+  call_stream_file(File, read_term_from_file_(Term)).
+
+read_term_from_file_(Term, In) :-
+  repeat,
+  read_line_to_string(In, Line),
+  (   Line == end_of_file
+  ->  !
+  ;   read_term_from_atom(Line, Term, [])
+  ).
 
 
 %! running_loop(:Goal_0) is det.

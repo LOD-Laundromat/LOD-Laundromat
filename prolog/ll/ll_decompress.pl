@@ -13,19 +13,23 @@
 :- use_module(library(debug_ext)).
 :- use_module(library(ll/ll_generics)).
 
-
-
-
-
 ll_decompress :-
-  gtrace,
   % precondition
   with_mutex(ll_decompress, (
     find_hash_file(downloaded, Hash, File),
+    ignore(read_term_from_file(File, MediaType)),
     delete_file(File)
   )),
+  debug(ll(decompress), "┌> decompressing ~a", [Hash]),
+  write_meta_now(Hash, decompressBegin),
   % operation
-  decompress_file(Hash).
+  catch(decompress_file(Hash), E, true),
+  % postcondition
+  write_meta_now(Hash, decompressEnd),
+  failure_success(Hash, decompressed, MediaType, E),
+  debug(ll(decompress), "└─> decompressing ~a", [Hash]).
+
+
 
 % open dirty file
 decompress_file(Hash) :-

@@ -22,30 +22,25 @@ ll_download :-
   debug(ll(download), "┌─> downloading ~a", [Seed.url]),
   write_meta_now(Seed.hash, downloadBegin),
   % operation
-  catch(download_url(Seed.hash, Seed.url), E, true),
+  catch(download_url(Seed.hash, Seed.url, MediaType), E, true),
   % postcondition
   write_meta_now(Seed.hash, downloadEnd),
-  (   % download succeeded
-      var(E)
-  ->  touch_hash_file(Seed.hash, downloaded),
-      debug(ll(download), "└─< downloaded ~a", [Seed.url])
-  ;   % download failed
-      write_meta_error(Seed.hash, E),
-      debug(ll(download), "└─< download failed ~a", [Seed.url])
-  ).
+  failure_success(Seed.hash, downloaded, MediaType, E),
+  debug(ll(download), "└─< downloaded ~a", [Seed.url]).
 
-download_url(Hash, Uri) :-
+download_url(Hash, Uri, MediaType) :-
   hash_file(Hash, dirty, File),
   setup_call_cleanup(
     open(File, write, Out, [type(binary)]),
-    download_stream(Hash, Uri, Out),
+    download_stream(Hash, Uri, Out, MediaType),
     close_metadata(Out, WriteMeta)
   ),
   write_meta_stream(Hash, downloadWritten, WriteMeta).
 
-download_stream(Hash, Uri, Out) :-
+download_stream(Hash, Uri, Out, MediaType) :-
   findall(RdfMediaType, rdf_media_type(RdfMediaType), RdfMediaTypes),
   http_open2(Uri, In, [accept(RdfMediaTypes),metadata(HttpMetas)]),
+  ignore(http_metadata_content_type(HttpMetas, MediaType)),
   write_meta_http(Hash, HttpMetas),
   HttpMetas = [HttpMeta|_],
   between(200, 299, HttpMeta.status),

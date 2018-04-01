@@ -13,6 +13,7 @@
 :- use_module(library(ll/ll_generics)).
 %:- use_module(library(ll/ll_guess)).
 %:- use_module(library(ll/ll_parse)).
+:- use_module(library(ll/ll_recode)).
 
 :- initialization
-   maplist(call_loop, [ll_decompress]).%,ll_download]).
+   maplist(call_loop, [ll_decompress,ll_download,ll_recode]).
