@@ -12,6 +12,7 @@
 :- use_module(library(archive_ext)).
 :- use_module(library(debug_ext)).
 :- use_module(library(ll/ll_generics)).
+:- use_module(library(ll/ll_metadata)).
 
 ll_decompress :-
   % precondition
@@ -37,9 +38,8 @@ decompress_file(Hash) :-
   setup_call_cleanup(
     open(File, read, In),
     decompress_stream(Hash, In),
-    close_metadata(In, ReadMeta)
-  ),
-  write_meta_stream(Hash, decompressRead, ReadMeta).
+    close_metadata(Hash, decompressRead, In)
+  ).
 
 % open archive
 decompress_stream(Hash, In) :-
@@ -74,9 +74,8 @@ decompress_entry(Hash, data, In) :- !,
   setup_call_cleanup(
     gzopen(File, write, Out),
     copy_stream_data(In, Out),
-    close_metadata(Out, WriteMeta)
+    close_metadata(Hash, decompressWrite, Out)
   ),
-  write_meta_stream(Hash, decompressWrite, WriteMeta),
   hash_file(Hash, dirty, File0),
   delete_file(File0),
   touch_hash_file(Hash, decompressed).
@@ -86,9 +85,8 @@ decompress_entry(Hash1, Entry, In) :-
   setup_call_cleanup(
     open(File, write, Out),
     copy_stream_data(In, Out),
-    close_metadata(Out, WriteMeta)
+    close_metadata(Hash2, decompressWrite, Out)
   ),
-  write_meta(Hash1, hasEntry, Hash2),
-  write_meta(Hash2, hasArchive, Hash1),
-  write_meta_stream(Hash2, decompressWrite, WriteMeta),
+  write_meta_triple(Hash1, id:Hash1, def:hasEntry, id:Hash2),
+  write_meta_triple(Hash2, id:Hash2, def:hasArchive, id:Hash1),
   touch_hash_file(Hash1, downloaded).

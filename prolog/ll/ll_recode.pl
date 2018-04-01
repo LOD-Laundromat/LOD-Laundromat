@@ -14,13 +14,10 @@
 :- use_module(library(debug_ext)).
 :- use_module(library(file_ext)).
 :- use_module(library(ll/ll_generics)).
+:- use_module(library(ll/ll_metadata)).
 :- use_module(library(media_type)).
 :- use_module(library(stream_ext)).
 :- use_module(library(xml_ext)).
-
-
-
-
 
 ll_recode :-
   % precondition
@@ -82,7 +79,6 @@ recode_to_utf8(Hash, File1, Enc) :-
   setup_call_cleanup(
     maplist(gzopen, [File1,File2], [read,write], [In,Out]),
     recode_stream(Enc, In, Out),
-    maplist(close_metadata, [In,Out], Metas)
+    maplist(close_metadata(Hash), [readRecode,writeRecode], [In,Out])
   ),
-  maplist(write_meta_stream(Hash), [readRecode,writeRecode], Metas),
   rename_file(File1, File2).

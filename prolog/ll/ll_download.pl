@@ -10,11 +10,8 @@
 
 :- use_module(library(http/http_client2)).
 :- use_module(library(ll/ll_generics)).
+:- use_module(library(ll/ll_metadata)).
 :- use_module(library(sw/rdf_media_type)).
-
-
-
-
 
 ll_download :-
   % precondition
@@ -33,9 +30,8 @@ download_url(Hash, Uri, MediaType) :-
   setup_call_cleanup(
     open(File, write, Out, [type(binary)]),
     download_stream(Hash, Uri, Out, MediaType),
-    close_metadata(Out, WriteMeta)
-  ),
-  write_meta_stream(Hash, downloadWritten, WriteMeta).
+    close_metadata(Hash, downloadWritten, Out)
+  ).
 
 download_stream(Hash, Uri, Out, MediaType) :-
   findall(RdfMediaType, rdf_media_type(RdfMediaType), RdfMediaTypes),
@@ -46,6 +42,5 @@ download_stream(Hash, Uri, Out, MediaType) :-
   between(200, 299, HttpMeta.status),
   call_cleanup(
     copy_stream_data(In, Out),
-    close_metadata(In, ReadMeta)
-  ),
-  write_meta_stream(Hash, downloadRead, ReadMeta).
+    close_metadata(Hash, downloadRead, In)
+  ).

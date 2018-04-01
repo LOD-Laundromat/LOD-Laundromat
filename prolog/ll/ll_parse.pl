@@ -13,6 +13,7 @@
 :- use_module(library(debug_ext)).
 :- use_module(library(dict)).
 :- use_module(library(ll/ll_generics)).
+:- use_module(library(ll/ll_metadata)).
 :- use_module(library(sw/rdf_clean)).
 :- use_module(library(sw/rdf_deref)).
 :- use_module(library(sw/rdf_export)).
@@ -24,18 +25,14 @@
    set_setting(rdf_term:bnode_prefix_scheme, http),
    set_setting(rdf_term:bnode_prefix_authority, 'lodlaundromat.org').
 
-
-
-
-
 ll_parse :-
   % precondition
   with_mutex(ll_parse, (
     find_hash_file(recoded, Hash, File),
     delete_file(File)
   )),
-  gtrace,
   debug(ll(parse), "┌─> parsing ~a", [Hash]),
+  gtrace,
   write_meta_now(Hash, parseBegin),
   % operation
   catch(parse_file(Hash), E, true),
@@ -60,10 +57,8 @@ parse_file(Hash) :-
       clean_tuples(RdfMeta, Out),
       [bnode_prefix(BNodePrefix),media_type(MediaType)]
     ),
-    maplist(close_metadata, [In,Out], [ReadMeta,WriteMeta])
+    maplist(close_metadata(Hash), [parseRead,parseWritten], [In,Out])
   ),
-  write_meta_stream(Hash, parseRead, ReadMeta),
-  write_meta_stream(Hash, parseWritten, WriteMeta),
   write_meta_triple(Hash, numberOfQuadruples, RdfMeta.number_of_quadruples),
   write_meta_triple(Hash, numberOfTriples, RdfMeta.number_of_triples).
 
