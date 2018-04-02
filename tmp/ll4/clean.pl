@@ -326,25 +326,6 @@ unpack_stream(Uri, Hash0, _, In0, [Dict0,_]) :-
 
 % HELPERS %
 
-%! archive_formats(?Format, ?Active) is nondet.
-
-archive_format('7zip', true).
-archive_format(ar, true).
-archive_format(cab, true).
-archive_format(cpio, true).
-archive_format(empty, true).
-archive_format(gnutar, true).
-archive_format(iso9660, true).
-archive_format(lha, true).
-archive_format(mtree, false).
-archive_format(rar, true).
-archive_format(raw, true).
-archive_format(tar, true).
-archive_format(xar, true).
-archive_format(zip, true).
-
-
-
 %! finish_meta(+Hash) is det.
 
 finish_meta(Hash) :-

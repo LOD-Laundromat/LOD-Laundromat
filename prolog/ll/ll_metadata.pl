@@ -8,8 +8,8 @@
     write_meta_error/2,    % +Hash, +Error
     write_meta_http/2,     % +Hash, +Metadata
     write_meta_now/2,      % +Hash, +PLocal
-    write_meta_quad/3,   % +Hash, ?P, ?O
-    write_meta_quad/4    % +Hash, ?S, ?P, ?O
+    write_meta_quad/4,     % +Hash, +P, +O, +G
+    write_meta_quad/5      % +Hash, +S, +P, +O, +G
   ]
 ).
 
@@ -43,8 +43,8 @@
 
 :- rdf_meta
    error_iri(+, r),
-   write_meta_quad(+, r, o),
-   write_meta_quad(+, r, r, o).
+   write_meta_quad(+, r, o, r),
+   write_meta_quad(+, r, r, o, r).
 
 
 
@@ -220,7 +220,7 @@ write_meta_error(Hash, non_canonical_lexical_form(D,Lex1,Lex2)) :- !,
   )).
 write_meta_error(Hash, E) :-
   error_iri(E, O),
-  write_meta_quad(Hash, def:error, O).
+  write_meta_quad(Hash, def:error, O, graph:meta).
 
 % archive error
 error_iri(error(archive_error(2,'Missing type keyword in mtree specification'),_Context), error:missingTypeKeywordInMtreeSpec).
@@ -345,13 +345,13 @@ write_meta_now_(S, P, Out) :-
 
 
 
-%! write_meta_quad(+Hash:atom, +P:iri, +O:rdf_term) is det.
-%! write_meta_quad(+Hash:atom, +S:rdf_nonliteral, +P:iri, +O:rdf_term) is det.
+%! write_meta_quad(+Hash:atom, +P:iri, +O:rdf_term, +G:rdf_graph) is det.
+%! write_meta_quad(+Hash:atom, +S:rdf_nonliteral, +P:iri, +O:rdf_term, +G:rdf_graph) is det.
 
-write_meta_quad(Hash, P, O) :-
+write_meta_quad(Hash, P, O, G) :-
   rdf_global_id(id:Hash, S),
-  write_meta_quad(Hash, S, P, O).
+  write_meta_quad(Hash, S, P, O, G).
 
 
-write_meta_quad(Hash, S, P, O) :-
-  write_meta(Hash, {S,P,O}/[Out]>>rdf_write_quad(Out, S, P, O, graph:meta)).
+write_meta_quad(Hash, S, P, O, G) :-
+  write_meta(Hash, {S,P,O,G}/[Out]>>rdf_write_quad(Out, S, P, O, G)).

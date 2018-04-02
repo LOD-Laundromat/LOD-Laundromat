@@ -22,7 +22,7 @@
 :- use_module(library(uri_ext)).
 
 :- initialization
-   set_setting(rdf_term:bnode_prefix_scheme, http),
+   set_setting(rdf_term:bnode_prefix_scheme, https),
    set_setting(rdf_term:bnode_prefix_authority, 'lodlaundromat.org').
 
 ll_parse :-
@@ -52,7 +52,7 @@ parse_file(Hash) :-
   maplist(hash_file(Hash), ['dirty.gz','clean.nq.gz'], [File1,File2]),
   ignore(rdf_guess_file(File1, 10 000, MediaType)),
   format(atom(Lex), "~w", [MediaType]),
-  write_meta_triple(Hash, def:serializationFormat, literal(type(xsd:string,Lex))),
+  write_meta_quad(Hash, def:serializationFormat, literal(type(xsd:string,Lex)), graph:meta),
   bnode_prefix([Hash], BNodePrefix),
   RdfMeta = _{number_of_quadruples: 0, number_of_triples: 0},
   uri_file_name(BaseUri, File1),
@@ -71,8 +71,8 @@ parse_file(Hash) :-
     [Lex1,Lex2],
     [RdfMeta.number_of_quadruples,RdfMeta.number_of_triples]
   ),
-  write_meta_triple(Hash, def:numberOfQuadruples, literal(type(xsd:nonNegativeInteger,Lex1))),
-  write_meta_triple(Hash, def:numberOfTriples, literal(type(xsd:nonNegativeInteger,Lex2))).
+  write_meta_quad(Hash, def:numberOfQuadruples, literal(type(xsd:nonNegativeInteger,Lex1)), graph:meta),
+  write_meta_quad(Hash, def:numberOfTriples, literal(type(xsd:nonNegativeInteger,Lex2)), graph:meta).
 
 bnode_prefix(Segments, BNodePrefix) :-
   setting(rdf_term:bnode_prefix_scheme, Scheme),

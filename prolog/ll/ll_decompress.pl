@@ -87,6 +87,8 @@ decompress_entry(Hash1, Entry, In) :-
     copy_stream_data(In, Out),
     close_metadata(Hash2, decompressWrite, Out)
   ),
-  write_meta_triple(Hash1, def:hasEntry, id:Hash2),
-  write_meta_triple(Hash2, def:hasArchive, id:Hash1),
+  rdf_global_id(id:Hash1, O1),
+  rdf_global_id(id:Hash2, O2),
+  write_meta_quad(Hash1, def:hasEntry, O2, graph:meta),
+  write_meta_quad(Hash2, def:hasArchive, O1, graph:meta),
   touch_hash_file(Hash1, downloaded).
