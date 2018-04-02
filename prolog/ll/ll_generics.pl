@@ -3,6 +3,7 @@
   [
     failure_success/4,     % +Hash, +Local, ?Term, +E
     find_hash_directory/2, % -Directory, -Hash
+    find_hash_file/2,      % +Local, -Hash
     find_hash_file/3,      % +Local, -Hash, -File
     hash_directory/2,      % +Hash, -Directory
     hash_entry_hash/3,     % +Hash1, +Entry, -Hash2
@@ -67,7 +68,12 @@ find_hash_directory(Dir2, Hash) :-
 
 
 
+%! find_hash_file(+Local:atom, -Hash:atom) is nondet.
 %! find_hash_file(+Local:atom, -Hash:atom, -File:atom) is nondet.
+
+find_hash_file(Local, Hash) :-
+  find_hash_file(Local, Hash, _).
+
 
 find_hash_file(Local, Hash, File) :-
   find_hash_directory(Dir, Hash),

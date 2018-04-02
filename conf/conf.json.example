@@ -16,5 +16,10 @@
       }
     }
   },
-  "workers": 10
+  "workers": {
+    "download": 1,
+    "decompress": 1,
+    "recode": 1,
+    "parse": 1
+  }
 }

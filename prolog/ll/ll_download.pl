@@ -18,6 +18,7 @@ ll_download :-
   stale_seed(Seed),
   debug(ll(download), "┌─> downloading ~a", [Seed.url]),
   write_meta_now(Seed.hash, downloadBegin),
+  write_meta_triple(Seed.hash, def:url, literal(type(xsd:anyURI,Seed.url))),
   % operation
   catch(download_url(Seed.hash, Seed.url, MediaType), E, true),
   % postcondition

@@ -32,10 +32,17 @@ ll_parse :-
     delete_file(File)
   )),
   debug(ll(parse), "┌─> parsing ~a", [Hash]),
-  gtrace,
   write_meta_now(Hash, parseBegin),
   % operation
-  catch(parse_file(Hash), E, true),
+  thread_create(parse_file(Hash), Id, [alias(Hash)]),
+  thread_join(Id, Status),
+  (   Status == true
+  ->  true
+  ;   Status = exception(E)
+  ->  write_meta_error(Hash, E)
+  ;   Status == false
+  ->  write_meta_error(Hash, fail)
+  ),
   % postcondition
   write_meta_now(Hash, parseEnd),
   failure_success(Hash, parsed, _, E),
