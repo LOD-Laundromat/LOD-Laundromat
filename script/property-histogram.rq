@@ -1,0 +1,8 @@
+prefix graph: <https://lodlaundromat.org/graph/>
+select ?p (count(?s) as ?n) {
+  graph graph:meta {
+    ?s ?p ?o .
+  }
+}
+group by ?p
+order by desc(?n)
