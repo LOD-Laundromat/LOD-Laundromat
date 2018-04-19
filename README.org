@@ -1,8 +1,14 @@
-#+TITLE: LOD-Laundromat 2: Cleaning other people's dirty data
+#+TITLE: LOD-Laundromat: Cleaning other people's dirty data
 #+AUTHOR: Wouter Beek
 
-This document describes the design for LOD Laundromat 2, a crawling
-and cleaning infrastructure for Linked Open Data (LOD).
+LOD Laundromat is a standard-compliant implementation for crawling and
+cleaning Linked Open Data (LOD).  Since data cleaning is often
+reported as comprising 80% of a data analist's workload, it would be
+great if we can automate at least a large part of that.
+
+With the LOD Laundromat, data is cleaned in parallel by an arbitrary
+number of /Washing Machine/ threads.  The collection of washing
+machines can be monitored from a main /Laundromat/ thread.
 
 * Data discovery
 
@@ -24,13 +30,11 @@ and cleaning infrastructure for Linked Open Data (LOD).
 
 #+BEGIN_SRC xml
 <?xml version="1.0" encoding="UTF-8"?>
-<urlset
-  xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
-  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9
-                      http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd"
-  xmlns:sc="http://sw.deri.org/2007/07/sitemapextension/scschema.xsd"
->
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:sc="http://sw.deri.org/2007/07/sitemapextension/scschema.xsd"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9
+                            http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd">
   <sc:dataset>
     <sc:datasetLabel>$(STRING)</sc:datasetLabel>
     <sc:dataDumpLocation>$(URI)</sc:dataDumpLocation>
