@@ -1,6 +1,9 @@
 :- module(
   ll_upload,
   [
+    ll_clear/0,
+    ll_clear_datasets/0,
+    ll_clear_users/0,
     ll_upload_data/1,    % ?Hash
     ll_upload_metadata/0
   ]
@@ -19,9 +22,9 @@
 
 :- use_module(library(conf_ext)).
 :- use_module(library(file_ext)).
+:- use_module(library(http/tapir)).
 :- use_module(library(ll/ll_generics)).
 :- use_module(library(sw/rdf_prefix)).
-:- use_module(library(tapir)).
 
 :- debug(ll(_)).
 
@@ -40,6 +43,36 @@
 :- setting(ll:data_directory, any, _, "").
 
 
+
+
+
+%! ll_clear is det.
+%
+% Delete all data currently stored in the LOD Laundromat.
+
+ll_clear :-
+  ll_clear_datasets,
+  ll_clear_users.
+
+
+
+%! ll_clear_datasets is det.
+
+ll_clear_datasets :-
+  forall(
+    dataset(User, Dataset, _),
+    dataset_delete(User, Dataset)
+  ).
+
+
+
+%! ll_clear_users is det.
+
+ll_clear_users :-
+  forall(
+    user(User, _),
+    user_delete(User)
+  ).
 
 
 

@@ -9,8 +9,10 @@
     hash_entry_hash/3,     % +Hash1, +Entry, -Hash2
     hash_file/3,           % +Hash, +Local, -File
     read_term_from_file/2, % +File, -Term
+    seedlist_request/3,    % +Segments, ?Query, :Goal_1
     seedlist_request/4,    % +Segments, ?Query, :Goal_1, +Options
-    stale_seed/1,          % -Seed
+    seed_by_status/2,      % +Status, -Seed
+    seed_by_status/3,      % +Status, +Method, -Seed
     touch_hash_file/2      % +Hash, +Local
   ]
 ).
@@ -22,6 +24,7 @@
 */
 
 :- use_module(library(apply)).
+:- use_module(library(error)).
 :- use_module(library(http/json)).
 :- use_module(library(zlib)).
 
@@ -32,6 +35,7 @@
 :- use_module(library(uri_ext)).
 
 :- meta_predicate
+    seedlist_request(+, ?, 1),
     seedlist_request(+, ?, 1, +).
 
 
@@ -120,8 +124,13 @@ read_term_from_file_(Term, In) :-
 
 
 
-%! seedlist_request_(+Segments:list(atom), ?Query:list(compound), :Goal_1,
-%!                   +Options:list(compound)) is semidet.
+%! seedlist_request(+Segments:list(atom), ?Query:list(compound), :Goal_1) is semidet.
+%! seedlist_request(+Segments:list(atom), ?Query:list(compound), :Goal_1,
+%!                  +Options:list(compound)) is semidet.
+
+seedlist_request(Segments, Query, Goal_1) :-
+  seedlist_request(Segments, Query, Goal_1, []).
+
 
 seedlist_request(Segments, Query, Goal_1, Options) :-
   setting(ll:authority, Auth),
@@ -137,10 +146,17 @@ seedlist_request(Segments, Query, Goal_1, Options) :-
 
 
 
-%! stale_seed(-Seed:dict) is semidet.
+%! seed_by_status(+Status:oneof([idle,processing,stale]), -Seed:dict) is nondet.
+%! seed_by_status(+Status:oneof([idle,processing,stale]),
+%!                +Method:oneof([get,patch]), -Seed:dict) is nondet.
 
-stale_seed(Seed) :-
-  seedlist_request([seed,stale], _, seed_(Seed), [failure(404),method(patch)]).
+seed_by_status(Status, Seed) :-
+  seed_by_status(Status, get, Seed).
+
+
+seed_by_status(Status, Method, Seed) :-
+  must_be(oneof([idle,processing,stale]), Status),
+  seedlist_request([seed,Status], _, seed_(Seed), [method(Method)]).
 
 seed_(Seed, In) :-
   call_cleanup(
