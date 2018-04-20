@@ -124,28 +124,6 @@ read_term_from_file_(Term, In) :-
 
 
 
-%! seedlist_request(+Segments:list(atom), ?Query:list(compound), :Goal_1) is semidet.
-%! seedlist_request(+Segments:list(atom), ?Query:list(compound), :Goal_1,
-%!                  +Options:list(compound)) is semidet.
-
-seedlist_request(Segments, Query, Goal_1) :-
-  seedlist_request(Segments, Query, Goal_1, []).
-
-
-seedlist_request(Segments, Query, Goal_1, Options) :-
-  setting(ll:authority, Auth),
-  setting(ll:password, Password),
-  setting(ll:scheme, Scheme),
-  setting(ll:user, User),
-  uri_comps(Uri, uri(Scheme,Auth,Segments,Query,_)),
-  http_call(
-    Uri,
-    Goal_1,
-    [accept(json),authorization(basic(User,Password))|Options]
-  ).
-
-
-
 %! seed_by_status(+Status:oneof([idle,processing,stale]), -Seed:dict) is nondet.
 %! seed_by_status(+Status:oneof([idle,processing,stale]),
 %!                +Method:oneof([get,patch]), -Seed:dict) is nondet.
@@ -165,6 +143,28 @@ seed_(Seed, In) :-
       (is_list(Seeds) -> member(Seed, Seeds) ; Seed = Seeds)
     ),
     close(In)
+  ).
+
+
+
+%! seedlist_request(+Segments:list(atom), ?Query:list(compound), :Goal_1) is semidet.
+%! seedlist_request(+Segments:list(atom), ?Query:list(compound), :Goal_1,
+%!                  +Options:list(compound)) is semidet.
+
+seedlist_request(Segments, Query, Goal_1) :-
+  seedlist_request(Segments, Query, Goal_1, []).
+
+
+seedlist_request(Segments, Query, Goal_1, Options) :-
+  setting(ll:authority, Auth),
+  setting(ll:password, Password),
+  setting(ll:scheme, Scheme),
+  setting(ll:user, User),
+  uri_comps(Uri, uri(Scheme,Auth,Segments,Query,_)),
+  http_call(
+    Uri,
+    Goal_1,
+    [accept(json),authorization(basic(User,Password))|Options]
   ).
 
 
