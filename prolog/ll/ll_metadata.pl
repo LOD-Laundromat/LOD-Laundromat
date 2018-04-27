@@ -29,6 +29,9 @@
 :- use_module(library(sw/rdf_prefix)).
 :- use_module(library(sw/rdf_term)).
 
+:- discontiguous
+    write_meta_error/2.
+
 :- maplist(rdf_assert_prefix, [
      def-'https://lodlaundromat.org/def/',
      error-'https://lodlaundromat.org/error/def/',
@@ -153,94 +156,104 @@ write_meta_encoding(S, [GuessEnc,HttpEnc,XmlEnc,Enc], Out) :-
 % existence error: Turtle prefix
 write_meta_error(Hash, error(existence_error(turtle_prefix,Alias),_Stream)) :- !,
   rdf_global_id(id:Hash, S),
-  write_meta(Hash, {Alias,S}/[Out]>>(
-    rdf_bnode_iri(O),
-    rdf_write_quad(Out, S, def:error, O, graph:meta),
-    rdf_write_quad(Out, O, rdf:type, error:'MissingTurtlePrefixDefinition', graph:meta),
-    rdf_write_quad(Out, O, error:alias, literal(type(xsd:string,Alias)), graph:meta)
-  )).
+  write_meta(Hash, write_meta_error_1(S, Alias)).
+write_meta_error_1(S, Alias, Out) :-
+  rdf_bnode_iri(O),
+  rdf_write_quad(Out, S, def:error, O, graph:meta),
+  rdf_write_quad(Out, O, rdf:type, error:'MissingTurtlePrefixDefinition', graph:meta),
+  rdf_write_quad(Out, O, error:alias, literal(type(xsd:string,Alias)), graph:meta).
+
 % syntax error: HTTP parameter
 write_meta_error(Hash, error(syntax_error(http_parameter(Param)),_)) :- !,
   rdf_global_id(id:Hash, S),
-  write_meta(Hash, {Param,S}/[Out]>>(
-    rdf_bnode_iri(O),
-    rdf_write_quad(Out, S, def:error, O, graph:meta),
-    rdf_write_quad(Out, O, rdf:type, error:'HttpParameter', graph:meta),
-    rdf_write_quad(Out, O, error:parameter, literal(type(xsd:string,Param)), graph:meta)
-  )).
+  write_meta(Hash, write_meta_error_2(S, Param)).
+write_meta_error_2(S, Param, Out) :-
+  rdf_bnode_iri(O),
+  rdf_write_quad(Out, S, def:error, O, graph:meta),
+  rdf_write_quad(Out, O, rdf:type, error:'HttpParameter', graph:meta),
+  rdf_write_quad(Out, O, error:parameter, literal(type(xsd:string,Param)), graph:meta).
+
 % HTTP status codes
 write_meta_error(Hash, http(status(Status,_Msg),_Uri)) :- !,
   atom_number(Local, Status),
   rdf_global_id(http:Local, O),
   write_meta_quad(Hash, def:error, O, graph:meta).
+
 % RDF syntax error: the lexical form does not occur in the lexical
 % space of the indicated datatype.
 write_meta_error(Hash, rdf(incorrect_lexical_form(D,Lex))) :- !,
   rdf_global_id(id:Hash, S),
-  write_meta(Hash, {D,Lex,S}/[Out]>>(
-    rdf_bnode_iri(O),
-    rdf_write_quad(Out, S, def:error, O, graph:meta),
-    rdf_write_quad(Out, O, rdf:type, error:'CannotMapLexicalForm', graph:meta),
-    rdf_write_quad(Out, O, error:datatype, D, graph:meta),
-    rdf_write_quad(Out, O, error:lexical_form, literal(type(xsd:string,Lex)), graph:meta)
-  )).
+  write_meta(Hash, write_meta_error_3(S, D, Lex)).
+write_meta_error_3(S, D, Lex, Out) :-
+  rdf_bnode_iri(O),
+  rdf_write_quad(Out, S, def:error, O, graph:meta),
+  rdf_write_quad(Out, O, rdf:type, error:'CannotMapLexicalForm', graph:meta),
+  rdf_write_quad(Out, O, error:datatype, D, graph:meta),
+  rdf_write_quad(Out, O, error:lexical_form, literal(type(xsd:string,Lex)), graph:meta).
+
 % RDF syntax error: a language-tagged string where the language tag is
 % missing.
 write_meta_error(Hash, rdf(missing_language_tag(LTag))) :- !,
   rdf_global_id(id:Hash, S),
-  write_meta(Hash, {LTag,S}/[Out]>>(
-    rdf_bnode_iri(O),
-    rdf_write_quad(Out, S, def:error, O, graph:meta),
-    rdf_write_quad(Out, O, rdf:type, error:'MissingLanguageTag', graph:meta),
-    rdf_write_quad(Out, O, error:languageTag, literal(type(xsd:string,LTag)), graph:meta)
-  )).
+  write_meta(Hash, write_meta_error_4(S, LTag)).
+write_meta_error_4(S, LTag, Out) :-
+  rdf_bnode_iri(O),
+  rdf_write_quad(Out, S, def:error, O, graph:meta),
+  rdf_write_quad(Out, O, rdf:type, error:'MissingLanguageTag', graph:meta),
+  rdf_write_quad(Out, O, error:languageTag, literal(type(xsd:string,LTag)), graph:meta).
+
 % RDF non-canonicity: a language-tagged string where the language tag is
 % not in canonical form.
 write_meta_error(Hash, rdf(non_canonical_language_tag(LTag))) :- !,
   rdf_global_id(id:Hash, S),
-  write_meta(Hash, {LTag,S}/[Out]>>(
-    rdf_bnode_iri(O),
-    rdf_write_quad(Out, S, def:canonicity, O, graph:meta),
-    rdf_write_quad(Out, O, rdf:type, error:'NonCanonicalLanguageTag', graph:meta),
-    rdf_write_quad(Out, O, error:languageTag, literal(type(xsd:string,LTag)), graph:meta)
-  )).
+  write_meta(Hash, write_meta_error_5(S, LTag)).
+write_meta_error_5(S, LTag, Out) :-
+  rdf_bnode_iri(O),
+  rdf_write_quad(Out, S, def:canonicity, O, graph:meta),
+  rdf_write_quad(Out, O, rdf:type, error:'NonCanonicalLanguageTag', graph:meta),
+  rdf_write_quad(Out, O, error:languageTag, literal(type(xsd:string,LTag)), graph:meta).
+
 % RDF: redefined ID?
 write_meta_error(Hash, rdf(redefined_id(Term))) :- !,
   rdf_global_id(id:Hash, S),
-  write_meta(Hash, {S,Term}/[Out]>>(
-    rdf_bnode_iri(O),
-    rdf_write_quad(Out, S, def:error, O, graph:meta),
-    rdf_write_quad(Out, O, rdf:type, error:'RedefinedId', graph:meta),
-    format(atom(Atom), "~w", [Term]),
-    rdf_write_quad(Out, O, def:id, literal(type(xsd:string,Atom)), graph:meta)
-  )).
+  format(atom(Lex), "~w", [Term]),
+  write_meta(Hash, write_meta_error_6(S, Lex)).
+write_meta_error_6(S, Lex, Out) :-
+  rdf_bnode_iri(O),
+  rdf_write_quad(Out, S, def:error, O, graph:meta),
+  rdf_write_quad(Out, O, rdf:type, error:'RedefinedId', graph:meta),
+  rdf_write_quad(Out, O, def:id, literal(type(xsd:string,Lex)), graph:meta).
+
 % RDF non-canonicicty: a lexical form that belongs to the lexical
 % space, but is not canonical.
 write_meta_error(Hash, rdf(non_canonical_lexical_form(D,Lex1,Lex2))) :- !,
   rdf_global_id(id:Hash, S),
-  write_meta(Hash, {D,Lex1,Lex2,S}/[Out]>>(
-    rdf_bnode_iri(O),
-    rdf_write_quad(Out, S, def:canonicity, O, graph:meta),
-    rdf_write_quad(Out, O, rdf:type, error:'NonCanonicalLexicalForm', graph:meta),
-    rdf_write_quad(Out, O, error:datatype, D, graph:meta),
-    rdf_write_quad(Out, O, error:lexicalForm, literal(type(xsd:string,Lex1)), graph:meta),
-    rdf_write_quad(Out, O, error:canonicalLexicalForm, literal(type(xsd:string,Lex2)), graph:meta)
-  )).
+  write_meta(Hash, write_meta_error_7(S, D, Lex1, Lex2)).
+write_meta_error_7(S, D, Lex1, Lex2, Out) :-
+  rdf_bnode_iri(O),
+  rdf_write_quad(Out, S, def:canonicity, O, graph:meta),
+  rdf_write_quad(Out, O, rdf:type, error:'NonCanonicalLexicalForm', graph:meta),
+  rdf_write_quad(Out, O, error:datatype, D, graph:meta),
+  rdf_write_quad(Out, O, error:lexicalForm, literal(type(xsd:string,Lex1)), graph:meta),
+  rdf_write_quad(Out, O, error:canonicalLexicalForm, literal(type(xsd:string,Lex2)), graph:meta).
+
 % RDF/XML parse error
 write_meta_error(Hash, sgml(sgml_parser(_Parser),_File,Line,Msg)) :- !,
   rdf_global_id(id:Hash, S),
   atom_number(Lex, Line),
-  write_meta(Hash, {Line,Msg,S}/[Out]>>(
-    rdf_bnode_iri(O),
-    rdf_write_quad(Out, S, def:error, O, graph:meta),
-    rdf_write_quad(Out, O, rdf:type, error:'ParseError', graph:meta),
-    rdf_write_quad(Out, O, def:line, literal(type(xsd:nonNegativeInteger,Lex)), graph:meta),
-    rdf_write_quad(Out, O, def:message, literal(type(xsd:string,Msg)), graph:meta)
-  )).
+  write_meta(Hash, write_meta_error_8(S, Lex, Msg)).
+write_meta_error_8(S, Lex, Msg, Out) :-
+  rdf_bnode_iri(O),
+  rdf_write_quad(Out, S, def:error, O, graph:meta),
+  rdf_write_quad(Out, O, rdf:type, error:'ParseError', graph:meta),
+  rdf_write_quad(Out, O, def:line, literal(type(xsd:nonNegativeInteger,Lex)), graph:meta),
+  rdf_write_quad(Out, O, def:message, literal(type(xsd:string,Msg)), graph:meta).
+
 % Single-statement errors
 write_meta_error(Hash, E) :-
   error_iri(E, O), !,
   write_meta_quad(Hash, def:error, O, graph:meta).
+
 % Not yet handled
 write_meta_error(Hash, E) :-
   gtrace,
