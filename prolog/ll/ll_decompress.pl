@@ -22,14 +22,14 @@ ll_decompress :-
     ignore(read_term_from_file(File, MediaType)),
     delete_file(File)
   )),
-  debug(ll(_,decompress), "┌> decompressing ~a", [Hash]),
+  indent_debug(1, ll(_,decompress), "> decompressing ~a", [Hash]),
   write_meta_now(Hash, decompressBegin),
   % operation
   catch(decompress_file(Hash), E, true),
   % postcondition
   write_meta_now(Hash, decompressEnd),
   failure_success(Hash, decompressed, MediaType, E),
-  debug(ll(_,decompress), "└─> decompressing ~a", [Hash]).
+  indent_debug(1, ll(_,decompress), "> decompressing ~a", [Hash]).
 
 
 
@@ -47,11 +47,11 @@ decompress_stream(Hash, In) :-
   setup_call_cleanup(
     (
       archive_open(In, Arch),
-      indent_debug(1, ll(decompress), "> ~w OPEN ARCHIVE ~w", [In,Arch])
+      indent_debug(1, ll(_,decompress), "> ~w OPEN ARCHIVE ~w", [In,Arch])
     ),
     decompress_archive(Hash, Arch),
     (
-      indent_debug(-1, ll(decompress), "< ~w CLOSE ARCHIVE ~w", [Arch,In]),
+      indent_debug(-1, ll(_,decompress), "< ~w CLOSE ARCHIVE ~w", [Arch,In]),
       archive_close(Arch)
     )
   ).
@@ -61,15 +61,16 @@ decompress_archive(Hash, Arch) :-
   archive_data_stream(Arch, In, [meta_data(ArchMetas)]), %NONDET
   write_meta_archive(Hash, ArchMetas),
   ArchMetas = [ArchMeta|_],
-  indent_debug(1, ll(decompress), "> ~w OPEN ENTRY ~w ‘~a’", [Arch,In,ArchMeta.name]),
+  indent_debug(1, ll(_,decompress), "> ~w OPEN ENTRY ~w ‘~a’", [Arch,In,ArchMeta.name]),
   call_cleanup(
     decompress_entry(Hash, ArchMeta.name, In),
     (
-      indent_debug(-1, ll(decompress), "< ~w ‘~a’ CLOSE ENTRY ~w", [In,ArchMeta.name,Arch]),
+      indent_debug(-1, ll(_,decompress), "< ~w ‘~a’ CLOSE ENTRY ~w", [In,ArchMeta.name,Arch]),
       close(In)
     )
   ).
 
+% leaf node
 decompress_entry(Hash, data, In) :- !,
   hash_file(Hash, 'dirty.gz', File),
   setup_call_cleanup(
@@ -80,6 +81,7 @@ decompress_entry(Hash, data, In) :- !,
   hash_file(Hash, dirty, File0),
   delete_file(File0),
   touch_hash_file(Hash, decompressed).
+% non-leaf node
 decompress_entry(Hash1, Entry, In) :-
   hash_entry_hash(Hash1, Entry, Hash2),
   hash_file(Hash2, dirty, File),
