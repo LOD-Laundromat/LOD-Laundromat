@@ -94,4 +94,4 @@ decompress_entry(Hash1, Entry, In) :-
   rdf_global_id(id:Hash2, O2),
   write_meta_quad(Hash1, def:hasEntry, O2, graph:meta),
   write_meta_quad(Hash2, def:hasArchive, O1, graph:meta),
-  touch_hash_file(Hash1, downloaded).
+  touch_hash_file(Hash1, decompressed).
