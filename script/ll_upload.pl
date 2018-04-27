@@ -26,8 +26,6 @@
 :- use_module(library(ll/ll_generics)).
 :- use_module(library(sw/rdf_prefix)).
 
-:- debug(ll(_)).
-
 :- initialization
    init_ll_upload.
 

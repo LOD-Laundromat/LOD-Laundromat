@@ -22,14 +22,14 @@ ll_decompress :-
     ignore(read_term_from_file(File, MediaType)),
     delete_file(File)
   )),
-  debug(ll(decompress), "┌> decompressing ~a", [Hash]),
+  debug(ll(_,decompress), "┌> decompressing ~a", [Hash]),
   write_meta_now(Hash, decompressBegin),
   % operation
   catch(decompress_file(Hash), E, true),
   % postcondition
   write_meta_now(Hash, decompressEnd),
   failure_success(Hash, decompressed, MediaType, E),
-  debug(ll(decompress), "└─> decompressing ~a", [Hash]).
+  debug(ll(_,decompress), "└─> decompressing ~a", [Hash]).
 
 
 

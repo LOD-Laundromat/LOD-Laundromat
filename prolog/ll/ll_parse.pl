@@ -31,7 +31,7 @@ ll_parse :-
     find_hash_file(recoded, Hash, File),
     delete_file(File)
   )),
-  debug(ll(parse), "┌─> parsing ~a", [Hash]),
+  debug(ll(_,parse), "┌─> parsing ~a", [Hash]),
   write_meta_now(Hash, parseBegin),
   % operation
   thread_create(parse_file(Hash), Id, [alias(Hash)]),
@@ -47,7 +47,7 @@ ll_parse :-
   write_meta_now(Hash, parseEnd),
   failure_success(Hash, parsed, _, E),
   end_seed(Hash),
-  debug(ll(parse), "└─< parsed ~a", [Hash]).
+  debug(ll(_,parse), "└─< parsed ~a", [Hash]).
 
 parse_file(Hash) :-
   maplist(hash_file(Hash), ['dirty.gz','clean.nq.gz'], [File1,File2]),
@@ -72,8 +72,8 @@ parse_file(Hash) :-
     [Lex1,Lex2],
     [RdfMeta.number_of_quadruples,RdfMeta.number_of_triples]
   ),
-  write_meta_quad(Hash, def:numberOfQuadruples, literal(type(xsd:nonNegativeInteger,Lex1)), graph:meta),
-  write_meta_quad(Hash, def:numberOfTriples, literal(type(xsd:nonNegativeInteger,Lex2)), graph:meta).
+  write_meta_quad(Hash, def:quadruples, literal(type(xsd:nonNegativeInteger,Lex1)), graph:meta),
+  write_meta_quad(Hash, def:triples, literal(type(xsd:nonNegativeInteger,Lex2)), graph:meta).
 
 bnode_prefix(Segments, BNodePrefix) :-
   setting(rdf_term:bnode_prefix_scheme, Scheme),

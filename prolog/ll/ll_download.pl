@@ -15,16 +15,22 @@
 
 ll_download :-
   % precondition
-  start_seed(Seed),
-  debug(ll(download), "┌─> downloading ~a", [Seed.url]),
-  write_meta_now(Seed.hash, downloadBegin),
-  write_meta_quad(Seed.hash, def:url, literal(type(xsd:anyURI,Seed.url)), graph:meta),
+  (   debugging(ll(Hash,_))
+  ->  hash_url(Hash, Url)
+  ;   start_seed(Seed),
+      Hash = Seed.hash,
+      Url = Seed.url
+  ),
+  debug(ll(_,download), "┌─> downloading ~a ~a", [Hash,Url]),
+  write_meta_now(Hash, downloadBegin),
+  write_meta_quad(Hash, def:url, literal(type(xsd:anyURI,Url)), graph:meta),
   % operation
-  catch(download_url(Seed.hash, Seed.url, MediaType), E, true),
+  catch(download_url(Hash, Url, MediaType), E, true),
   % postcondition
-  write_meta_now(Seed.hash, downloadEnd),
-  failure_success(Seed.hash, downloaded, MediaType, E),
-  debug(ll(download), "└─< downloaded ~a", [Seed.url]).
+  write_meta_now(Hash, downloadEnd),
+  failure_success(Hash, downloaded, MediaType, E),
+  gtrace,
+  debug(ll(_,download), "└─< downloaded ~a ~a", [Hash,Url]).
 
 download_url(Hash, Uri, MediaType) :-
   hash_file(Hash, dirty, File),

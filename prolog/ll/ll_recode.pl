@@ -26,14 +26,14 @@ ll_recode :-
     ignore(read_term_from_file(File, MediaType)),
     delete_file(File)
   )),
-  debug(ll(recode), "┌> recoding ~a", [Hash]),
+  debug(ll(_,recode), "┌> recoding ~a", [Hash]),
   write_meta_now(Hash, recodeBegin),
   % operation
   catch(recode_file(Hash, MediaType), E, true),
   % postcondition
   write_meta_now(Hash, recodeEnd),
   failure_success(Hash, recoded, _, E),
-  debug(ll(decompress), "└─> recoding ~a", [Hash]).
+  debug(ll(_,recode), "└─> recoding ~a", [Hash]).
 
 recode_file(Hash, MediaType) :-
   hash_file(Hash, 'dirty.gz', File),
