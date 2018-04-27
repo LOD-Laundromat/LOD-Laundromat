@@ -15,7 +15,7 @@
 
 ll_download :-
   % precondition
-  seed_by_status(stale, patch, Seed),
+  start_seed(Seed),
   debug(ll(download), "┌─> downloading ~a", [Seed.url]),
   write_meta_now(Seed.hash, downloadBegin),
   write_meta_quad(Seed.hash, def:url, literal(type(xsd:anyURI,Seed.url)), graph:meta),

@@ -97,14 +97,16 @@ ll_upload_data_file(Hash) :-
 %! ll_upload_metadata is det.
 
 ll_upload_metadata :-
+  Base = 'meta.nq',
+  file_name_extension(Base, gz, ToFile),
   setup_call_cleanup(
-    gzopen('meta.nq.gz', write, Out),
+    gzopen(ToFile, write, Out),
     forall(
-      find_hash_file(parsed, Hash),
+      find_hash_file(finished, Hash),
       (
-        hash_file(Hash, 'meta.nq', File),
+        hash_file(Hash, Base, FromFile),
         setup_call_cleanup(
-          open(File, read, In),
+          open(FromFile, read, In),
           copy_stream_data(In, Out),
           close(In)
         )
@@ -117,8 +119,9 @@ ll_upload_metadata :-
   dataset_upload(
     'lod-laundromat',
     metadata,
-    _{files: ['meta.nq.gz'], prefixes: [bnode,def,error,graph,http,id]}
-  ).
+    _{files: [ToFile], prefixes: [bnode,def,error,graph,http,id]}
+  ),
+  delete_file(ToFile).
 
 
 

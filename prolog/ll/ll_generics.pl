@@ -1,6 +1,7 @@
 :- module(
   ll_generics,
   [
+    end_seed/1,            % +Hash
     failure_success/4,     % +Hash, +Local, ?Term, +E
     find_hash_directory/2, % -Directory, -Hash
     find_hash_file/2,      % +Local, -Hash
@@ -9,10 +10,7 @@
     hash_entry_hash/3,     % +Hash1, +Entry, -Hash2
     hash_file/3,           % +Hash, +Local, -File
     read_term_from_file/2, % +File, -Term
-    seedlist_request/3,    % +Segments, ?Query, :Goal_1
-    seedlist_request/4,    % +Segments, ?Query, :Goal_1, +Options
-    seed_by_status/2,      % +Status, -Seed
-    seed_by_status/3,      % +Status, +Method, -Seed
+    start_seed/1,          % -Seed
     touch_hash_file/2      % +Hash, +Local
   ]
 ).
@@ -28,6 +26,7 @@
 :- use_module(library(http/json)).
 :- use_module(library(zlib)).
 
+:- use_module(library(call_ext)).
 :- use_module(library(file_ext)).
 :- use_module(library(hash_ext)).
 :- use_module(library(http/http_client2)).
@@ -39,6 +38,14 @@
     seedlist_request(+, ?, 1, +).
 
 
+
+
+
+%! end_seed(+Hash:atom) is det.
+
+end_seed(Hash) :-
+  touch_hash_file(Hash, finished),
+  seedlist_request([seed,processing], [hash(Hash)], true, [method(patch)]).
 
 
 
@@ -58,7 +65,8 @@ failure_success(Hash, Local, Term, E) :-
   ).
 % failure
 failure_success(Hash, _, _, E) :-
-  write_meta_error(Hash, E).
+  write_meta_error(Hash, E),
+  end_seed(Hash).
 
 
 
@@ -124,29 +132,6 @@ read_term_from_file_(Term, In) :-
 
 
 
-%! seed_by_status(+Status:oneof([idle,processing,stale]), -Seed:dict) is nondet.
-%! seed_by_status(+Status:oneof([idle,processing,stale]),
-%!                +Method:oneof([get,patch]), -Seed:dict) is nondet.
-
-seed_by_status(Status, Seed) :-
-  seed_by_status(Status, get, Seed).
-
-
-seed_by_status(Status, Method, Seed) :-
-  must_be(oneof([idle,processing,stale]), Status),
-  seedlist_request([seed,Status], _, seed_(Seed), [method(Method)]).
-
-seed_(Seed, In) :-
-  call_cleanup(
-    (
-      json_read_dict(In, Seeds, [value_string_as(atom)]),
-      (is_list(Seeds) -> member(Seed, Seeds) ; Seed = Seeds)
-    ),
-    close(In)
-  ).
-
-
-
 %! seedlist_request(+Segments:list(atom), ?Query:list(compound), :Goal_1) is semidet.
 %! seedlist_request(+Segments:list(atom), ?Query:list(compound), :Goal_1,
 %!                  +Options:list(compound)) is semidet.
@@ -165,6 +150,22 @@ seedlist_request(Segments, Query, Goal_1, Options) :-
     Uri,
     Goal_1,
     [accept(json),authorization(basic(User,Password))|Options]
+  ).
+
+
+
+%! start_seed(-Seed:dict) is semidet.
+
+start_seed(Seed) :-
+  seedlist_request([seed,stale], _, seed_(Seed), [method(patch)]).
+
+seed_(Seed, In) :-
+  call_cleanup(
+    (
+      json_read_dict(In, Seeds, [value_string_as(atom)]),
+      (is_list(Seeds) -> member(Seed, Seeds) ; Seed = Seeds)
+    ),
+    close(In)
   ).
 
 

@@ -104,7 +104,7 @@ write_meta_archive_list2(Node, [H|T], Out) :-
   (   T == []
   ->  rdf_equal(Next, rdf:type)
   ;   rdf_bnode_iri(Next),
-      write_meta_http_list2(Next, T, Out)
+      write_meta_archive_list2(Next, T, Out)
   ),
   rdf_write_quad(Out, Node, rdf:next, Next, graph:meta).
 
@@ -150,7 +150,6 @@ write_meta_encoding(S, [GuessEnc,HttpEnc,XmlEnc,Enc], Out) :-
 
 %! write_meta_error(+Hash:atom, +Error:compound) is det,
 
-write_meta_error(_, _) :- !.
 % existence error: Turtle prefix
 write_meta_error(Hash, error(existence_error(turtle_prefix,Alias),_Stream)) :- !,
   write_meta(Hash, {Alias,Hash}/[Out]>>(
@@ -169,8 +168,14 @@ write_meta_error(Hash, error(syntax_error(http_parameter(Param)),_)) :- !,
     rdf_write_quad(Out, O, rdf:type, error:'HttpParameter', graph:meta),
     rdf_write_quad(Out, O, error:parameter, literal(type(xsd:string,Param)), graph:meta)
   )).
-% syntax error: lexical form does not conform to the datatype IRI
-write_meta_error(Hash, incorrect_lexical_form(D,Lex)) :- !,
+% HTTP status codes
+write_meta_error(Hash, http(status(Status,_Msg),_Uri)) :- !,
+  atom_number(Local, Status),
+  rdf_global_id(http:Local, O),
+  write_meta_quad(Hash, def:error, O, graph:meta).
+% RDF syntax error: the lexical form does not occur in the lexical
+% space of the indicated datatype.
+write_meta_error(Hash, rdf(incorrect_lexical_form(D,Lex))) :- !,
   write_meta(Hash, {D,Hash,Lex}/[Out]>>(
     rdf_global_id(id:Hash, S),
     rdf_bnode_iri(O),
@@ -179,8 +184,9 @@ write_meta_error(Hash, incorrect_lexical_form(D,Lex)) :- !,
     rdf_write_quad(Out, O, error:datatype, D, graph:meta),
     rdf_write_quad(Out, O, error:lexical_form, literal(type(xsd:string,Lex)), graph:meta)
   )).
-% syntax error: missing language tag
-write_meta_error(Hash, missing_language_tag(LTag)) :- !,
+% RDF syntax error: a language-tagged string where the language tag is
+% missing.
+write_meta_error(Hash, rdf(missing_language_tag(LTag))) :- !,
   write_meta(Hash, {Hash,LTag}/[Out]>>(
     rdf_global_id(id:Hash, S),
     rdf_bnode_iri(O),
@@ -188,7 +194,17 @@ write_meta_error(Hash, missing_language_tag(LTag)) :- !,
     rdf_write_quad(Out, O, rdf:type, error:'MissingLanguageTag', graph:meta),
     rdf_write_quad(Out, O, error:languageTag, literal(type(xsd:string,LTag)), graph:meta)
   )).
-% redefined ID?
+% RDF non-canonicity: a language-tagged string where the language tag is
+% not in canonical form.
+write_meta_error(Hash, rdf(non_canonical_language_tag(LTag))) :- !,
+  write_meta(Hash, {Hash,LTag}/[Out]>>(
+    rdf_global_id(id:Hash, S),
+    rdf_bnode_iri(O),
+    rdf_write_quad(Out, S, def:canonicity, O, graph:meta),
+    rdf_write_quad(Out, O, rdf:type, error:'NonCanonicalLanguageTag', graph:meta),
+    rdf_write_quad(Out, O, error:languageTag, literal(type(xsd:string,LTag)), graph:meta)
+  )).
+% RDF: redefined ID?
 write_meta_error(Hash, rdf(redefined_id(Term))) :- !,
   write_meta(Hash, {Hash,Term}/[Out]>>(
     rdf_global_id(id:Hash, S),
@@ -198,17 +214,9 @@ write_meta_error(Hash, rdf(redefined_id(Term))) :- !,
     format(atom(Atom), "~w", [Term]),
     rdf_write_quad(Out, O, def:id, literal(type(xsd:string,Atom)), graph:meta)
   )).
-% non-canonicity: language tag
-write_meta_error(Hash, non_canonical_language_tag(LTag)) :- !,
-  write_meta(Hash, {Hash,LTag}/[Out]>>(
-    rdf_global_id(id:Hash, S),
-    rdf_bnode_iri(O),
-    rdf_write_quad(Out, S, def:canonicity, O, graph:meta),
-    rdf_write_quad(Out, O, rdf:type, error:'NonCanonicalLanguageTag', graph:meta),
-    rdf_write_quad(Out, O, error:languageTag, literal(type(xsd:string,LTag)), graph:meta)
-  )).
-% non-canonicicty: lexical form
-write_meta_error(Hash, non_canonical_lexical_form(D,Lex1,Lex2)) :- !,
+% RDF non-canonicicty: a lexical form that belongs to the lexical
+% space, but is not canonical.
+write_meta_error(Hash, rdf(non_canonical_lexical_form(D,Lex1,Lex2))) :- !,
   write_meta(Hash, {D,Hash,Lex1,Lex2}>>(
     rdf_global_id(id:Hash, S),
     rdf_bnode_iri(O),
@@ -218,9 +226,14 @@ write_meta_error(Hash, non_canonical_lexical_form(D,Lex1,Lex2)) :- !,
     rdf_write_quad(Out, O, error:lexicalForm, literal(type(xsd:string,Lex1)), graph:meta),
     rdf_write_quad(Out, O, error:canonicalLexicalForm, literal(type(xsd:string,Lex2)), graph:meta)
   )).
+% Single-statement errors
 write_meta_error(Hash, E) :-
-  error_iri(E, O),
+  error_iri(E, O), !,
   write_meta_quad(Hash, def:error, O, graph:meta).
+% Not yet handled
+write_meta_error(Hash, E) :-
+  gtrace,
+  writeln(Hash-E).
 
 % archive error
 error_iri(error(archive_error(2,'Missing type keyword in mtree specification'),_Context), error:missingTypeKeywordInMtreeSpec).
@@ -239,21 +252,6 @@ error_iri(error(socket_error('No Data'),_), error:noData).
 error_iri(error(socket_error('No Recovery'),_), error:noRecovery).
 error_iri(error(socket_error('No route to host'),_), error:noRouteToHost).
 error_iri(error(socket_error('Try Again'),_), error:tryAgain).
-% HTTP status
-error_iri(http(status(301),_Uri), http:'301').
-error_iri(http(status(302),_Uri), http:'302').
-error_iri(http(status(400),_Uri), http:'400').
-error_iri(http(status(401),_Uri), http:'401').
-error_iri(http(status(403),_Uri), http:'403').
-error_iri(http(status(404),_Uri), http:'404').
-error_iri(http(status(406),_Uri), http:'406').
-error_iri(http(status(410),_Uri), http:'410').
-error_iri(http(status(500),_Uri), http:'500').
-error_iri(http(status(502),_Uri), http:'502').
-error_iri(http(status(503),_Uri), http:'503').
-error_iri(http(status(504),_Uri), http:'504').
-error_iri(http(status(522),_Uri), http:'522').
-error_iri(http(status(523),_Uri), http:'523').
 % I/O errors
 error_iri(error(io_error(read,_Stream),_Context), http:ioError).
 % syntax error

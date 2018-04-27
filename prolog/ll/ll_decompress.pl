@@ -13,6 +13,7 @@
 :- use_module(library(debug_ext)).
 :- use_module(library(ll/ll_generics)).
 :- use_module(library(ll/ll_metadata)).
+:- use_module(library(sw/rdf_prefix)).
 
 ll_decompress :-
   % precondition
