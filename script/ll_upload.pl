@@ -84,11 +84,9 @@ ll_upload_data(Hash) :-
   indent_debug(-1, ll(upload), "< uploaded ~a", [Hash]).
 
 ll_upload_data_file(Hash) :-
-  hash_file(Hash, 'data.nq.gz', File1),
-  hash_file(Hash, 'meta.nq', File2),
-  compress_file(File2),
-  dataset_create('lod-laundromat', Hash, _{}, _),
-  dataset_upload('lod-laundromat', Hash, _{files: [File1,File2]}).
+  maplist(hash_file(Hash), ['data.nq.gz','meta.nq.gz'], [DataFile,MetaFile]),
+  ignore(dataset_delete('lod-laundromat', Hash)),
+  dataset_upload('lod-laundromat', Hash, _{files: [DataFile,MetaFile]}).
 
 
 
@@ -112,7 +110,6 @@ ll_upload_metadata :-
     close(Out)
   ),
   ignore(dataset_delete('lod-laundromat', metadata)),
-  dataset_create('lod-laundromat', metadata, _{}, _),
   dataset_upload(
     'lod-laundromat',
     metadata,
