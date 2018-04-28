@@ -34,15 +34,7 @@ ll_parse :-
   indent_debug(1, ll(_,parse), "> parsing ~a", [Hash]),
   write_meta_now(Hash, parseBegin),
   % operation
-  thread_create(parse_file(Hash), Id, [alias(Hash)]),
-  thread_join(Id, Status),
-  (   Status == true
-  ->  true
-  ;   Status = exception(E)
-  ->  write_meta_error(Hash, E)
-  ;   Status == false
-  ->  write_meta_error(Hash, fail)
-  ),
+  catch(parse_file(Hash), E, true),
   % postcondition
   write_meta_now(Hash, parseEnd),
   (var(E) -> end_task(Hash, parsed) ; write_meta_error(Hash, E)),
