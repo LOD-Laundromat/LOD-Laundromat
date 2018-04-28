@@ -64,9 +64,14 @@ decompress_stream(Hash, In) :-
     )
   ).
 
-% open entry
+% open entries
 decompress_archive(Hash, Arch) :-
-  archive_data_stream(Arch, In, [meta_data(ArchMetas)]), %NONDET
+  forall(
+    archive_data_stream(Arch, In, [meta_data(ArchMetas)]),
+    decompress_archive_entry(Hash, In, ArchMetas)
+  ).
+
+decompress_archive_entry(Hash, In, ArchMetas) :-
   write_meta_archive(Hash, ArchMetas),
   ArchMetas = [ArchMeta|_],
   indent_debug(1, ll(_,decompress), "> ~w OPEN ENTRY ~w ‘~a’", [Arch,In,ArchMeta.name]),
