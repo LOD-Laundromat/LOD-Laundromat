@@ -7,7 +7,6 @@
 */
 
 :- use_module(library(archive)).
-:- use_module(library(zlib)).
 
 :- use_module(library(archive_ext)).
 :- use_module(library(debug_ext)).
@@ -31,7 +30,7 @@ ll_decompress :-
   (   var(E)
   ->  % Check whether there is any data to recode, or whether all data
       % is now stored under different hashes.
-      hash_file(Hash, 'dirty.gz', DataFile),
+      hash_file(Hash, dirty, DataFile),
       (   exists_file(DataFile)
       ->  end_task(Hash, decompressed, MediaType)
       ;   finish(Hash)
@@ -45,7 +44,7 @@ ll_decompress :-
 
 % open dirty file
 decompress_file(Hash) :-
-  hash_file(Hash, dirty, File),
+  hash_file(Hash, compressed, File),
   setup_call_cleanup(
     open(File, read, In),
     decompress_stream(Hash, In),
@@ -82,18 +81,17 @@ decompress_archive(Hash, Arch) :-
 
 % leaf node
 decompress_entry(Hash, data, In) :- !,
-  hash_file(Hash, 'dirty.gz', File),
+  hash_file(Hash, dirty, File),
+  file_name_extension(File, tmp, TmpFile),
   setup_call_cleanup(
-    gzopen(File, write, Out),
+    open(TmpFile, write, Out),
     copy_stream_data(In, Out),
     close_metadata(Hash, decompressWrite, Out)
-  ),
-  hash_file(Hash, dirty, File0),
-  delete_file(File0).
+  ).
 % non-leaf node
 decompress_entry(Hash1, Entry, In) :-
   hash_entry_hash(Hash1, Entry, Hash2),
-  hash_file(Hash2, dirty, File),
+  hash_file(Hash2, compressed, File),
   setup_call_cleanup(
     open(File, write, Out),
     copy_stream_data(In, Out),

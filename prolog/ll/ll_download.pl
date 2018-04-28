@@ -40,7 +40,7 @@ ll_download :-
   indent_debug(-1, ll(_,download), "< downloaded ~a ~a", [Hash,Url]).
 
 download_url(Hash, Uri, MediaType, Status) :-
-  hash_file(Hash, dirty, File),
+  hash_file(Hash, compressed, File),
   setup_call_cleanup(
     open(File, write, Out, [type(binary)]),
     download_stream(Hash, Uri, Out, MediaType, Status),

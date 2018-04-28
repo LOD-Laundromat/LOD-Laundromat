@@ -50,15 +50,18 @@ ll_parse :-
   indent_debug(-1, ll(_,parse), "< parsed ~a", [Hash]).
 
 parse_file(Hash) :-
-  maplist(hash_file(Hash), ['dirty.gz','clean.nq.gz'], [File1,File2]),
-  ignore(rdf_guess_file(File1, 10 000, MediaType)),
+  maplist(hash_file(Hash), [dirty,'data.nq.gz'], [FromFile,ToFile]),
+  ignore(rdf_guess_file(FromFile, 10 000, MediaType)),
   format(atom(Lex), "~w", [MediaType]),
   write_meta_quad(Hash, def:serializationFormat, literal(type(xsd:string,Lex)), graph:meta),
   bnode_prefix([Hash], BNodePrefix),
   RdfMeta = _{number_of_quadruples: 0, number_of_triples: 0},
-  uri_file_name(BaseUri, File1),
+  uri_file_name(BaseUri, FromFile),
   setup_call_cleanup(
-    maplist(gzopen, [File1,File2], [read,write], [In,Out]),
+    (
+      open(FromFile, read, In),
+      gzopen(ToFile, write, Out)
+    ),
     rdf_deref_stream(
       BaseUri,
       In,
