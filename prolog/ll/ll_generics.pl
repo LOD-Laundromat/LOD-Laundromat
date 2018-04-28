@@ -171,7 +171,7 @@ seedlist_request(Segments, Query, Goal_1, Options) :-
   http_call(
     Uri,
     Goal_1,
-    [accept(json),authorization(basic(User,Password))|Options]
+    [accept(json),authorization(basic(User,Password)),failure(404)|Options]
   ).
 
 
