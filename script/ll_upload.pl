@@ -84,7 +84,7 @@ ll_upload_data(Hash) :-
   debug(ll(upload), "└─< uploaded ~a", [Hash]).
 
 ll_upload_data_file(Hash) :-
-  hash_file(Hash, 'clean.nq.gz', File1),
+  hash_file(Hash, 'data.nq.gz', File1),
   hash_file(Hash, 'meta.nq', File2),
   compress_file(File2),
   dataset_create('lod-laundromat', Hash, _{}, _),
