@@ -5,6 +5,7 @@
     write_meta/2,          % +Hash, :Goal_1
     write_meta_archive/2,  % +Hash, +Metadata
     write_meta_encoding/2, % +Hash, +Encodings
+    write_meta_entry/2,    % +Hash1, +Hash2
     write_meta_error/2,    % +Hash, +Error
     write_meta_http/2,     % +Hash, +Metadata
     write_meta_now/2,      % +Hash, +PLocal
@@ -151,6 +152,16 @@ write_meta_encoding(S, [GuessEnc,HttpEnc,XmlEnc,Enc], Out) :-
 
 
 
+%! write_meta_entry(+Hash1:atom, +Hash2:atom) is det.
+
+write_meta_entry(Hash1, Hash2) :-
+  rdf_global_id(id:Hash1, O1),
+  rdf_global_id(id:Hash2, O2),
+  write_meta_quad(Hash1, def:hasEntry, O2, graph:meta),
+  write_meta_quad(Hash2, def:hasArchive, O1, graph:meta).
+
+
+
 %! write_meta_error(+Hash:atom, +Error:compound) is det,
 
 % existence error: Turtle prefix
@@ -261,6 +272,7 @@ write_meta_error(Hash, E) :-
 
 % archive error
 error_iri(error(archive_error(2,'Missing type keyword in mtree specification'),_Context), error:missingTypeKeywordInMtreeSpec).
+error_iri(error(archive_error(25,'Invalid central directory signature'),_Context), error:invalidCentralDirectorySignature).
 error_iri(error(archive_error(29,'Missing type keyword in mtree specification'),_Context), error:missingTypeKeywordInMtreeSpec).
 error_iri(error(archive_error(104,'Truncated input file (needed 444997632 bytes, only 0 available)'),_Context), error:truncatedInputFile).
 % domain errors

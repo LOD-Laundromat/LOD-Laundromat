@@ -1,11 +1,12 @@
 :- module(
   ll_generics,
   [
-    end_seed/1,            % +Hash
-    failure_success/4,     % +Hash, +Local, ?Term, +E
+    end_task/2,            % +Hash, +Local
+    end_task/3,            % +Hash, +Local, ?Term
     find_hash_directory/2, % -Directory, -Hash
-    find_hash_file/2,      % +Local, -Hash
+    find_hash/2,           % +Local, -Hash
     find_hash_file/3,      % +Local, -Hash, -File
+    finish/1,              % +Hash
     hash_directory/2,      % +Hash, -Directory
     hash_entry_hash/3,     % +Hash1, +Entry, -Hash2
     hash_file/3,           % +Hash, +Local, -File
@@ -45,32 +46,25 @@
 
 
 
-%! end_seed(+Hash:atom) is det.
+%! end_task(+Hash:atom, +Local:atom) is det.
+%! end_task(+Hash:atom, +Local:atom, +Term:term) is det.
+%
+% Term stores information that is carried over to the next task.
 
-end_seed(Hash) :-
-  touch_hash_file(Hash, finished),
-  seedlist_request([seed,processing], [hash(Hash)], true, [method(patch)]).
+end_task(Hash, Local) :-
+  touch_hash_file(Hash, Local).
 
 
-
-%! failure_success(+Hash:atom, +Local:atom, ?Term:term, +E:compound) is det.
-
-% success
-failure_success(Hash, Local, Term, E) :-
-  var(E), !,
-  (   var(Term)
-  ->  touch_hash_file(Hash, Local)
-  ;   hash_file(Hash, Local, File),
-      setup_call_cleanup(
-        open(File, write, Out),
-        format(Out, "~W\n", [Term,[quoted(true)]]),
-        close(Out)
-      )
+end_task(Hash, Local, Term) :-
+  var(Term), !,
+  end_task(Hash, Local).
+end_task(Hash, Local, Term) :-
+  hash_file(Hash, Local, File),
+  setup_call_cleanup(
+    open(File, write, Out),
+    format(Out, "~W\n", [Term,[quoted(true)]]),
+    close(Out)
   ).
-% failure
-failure_success(Hash, _, _, E) :-
-  write_meta_error(Hash, E),
-  end_seed(Hash).
 
 
 
@@ -84,17 +78,33 @@ find_hash_directory(Dir2, Hash) :-
 
 
 
-%! find_hash_file(+Local:atom, -Hash:atom) is nondet.
-%! find_hash_file(+Local:atom, -Hash:atom, -File:atom) is nondet.
+%! find_hash(+Local:atom, -Hash:atom) is nondet.
 
-find_hash_file(Local, Hash) :-
+find_hash(Local, Hash) :-
   find_hash_file(Local, Hash, _).
 
+
+
+%! find_hash_file(+Local:atom, -Hash:atom, -File:atom) is nondet.
 
 find_hash_file(Local, Hash, File) :-
   find_hash_directory(Dir, Hash),
   directory_file_path(Dir, Local, File),
   exists_file(File).
+
+
+
+%! finish(+Hash:atom) is det.
+
+finish(Hash) :-
+  touch_hash_file(Hash, finished),
+  hash_file(Hash, 'meta.nq', File),
+  compress_file(File),
+  delete_file(File),
+  (   seedlist_request([seed,processing], [hash(Hash)], true)
+  ->  seedlist_request([seed,processing], [hash(Hash)], true, [method(patch)])
+  ;   true
+  ).
 
 
 

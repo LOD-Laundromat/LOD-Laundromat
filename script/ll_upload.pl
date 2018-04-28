@@ -78,7 +78,7 @@ ll_clear_users :-
 %! ll_upload_data(-Hash:atom) is nondet.
 
 ll_upload_data(Hash) :-
-  find_hash_file(parsed, Hash), %NONDET
+  find_hash(parsed, Hash), %NONDET
   debug(ll(upload), "┌─> uploading ~a", [Hash]),
   ll_upload_data_file(Hash),
   debug(ll(upload), "└─< uploaded ~a", [Hash]).
@@ -95,16 +95,15 @@ ll_upload_data_file(Hash) :-
 %! ll_upload_metadata is det.
 
 ll_upload_metadata :-
-  Base = 'meta.nq',
-  file_name_extension(Base, gz, ToFile),
+  ToFile = 'meta.nq.gz',
   setup_call_cleanup(
     gzopen(ToFile, write, Out),
     forall(
-      find_hash_file(finished, Hash),
+      find_hash(finished, Hash),
       (
-        hash_file(Hash, Base, FromFile),
+        hash_file(Hash, ToFile, FromFile),
         setup_call_cleanup(
-          open(FromFile, read, In),
+          gzopen(FromFile, read, In),
           copy_stream_data(In, Out),
           close(In)
         )

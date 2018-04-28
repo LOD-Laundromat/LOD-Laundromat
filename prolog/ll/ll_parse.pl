@@ -45,8 +45,9 @@ ll_parse :-
   ),
   % postcondition
   write_meta_now(Hash, parseEnd),
-  failure_success(Hash, parsed, _, E),
-  end_seed(Hash),
+  (var(E) -> true ; write_meta_error(Hash, E)),
+  end_task(Hash, parsed),
+  finish(Hash),
   debug(ll(_,parse), "└─< parsed ~a", [Hash]).
 
 parse_file(Hash) :-

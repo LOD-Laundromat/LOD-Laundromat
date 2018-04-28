@@ -28,8 +28,8 @@ ll_download :-
   catch(download_url(Hash, Url, MediaType), E, true),
   % postcondition
   write_meta_now(Hash, downloadEnd),
-  failure_success(Hash, downloaded, MediaType, E),
-  gtrace,
+  (var(E) -> true ; write_meta_error(Hash, E)),
+  end_task(Hash, downloaded, MediaType),
   debug(ll(_,download), "└─< downloaded ~a ~a", [Hash,Url]).
 
 download_url(Hash, Uri, MediaType) :-

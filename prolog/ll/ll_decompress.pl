@@ -28,7 +28,14 @@ ll_decompress :-
   catch(decompress_file(Hash), E, true),
   % postcondition
   write_meta_now(Hash, decompressEnd),
-  failure_success(Hash, decompressed, MediaType, E),
+  (var(E) -> true ; write_meta_error(Hash, E)),
+  % Check whether there is any data to recode, or whether all data is
+  % now stored under different hashes.
+  hash_file(Hash, 'dirty.gz', File),
+  (   exists_file(File)
+  ->  end_task(Hash, decompressed, MediaType)
+  ;   finish(Hash)
+  ),
   indent_debug(1, ll(_,decompress), "> decompressing ~a", [Hash]).
 
 
@@ -79,8 +86,7 @@ decompress_entry(Hash, data, In) :- !,
     close_metadata(Hash, decompressWrite, Out)
   ),
   hash_file(Hash, dirty, File0),
-  delete_file(File0),
-  touch_hash_file(Hash, decompressed).
+  delete_file(File0).
 % non-leaf node
 decompress_entry(Hash1, Entry, In) :-
   hash_entry_hash(Hash1, Entry, Hash2),
@@ -90,8 +96,5 @@ decompress_entry(Hash1, Entry, In) :-
     copy_stream_data(In, Out),
     close_metadata(Hash2, decompressWrite, Out)
   ),
-  rdf_global_id(id:Hash1, O1),
-  rdf_global_id(id:Hash2, O2),
-  write_meta_quad(Hash1, def:hasEntry, O2, graph:meta),
-  write_meta_quad(Hash2, def:hasArchive, O1, graph:meta),
-  touch_hash_file(Hash1, decompressed).
+  write_meta_entry(Hash1, Hash2),
+  touch_hash_file(Hash2, downloaded).

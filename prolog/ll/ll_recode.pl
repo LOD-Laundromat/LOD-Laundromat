@@ -32,7 +32,8 @@ ll_recode :-
   catch(recode_file(Hash, MediaType), E, true),
   % postcondition
   write_meta_now(Hash, recodeEnd),
-  failure_success(Hash, recoded, _, E),
+  (var(E) -> true ; write_meta_error(Hash, E)),
+  end_task(Hash, recoded),
   debug(ll(_,recode), "└─> recoding ~a", [Hash]).
 
 recode_file(Hash, MediaType) :-
