@@ -266,6 +266,7 @@ write_meta_error(Hash, E) :-
 
 % archive error
 error_iri(error(archive_error(2,'Missing type keyword in mtree specification'),_Context), error:missingTypeKeywordInMtreeSpec).
+error_iri(error(archive_error(22,'Invalid central directory signature'),_Context), error:invalidCentralDirectorySignature).
 error_iri(error(archive_error(25,'Invalid central directory signature'),_Context), error:invalidCentralDirectorySignature).
 error_iri(error(archive_error(29,'Missing type keyword in mtree specification'),_Context), error:missingTypeKeywordInMtreeSpec).
 error_iri(error(archive_error(104,'Truncated input file (needed 444997632 bytes, only 0 available)'),_Context), error:truncatedInputFile).
@@ -300,6 +301,7 @@ error_iri(error(syntax_error('Illegal IRIREF'),_Stream), error:illegalIriref).
 error_iri(error(syntax_error('Invalid @base directive'),_Stream), error:invalidBaseDirective).
 error_iri(error(syntax_error('Invalid @prefix directive'),_Stream), error:invalidPrefixDirective).
 error_iri(error(syntax_error('newline in string'),_Stream), error:newlineInString).
+error_iri(error(syntax_error('newline in uriref'),_Stream), error:newlineInUriref).
 error_iri(error(syntax_error('PN_PREFIX expected'),_Stream), error:pnPrefixExpected).
 error_iri(error(syntax_error('predicate expected'),_Stream), error:predicateExpected).
 error_iri(error(syntax_error('predicate not followed by whitespace'),_Stream), error:predicateWhitespace).
