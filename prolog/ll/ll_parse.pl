@@ -28,8 +28,8 @@
 ll_parse :-
   % precondition
   with_mutex(ll_parse, (
-    find_hash_file(recoded, Hash, File),
-    delete_file(File)
+    find_hash_file(recoded, Hash, TaskFile),
+    delete_file(TaskFile)
   )),
   debug(ll(_,parse), "┌─> parsing ~a", [Hash]),
   write_meta_now(Hash, parseBegin),
@@ -45,8 +45,7 @@ ll_parse :-
   ),
   % postcondition
   write_meta_now(Hash, parseEnd),
-  (var(E) -> true ; write_meta_error(Hash, E)),
-  end_task(Hash, parsed),
+  (var(E) -> end_task(Hash, parsed) ; write_meta_error(Hash, E)),
   finish(Hash),
   debug(ll(_,parse), "└─< parsed ~a", [Hash]).
 

@@ -184,12 +184,6 @@ write_meta_error_2(S, Param, Out) :-
   rdf_write_quad(Out, O, rdf:type, error:'HttpParameter', graph:meta),
   rdf_write_quad(Out, O, error:parameter, literal(type(xsd:string,Param)), graph:meta).
 
-% HTTP status codes
-write_meta_error(Hash, http(status(Status,_Msg),_Uri)) :- !,
-  atom_number(Local, Status),
-  rdf_global_id(http:Local, O),
-  write_meta_quad(Hash, def:error, O, graph:meta).
-
 % RDF syntax error: the lexical form does not occur in the lexical
 % space of the indicated datatype.
 write_meta_error(Hash, rdf(incorrect_lexical_form(D,Lex))) :- !,

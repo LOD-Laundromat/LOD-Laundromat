@@ -18,9 +18,9 @@
 ll_decompress :-
   % precondition
   with_mutex(ll_decompress, (
-    find_hash_file(downloaded, Hash, File),
-    ignore(read_term_from_file(File, MediaType)),
-    delete_file(File)
+    find_hash_file(downloaded, Hash, TaskFile),
+    ignore(read_term_from_file(TaskFile, MediaType)),
+    delete_file(TaskFile)
   )),
   indent_debug(1, ll(_,decompress), "> decompressing ~a", [Hash]),
   write_meta_now(Hash, decompressBegin),
@@ -28,13 +28,16 @@ ll_decompress :-
   catch(decompress_file(Hash), E, true),
   % postcondition
   write_meta_now(Hash, decompressEnd),
-  (var(E) -> true ; write_meta_error(Hash, E)),
-  % Check whether there is any data to recode, or whether all data is
-  % now stored under different hashes.
-  hash_file(Hash, 'dirty.gz', File),
-  (   exists_file(File)
-  ->  end_task(Hash, decompressed, MediaType)
-  ;   finish(Hash)
+  (   var(E)
+  ->  % Check whether there is any data to recode, or whether all data
+      % is now stored under different hashes.
+      hash_file(Hash, 'dirty.gz', DataFile),
+      (   exists_file(DataFile)
+      ->  end_task(Hash, decompressed, MediaType)
+      ;   finish(Hash)
+      )
+  ;   write_meta_error(Hash, E),
+      finish(Hash)
   ),
   indent_debug(1, ll(_,decompress), "> decompressing ~a", [Hash]).
 

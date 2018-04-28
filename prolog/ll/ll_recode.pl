@@ -22,9 +22,9 @@
 ll_recode :-
   % precondition
   with_mutex(ll_recode, (
-    find_hash_file(decompressed, Hash, File),
-    ignore(read_term_from_file(File, MediaType)),
-    delete_file(File)
+    find_hash_file(decompressed, Hash, TaskFile),
+    ignore(read_term_from_file(TaskFile, MediaType)),
+    delete_file(TaskFile)
   )),
   debug(ll(_,recode), "┌> recoding ~a", [Hash]),
   write_meta_now(Hash, recodeBegin),
@@ -32,8 +32,11 @@ ll_recode :-
   catch(recode_file(Hash, MediaType), E, true),
   % postcondition
   write_meta_now(Hash, recodeEnd),
-  (var(E) -> true ; write_meta_error(Hash, E)),
-  end_task(Hash, recoded),
+  (   var(E)
+  ->  end_task(Hash, recoded)
+  ;   write_meta_error(Hash, E),
+      finish(Hash)
+  ),
   debug(ll(_,recode), "└─> recoding ~a", [Hash]).
 
 recode_file(Hash, MediaType) :-

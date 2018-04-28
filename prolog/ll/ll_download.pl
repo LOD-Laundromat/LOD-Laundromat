@@ -25,28 +25,34 @@ ll_download :-
   write_meta_now(Hash, downloadBegin),
   write_meta_quad(Hash, def:url, literal(type(xsd:anyURI,Url)), graph:meta),
   % operation
-  catch(download_url(Hash, Url, MediaType), E, true),
+  catch(download_url(Hash, Url, MediaType, Status), E, true),
   % postcondition
   write_meta_now(Hash, downloadEnd),
-  (var(E) -> true ; write_meta_error(Hash, E)),
-  end_task(Hash, downloaded, MediaType),
+  (   var(E)
+  ->  (   between(200, 299, Status)
+      ->  end_task(Hash, downloaded, MediaType)
+      ;   assertion(between(400, 599, Status)),
+          finish(Hash)
+      )
+  ;   write_meta_error(Hash, E),
+      finish(Hash)
+  ),
   debug(ll(_,download), "└─< downloaded ~a ~a", [Hash,Url]).
 
-download_url(Hash, Uri, MediaType) :-
+download_url(Hash, Uri, MediaType, Status) :-
   hash_file(Hash, dirty, File),
   setup_call_cleanup(
     open(File, write, Out, [type(binary)]),
-    download_stream(Hash, Uri, Out, MediaType),
+    download_stream(Hash, Uri, Out, MediaType, Status),
     close_metadata(Hash, downloadWritten, Out)
   ).
 
-download_stream(Hash, Uri, Out, MediaType) :-
+download_stream(Hash, Uri, Out, MediaType, Status) :-
   findall(RdfMediaType, rdf_media_type(RdfMediaType), RdfMediaTypes),
   http_open2(Uri, In, [accept(RdfMediaTypes),metadata(HttpMetas)]),
   ignore(http_metadata_content_type(HttpMetas, MediaType)),
   write_meta_http(Hash, HttpMetas),
-  HttpMetas = [HttpMeta|_],
-  between(200, 299, HttpMeta.status),
+  http_metadata_status(HttpMetas, Status),
   call_cleanup(
     copy_stream_data(In, Out),
     close_metadata(Hash, downloadRead, In)
