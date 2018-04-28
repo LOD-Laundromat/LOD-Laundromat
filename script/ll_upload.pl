@@ -16,11 +16,11 @@
 */
 
 :- use_module(library(apply)).
-:- use_module(library(debug)).
 :- use_module(library(settings)).
 :- use_module(library(zlib)).
 
 :- use_module(library(conf_ext)).
+:- use_module(library(debug_ext)).
 :- use_module(library(file_ext)).
 :- use_module(library(http/tapir)).
 :- use_module(library(ll/ll_generics)).
@@ -79,9 +79,9 @@ ll_clear_users :-
 
 ll_upload_data(Hash) :-
   find_hash(parsed, Hash), %NONDET
-  debug(ll(upload), "┌─> uploading ~a", [Hash]),
+  indent_debug(1, ll(upload), "> uploading ~a", [Hash]),
   ll_upload_data_file(Hash),
-  debug(ll(upload), "└─< uploaded ~a", [Hash]).
+  indent_debug(-1, ll(upload), "< uploaded ~a", [Hash]).
 
 ll_upload_data_file(Hash) :-
   hash_file(Hash, 'data.nq.gz', File1),
