@@ -164,6 +164,17 @@ write_meta_entry(Hash1, Hash2) :-
 
 %! write_meta_error(+Hash:atom, +Error:compound) is det,
 
+write_meta_error(Hash, error(archive_error(Code,Msg),_Context)) :- !,
+  rdf_global_id(id:Hash, S),
+  atom_number(Lex, Code),
+  write_meta(Hash, write_meta_error_0(S, Lex, Msg)).
+write_meta_error_0(S, Lex, Msg, Out) :-
+  rdf_bnode_iri(O),
+  rdf_write_quad(Out, S, def:error, O, graph:meta),
+  rdf_write_quad(Out, O, rdf:type, error:'ArchiveError', graph:meta),
+  rdf_write_quad(Out, O, def:code, literal(type(xsd:positiveInteger,Lex)), graph:meta),
+  rdf_write_quad(Out, O, def:message, literal(type(xsd:string,Msg)), graph:meta).
+
 % existence error: Turtle prefix
 write_meta_error(Hash, error(existence_error(turtle_prefix,Alias),_Stream)) :- !,
   rdf_global_id(id:Hash, S),
@@ -174,15 +185,79 @@ write_meta_error_1(S, Alias, Out) :-
   rdf_write_quad(Out, O, rdf:type, error:'MissingTurtlePrefixDefinition', graph:meta),
   rdf_write_quad(Out, O, error:alias, literal(type(xsd:string,Alias)), graph:meta).
 
+% socket error:
+% - Connection refused
+% - Connection reset by peer
+% - Connection timed out
+% - Host not found
+% - No Data
+% - No Recovery
+% - No route to host
+% - Try Again
+write_meta_error(Hash, error(socket_error(Msg),_Context)) :- !,
+  rdf_global_id(id:Hash, S),
+  write_meta(Hash, write_socket_error(S, Msg)).
+write_socket_error(S, Msg, Out) :-
+  rdf_bnode_iri(O),
+  rdf_write_quad(Out, S, def:error, O, graph:meta),
+  rdf_write_quad(Out, O, rdf:type, error:'SocketError', graph:meta),
+  rdf_write_quad(Out, O, error:message, literal(type(xsd:string,Msg)), graph:meta).
+
 % syntax error: HTTP parameter
 write_meta_error(Hash, error(syntax_error(http_parameter(Param)),_)) :- !,
   rdf_global_id(id:Hash, S),
-  write_meta(Hash, write_meta_error_2(S, Param)).
-write_meta_error_2(S, Param, Out) :-
+  write_meta(Hash, write_http_parameter_error(S, Param)).
+write_http_parameter_error(S, Param, Out) :-
   rdf_bnode_iri(O),
   rdf_write_quad(Out, S, def:error, O, graph:meta),
-  rdf_write_quad(Out, O, rdf:type, error:'HttpParameter', graph:meta),
+  rdf_write_quad(Out, O, rdf:type, error:'HttpParameterError', graph:meta),
   rdf_write_quad(Out, O, error:parameter, literal(type(xsd:string,Param)), graph:meta).
+
+% RDF syntax error:
+% - end-of-line expected
+% - End of statement expected
+% - EOF in string
+% - EOF in uriref
+% - Expected ":"
+% - Expected "]"
+% - Expected ":" after "_"
+% - Illegal \\-escape
+% - Illegal character in uriref
+% - Illegal control character in uriref
+% - illegal escape
+% - Illegal IRIREF
+% - Invalid @base directive
+% - Invalid @prefix directive
+% - invalid node ID
+% - newline in string
+% - newline in uriref
+% - PN_PREFIX expected
+% - predicate expected
+% - predicate not followed by whitespace
+% - subject expected
+% - subject not followed by whitespace
+% - Unexpected "." (missing object)
+% - Unexpected newline in short string
+% - LANGTAG expected
+write_meta_error(Hash, error(syntax_error(Msg),Stream0)) :- !,
+  (Stream0 = stream(Stream,_,_,_) -> true ; Stream = Stream0),
+  stream_property(Stream, position(Pos)),
+  stream_position_data(line_count, Pos, Line),
+  stream_position_data(line_position, Pos, Column),
+  write_syntax_error_1(Hash, Msg, Line, Column).
+write_meta_error(Hash, error(syntax_error(Msg),_Stream,Line,Column,_)) :- !,
+  write_syntax_error_1(Hash, Msg, Line, Column).
+write_syntax_error_1(Hash, Msg, Line, Column) :-
+  rdf_global_id(id:Hash, S),
+  maplist(atom_number, [Lex1,Lex2], [Line,Column]),
+  write_meta(Hash, write_syntax_error_2(S, Msg, Lex1, Lex2)).
+write_syntax_error_2(S, Msg, Lex1, Lex2, Out) :-
+  rdf_bnode_iri(O),
+  rdf_write_quad(Out, S, def:error, O, graph:meta),
+  rdf_write_quad(Out, O, rdf:type, error:'ParseError', graph:meta),
+  rdf_write_quad(Out, O, def:line, literal(type(xsd:nonNegativeInteger,Lex1)), graph:meta),
+  rdf_write_quad(Out, O, def:column, literal(type(xsd:nonNegativeInteger,Lex2)), graph:meta),
+  rdf_write_quad(Out, O, def:message, literal(type(xsd:string,Msg)), graph:meta).
 
 % RDF syntax error: the lexical form does not occur in the lexical
 % space of the indicated datatype.
@@ -264,52 +339,12 @@ write_meta_error(Hash, E) :-
   gtrace,
   writeln(Hash-E).
 
-% archive error
-error_iri(error(archive_error(2,'Missing type keyword in mtree specification'),_Context), error:missingTypeKeywordInMtreeSpec).
-error_iri(error(archive_error(22,'Invalid central directory signature'),_Context), error:invalidCentralDirectorySignature).
-error_iri(error(archive_error(25,'Invalid central directory signature'),_Context), error:invalidCentralDirectorySignature).
-error_iri(error(archive_error(29,'Missing type keyword in mtree specification'),_Context), error:missingTypeKeywordInMtreeSpec).
-error_iri(error(archive_error(104,'Truncated input file (needed 444997632 bytes, only 0 available)'),_Context), error:truncatedInputFile).
 % domain errors
 error_iri(error(domain_error(http_encoding,identity),_Context), error:httpEncodingIdentity).
 error_iri(error(domain_error(set_cookie,_Value),_Context), error:setCookie).
 error_iri(error(domain_error(url,_Url),_Context), error:url).
-% socket error
-error_iri(error(socket_error('Connection refused'),_), error:connectionRefused).
-error_iri(error(socket_error('Connection reset by peer'),_), error:connectionResetByPeer).
-error_iri(error(socket_error('Connection timed out'),_), error:connectionTimedOut).
-error_iri(error(socket_error('Host not found'),_), error:hostNotFound).
-error_iri(error(socket_error('No Data'),_), error:noData).
-error_iri(error(socket_error('No Recovery'),_), error:noRecovery).
-error_iri(error(socket_error('No route to host'),_), error:noRouteToHost).
-error_iri(error(socket_error('Try Again'),_), error:tryAgain).
 % I/O errors
 error_iri(error(io_error(read,_Stream),_Context), http:ioError).
-% syntax error
-error_iri(error(syntax_error('end-of-line expected'),_Stream), error:eolExpected).
-error_iri(error(syntax_error('End of statement expected'),_Stream), error:eosExpected).
-error_iri(error(syntax_error('EOF in string'),_Stream), error:eofInString).
-error_iri(error(syntax_error('EOF in uriref'),_Stream), error:eofInUri).
-error_iri(error(syntax_error('Expected ":"'),_Stream), error:expectedColon).
-error_iri(error(syntax_error('Expected "]"'),_Stream), error:expectedBracket).
-error_iri(error(syntax_error('Expected ":" after "_"'),_Stream), error:expectedBnode).
-error_iri(error(syntax_error('Illegal \\-escape'),_Stream), error:illegal_backslash_escape).
-error_iri(error(syntax_error('Illegal character in uriref'),_Stream), error:illegalCharUriref).
-error_iri(error(syntax_error('Illegal control character in uriref'),_Stream), error:illegalControlCharUriref).
-error_iri(error(syntax_error('illegal escape'),_Stream), error:illegalEscape).
-error_iri(error(syntax_error('Illegal IRIREF'),_Stream), error:illegalIriref).
-error_iri(error(syntax_error('Invalid @base directive'),_Stream), error:invalidBaseDirective).
-error_iri(error(syntax_error('Invalid @prefix directive'),_Stream), error:invalidPrefixDirective).
-error_iri(error(syntax_error('newline in string'),_Stream), error:newlineInString).
-error_iri(error(syntax_error('newline in uriref'),_Stream), error:newlineInUriref).
-error_iri(error(syntax_error('PN_PREFIX expected'),_Stream), error:pnPrefixExpected).
-error_iri(error(syntax_error('predicate expected'),_Stream), error:predicateExpected).
-error_iri(error(syntax_error('predicate not followed by whitespace'),_Stream), error:predicateWhitespace).
-error_iri(error(syntax_error('subject expected'),_Stream), error:subjectExpected).
-error_iri(error(syntax_error('subject not followed by whitespace'),_Stream), error:subjectWhitespace).
-error_iri(error(syntax_error('Unexpected "." (missing object)'),_Stream), error:missingObject).
-error_iri(error(syntax_error('Unexpected newline in short string'),_Stream), error:newlineInShortString).
-error_iri(error(syntax_error('LANGTAG expected'),_Stream), error:ltagExpected).
 error_iri(error(timeout_error(read,_Stream),_Context), error:timeout).
 error_iri(http(max_redirect(_N,_Uris)), error:httpMaxRedirect).
 error_iri(http(no_content_type,_Uri), error:httpNoContentType).
