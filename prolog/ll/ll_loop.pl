@@ -47,7 +47,7 @@ run_loop(Goal_0, M) :-
     between(1, M, _),
     (
       flag(Pred, N, N+1),
-      format(atom(Alias), "~a ~D", [Pred,N]),
+      format(atom(Alias), "~a-~D", [Pred,N]),
       thread_create(running_loop(Goal_0), _, [alias(Alias),detached(true)])
     )
   ).
