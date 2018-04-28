@@ -6,8 +6,7 @@
 @version 2017/09-2017/12
 */
 
-:- use_module(library(debug)).
-
+:- use_module(library(debug_ext)).
 :- use_module(library(http/http_client2)).
 :- use_module(library(ll/ll_generics)).
 :- use_module(library(ll/ll_metadata)).
@@ -15,13 +14,14 @@
 
 ll_download :-
   % precondition
-  (   debugging(ll(Hash,_))
-  ->  hash_url(Hash, Url)
+  (   debugging(ll(Hash,_)),
+      ground(Hash)
+  ->  assertion(hash_url(Hash, Url))
   ;   start_seed(Seed),
       Hash = Seed.hash,
       Url = Seed.url
   ),
-  debug(ll(_,download), "┌─> downloading ~a ~a", [Hash,Url]),
+  indent_debug(1, ll(_,download), "> downloading ~a ~a", [Hash,Url]),
   write_meta_now(Hash, downloadBegin),
   write_meta_quad(Hash, def:url, literal(type(xsd:anyURI,Url)), graph:meta),
   % operation
@@ -37,7 +37,7 @@ ll_download :-
   ;   write_meta_error(Hash, E),
       finish(Hash)
   ),
-  debug(ll(_,download), "└─< downloaded ~a ~a", [Hash,Url]).
+  indent_debug(-1, ll(_,download), "< downloaded ~a ~a", [Hash,Url]).
 
 download_url(Hash, Uri, MediaType, Status) :-
   hash_file(Hash, dirty, File),

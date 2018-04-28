@@ -26,7 +26,7 @@ ll_recode :-
     ignore(read_term_from_file(TaskFile, MediaType)),
     delete_file(TaskFile)
   )),
-  debug(ll(_,recode), "┌> recoding ~a", [Hash]),
+  indent_debug(1, ll(_,recode), "> recoding ~a", [Hash]),
   write_meta_now(Hash, recodeBegin),
   % operation
   catch(recode_file(Hash, MediaType), E, true),
@@ -37,7 +37,7 @@ ll_recode :-
   ;   write_meta_error(Hash, E),
       finish(Hash)
   ),
-  debug(ll(_,recode), "└─> recoding ~a", [Hash]).
+  indent_debug(-1, ll(_,recode), "< recoding ~a", [Hash]).
 
 recode_file(Hash, MediaType) :-
   hash_file(Hash, 'dirty.gz', File),

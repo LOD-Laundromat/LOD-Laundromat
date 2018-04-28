@@ -31,7 +31,7 @@ ll_parse :-
     find_hash_file(recoded, Hash, TaskFile),
     delete_file(TaskFile)
   )),
-  debug(ll(_,parse), "┌─> parsing ~a", [Hash]),
+  indent_debug(1, ll(_,parse), "> parsing ~a", [Hash]),
   write_meta_now(Hash, parseBegin),
   % operation
   thread_create(parse_file(Hash), Id, [alias(Hash)]),
@@ -47,7 +47,7 @@ ll_parse :-
   write_meta_now(Hash, parseEnd),
   (var(E) -> end_task(Hash, parsed) ; write_meta_error(Hash, E)),
   finish(Hash),
-  debug(ll(_,parse), "└─< parsed ~a", [Hash]).
+  indent_debug(-1, ll(_,parse), "< parsed ~a", [Hash]).
 
 parse_file(Hash) :-
   maplist(hash_file(Hash), ['dirty.gz','clean.nq.gz'], [File1,File2]),

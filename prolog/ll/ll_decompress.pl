@@ -39,7 +39,7 @@ ll_decompress :-
   ;   write_meta_error(Hash, E),
       finish(Hash)
   ),
-  indent_debug(1, ll(_,decompress), "> decompressing ~a", [Hash]).
+  indent_debug(-1, ll(_,decompress), "< decompressing ~a", [Hash]).
 
 
 
