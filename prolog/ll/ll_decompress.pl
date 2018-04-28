@@ -29,8 +29,10 @@ ll_decompress :-
   (   var(E)
   ->  % Check whether there is any data to recode, or whether all data
       % is now stored under different hashes.
-      hash_file(Hash, dirty, DataFile),
-      (   exists_file(DataFile)
+      hash_file(Hash, compressed, TmpFile),
+      delete_file(TmpFile),
+      (   hash_file(Hash, dirty, DataFile),
+          exists_file(DataFile)
       ->  end_task(Hash, decompressed, MediaType)
       ;   finish(Hash)
       )
@@ -86,9 +88,8 @@ decompress_archive_entry(Hash, In, ArchMetas) :-
 % leaf node
 decompress_entry(Hash, data, In) :- !,
   hash_file(Hash, dirty, File),
-  file_name_extension(File, tmp, TmpFile),
   setup_call_cleanup(
-    open(TmpFile, write, Out),
+    open(File, write, Out),
     copy_stream_data(In, Out),
     close_metadata(Hash, decompressWrite, Out)
   ).

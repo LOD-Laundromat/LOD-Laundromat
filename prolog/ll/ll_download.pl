@@ -32,6 +32,8 @@ ll_download :-
   ->  (   between(200, 299, Status)
       ->  end_task(Hash, downloaded, MediaType)
       ;   assertion(between(400, 599, Status)),
+          hash_file(Hash, compressed, File),
+          delete_file(File),
           finish(Hash)
       )
   ;   write_meta_error(Hash, E),

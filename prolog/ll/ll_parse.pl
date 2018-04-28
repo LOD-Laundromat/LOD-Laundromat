@@ -70,6 +70,7 @@ parse_file(Hash) :-
     ),
     maplist(close_metadata(Hash), [parseRead,parseWritten], [In,Out])
   ),
+  delete_file(FromFile),
   maplist(
     atom_number,
     [Lex1,Lex2],
