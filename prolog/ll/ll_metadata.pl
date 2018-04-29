@@ -164,18 +164,29 @@ write_meta_entry(Hash1, Hash2) :-
 
 %! write_meta_error(+Hash:atom, +Error:compound) is det,
 
+% Archive errors.
 write_meta_error(Hash, error(archive_error(Code,Msg),_Context)) :- !,
   rdf_global_id(id:Hash, S),
   atom_number(Lex, Code),
-  write_meta(Hash, write_meta_error_0(S, Lex, Msg)).
-write_meta_error_0(S, Lex, Msg, Out) :-
+  write_meta(Hash, write_archive_error_(S, Lex, Msg)).
+write_archive_error_(S, Lex, Msg, Out) :-
   rdf_bnode_iri(O),
   rdf_write_quad(Out, S, def:error, O, graph:meta),
   rdf_write_quad(Out, O, rdf:type, error:'ArchiveError', graph:meta),
   rdf_write_quad(Out, O, def:code, literal(type(xsd:positiveInteger,Lex)), graph:meta),
   rdf_write_quad(Out, O, def:message, literal(type(xsd:string,Msg)), graph:meta).
 
-% existence error: Turtle prefix
+% Exisntence error: the HTTP reply is completely empty.
+write_meta_error(Hash, error(existence_error(http_reply,Url),_Context)) :- !,
+  rdf_global_id(id:Hash, S),
+  write_meta(Hash, write_empty_http_reply_(S,Url)).
+write_empty_http_reply_(S, Url, Out) :-
+  rdf_bnode_iri(O),
+  rdf_write_quad(Out, S, def:error, O, graph:meta),
+  rdf_write_quad(Out, O, rdf:type, error:'MissingTurtlePrefixDefinition', graph:meta),
+  rdf_write_quad(Out, O, def:alias, literal(type(xsd:anyURI,Url)), graph:meta).
+
+% Existence error: Turtle prefix
 write_meta_error(Hash, error(existence_error(turtle_prefix,Alias),_Stream)) :- !,
   rdf_global_id(id:Hash, S),
   write_meta(Hash, write_meta_error_1(S, Alias)).
@@ -183,17 +194,17 @@ write_meta_error_1(S, Alias, Out) :-
   rdf_bnode_iri(O),
   rdf_write_quad(Out, S, def:error, O, graph:meta),
   rdf_write_quad(Out, O, rdf:type, error:'MissingTurtlePrefixDefinition', graph:meta),
-  rdf_write_quad(Out, O, error:alias, literal(type(xsd:string,Alias)), graph:meta).
+  rdf_write_quad(Out, O, def:alias, literal(type(xsd:string,Alias)), graph:meta).
 
-% socket error:
-% - Connection refused
-% - Connection reset by peer
-% - Connection timed out
-% - Host not found
-% - No Data
-% - No Recovery
-% - No route to host
-% - Try Again
+% Socket errors:
+%   - Connection refused
+%   - Connection reset by peer
+%   - Connection timed out
+%   - Host not found
+%   - No Data
+%   - No Recovery
+%   - No route to host
+%   - Try Again
 write_meta_error(Hash, error(socket_error(Msg),_Context)) :- !,
   rdf_global_id(id:Hash, S),
   write_meta(Hash, write_socket_error(S, Msg)).
@@ -201,9 +212,9 @@ write_socket_error(S, Msg, Out) :-
   rdf_bnode_iri(O),
   rdf_write_quad(Out, S, def:error, O, graph:meta),
   rdf_write_quad(Out, O, rdf:type, error:'SocketError', graph:meta),
-  rdf_write_quad(Out, O, error:message, literal(type(xsd:string,Msg)), graph:meta).
+  rdf_write_quad(Out, O, def:message, literal(type(xsd:string,Msg)), graph:meta).
 
-% syntax error: HTTP parameter
+% Syntax error: HTTP parameter
 write_meta_error(Hash, error(syntax_error(http_parameter(Param)),_)) :- !,
   rdf_global_id(id:Hash, S),
   write_meta(Hash, write_http_parameter_error(S, Param)).
@@ -211,34 +222,34 @@ write_http_parameter_error(S, Param, Out) :-
   rdf_bnode_iri(O),
   rdf_write_quad(Out, S, def:error, O, graph:meta),
   rdf_write_quad(Out, O, rdf:type, error:'HttpParameterError', graph:meta),
-  rdf_write_quad(Out, O, error:parameter, literal(type(xsd:string,Param)), graph:meta).
+  rdf_write_quad(Out, O, def:parameter, literal(type(xsd:string,Param)), graph:meta).
 
 % RDF syntax error:
-% - end-of-line expected
-% - End of statement expected
-% - EOF in string
-% - EOF in uriref
-% - Expected ":"
-% - Expected "]"
-% - Expected ":" after "_"
-% - Illegal \\-escape
-% - Illegal character in uriref
-% - Illegal control character in uriref
-% - illegal escape
-% - Illegal IRIREF
-% - Invalid @base directive
-% - Invalid @prefix directive
-% - invalid node ID
-% - newline in string
-% - newline in uriref
-% - PN_PREFIX expected
-% - predicate expected
-% - predicate not followed by whitespace
-% - subject expected
-% - subject not followed by whitespace
-% - Unexpected "." (missing object)
-% - Unexpected newline in short string
-% - LANGTAG expected
+%   - end-of-line expected
+%   - End of statement expected
+%   - EOF in string
+%   - EOF in uriref
+%   - Expected ":"
+%   - Expected "]"
+%   - Expected ":" after "_"
+%   - Illegal \\-escape
+%   - Illegal character in uriref
+%   - Illegal control character in uriref
+%   - illegal escape
+%   - Illegal IRIREF
+%   - Invalid @base directive
+%   - Invalid @prefix directive
+%   - invalid node ID
+%   - newline in string
+%   - newline in uriref
+%   - PN_PREFIX expected
+%   - predicate expected
+%   - predicate not followed by whitespace
+%   - subject expected
+%   - subject not followed by whitespace
+%   - Unexpected "." (missing object)
+%   - Unexpected newline in short string
+%   - LANGTAG expected
 write_meta_error(Hash, error(syntax_error(Msg),Stream0)) :- !,
   (Stream0 = stream(Stream,_,_,_) -> true ; Stream = Stream0),
   stream_property(Stream, position(Pos)),
@@ -259,6 +270,22 @@ write_syntax_error_2(S, Msg, Lex1, Lex2, Out) :-
   rdf_write_quad(Out, O, def:column, literal(type(xsd:nonNegativeInteger,Lex2)), graph:meta),
   rdf_write_quad(Out, O, def:message, literal(type(xsd:string,Msg)), graph:meta).
 
+write_meta_error(Hash, http(max_redirect(_Length,_Urls))) :- !,
+  rdf_global_id(id:Hash, S),
+  write_meta(Hash, write_http_max_redirect(S)).
+write_http_max_redirect(S, Out) :-
+  rdf_bnode_iri(O),
+  rdf_write_quad(Out, S, def:error, O, graph:meta),
+  rdf_write_quad(Out, O, rdf:type, error:'HttpMaxRedirect', graph:meta).
+
+write_meta_error(Hash, http(redirect_loop(_Urls))) :- !,
+  rdf_global_id(id:Hash, S),
+  write_meta(Hash, write_http_redirect_loop(S)).
+write_http_redirect_loop(S, Out) :-
+  rdf_bnode_iri(O),
+  rdf_write_quad(Out, S, def:error, O, graph:meta),
+  rdf_write_quad(Out, O, rdf:type, error:'HttpRedirectLoop', graph:meta).
+
 % RDF syntax error: the lexical form does not occur in the lexical
 % space of the indicated datatype.
 write_meta_error(Hash, rdf(incorrect_lexical_form(D,Lex))) :- !,
@@ -268,8 +295,8 @@ write_meta_error_3(S, D, Lex, Out) :-
   rdf_bnode_iri(O),
   rdf_write_quad(Out, S, def:error, O, graph:meta),
   rdf_write_quad(Out, O, rdf:type, error:'CannotMapLexicalForm', graph:meta),
-  rdf_write_quad(Out, O, error:datatype, D, graph:meta),
-  rdf_write_quad(Out, O, error:lexical_form, literal(type(xsd:string,Lex)), graph:meta).
+  rdf_write_quad(Out, O, def:datatype, D, graph:meta),
+  rdf_write_quad(Out, O, def:lexicalForm, literal(type(xsd:string,Lex)), graph:meta).
 
 % RDF syntax error: a language-tagged string where the language tag is
 % missing.
@@ -280,7 +307,7 @@ write_meta_error_4(S, LTag, Out) :-
   rdf_bnode_iri(O),
   rdf_write_quad(Out, S, def:error, O, graph:meta),
   rdf_write_quad(Out, O, rdf:type, error:'MissingLanguageTag', graph:meta),
-  rdf_write_quad(Out, O, error:languageTag, literal(type(xsd:string,LTag)), graph:meta).
+  rdf_write_quad(Out, O, def:languageTag, literal(type(xsd:string,LTag)), graph:meta).
 
 % RDF non-canonicity: a language-tagged string where the language tag is
 % not in canonical form.
@@ -291,7 +318,7 @@ write_meta_error_5(S, LTag, Out) :-
   rdf_bnode_iri(O),
   rdf_write_quad(Out, S, def:canonicity, O, graph:meta),
   rdf_write_quad(Out, O, rdf:type, error:'NonCanonicalLanguageTag', graph:meta),
-  rdf_write_quad(Out, O, error:languageTag, literal(type(xsd:string,LTag)), graph:meta).
+  rdf_write_quad(Out, O, def:languageTag, literal(type(xsd:string,LTag)), graph:meta).
 
 % RDF: redefined ID?
 write_meta_error(Hash, rdf(redefined_id(Term))) :- !,
@@ -313,11 +340,11 @@ write_meta_error_7(S, D, Lex1, Lex2, Out) :-
   rdf_bnode_iri(O),
   rdf_write_quad(Out, S, def:canonicity, O, graph:meta),
   rdf_write_quad(Out, O, rdf:type, error:'NonCanonicalLexicalForm', graph:meta),
-  rdf_write_quad(Out, O, error:datatype, D, graph:meta),
-  rdf_write_quad(Out, O, error:lexicalForm, literal(type(xsd:string,Lex1)), graph:meta),
-  rdf_write_quad(Out, O, error:canonicalLexicalForm, literal(type(xsd:string,Lex2)), graph:meta).
+  rdf_write_quad(Out, O, def:datatype, D, graph:meta),
+  rdf_write_quad(Out, O, def:lexicalForm, literal(type(xsd:string,Lex1)), graph:meta),
+  rdf_write_quad(Out, O, def:canonicalLexicalForm, literal(type(xsd:string,Lex2)), graph:meta).
 
-% RDF/XML parse error
+% RDF/XML parse error.
 write_meta_error(Hash, sgml(sgml_parser(_Parser),_File,Line,Msg)) :- !,
   rdf_global_id(id:Hash, S),
   atom_number(Lex, Line),
@@ -329,12 +356,12 @@ write_meta_error_8(S, Lex, Msg, Out) :-
   rdf_write_quad(Out, O, def:line, literal(type(xsd:nonNegativeInteger,Lex)), graph:meta),
   rdf_write_quad(Out, O, def:message, literal(type(xsd:string,Msg)), graph:meta).
 
-% Single-statement errors
+% Single-statement errors.
 write_meta_error(Hash, E) :-
   error_iri(E, O), !,
   write_meta_quad(Hash, def:error, O, graph:meta).
 
-% Not yet handled
+% Not yet handled.
 write_meta_error(Hash, E) :-
   gtrace,
   writeln(Hash-E).
@@ -346,10 +373,7 @@ error_iri(error(domain_error(url,_Url),_Context), error:url).
 % I/O errors
 error_iri(error(io_error(read,_Stream),_Context), http:ioError).
 error_iri(error(timeout_error(read,_Stream),_Context), error:timeout).
-error_iri(http(max_redirect(_N,_Uris)), error:httpMaxRedirect).
 error_iri(http(no_content_type,_Uri), error:httpNoContentType).
-% HTTP redirection loops can co-occur with 3xx status codes.
-error_iri(http(redirect_loop(_Uri)), error:httpRedirectLoop).
 error_iri(io_warning(_Stream,'Illegal UTF-8 continuation'), error:illegalUtf8Continuation).
 error_iri(io_warning(_Stream,'Illegal UTF-8 start'), error:illegalUtf8Start).
 error_iri(rdf(non_rdf_format(_Hash,_Content)), error:nonRdfFormat).

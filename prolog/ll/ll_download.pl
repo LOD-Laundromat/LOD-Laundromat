@@ -16,7 +16,7 @@ ll_download :-
   % precondition
   (   debugging(ll(Hash,_)),
       ground(Hash)
-  ->  assertion(hash_url(Hash, Url))
+  ->  hash_url(Hash, Url)
   ;   start_seed(Seed),
       Hash = Seed.hash,
       Url = Seed.url
