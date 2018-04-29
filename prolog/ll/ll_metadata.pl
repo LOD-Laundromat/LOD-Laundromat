@@ -106,7 +106,7 @@ write_meta_archive_list2(Node, [H|T], Out) :-
   rdf_write_quad(Out, Node, rdf:first, First, graph:meta),
   write_meta_archive_item(First, H, Out),
   (   T == []
-  ->  rdf_equal(Next, rdf:type)
+  ->  rdf_equal(Next, rdf:nil)
   ;   rdf_bnode_iri(Next),
       write_meta_archive_list2(Next, T, Out)
   ),
@@ -196,6 +196,7 @@ write_meta_error_1(S, Alias, Out) :-
   rdf_write_quad(Out, O, rdf:type, error:'MissingTurtlePrefixDefinition', graph:meta),
   rdf_write_quad(Out, O, def:alias, literal(type(xsd:string,Alias)), graph:meta).
 
+% HTTP maximum redirection sequence length exceeded.
 write_meta_error(Hash, error(http_error(max_redirect,_Length,_Urls),_Context)) :- !,
   rdf_global_id(id:Hash, S),
   write_meta(Hash, write_http_max_redirect(S)).
@@ -204,6 +205,7 @@ write_http_max_redirect(S, Out) :-
   rdf_write_quad(Out, S, def:error, O, graph:meta),
   rdf_write_quad(Out, O, rdf:type, error:'HttpMaxRedirect', graph:meta).
 
+% HTTP redirection loop detected.
 write_meta_error(Hash, error(http_error(redirect_loop,_Urls),_Context)) :- !,
   rdf_global_id(id:Hash, S),
   write_meta(Hash, write_http_redirect_loop(S)).
