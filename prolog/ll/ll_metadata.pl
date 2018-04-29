@@ -196,6 +196,22 @@ write_meta_error_1(S, Alias, Out) :-
   rdf_write_quad(Out, O, rdf:type, error:'MissingTurtlePrefixDefinition', graph:meta),
   rdf_write_quad(Out, O, def:alias, literal(type(xsd:string,Alias)), graph:meta).
 
+write_meta_error(Hash, error(http_error(max_redirect,_Length,_Urls),_Context)) :- !,
+  rdf_global_id(id:Hash, S),
+  write_meta(Hash, write_http_max_redirect(S)).
+write_http_max_redirect(S, Out) :-
+  rdf_bnode_iri(O),
+  rdf_write_quad(Out, S, def:error, O, graph:meta),
+  rdf_write_quad(Out, O, rdf:type, error:'HttpMaxRedirect', graph:meta).
+
+write_meta_error(Hash, error(http_error(redirect_loop,_Urls),_Context)) :- !,
+  rdf_global_id(id:Hash, S),
+  write_meta(Hash, write_http_redirect_loop(S)).
+write_http_redirect_loop(S, Out) :-
+  rdf_bnode_iri(O),
+  rdf_write_quad(Out, S, def:error, O, graph:meta),
+  rdf_write_quad(Out, O, rdf:type, error:'HttpRedirectLoop', graph:meta).
+
 % Socket errors:
 %   - Connection refused
 %   - Connection reset by peer
@@ -269,22 +285,6 @@ write_syntax_error_2(S, Msg, Lex1, Lex2, Out) :-
   rdf_write_quad(Out, O, def:line, literal(type(xsd:nonNegativeInteger,Lex1)), graph:meta),
   rdf_write_quad(Out, O, def:column, literal(type(xsd:nonNegativeInteger,Lex2)), graph:meta),
   rdf_write_quad(Out, O, def:message, literal(type(xsd:string,Msg)), graph:meta).
-
-write_meta_error(Hash, http(max_redirect(_Length,_Urls))) :- !,
-  rdf_global_id(id:Hash, S),
-  write_meta(Hash, write_http_max_redirect(S)).
-write_http_max_redirect(S, Out) :-
-  rdf_bnode_iri(O),
-  rdf_write_quad(Out, S, def:error, O, graph:meta),
-  rdf_write_quad(Out, O, rdf:type, error:'HttpMaxRedirect', graph:meta).
-
-write_meta_error(Hash, http(redirect_loop(_Urls))) :- !,
-  rdf_global_id(id:Hash, S),
-  write_meta(Hash, write_http_redirect_loop(S)).
-write_http_redirect_loop(S, Out) :-
-  rdf_bnode_iri(O),
-  rdf_write_quad(Out, S, def:error, O, graph:meta),
-  rdf_write_quad(Out, O, rdf:type, error:'HttpRedirectLoop', graph:meta).
 
 % RDF syntax error: the lexical form does not occur in the lexical
 % space of the indicated datatype.
@@ -366,14 +366,12 @@ write_meta_error(Hash, E) :-
   gtrace,
   writeln(Hash-E).
 
-% domain errors
 error_iri(error(domain_error(http_encoding,identity),_Context), error:httpEncodingIdentity).
 error_iri(error(domain_error(set_cookie,_Value),_Context), error:setCookie).
 error_iri(error(domain_error(url,_Url),_Context), error:url).
-% I/O errors
+error_iri(error(http_error(no_content_type,_Uri),_Context), error:httpNoContentType).
 error_iri(error(io_error(read,_Stream),_Context), http:ioError).
 error_iri(error(timeout_error(read,_Stream),_Context), error:timeout).
-error_iri(http(no_content_type,_Uri), error:httpNoContentType).
 error_iri(io_warning(_Stream,'Illegal UTF-8 continuation'), error:illegalUtf8Continuation).
 error_iri(io_warning(_Stream,'Illegal UTF-8 start'), error:illegalUtf8Start).
 error_iri(rdf(non_rdf_format(_Hash,_Content)), error:nonRdfFormat).
