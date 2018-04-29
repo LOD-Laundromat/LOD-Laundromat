@@ -61,7 +61,7 @@ decompress_stream(Hash, In) :-
     ),
     decompress_archive(Hash, Arch),
     (
-      indent_debug(-1, ll(_,decompress), "< ~w CLOSE ARCHIVE ~w", [Arch,In]),
+      indent_debug(-1, ll(_,decompress), "< ~w CLOSE ARCHIVE ~w", [In,Arch]),
       archive_close(Arch)
     )
   ).
@@ -70,17 +70,17 @@ decompress_stream(Hash, In) :-
 decompress_archive(Hash, Arch) :-
   forall(
     archive_data_stream(Arch, In, [meta_data(ArchMetas)]),
-    decompress_archive_entry(Hash, In, ArchMetas)
+    decompress_archive_entry(Hash, Arch, In, ArchMetas)
   ).
 
-decompress_archive_entry(Hash, In, ArchMetas) :-
+decompress_archive_entry(Hash, Arch, In, ArchMetas) :-
   write_meta_archive(Hash, ArchMetas),
   ArchMetas = [ArchMeta|_],
-  indent_debug(1, ll(_,decompress), "> ~w OPEN ENTRY ~w ‘~a’", [Arch,In,ArchMeta.name]),
+  indent_debug(1, ll(_,decompress), "> ~w OPEN ENTRY ‘~a’ ~w", [Arch,ArchMeta.name,In]),
   call_cleanup(
     decompress_entry(Hash, ArchMeta.name, In),
     (
-      indent_debug(-1, ll(_,decompress), "< ~w ‘~a’ CLOSE ENTRY ~w", [In,ArchMeta.name,Arch]),
+      indent_debug(-1, ll(_,decompress), "< ~w CLOSE ENTRY ‘~a’ ~w", [Arch,ArchMeta.name,In]),
       close(In)
     )
   ).
