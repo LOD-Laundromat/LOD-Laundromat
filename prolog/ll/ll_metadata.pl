@@ -363,10 +363,10 @@ write_meta_error(Hash, E) :-
   error_iri(E, O), !,
   write_meta_quad(Hash, def:error, O, graph:meta).
 
-% Not yet handled.
+% TBD: Not yet handled.
 write_meta_error(Hash, E) :-
-  gtrace,
-  writeln(Hash-E).
+  format(atom(Lex), "~w", [E]),
+  rdf_write_meta(Hash, def:error, literal(type(xsd:string,Lex)), graph:meta).
 
 error_iri(error(domain_error(http_encoding,identity),_Context), error:httpEncodingIdentity).
 error_iri(error(domain_error(set_cookie,_Value),_Context), error:setCookie).
