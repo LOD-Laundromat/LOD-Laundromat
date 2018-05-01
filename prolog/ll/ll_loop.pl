@@ -13,6 +13,7 @@
 */
 
 :- use_module(library(apply)).
+:- use_module(library(debug)).
 
 :- use_module(library(ll/ll_decompress)).
 :- use_module(library(ll/ll_download)).
@@ -56,5 +57,9 @@ running_loop(Goal_0) :-
   Goal_0, !,
   running_loop(Goal_0).
 running_loop(Goal_0) :-
-  sleep(1),
+  (   debugging(ll(idle))
+  ->  (Goal_0 = _:ll_parse -> debug(ll(idle), "💤 nothing to parse", []) ; true)
+  ;   true
+  ),
+  sleep(60),
   running_loop(Goal_0).
