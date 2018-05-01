@@ -4,6 +4,7 @@
     ll_clear/0,
     ll_clear_datasets/0,
     ll_clear_users/0,
+    ll_compile_data/0,
     ll_upload_data/1,    % ?Hash
     ll_upload_metadata/0
   ]
@@ -15,6 +16,7 @@
 @version 2018
 */
 
+:- use_module(library(aggregate)).
 :- use_module(library(apply)).
 :- use_module(library(settings)).
 :- use_module(library(zlib)).
@@ -24,6 +26,7 @@
 :- use_module(library(file_ext)).
 :- use_module(library(http/tapir)).
 :- use_module(library(ll/ll_generics)).
+:- use_module(library(sw/hdt_db)).
 :- use_module(library(sw/rdf_prefix)).
 
 :- initialization
@@ -74,6 +77,33 @@ ll_clear_users :-
 
 
 
+%! ll_compile_data is det.
+
+ll_compile_data :-
+  aggregate_all(count, rdf_source_file(_, _), N),
+  Counter = count(0,N),
+  forall(
+    rdf_source_file(Hash, RdfFile),
+    (
+      hdt_create(RdfFile),
+      Counter = count(N1,N),
+      N2 is N1 + 1,
+      nb_setarg(1, Counter, N2),
+      format("~D/~D (~a)\n", [N2,N,Hash])
+    )
+  ).
+
+rdf_source_file(Hash, RdfFile) :-
+  find_hash(finished, Hash),
+  hash_file(Hash, 'data.nq.gz', RdfFile),
+  exists_file(RdfFile),
+  % HDT creation throws an exception for empty files.
+  \+ is_empty_file(RdfFile),
+  hdt_file_name(RdfFile, HdtFile),
+  \+ exists_file(HdtFile).
+
+
+
 %! ll_upload_data(+Hash:atom) is det.
 %! ll_upload_data(-Hash:atom) is nondet.
 
@@ -109,9 +139,9 @@ ll_upload_metadata :-
     ),
     close(Out)
   ),
-  ignore(dataset_delete('lod-laundromat', metadata)),
+  ignore(dataset_delete(_, metadata)),
   dataset_upload(
-    'lod-laundromat',
+    _,
     metadata,
     _{files: [ToFile], prefixes: [bnode,def,error,graph,http,id]}
   ),
