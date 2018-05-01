@@ -41,7 +41,7 @@ ll_recode :-
 
 recode_file(Hash, MediaType) :-
   hash_file(Hash, dirty, File),
-  guess_encoding_(File, GuessEnc),
+  ignore(guess_encoding_(File, GuessEnc)),
   ignore((
     nonvar(MediaType),
     media_type_encoding(MediaType, HttpEnc)
@@ -51,17 +51,18 @@ recode_file(Hash, MediaType) :-
   write_meta_encoding(Hash, [GuessEnc,HttpEnc,XmlEnc,Enc]),
   recode_to_utf8(File, Enc).
 
-guess_encoding_(File, Enc) :-
+guess_encoding_(File, Enc2) :-
   process_create(path(uchardet), [file(File)], [stdout(pipe(ProcOut))]),
   call_cleanup(
     (
       read_string(ProcOut, String1),
       string_strip(String1, "\n", String2),
-      atom_string(Enc0, String2)
+      atom_string(Enc1, String2)
     ),
     close(ProcOut)
   ),
-  clean_encoding(Enc0, Enc).
+  clean_encoding(Enc1, Enc2),
+  Enc2 \== unknown.
 
 % 1. XML header
 choose_encoding(_, _, XmlEnc, XmlEnc) :-
