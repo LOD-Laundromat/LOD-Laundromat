@@ -94,21 +94,21 @@ write_meta(Hash, Goal_1) :-
 
 write_meta_archive(Hash, L) :-
   rdf_global_id(id:Hash, S),
-  write_meta(Hash, write_meta_archive_list1(S, L)).
+  write_meta(Hash, write_meta_archive_list_1(S, L)).
 
-write_meta_archive_list1(S, L, Out) :-
+write_meta_archive_list_1(S, L, Out) :-
   rdf_bnode_iri(O),
   rdf_write_quad(Out, S, def:archive, O, graph:meta),
-  write_meta_archive_list2(O, L, Out).
+  write_meta_archive_list_2(O, L, Out).
 
-write_meta_archive_list2(Node, [H|T], Out) :-
+write_meta_archive_list_2(Node, [H|T], Out) :-
   rdf_bnode_iri(First),
   rdf_write_quad(Out, Node, rdf:first, First, graph:meta),
   write_meta_archive_item(First, H, Out),
   (   T == []
   ->  rdf_equal(Next, rdf:nil)
   ;   rdf_bnode_iri(Next),
-      write_meta_archive_list2(Next, T, Out)
+      write_meta_archive_list_2(Next, T, Out)
   ),
   rdf_write_quad(Out, Node, rdf:next, Next, graph:meta).
 
@@ -366,7 +366,7 @@ write_meta_error(Hash, E) :-
 % TBD: Not yet handled.
 write_meta_error(Hash, E) :-
   format(atom(Lex), "~w", [E]),
-  rdf_write_meta(Hash, def:error, literal(type(xsd:string,Lex)), graph:meta).
+  write_meta_quad(Hash, def:error, literal(type(xsd:string,Lex)), graph:meta).
 
 error_iri(error(domain_error(http_encoding,identity),_Context), error:httpEncodingIdentity).
 error_iri(error(domain_error(set_cookie,_Value),_Context), error:setCookie).
