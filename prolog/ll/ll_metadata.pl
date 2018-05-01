@@ -114,13 +114,9 @@ write_meta_archive_list_2(Node, [H|T], Out) :-
 
 write_meta_archive_item(Item, Meta, Out) :-
   atomic_list_concat(Meta.filters, ' ', Filters),
-  maplist(
-    atom_number,
-    [Mtime,Permissions,Size],
-    [Meta.mtime,Meta.permissions,Meta.size]
-  ),
+  maplist(atom_number, [Mtime,Permissions,Size], [Meta.mtime,Meta.permissions,Meta.size]),
   rdf_write_quad(Out, Item, def:filetype, literal(type(xsd:string,Meta.filetype)), graph:meta),
-  rdf_write_quad(Out, Item, def:filter, literal(type(xsd:string,Filters)), graph:meta),
+  (Filters == '' -> true ; rdf_write_quad(Out, Item, def:filter, literal(type(xsd:string,Filters)), graph:meta)),
   rdf_write_quad(Out, Item, def:format, literal(type(xsd:string,Meta.format)), graph:meta),
   rdf_write_quad(Out, Item, def:mtime, literal(type(xsd:float,Mtime)), graph:meta),
   rdf_write_quad(Out, Item, def:name, literal(type(xsd:string,Meta.name)), graph:meta),
