@@ -74,33 +74,36 @@ decompress_archive(Hash, Arch) :-
   ).
 
 decompress_archive_entry(Hash, Arch, In, ArchMetas) :-
-  write_meta_archive(Hash, ArchMetas),
   ArchMetas = [ArchMeta|_],
   indent_debug(1, ll(_,decompress), "> ~w OPEN ENTRY ‘~a’ ~w", [Arch,ArchMeta.name,In]),
   call_cleanup(
-    decompress_entry(Hash, ArchMeta.name, In),
+    decompress_entry(Hash, ArchMeta.name, ArchMetas, In),
     (
       indent_debug(-1, ll(_,decompress), "< ~w CLOSE ENTRY ‘~a’ ~w", [Arch,ArchMeta.name,In]),
       close(In)
     )
   ).
 
-% leaf node
-decompress_entry(Hash, data, In) :- !,
-  hash_file(Hash, dirty, File),
-  setup_call_cleanup(
-    open(File, write, Out),
-    copy_stream_data(In, Out),
-    close_metadata(Hash, decompressWrite, Out)
-  ).
-% non-leaf node
-decompress_entry(Hash1, Entry, In) :-
-  hash_entry_hash(Hash1, Entry, Hash2),
-  hash_file(Hash2, compressed, File),
+decompress_entry(Hash1, Entry, ArchMetas, In) :-
+  decompress_entry_start(Entry, Hash1, Hash2, Local),
+  write_meta_archive(Hash2, ArchMetas),
+  hash_file(Hash2, Local, File),
   setup_call_cleanup(
     open(File, write, Out),
     copy_stream_data(In, Out),
     close_metadata(Hash2, decompressWrite, Out)
   ),
+  decompress_entry_end(Entry, Hash1, Hash2).
+
+% leaf node
+decompress_entry_start(data, Hash, Hash, dirty) :- !.
+% non-leaf node
+decompress_entry_start(Entry, Hash1, Hash2, compressed) :-
+  hash_entry_hash(Hash1, Entry, Hash2).
+
+% leaf node
+decompress_entry_end(data, _, _) :- !.
+% non-leaf node
+decompress_entry_end(_, Hash1, Hash2) :-
   write_meta_entry(Hash1, Hash2),
   touch_hash_file(Hash2, downloaded).
