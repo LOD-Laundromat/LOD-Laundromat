@@ -62,7 +62,7 @@ parse_file(Hash) :-
     maplist(close_metadata(Hash), [parseRead,parseWritten], [In,Out])
   ),
   delete_file(FromFile),
-  write_meta_statements(RdfMeta).
+  write_meta_statements(Hash, RdfMeta).
 
 bnode_prefix(Segments, BNodePrefix) :-
   setting(rdf_term:bnode_prefix_scheme, Scheme),

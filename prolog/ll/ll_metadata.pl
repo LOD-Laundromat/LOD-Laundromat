@@ -12,7 +12,7 @@
     write_meta_quad/4,                 % +Hash, +P, +O, +G
     write_meta_quad/5,                 % +Hash, +S, +P, +O, +G
     write_meta_serialization_format/2, % +Hash, +MediaType
-    write_meta_statements/1            % +RdfMeta
+    write_meta_statements/2            % +Hash, +RdfMeta
   ]
 ).
 
@@ -458,9 +458,9 @@ write_meta_serialization_format(Hash, MediaType) :-
 
 
 
-%! write_meta_statements(+RdfMeta:dict) is det.
+%! write_meta_statements(+Hash:atom, +RdfMeta:dict) is det.
 
-write_meta_statements(RdfMeta) :-
+write_meta_statements(Hash, RdfMeta) :-
   maplist(
     atom_number,
     [Lex1,Lex2],
