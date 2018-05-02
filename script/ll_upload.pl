@@ -18,6 +18,7 @@
 
 :- use_module(library(aggregate)).
 :- use_module(library(apply)).
+:- use_module(library(lists)).
 :- use_module(library(settings)).
 :- use_module(library(zlib)).
 
@@ -80,16 +81,17 @@ ll_clear_users :-
 %! ll_compile_data is det.
 
 ll_compile_data :-
-  aggregate_all(count, rdf_source_file(_, _), N),
+  aggregate_all(set(Hash-RdfFile), rdf_source_file(Hash, RdfFile), Pairs),
+  length(Pairs, N),
   Counter = count(0,N),
   forall(
-    rdf_source_file(Hash, RdfFile),
+    member(Hash-RdfFile, Pairs),
     (
-      hdt_create(RdfFile),
       Counter = count(N1,N),
+      format("~D/~D (~a)\n", [N1,N,Hash]),
+      hdt_create(RdfFile),
       N2 is N1 + 1,
-      nb_setarg(1, Counter, N2),
-      format("~D/~D (~a)\n", [N2,N,Hash])
+      nb_setarg(1, Counter, N2)
     )
   ).
 
