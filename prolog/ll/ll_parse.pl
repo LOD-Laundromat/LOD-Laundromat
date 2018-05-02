@@ -43,11 +43,15 @@ ll_parse :-
 
 parse_file(Hash) :-
   maplist(hash_file(Hash), [dirty,'data.nq.gz'], [FromFile,ToFile]),
+  % base URI
+  read_task_memory(Hash, base_uri, BaseUri),
+  % blank node-replacing well-known IRI prefix
+  bnode_prefix([Hash], BNodePrefix),
+  % Media Type
   ignore(rdf_guess_file(FromFile, 10 000, MediaType)),
   write_meta_serialization_format(Hash, MediaType),
-  bnode_prefix([Hash], BNodePrefix),
+  % counter
   RdfMeta = _{number_of_quadruples: 0, number_of_triples: 0},
-  uri_file_name(BaseUri, FromFile),
   setup_call_cleanup(
     (
       open(FromFile, read, In),
@@ -57,7 +61,7 @@ parse_file(Hash) :-
       BaseUri,
       In,
       clean_tuples(RdfMeta, Out),
-      [bnode_prefix(BNodePrefix),media_type(MediaType)]
+      [base_uri(BaseUri),bnode_prefix(BNodePrefix),media_type(MediaType)]
     ),
     maplist(close_metadata(Hash), [parseRead,parseWritten], [In,Out])
   ),

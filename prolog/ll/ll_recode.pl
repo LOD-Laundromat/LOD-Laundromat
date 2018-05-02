@@ -23,13 +23,12 @@ ll_recode :-
   % precondition
   with_mutex(ll_recode, (
     find_hash_file(decompressed, Hash, TaskFile),
-    ignore(read_term_from_file(TaskFile, MediaType)),
     delete_file(TaskFile)
   )),
   indent_debug(1, ll(_,recode), "> recoding ~a", [Hash]),
   write_meta_now(Hash, recodeBegin),
   % operation
-  catch(recode_file(Hash, MediaType), E, true),
+  catch(recode_file(Hash), E, true),
   % postcondition
   write_meta_now(Hash, recodeEnd),
   (   var(E)
@@ -39,11 +38,11 @@ ll_recode :-
   ),
   indent_debug(-1, ll(_,recode), "< recoding ~a", [Hash]).
 
-recode_file(Hash, MediaType) :-
+recode_file(Hash) :-
   hash_file(Hash, dirty, File),
   ignore(guess_encoding_(File, GuessEnc)),
   ignore((
-    nonvar(MediaType),
+    read_task_memory(Hash, http_media_type, MediaType),
     media_type_encoding(MediaType, HttpEnc)
   )),
   ignore(xml_file_encoding(File, XmlEnc)),

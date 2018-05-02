@@ -16,21 +16,26 @@ ll_download :-
   % precondition
   (   debugging(ll(Hash,_)),
       ground(Hash)
-  ->  hash_url(Hash, Url)
+  ->  hash_url(Hash, Uri)
   ;   start_seed(Seed),
       Hash = Seed.hash,
-      Url = Seed.url
+      Uri = Seed.url
   ),
-  indent_debug(1, ll(_,download), "> downloading ~a ~a", [Hash,Url]),
+  indent_debug(1, ll(_,download), "> downloading ~a ~a", [Hash,Uri]),
   write_meta_now(Hash, downloadBegin),
-  write_meta_quad(Hash, def:url, literal(type(xsd:anyURI,Url)), graph:meta),
+  write_meta_quad(Hash, def:url, literal(type(xsd:anyURI,Uri)), graph:meta),
   % operation
-  catch(download_url(Hash, Url, MediaType, Status), E, true),
+  catch(download_url(Hash, Uri, MediaType, Status, FinalUri), E, true),
   % postcondition
   write_meta_now(Hash, downloadEnd),
   (   var(E)
   ->  (   between(200, 299, Status)
-      ->  end_task(Hash, downloaded, MediaType)
+      ->  write_task_memory(Hash, base_uri, FinalUri),
+          (   var(MediaType)
+          ->  true
+          ;   write_task_memory(Hash, http_media_type, MediaType)
+          ),
+          end_task(Hash, downloaded)
       ;   assertion(between(400, 599, Status)),
           hash_file(Hash, compressed, File),
           delete_file(File),
@@ -39,21 +44,22 @@ ll_download :-
   ;   write_meta_error(Hash, E),
       finish(Hash)
   ),
-  indent_debug(-1, ll(_,download), "< downloaded ~a ~a", [Hash,Url]).
+  indent_debug(-1, ll(_,download), "< downloaded ~a ~a", [Hash,Uri]).
 
-download_url(Hash, Uri, MediaType, Status) :-
+download_url(Hash, Uri, MediaType, Status, FinalUri) :-
   hash_file(Hash, compressed, File),
   setup_call_cleanup(
     open(File, write, Out, [type(binary)]),
-    download_stream(Hash, Uri, Out, MediaType, Status),
+    download_stream(Hash, Uri, Out, MediaType, Status, FinalUri),
     close_metadata(Hash, downloadWritten, Out)
   ).
 
-download_stream(Hash, Uri, Out, MediaType, Status) :-
+download_stream(Hash, Uri, Out, MediaType, Status, FinalUri) :-
   findall(RdfMediaType, rdf_media_type(RdfMediaType), RdfMediaTypes),
   http_open2(Uri, In, [accept(RdfMediaTypes),metadata(HttpMetas)]),
   ignore(http_metadata_content_type(HttpMetas, MediaType)),
   write_meta_http(Hash, HttpMetas),
+  http_metadata_final_uri(HttpMetas, FinalUri),
   http_metadata_status(HttpMetas, Status),
   call_cleanup(
     copy_stream_data(In, Out),

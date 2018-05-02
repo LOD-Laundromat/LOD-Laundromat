@@ -17,7 +17,6 @@ ll_decompress :-
   % precondition
   with_mutex(ll_decompress, (
     find_hash_file(downloaded, Hash, TaskFile),
-    ignore(read_term_from_file(TaskFile, MediaType)),
     delete_file(TaskFile)
   )),
   indent_debug(1, ll(_,decompress), "> decompressing ~a", [Hash]),
@@ -33,7 +32,7 @@ ll_decompress :-
       delete_file(TmpFile),
       (   hash_file(Hash, dirty, DataFile),
           exists_file(DataFile)
-      ->  end_task(Hash, decompressed, MediaType)
+      ->  end_task(Hash, decompressed)
       ;   finish(Hash)
       )
   ;   write_meta_error(Hash, E),
@@ -70,17 +69,16 @@ decompress_stream(Hash, In) :-
 decompress_archive(Hash, Arch) :-
   forall(
     archive_data_stream(Arch, In, [meta_data(ArchMetas)]),
-    decompress_archive_entry(Hash, Arch, In, ArchMetas)
-  ).
-
-decompress_archive_entry(Hash, Arch, In, ArchMetas) :-
-  ArchMetas = [ArchMeta|_],
-  indent_debug(1, ll(_,decompress), "> ~w OPEN ENTRY ‘~a’ ~w", [Arch,ArchMeta.name,In]),
-  call_cleanup(
-    decompress_entry(Hash, ArchMeta.name, ArchMetas, In),
     (
-      indent_debug(-1, ll(_,decompress), "< ~w CLOSE ENTRY ‘~a’ ~w", [Arch,ArchMeta.name,In]),
-      close(In)
+      ArchMetas = [ArchMeta|_],
+      indent_debug(1, ll(_,decompress), "> ~w OPEN ENTRY ‘~a’ ~w", [Arch,ArchMeta.name,In]),
+      call_cleanup(
+        (
+          decompress_entry(Hash, ArchMeta.name, ArchMetas, In),
+          indent_debug(-1, ll(_,decompress), "< ~w CLOSE ENTRY ‘~a’ ~w", [Arch,ArchMeta.name,In])
+        ),
+        close(In)
+      )
     )
   ).
 

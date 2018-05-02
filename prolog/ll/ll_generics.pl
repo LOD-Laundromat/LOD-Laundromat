@@ -2,7 +2,6 @@
   ll_generics,
   [
     end_task/2,            % +Hash, +Local
-    end_task/3,            % +Hash, +Local, ?Term
     find_hash_directory/2, % -Directory, -Hash
     find_hash/2,           % +Local, -Hash
     find_hash_file/3,      % +Local, -Hash, -File
@@ -11,9 +10,10 @@
     hash_entry_hash/3,     % +Hash1, +Entry, -Hash2
     hash_file/3,           % +Hash, +Local, -File
     hash_url/2,            % +Hash, -Url
-    read_term_from_file/2, % +File, -Term
+    read_task_memory/3,    % +Hash, +Local, -Term
     start_seed/1,          % -Seed
-    touch_hash_file/2      % +Hash, +Local
+    touch_hash_file/2,     % +Hash, +Local
+    write_task_memory/3    % +Hash, +Local, +Term
   ]
 ).
 
@@ -46,24 +46,9 @@
 
 
 %! end_task(+Hash:atom, +Local:atom) is det.
-%! end_task(+Hash:atom, +Local:atom, +Term:term) is det.
-%
-% Term stores information that is carried over to the next task.
 
 end_task(Hash, Local) :-
   touch_hash_file(Hash, Local).
-
-
-end_task(Hash, Local, Term) :-
-  var(Term), !,
-  end_task(Hash, Local).
-end_task(Hash, Local, Term) :-
-  hash_file(Hash, Local, File),
-  setup_call_cleanup(
-    open(File, write, Out),
-    format(Out, "~W\n", [Term,[quoted(true)]]),
-    close(Out)
-  ).
 
 
 
@@ -138,17 +123,17 @@ hash_url(Hash, Url) :-
 
 
 
-%! read_term_from_file(+File:atom, -Term:term) is semidet.
+%! read_task_memory(+Hash:atom, +Local:atom, -Term:term) is semidet.
 
-read_term_from_file(File, Term) :-
-  call_stream_file(File, read_term_from_file_(Term)).
-
-read_term_from_file_(Term, In) :-
-  repeat,
-  read_line_to_string(In, Line),
-  (   Line == end_of_file
-  ->  !
-  ;   read_term_from_atom(Line, Term, [])
+read_task_memory(Hash, Local, Term) :-
+  hash_file(Hash, Local, File),
+  setup_call_cleanup(
+    open(File, read, In),
+    (
+      read_line_to_string(In, Line),
+      read_term_from_atom(Line, Term, [])
+    ),
+    close(In)
   ).
 
 
@@ -196,3 +181,15 @@ seed_(Seed, In) :-
 touch_hash_file(Hash, Local) :-
   hash_file(Hash, Local, File),
   touch(File).
+
+
+
+%! write_task_memory(+Hash:atom, +Local:atom, +Term:term) is det.
+
+write_task_memory(Hash, Local, Term) :-
+  hash_file(Hash, Local, File),
+  setup_call_cleanup(
+    open(File, write, Out),
+    format(Out, "~W\n", [Term,[quoted(true)]]),
+    close(Out)
+  ).
