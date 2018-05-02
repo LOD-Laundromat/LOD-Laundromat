@@ -44,8 +44,7 @@ ll_parse :-
 parse_file(Hash) :-
   maplist(hash_file(Hash), [dirty,'data.nq.gz'], [FromFile,ToFile]),
   ignore(rdf_guess_file(FromFile, 10 000, MediaType)),
-  format(atom(Lex), "~w", [MediaType]),
-  write_meta_quad(Hash, def:serializationFormat, literal(type(xsd:string,Lex)), graph:meta),
+  write_meta_serialization_format(Hash, MediaType),
   bnode_prefix([Hash], BNodePrefix),
   RdfMeta = _{number_of_quadruples: 0, number_of_triples: 0},
   uri_file_name(BaseUri, FromFile),
@@ -63,13 +62,7 @@ parse_file(Hash) :-
     maplist(close_metadata(Hash), [parseRead,parseWritten], [In,Out])
   ),
   delete_file(FromFile),
-  maplist(
-    atom_number,
-    [Lex1,Lex2],
-    [RdfMeta.number_of_quadruples,RdfMeta.number_of_triples]
-  ),
-  write_meta_quad(Hash, def:quadruples, literal(type(xsd:nonNegativeInteger,Lex1)), graph:meta),
-  write_meta_quad(Hash, def:triples, literal(type(xsd:nonNegativeInteger,Lex2)), graph:meta).
+  write_meta_statements(RdfMeta).
 
 bnode_prefix(Segments, BNodePrefix) :-
   setting(rdf_term:bnode_prefix_scheme, Scheme),

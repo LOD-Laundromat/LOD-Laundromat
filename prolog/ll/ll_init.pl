@@ -24,8 +24,7 @@
 :- multifile
     user:message_hook/3.
 
-% Set global stack to 10GB for larger datasets.
-:- set_prolog_stack(global, limit(10*10**9)).
+:- set_prolog_stack(global, limit(10*10**9)). %TBD
 
 :- setting(ll:authority, any, _,
            "URI scheme of the seedlist server location.").

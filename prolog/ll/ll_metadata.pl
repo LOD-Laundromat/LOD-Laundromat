@@ -1,16 +1,18 @@
 :- module(
   ll_metadata,
   [
-    close_metadata/3,      % +Hash, +PLocal, +Out
-    write_meta/2,          % +Hash, :Goal_1
-    write_meta_archive/2,  % +Hash, +Metadata
-    write_meta_encoding/2, % +Hash, +Encodings
-    write_meta_entry/2,    % +Hash1, +Hash2
-    write_meta_error/2,    % +Hash, +Error
-    write_meta_http/2,     % +Hash, +Metadata
-    write_meta_now/2,      % +Hash, +PLocal
-    write_meta_quad/4,     % +Hash, +P, +O, +G
-    write_meta_quad/5      % +Hash, +S, +P, +O, +G
+    close_metadata/3,                  % +Hash, +PLocal, +Stream
+    write_meta/2,                      % +Hash, :Goal_1
+    write_meta_archive/2,              % +Hash, +Metadata
+    write_meta_encoding/2,             % +Hash, +Encodings
+    write_meta_entry/2,                % +Hash1, +Hash2
+    write_meta_error/2,                % +Hash, +Error
+    write_meta_http/2,                 % +Hash, +Metadata
+    write_meta_now/2,                  % +Hash, +PLocal
+    write_meta_quad/4,                 % +Hash, +P, +O, +G
+    write_meta_quad/5,                 % +Hash, +S, +P, +O, +G
+    write_meta_serialization_format/2, % +Hash, +MediaType
+    write_meta_statements/1            % +RdfMeta
   ]
 ).
 
@@ -23,8 +25,10 @@
 :- use_module(library(apply)).
 :- use_module(library(yall)).
 
+:- use_module(library(dcg)).
 :- use_module(library(dict)).
 :- use_module(library(ll/ll_generics)).
+:- use_module(library(media_type)).
 :- use_module(library(stream_ext)).
 :- use_module(library(sw/rdf_export)).
 :- use_module(library(sw/rdf_prefix)).
@@ -54,14 +58,18 @@
 
 
 
-%! close_metadata(+Hash:atom, +PLocal:atom, +Out:stream) is det.
+%! close_metadata(+Hash:atom, +PLocal:atom, +Stream:stream) is det.
 
-close_metadata(Hash, PLocal, Out) :-
-  stream_metadata(Out, Meta),
-  rdf_global_id(id:Hash, S),
-  rdf_global_id(def:PLocal, P),
-  write_meta(Hash, write_meta_stream_(S, P, Meta)),
-  close(Out).
+close_metadata(Hash, PLocal, Stream) :-
+  call_cleanup(
+    (
+      stream_metadata(Stream, Meta),
+      rdf_global_id(id:Hash, S),
+      rdf_global_id(def:PLocal, P),
+      write_meta(Hash, write_meta_stream_(S, P, Meta))
+    ),
+    close(Stream)
+  ).
 
 write_meta_stream_(S, P, Meta, Out) :-
   rdf_bnode_iri(O),
@@ -439,3 +447,24 @@ write_meta_quad(Hash, P, O, G) :-
 
 write_meta_quad(Hash, S, P, O, G) :-
   write_meta(Hash, {S,P,O,G}/[Out]>>rdf_write_quad(Out, S, P, O, G)).
+
+
+
+%! write_meta_serialization_format(+Hash:atom, +MediaType:compound) is det.
+
+write_meta_serialization_format(Hash, MediaType) :-
+  dcg_with_output_to(atom(Lex), media_type(MediaType)),
+  write_meta_quad(Hash, def:serializationFormat, literal(type(xsd:string,Lex)), graph:meta).
+
+
+
+%! write_meta_statements(+RdfMeta:dict) is det.
+
+write_meta_statements(RdfMeta) :-
+  maplist(
+    atom_number,
+    [Lex1,Lex2],
+    [RdfMeta.number_of_quadruples,RdfMeta.number_of_triples]
+  ),
+  write_meta_quad(Hash, def:quadruples, literal(type(xsd:nonNegativeInteger,Lex1)), graph:meta),
+  write_meta_quad(Hash, def:triples, literal(type(xsd:nonNegativeInteger,Lex2)), graph:meta).
