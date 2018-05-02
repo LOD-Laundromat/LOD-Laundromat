@@ -89,7 +89,7 @@ decompress_entry(Hash1, Entry, ArchMetas, In) :-
   write_meta_archive(Hash2, ArchMetas),
   hash_file(Hash2, Local, File),
   setup_call_cleanup(
-    open(File, write, Out),
+    open(File, write, Out, [type(binary)]),
     copy_stream_data(In, Out),
     close_metadata(Hash2, decompressWrite, Out)
   ),
