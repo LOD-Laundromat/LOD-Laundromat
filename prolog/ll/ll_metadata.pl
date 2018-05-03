@@ -352,11 +352,12 @@ write_meta_error(Hash, rdf(unexpected(Tag,_Parser))) :- !,
 write_error_14(Tag, Out, O) :-
   rdf_write_quad(Out, O, ll:tag, literal(type(xsd:string,Tag)), graph:meta).
 
-% RDF/XML parser error: unparseable DOM
+% RDF/XML parser error: unparseable DOM.
 write_meta_error(Hash, rdf(unparsed(Dom))) :- !,
   write_meta_error_(Hash, 'RdfXmlParseError', write_error_15(Dom)).
 write_error_15(Dom, Out, O) :-
-  rdf_write_quad(Out, O, ll:dom, literal(type(rdf:'XMLLiteral',Dom)), graph:meta).
+  rdf_literal_value(Literal, rdf:'XMLLiteral', Dom),
+  rdf_write_quad(Out, O, ll:dom, Literal, graph:meta).
 
 % JSON-LD serialization format is not yet supported.
 write_meta_error(Hash, rdf(unsupported_format(media(application/'ld+json',[]),_Content))) :- !,
