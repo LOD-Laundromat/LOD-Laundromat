@@ -164,6 +164,9 @@ write_meta_entry(Hash1, Hash2) :-
 
 %! write_meta_error(+Hash:atom, +Error:compound) is det,
 
+% Oh no!
+write_meta_error(Hash, error(resource_error(stack),global)) :- !,
+  write_meta_quad(Hash, ll:error, error:'GlobalStack', graph:meta).
 % Archive errors.
 write_meta_error(Hash, error(archive_error(Code,Msg),_Context)) :- !,
   atom_number(Lex, Code),
