@@ -321,27 +321,27 @@ write_error_10(S, LTag, Out) :-
   rdf_write_quad(Out, O, rdf:type, error:'NonCanonicalLanguageTag', graph:meta),
   rdf_write_quad(Out, O, ll:languageTag, literal(type(xsd:string,LTag)), graph:meta).
 
-% RDF: redefined ID?
-write_meta_error(Hash, rdf(redefined_id(Term))) :- !,
-  format(atom(Lex), "~w", [Term]),
-  write_meta_error_(Hash, 'RdfRedefinedId', write_error_11(Lex)).
-write_error_11(Lex, Out, O) :-
-  rdf_write_quad(Out, O, ll:id, literal(type(xsd:string,Lex)), graph:meta).
-
 % RDF non-canonicicty: a lexical form that belongs to the lexical
 % space, but is not canonical.
 write_meta_error(Hash, rdf(non_canonical_lexical_form(D,Lex1,Lex2))) :- !,
-  write_meta_error_(Hash, 'NonCanonicalLexicalForm', write_error_12(D, Lex1, Lex2)).
-write_error_12(D, Lex1, Lex2, Out, O) :-
+  write_meta_error_(Hash, 'NonCanonicalLexicalForm', write_error_11(D, Lex1, Lex2)).
+write_error_11(D, Lex1, Lex2, Out, O) :-
   rdf_write_quad(Out, O, ll:datatype, D, graph:meta),
   rdf_write_quad(Out, O, ll:lexicalForm, literal(type(xsd:string,Lex1)), graph:meta),
   rdf_write_quad(Out, O, ll:canonicalLexicalForm, literal(type(xsd:string,Lex2)), graph:meta).
 
 % Not an RDF serialization format.
-write_meta_error(Hash, rdf(non_rdf_format(_Hash,Content))) :- !,
-  write_meta_error_(Hash, 'NonRdfFormat', write_error_13(Content)).
-write_error_13(Content, Out, O) :-
-  rdf_write_quad(Out, O, ll:content, literal(type(xsd:string,Content)), graph:meta).
+write_meta_error(Hash, error(rdf(non_rdf_format,Str),_Context)) :- !,
+  write_meta_error_(Hash, 'NonRdfFormat', write_error_12(Str)).
+write_error_12(Str, Out, O) :-
+  rdf_write_quad(Out, O, ll:content, literal(type(xsd:string,Str)), graph:meta).
+
+% RDF: redefined ID?
+write_meta_error(Hash, rdf(redefined_id(Term))) :- !,
+  format(atom(Lex), "~w", [Term]),
+  write_meta_error_(Hash, 'RdfRedefinedId', write_error_13(Lex)).
+write_error_13(Lex, Out, O) :-
+  rdf_write_quad(Out, O, ll:id, literal(type(xsd:string,Lex)), graph:meta).
 
 % RDF/XML parser error: unexpected tag
 write_meta_error(Hash, rdf(unexpected(Tag,_Parser))) :- !,

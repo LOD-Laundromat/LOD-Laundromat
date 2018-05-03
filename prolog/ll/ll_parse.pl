@@ -12,6 +12,7 @@
 
 :- use_module(library(debug_ext)).
 :- use_module(library(dict)).
+:- use_module(library(file_ext)).
 :- use_module(library(ll/ll_generics)).
 :- use_module(library(ll/ll_metadata)).
 :- use_module(library(sw/rdf_clean)).
@@ -47,26 +48,30 @@ parse_file(Hash) :-
   read_task_memory(Hash, base_uri, BaseUri),
   % blank node-replacing well-known IRI prefix
   bnode_prefix([Hash], BNodePrefix),
-  % Media Type
-  ignore(rdf_guess_file(FromFile, 10 000, MediaType)),
-  write_meta_serialization_format(Hash, MediaType),
-  % counter
-  RdfMeta = _{number_of_quadruples: 0, number_of_triples: 0},
-  setup_call_cleanup(
-    (
-      open(FromFile, read, In),
-      gzopen(ToFile, write, Out)
-    ),
-    rdf_deref_stream(
-      BaseUri,
-      In,
-      clean_tuples(RdfMeta, Out),
-      [base_uri(BaseUri),bnode_prefix(BNodePrefix),media_type(MediaType)]
-    ),
-    maplist(close_metadata(Hash), [parseRead,parseWritten], [In,Out])
-  ),
-  delete_file(FromFile),
-  write_meta_statements(Hash, RdfMeta).
+  peek_file(FromFile, 10 000, Str),
+  (   % RDF serialization format Media Type
+      rdf_guess_string(Str, MediaType)
+  ->  write_meta_serialization_format(Hash, MediaType),
+      % counter
+      RdfMeta = _{number_of_quadruples: 0, number_of_triples: 0},
+      % Reserialize the RDF statements.
+      setup_call_cleanup(
+        (
+          open(FromFile, read, In),
+          gzopen(ToFile, write, Out)
+        ),
+        rdf_deref_stream(
+          BaseUri,
+          In,
+          clean_tuples(RdfMeta, Out),
+          [base_uri(BaseUri),bnode_prefix(BNodePrefix),media_type(MediaType)]
+        ),
+        maplist(close_metadata(Hash), [parseRead,parseWritten], [In,Out])
+      ),
+      delete_file(FromFile),
+      write_meta_statements(Hash, RdfMeta)
+  ;   throw(error(rdf(non_rdf_format,Str),ll_parse))
+  ).
 
 bnode_prefix(Segments, BNodePrefix) :-
   setting(rdf_term:bnode_prefix_scheme, Scheme),
