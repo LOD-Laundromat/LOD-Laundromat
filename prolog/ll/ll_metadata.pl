@@ -81,8 +81,8 @@ write_meta_stream_(S, P, Meta, Out) :-
     [Meta.bytes,Meta.characters,Meta.lines]
   ),
   rdf_write_quad(Out, O, def:bytes, literal(type(xsd:nonNegativeInteger,NumBytes)), graph:meta),
-  rdf_write_quad(Out, O, def:characters, literal(type(xsd:string,NumChars)), graph:meta),
-  rdf_write_quad(Out, O, def:lines, literal(type(xsd:string,NumLines)), graph:meta).
+  rdf_write_quad(Out, O, def:characters, literal(type(xsd:nonNegativeInteger,NumChars)), graph:meta),
+  rdf_write_quad(Out, O, def:lines, literal(type(xsd:nonNegativeInteger,NumLines)), graph:meta).
 
 
 
