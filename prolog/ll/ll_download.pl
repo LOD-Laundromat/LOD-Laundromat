@@ -1,4 +1,4 @@
-:- module(ll_download, [ll_download/0]).
+:- module(ll_download, [ll_download/0,ll_download/1]).
 
 /** <module> LOD Laundromat: Download
 
@@ -7,6 +7,7 @@
 */
 
 :- use_module(library(debug_ext)).
+:- use_module(library(hash_ext)).
 :- use_module(library(http/http_client2)).
 :- use_module(library(ll/ll_generics)).
 :- use_module(library(ll/ll_metadata)).
@@ -14,13 +15,16 @@
 
 ll_download :-
   % precondition
-  (   debugging(ll(Hash,_)),
-      ground(Hash)
-  ->  hash_url(Hash, Uri)
-  ;   start_seed(Seed),
-      Hash = Seed.hash,
-      Uri = Seed.url
-  ),
+  start_seed(Seed),
+  _{hash: Hash, url: Uri} :< Seed,
+  ll_download(Hash, Uri).
+
+ll_download(Uri) :-
+  md5(Uri, Hash),
+  ll_download(Hash, Uri).
+
+ll_download(Hash, Uri) :-
+  % preparation
   indent_debug(1, ll(_,download), "> downloading ~a ~a", [Hash,Uri]),
   write_meta_now(Hash, downloadBegin),
   write_meta_quad(Hash, ll:url, literal(type(xsd:anyURI,Uri)), graph:meta),

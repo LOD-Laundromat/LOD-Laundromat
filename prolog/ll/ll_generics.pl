@@ -25,6 +25,7 @@
 */
 
 :- use_module(library(apply)).
+:- use_module(library(debug)).
 :- use_module(library(error)).
 :- use_module(library(http/json)).
 :- use_module(library(lists)).
@@ -111,7 +112,9 @@ finish(Hash) :-
   hash_file(Hash, 'meta.nq', File),
   compress_file(File),
   delete_file(File),
-  (   seedlist_request([seed,processing], [hash(Hash)], true)
+  (   debugging(ll(offline))
+  ->  true
+  ;   seedlist_request([seed,processing], [hash(Hash)], true)
   ->  seedlist_request([seed,processing], [hash(Hash)], true, [method(patch)])
   ;   true
   ).

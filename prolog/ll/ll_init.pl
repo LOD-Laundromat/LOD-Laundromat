@@ -24,7 +24,7 @@
 :- multifile
     user:message_hook/3.
 
-:- set_prolog_stack(global, limit(10*10**9)). %TBD
+:- set_prolog_stack(global, limit(2*10**9)).
 
 :- setting(ll:authority, any, _,
            "URI scheme of the seedlist server location.").
@@ -63,10 +63,14 @@ init_ll :-
     ]
   ),
   % workers
-  run_loop(ll_download:ll_download, Conf.workers.download),
-  run_loop(ll_decompress:ll_decompress, Conf.workers.decompress),
-  run_loop(ll_recode:ll_recode, Conf.workers.recode),
-  run_loop(ll_parse:ll_parse, Conf.workers.parse),
+  (   debugging(ll(offline))
+  ->  Workers = _{download: 1, decompress: 1, recode: 1, parse: 1}
+  ;   Workers = Conf.workers
+  ),
+  run_loop(ll_download:ll_download, Workers.download),
+  run_loop(ll_decompress:ll_decompress, Workers.decompress),
+  run_loop(ll_recode:ll_recode, Workers.recode),
+  run_loop(ll_parse:ll_parse, Workers.parse),
   % log standard output
   directory_file_path(Conf.'data-directory', 'out.log', File),
   protocol(File).
