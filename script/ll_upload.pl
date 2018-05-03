@@ -4,7 +4,7 @@
     ll_clear/0,
     ll_clear_datasets/0,
     ll_clear_users/0,
-    ll_compile_data/0,
+    ll_compile/1,        % +Base
     ll_upload_data/1,    % ?Hash
     ll_upload_metadata/0
   ]
@@ -78,10 +78,10 @@ ll_clear_users :-
 
 
 
-%! ll_compile_data is det.
+%! ll_compile(+Base:oneof([data,meta])) is det.
 
-ll_compile_data :-
-  aggregate_all(set(Hash-RdfFile), rdf_source_file(Hash, RdfFile), Pairs),
+ll_compile(Base) :-
+  aggregate_all(set(Hash-RdfFile), rdf_source_file(Hash, Base, RdfFile), Pairs),
   length(Pairs, N),
   Counter = count(0,N),
   forall(
@@ -95,9 +95,10 @@ ll_compile_data :-
     )
   ).
 
-rdf_source_file(Hash, RdfFile) :-
+rdf_source_file(Hash, Base, RdfFile) :-
   find_hash(Hash, finished),
-  hash_file(Hash, 'data.nq.gz', RdfFile),
+  file_name_extension(Base, 'nq.gz', Local),
+  hash_file(Hash, Local, RdfFile),
   exists_file(RdfFile),
   % HDT creation throws an exception for empty files.
   \+ is_empty_file(RdfFile),
