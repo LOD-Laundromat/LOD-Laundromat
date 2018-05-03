@@ -29,7 +29,7 @@
 :- meta_predicate
     run_loop(0),
     run_loop(0, +),
-    running_loop(0).
+    running_loop(+, 0).
 
 
 
@@ -44,19 +44,20 @@ run_loop(Goal_0) :-
 
 run_loop(Goal_0, M) :-
   strip_module(Goal_0, _, Pred),
+  (debugging(ll(offline)) -> Sleep = 1 ; Sleep = 60),
   forall(
     between(1, M, _),
     (
       flag(Pred, N, N+1),
       format(atom(Alias), "~a-~D", [Pred,N]),
-      thread_create(running_loop(Goal_0), _, [alias(Alias),detached(true)])
+      thread_create(running_loop(Sleep, Goal_0), _, [alias(Alias),detached(true)])
     )
   ).
 
-running_loop(Goal_0) :-
+running_loop(Sleep, Goal_0) :-
   Goal_0, !,
-  running_loop(Goal_0).
-running_loop(Goal_0) :-
+  running_loop(Sleep, Goal_0).
+running_loop(Sleep, Goal_0) :-
   (debugging(ll(idle)) -> debug(ll(idle), "💤 ~w", [Goal_0]) ; true),
-  sleep(60),
-  running_loop(Goal_0).
+  sleep(Sleep),
+  running_loop(Sleep, Goal_0).
