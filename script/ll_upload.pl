@@ -88,9 +88,9 @@ ll_compile_data :-
     member(Hash-RdfFile, Pairs),
     (
       Counter = count(N1,N),
-      format("~D/~D (~a)\n", [N1,N,Hash]),
-      hdt_create(RdfFile),
       N2 is N1 + 1,
+      format("~D/~D (~a)\n", [N2,N,Hash]),
+      hdt_create(RdfFile),
       nb_setarg(1, Counter, N2)
     )
   ).
