@@ -16,7 +16,7 @@
 ll_decompress :-
   % precondition
   with_mutex(ll_decompress, (
-    find_hash_file(downloaded, Hash, TaskFile),
+    find_hash_file(Hash, downloaded, TaskFile),
     delete_file(TaskFile)
   )),
   indent_debug(1, ll(_,decompress), "> decompressing ~a", [Hash]),

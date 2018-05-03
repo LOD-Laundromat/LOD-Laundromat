@@ -28,7 +28,7 @@
 ll_parse :-
   % precondition
   with_mutex(ll_parse, (
-    find_hash_file(recoded, Hash, TaskFile),
+    find_hash_file(Hash, recoded, TaskFile),
     delete_file(TaskFile)
   )),
   indent_debug(1, ll(_,parse), "> parsing ~a", [Hash]),

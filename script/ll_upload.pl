@@ -96,7 +96,7 @@ ll_compile_data :-
   ).
 
 rdf_source_file(Hash, RdfFile) :-
-  find_hash(finished, Hash),
+  find_hash(Hash, finished),
   hash_file(Hash, 'data.nq.gz', RdfFile),
   exists_file(RdfFile),
   % HDT creation throws an exception for empty files.
@@ -110,7 +110,7 @@ rdf_source_file(Hash, RdfFile) :-
 %! ll_upload_data(-Hash:atom) is nondet.
 
 ll_upload_data(Hash) :-
-  find_hash(parsed, Hash), %NONDET
+  find_hash(Hash, parsed), %NONDET
   indent_debug(1, ll(upload), "> uploading ~a", [Hash]),
   ll_upload_data_file(Hash),
   indent_debug(-1, ll(upload), "< uploaded ~a", [Hash]).
@@ -129,7 +129,7 @@ ll_upload_metadata :-
   setup_call_cleanup(
     gzopen(ToFile, write, Out),
     forall(
-      find_hash(finished, Hash),
+      find_hash(Hash, finished),
       (
         hash_file(Hash, ToFile, FromFile),
         setup_call_cleanup(

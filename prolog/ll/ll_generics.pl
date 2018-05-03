@@ -2,9 +2,9 @@
   ll_generics,
   [
     end_task/2,            % +Hash, +Local
-    find_hash_directory/2, % -Directory, -Hash
-    find_hash/2,           % +Local, -Hash
-    find_hash_file/3,      % +Local, -Hash, -File
+    find_hash/2,           % ?Hash, +Local
+    find_hash_directory/2, % ?Hash, -Directory
+    find_hash_file/3,      % ?Hash, +Local, -File
     finish/1,              % +Hash
     hash_directory/2,      % +Hash, -Directory
     hash_entry_hash/3,     % +Hash1, +Entry, -Hash2
@@ -52,27 +52,34 @@ end_task(Hash, Local) :-
 
 
 
-%! find_hash_directory(-Directory:atom, -Hash:atom) is nondet.
+%! find_hash(+Hash:atom, +Local:atom) is semidet.
+%! find_hash(-Hash:atom, +Local:atom) is nondet.
 
-find_hash_directory(Dir2, Hash) :-
+find_hash(Hash, Local) :-
+  find_hash_file(Hash, Local, _).
+
+
+
+%! find_hash_directory(+Hash:atom, -Directory:atom) is semidet.
+%! find_hash_directory(-Hash:atom, -Directory:atom) is nondet.
+
+find_hash_directory(Hash, Dir2) :-
   setting(ll:data_directory, Root),
-  directory_subdirectory(Root, Hash1, Dir1),
-  directory_subdirectory(Dir1, Hash2, Dir2),
-  atom_concat(Hash1, Hash2, Hash).
+  (   var(Hash)
+  ->  directory_subdirectory(Root, Hash1, Dir1),
+      directory_subdirectory(Dir1, Hash2, Dir2),
+      atom_concat(Hash1, Hash2, Hash)
+  ;   hash_directory(Hash, Dir2),
+      exists_directory(Dir2)
+  ).
 
 
 
-%! find_hash(+Local:atom, -Hash:atom) is nondet.
+%! find_hash_file(+Hash:atom, +Local:atom, -File:atom) is semidet.
+%! find_hash_file(-Hash:atom, +Local:atom, -File:atom) is nondet.
 
-find_hash(Local, Hash) :-
-  find_hash_file(Local, Hash, _).
-
-
-
-%! find_hash_file(+Local:atom, -Hash:atom, -File:atom) is nondet.
-
-find_hash_file(Local, Hash, File) :-
-  find_hash_directory(Dir, Hash),
+find_hash_file(Hash, Local, File) :-
+  find_hash_directory(Hash, Dir),
   directory_file_path(Dir, Local, File),
   exists_file(File).
 
@@ -126,7 +133,7 @@ hash_url(Hash, Url) :-
 %! read_task_memory(+Hash:atom, +Local:atom, -Term:term) is semidet.
 
 read_task_memory(Hash, Local, Term) :-
-  hash_file(Hash, Local, File),
+  find_hash_file(Hash, Local, File),
   setup_call_cleanup(
     open(File, read, In),
     (

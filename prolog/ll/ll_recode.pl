@@ -22,7 +22,7 @@
 ll_recode :-
   % precondition
   with_mutex(ll_recode, (
-    find_hash_file(decompressed, Hash, TaskFile),
+    find_hash_file(Hash, decompressed, TaskFile),
     delete_file(TaskFile)
   )),
   indent_debug(1, ll(_,recode), "> recoding ~a", [Hash]),
