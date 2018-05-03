@@ -83,8 +83,7 @@ decompress_archive(Hash, Arch) :-
   ).
 
 decompress_entry(Hash1, Entry, ArchMetas, In) :-
-  decompress_entry_start(Entry, Hash1, Hash2, Local),
-  write_meta_archive(Hash2, ArchMetas),
+  decompress_entry_start(Entry, Hash1, ArchMetas, Hash2, Local),
   hash_file(Hash2, Local, File),
   setup_call_cleanup(
     open(File, write, Out, [type(binary)]),
@@ -94,9 +93,10 @@ decompress_entry(Hash1, Entry, ArchMetas, In) :-
   decompress_entry_end(Entry, Hash1, Hash2).
 
 % leaf node
-decompress_entry_start(data, Hash, Hash, dirty) :- !.
+decompress_entry_start(data, Hash, ArchMetas, Hash, dirty) :- !,
+  write_meta_archive(Hash, ArchMetas).
 % non-leaf node
-decompress_entry_start(Entry, Hash1, Hash2, compressed) :-
+decompress_entry_start(Entry, Hash1, _, Hash2, compressed) :-
   hash_entry_hash(Hash1, Entry, Hash2).
 
 % leaf node
