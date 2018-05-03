@@ -35,11 +35,11 @@
 
 :- maplist(rdf_assert_prefix, [
      bnode-'https://lodlaundromat.org/.well-known/genid/',
-     def-'https://lodlaundromat.org/def/',
      error-'https://lodlaundromat.org/error/def/',
      graph-'https://lodlaundromat.org/graph/',
      http-'https://lodlaundromat.org/http/def/',
-     id-'https://lodlaundromat.org/id/'
+     id-'https://lodlaundromat.org/id/',
+     ll-'https://lodlaundromat.org/def/'
    ]).
 
 :- setting(ll:data_directory, any, _, "").
@@ -146,7 +146,7 @@ ll_upload_metadata :-
   dataset_upload(
     _,
     metadata,
-    _{files: [ToFile], prefixes: [bnode,def,error,graph,http,id]}
+    _{files: [ToFile], prefixes: [bnode,error,graph,http,id,ll]}
   ),
   delete_file(ToFile).
 
