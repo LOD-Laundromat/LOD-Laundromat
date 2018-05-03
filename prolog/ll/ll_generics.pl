@@ -52,7 +52,7 @@
 copy_task_files(Hash1, Hash2) :-
   forall(
     task_file_local(Local),
-    (   find_hash(Hash1, Local, File1)
+    (   find_hash_file(Hash1, Local, File1)
     ->  hash_file(Hash2, Local, File2),
         copy_file(File1, File2)
     ;   true
