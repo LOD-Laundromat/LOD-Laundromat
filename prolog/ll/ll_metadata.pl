@@ -412,7 +412,9 @@ write_meta_http_item(Item, Meta, Out) :-
   maplist(write_meta_http_header(Out, Item), Pairs),
   % Some servers emit non-numeric status codes, so we cannot use
   % `xsd:positiveInteger' here.
-  rdf_write_quad(Out, Item, ll:status, literal(type(xsd:string,Meta.status)), graph:meta),
+  Status = Meta.status,
+  (atom(Status) -> Lex = Status ; atom_number(Lex, Status)),
+  rdf_write_quad(Out, Item, ll:status, literal(type(xsd:string,Lex)), graph:meta),
   rdf_write_quad(Out, Item, ll:url, literal(type(xsd:anyURI,Meta.uri)), graph:meta).
 % TBD: Multiple values should emit a warning in `http/http_client2'.
 write_meta_http_header(Out, Item, PLocal-Lexs) :-
