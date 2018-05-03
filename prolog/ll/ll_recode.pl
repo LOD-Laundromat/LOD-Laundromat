@@ -48,7 +48,7 @@ recode_file(Hash) :-
   ignore(xml_file_encoding(File, XmlEnc)),
   write_meta_encoding(Hash, GuessEnc, HttpEnc, XmlEnc),
   choose_encoding(GuessEnc, HttpEnc, XmlEnc, Enc),
-  write_meta_quad(Hash, def:encoding, literal(type(xsd:string,Enc)), graph:meta),
+  write_meta_quad(Hash, ll:encoding, literal(type(xsd:string,Enc)), graph:meta),
   recode_to_utf8(File, Enc).
 
 guess_encoding_(File, Enc2) :-

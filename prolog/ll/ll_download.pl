@@ -23,7 +23,7 @@ ll_download :-
   ),
   indent_debug(1, ll(_,download), "> downloading ~a ~a", [Hash,Uri]),
   write_meta_now(Hash, downloadBegin),
-  write_meta_quad(Hash, def:url, literal(type(xsd:anyURI,Uri)), graph:meta),
+  write_meta_quad(Hash, ll:url, literal(type(xsd:anyURI,Uri)), graph:meta),
   % operation
   catch(download_url(Hash, Uri, MediaType, Status, FinalUri), E, true),
   % postcondition
