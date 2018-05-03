@@ -103,5 +103,6 @@ decompress_entry_start(Entry, Hash1, Hash2, compressed) :-
 decompress_entry_end(data, _, _) :- !.
 % non-leaf node
 decompress_entry_end(_, Hash1, Hash2) :-
+  copy_task_files(Hash1, Hash2),
   write_meta_entry(Hash1, Hash2),
   touch_hash_file(Hash2, downloaded).

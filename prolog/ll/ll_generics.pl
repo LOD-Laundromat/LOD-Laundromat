@@ -1,6 +1,7 @@
 :- module(
   ll_generics,
   [
+    copy_task_files/2,     % +FromHash, +ToHash
     end_task/2,            % +Hash, +Local
     find_hash/2,           % ?Hash, +Local
     find_hash_directory/2, % ?Hash, -Directory
@@ -26,6 +27,7 @@
 :- use_module(library(apply)).
 :- use_module(library(error)).
 :- use_module(library(http/json)).
+:- use_module(library(lists)).
 
 :- use_module(library(call_ext)).
 :- use_module(library(file_ext)).
@@ -42,6 +44,23 @@
     seedlist_request(+, ?, 1, +).
 
 
+
+
+
+%! copy_task_files(+FromHash:atom, +ToHash:atom) is det.
+
+copy_task_files(Hash1, Hash2) :-
+  forall(
+    task_file_local(Local),
+    (   find_hash(Hash1, Local, File1)
+    ->  hash_file(Hash2, Local, File2),
+        copy_file(File1, File2)
+    ;   true
+    )
+  ).
+
+task_file_local(base_uri).
+task_file_local(http_media_type).
 
 
 
