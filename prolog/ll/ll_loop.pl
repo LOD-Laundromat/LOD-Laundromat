@@ -57,9 +57,6 @@ running_loop(Goal_0) :-
   Goal_0, !,
   running_loop(Goal_0).
 running_loop(Goal_0) :-
-  (   debugging(ll(idle))
-  ->  (Goal_0 = _:ll_parse -> debug(ll(idle), "💤 nothing to parse", []) ; true)
-  ;   true
-  ),
+  (debugging(ll(idle)) -> debug(ll(idle), "💤 ~w", [Goal_0]) ; true),
   sleep(60),
   running_loop(Goal_0).
