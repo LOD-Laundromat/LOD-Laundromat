@@ -70,7 +70,11 @@ choose_encoding(_, _, XmlEnc, XmlEnc) :-
 choose_encoding(_, HttpEnc, _, HttpEnc) :-
   ground(HttpEnc), !.
 % 3. Guessed encoding
-choose_encoding(GuessEnc, _, _, GuessEnc).
+choose_encoding(GuessEnc, _, _, GuessEnc) :-
+  ground(GuessEnc), !.
+% 4. No encoding whatsoever.  This is probably binary (e.g., PDF), but
+% let's try to parse it as text anyway.
+choose_encoding(_, _, _, utf8).
 
 % unknown encoding
 recode_to_utf8(_, Enc) :-
