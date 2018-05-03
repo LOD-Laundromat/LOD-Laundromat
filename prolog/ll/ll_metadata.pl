@@ -4,7 +4,7 @@
     close_metadata/3,                  % +Hash, +PLocal, +Stream
     write_meta/2,                      % +Hash, :Goal_1
     write_meta_archive/2,              % +Hash, +Metadata
-    write_meta_encoding/2,             % +Hash, +Encodings
+    write_meta_encoding/4,             % +Hash, ?GuessEncoding, ?HttpEncoding, ?XmlEncoding
     write_meta_entry/2,                % +Hash1, +Hash2
     write_meta_error/2,                % +Hash, +Error
     write_meta_http/2,                 % +Hash, +Metadata
@@ -129,18 +129,17 @@ write_meta_archive_item(Item, Meta, Out) :-
   rdf_write_quad(Out, Item, def:mtime, literal(type(xsd:float,Mtime)), graph:meta),
   rdf_write_quad(Out, Item, def:name, literal(type(xsd:string,Meta.name)), graph:meta),
   rdf_write_quad(Out, Item, def:permissions, literal(type(xsd:positiveInteger,Permissions)), graph:meta),
-  rdf_write_quad(Out, Item, def:permissions, literal(type(xsd:float,Size)), graph:meta).
+  rdf_write_quad(Out, Item, def:size, literal(type(xsd:float,Size)), graph:meta).
 
 
 
-%! write_meta_encoding(+Hash:atom, +Encodings:list(atom)) is det.
+%! write_meta_encoding(+Hash:atom, ?GuessEncoding:atom, ?HttpEncoding:atom, ?XmlEncoding:atom) is det.
 
-write_meta_encoding(Hash, Encodings) :-
+write_meta_encoding(Hash, GuessEnc, HttpEnc, XmlEnc) :-
   rdf_global_id(id:Hash, S),
-  write_meta(Hash, write_meta_encoding(S, Encodings)).
+  write_meta(Hash, write_meta_encoding(S, GuessEnc, HttpEnc, XmlEnc)).
 
-write_meta_encoding(S, [GuessEnc,HttpEnc,XmlEnc,Enc], Out) :-
-  rdf_write_quad(Out, S, def:encoding, literal(type(xsd:string,Enc)), graph:meta),
+write_meta_encoding(S, GuessEnc, HttpEnc, XmlEnc, Out) :-
   (   var(GuessEnc)
   ->  true
   ;   rdf_write_quad(Out, S, def:uchardet, literal(type(xsd:string,GuessEnc)), graph:meta)
@@ -217,6 +216,9 @@ write_http_redirect_loop(S, Out) :-
   rdf_bnode_iri(O),
   rdf_write_quad(Out, S, def:error, O, graph:meta),
   rdf_write_quad(Out, O, rdf:type, error:'HttpRedirectLoop', graph:meta).
+
+write_meta_error(Hash, error(no_encoding,_Context)) :-
+  write_meta_query(Hash, def:error, error:noEncoding, graph:meta).
 
 % Socket errors:
 %   - Connection refused

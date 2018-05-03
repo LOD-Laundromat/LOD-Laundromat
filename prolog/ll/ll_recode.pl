@@ -46,8 +46,9 @@ recode_file(Hash) :-
     media_type_encoding(MediaType, HttpEnc)
   )),
   ignore(xml_file_encoding(File, XmlEnc)),
+  write_meta_encoding(Hash, GuessEnc, HttpEnc, XmlEnc),
   choose_encoding(GuessEnc, HttpEnc, XmlEnc, Enc),
-  write_meta_encoding(Hash, [GuessEnc,HttpEnc,XmlEnc,Enc]),
+  write_meta_quad(Hash, def:encoding, literal(type(xsd:string,Enc)), graph:meta),
   recode_to_utf8(File, Enc).
 
 guess_encoding_(File, Enc2) :-
@@ -71,10 +72,11 @@ choose_encoding(_, HttpEnc, _, HttpEnc) :-
   ground(HttpEnc), !.
 % 3. Guessed encoding
 choose_encoding(GuessEnc, _, _, GuessEnc) :-
-  ground(GuessEnc), !.
-% 4. No encoding whatsoever.  This is probably binary (e.g., PDF), but
-% let's try to parse it as text anyway.
-choose_encoding(_, _, _, utf8).
+  ground(GuessEnc),
+  GuessEnc \== octet.
+% 4. No encoding or binary (`octet').
+choose_encoding(_, _, _, _) :-
+  throw(error(no_encoding,ll_recode)).
 
 % unknown encoding
 recode_to_utf8(_, Enc) :-
