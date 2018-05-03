@@ -10,7 +10,6 @@
     hash_directory/2,      % +Hash, -Directory
     hash_entry_hash/3,     % +Hash1, +Entry, -Hash2
     hash_file/3,           % +Hash, +Local, -File
-    hash_url/2,            % +Hash, -Url
     read_task_memory/3,    % +Hash, +Local, -Term
     start_seed/1,          % -Seed
     touch_hash_file/2,     % +Hash, +Local
@@ -141,14 +140,6 @@ hash_entry_hash(Hash1, Entry, Hash2) :-
 hash_file(Hash, Local, File) :-
   setting(ll:data_directory, Dir),
   hash_file(Dir, Hash, Local, File).
-
-
-
-%! hash_url(+Hash:atom, -Url:atom) is det.
-
-hash_url(Hash, Url) :-
-  seedlist_request([seed], [hash(Hash)], seed_(Seed)),
-  Url = Seed.url.
 
 
 
