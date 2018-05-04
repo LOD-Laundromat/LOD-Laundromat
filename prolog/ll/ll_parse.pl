@@ -48,12 +48,7 @@ ll_parse :-
   thread_join(Id, Status),
   % postcondition
   write_meta_now(Hash, parseEnd),
-  (   Status = exception(E)
-  ->  write_meta_error(Hash, E)
-  ;   Status == fail
-  ->  write_meta_error(Hash, fail)
-  ;   end_task(Hash, parsed)
-  ),
+  (Status == true -> end_task(Hash, parsed) ; write_meta_status(Hash, Status)),
   finish(Hash),
   indent_debug(-1, ll(_,parse), "< parsed ~a", [Hash]).
 

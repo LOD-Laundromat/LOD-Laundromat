@@ -29,10 +29,11 @@ ll_download(Hash, Uri) :-
   write_meta_now(Hash, downloadBegin),
   write_meta_quad(Hash, ll:url, literal(type(xsd:anyURI,Uri)), graph:meta),
   % operation
-  catch(download_url(Hash, Uri, MediaType, Status, FinalUri), E, true),
+  thread_create(download_url(Hash, Uri, MediaType, Status, FinalUri), Id, [alias(Hash)]),
+  thread_join(Id, Status),
   % postcondition
   write_meta_now(Hash, downloadEnd),
-  (   var(E)
+  (   Status == true
   ->  (   between(200, 299, Status)
       ->  write_task_memory(Hash, base_uri, FinalUri),
           (   var(MediaType)
@@ -45,7 +46,7 @@ ll_download(Hash, Uri) :-
           delete_file(File),
           finish(Hash)
       )
-  ;   write_meta_error(Hash, E),
+  ;   write_meta_status(Hash, Status),
       finish(Hash)
   ),
   indent_debug(-1, ll(_,download), "< downloaded ~a ~a", [Hash,Uri]).
