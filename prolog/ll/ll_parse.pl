@@ -39,8 +39,7 @@ ll_parse :-
   thread_join(Id, Status),
   % postcondition
   write_meta_now(Hash, parseEnd),
-  (Status == true -> end_task(Hash, parsed) ; write_meta_status(Hash, Status)),
-  finish(Hash),
+  write_meta_status(Hash, Status),
   indent_debug(-1, ll(_,parse), "< parsed ~a", [Hash]).
 
 parse_file(Hash) :-
@@ -76,7 +75,9 @@ parse_file(Hash) :-
       delete_file(FromFile),
       write_meta_statements(Hash, RdfMeta)
   ;   throw(error(rdf(non_rdf_format,Str),ll_parse))
-  ).
+  ),
+  end_task(Hash, parsed),
+  finish(Hash).
 
 bnode_prefix(Segments, BNodePrefix) :-
   setting(rdf_term:bnode_prefix_scheme, Scheme),

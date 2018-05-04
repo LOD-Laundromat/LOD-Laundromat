@@ -212,6 +212,13 @@ write_meta_error(Hash, error(http_error(no_content_type,_Uri),_Context)) :- !,
 write_meta_error(Hash, error(http_error(redirect_loop,_Urls),_Context)) :- !,
   write_meta_error_(Hash, 'HttpRedirectLoop').
 
+% HTTP error status code
+write_meta_error(Hash, error(http_error(status,Status),_Context)) :- !,
+  atom_number(Lex, Status),
+  write_meta_error_(Hash, 'HttpErrorStatus', write_error_51(Lex)).
+write_error_51(Lex, Out, O) :-
+  rdf_write_quad(Out, O, ll:code, literal(type(xsd:positiveInteger,Lex)), graph:meta).
+
 % I/O error: ???
 write_meta_error(Hash, error(io_error(read,_Stream),_Context)) :- !,
   write_meta_error_(Hash, 'ReadStreamError').
@@ -247,6 +254,12 @@ write_meta_error(Hash, error(syntax_error(http_parameter(Param)),_)) :- !,
   write_meta_error_(Hash, 'HttpParameterParseError', write_error_7(Param)).
 write_error_7(Param, Out, O) :-
   rdf_write_quad(Out, O, ll:parameter, literal(type(xsd:string,Param)), graph:meta).
+
+write_meta_error(Hash, error(syntax_error(http_status(Status)),_Context)) :- !,
+  ensure_atom(Status, Lex),
+  write_meta_error_(Hash, 'IncorrectHttpStatusCode', write_error_71(Lex)).
+write_error_71(Lex, Out, O) :-
+  rdf_write_quad(Out, O, ll:status, literal(type(xsd:string,Lex)), graph:meta).
 
 % RDF syntax error:
 %   - end-of-line expected
@@ -480,7 +493,24 @@ write_meta_statements(Hash, RdfMeta) :-
 
 %! write_meta_status(+Hash:atom, +Status:term) is det.
 
+write_meta_status(_, true) :- !.
 write_meta_status(Hash, exception(E)) :- !,
-  write_meta_error(Hash, E).
+  write_meta_error(Hash, E),
+  finish(Hash).
 write_meta_status(Hash, Status) :-
-  write_meta_error(Hash, Status).
+  write_meta_error(Hash, Status),
+  finish(Hash).
+
+
+
+
+
+% HELPERS %
+
+%! ensure_atom(+Term:term, -Atom:atom) is det.
+
+ensure_atom(Atom, Atom) :-
+  atom(Atom), !.
+ensure_atom(N, Atom) :-
+  number(N), !,
+  atom_number(Atom, N).

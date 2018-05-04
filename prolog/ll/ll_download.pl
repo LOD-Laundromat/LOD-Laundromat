@@ -6,6 +6,8 @@
 @version 2017/09-2017/12
 */
 
+:- use_module(library(error)).
+
 :- use_module(library(debug_ext)).
 :- use_module(library(hash_ext)).
 :- use_module(library(http/http_client2)).
@@ -29,38 +31,38 @@ ll_download(Hash, Uri) :-
   write_meta_now(Hash, downloadBegin),
   write_meta_quad(Hash, ll:url, literal(type(xsd:anyURI,Uri)), graph:meta),
   % operation
-  thread_create(
-    download_url(Hash, Uri, MediaType, HttpStatus, FinalUri),
-    Id,
-    [alias(Hash)]
-  ),
-  thread_join(Id, ThreadStatus),
+  thread_create(download_url(Hash, Uri), Id, [alias(Hash)]),
+  thread_join(Id, Status),
   % postcondition
   write_meta_now(Hash, downloadEnd),
-  (   ThreadStatus == true
-  ->  (   between(200, 299, HttpStatus)
-      ->  write_task_memory(Hash, base_uri, FinalUri),
-          (   var(MediaType)
-          ->  true
-          ;   write_task_memory(Hash, http_media_type, MediaType)
-          ),
-          end_task(Hash, downloaded)
-      ;   assertion(between(400, 599, HttpStatus)),
-          hash_file(Hash, compressed, File),
-          delete_file(File),
-          finish(Hash)
-      )
-  ;   write_meta_status(Hash, ThreadStatus),
-      finish(Hash)
-  ),
+  write_meta_status(Hash, Status),
   indent_debug(-1, ll(_,download), "< downloaded ~a ~a", [Hash,Uri]).
 
-download_url(Hash, Uri, MediaType, Status, FinalUri) :-
+download_url(Hash, Uri) :-
   hash_file(Hash, compressed, File),
   setup_call_cleanup(
     open(File, write, Out, [type(binary)]),
     download_stream(Hash, Uri, Out, MediaType, Status, FinalUri),
     close_metadata(Hash, downloadWritten, Out)
+  ),
+  % End task or finish with an error, depending on the HTTP status
+  % code.
+  (   between(200, 299, Status)
+  ->  write_task_memory(Hash, base_uri, FinalUri),
+      (   var(MediaType)
+      ->  true
+      ;   write_task_memory(Hash, http_media_type, MediaType)
+      ),
+      end_task(Hash, downloaded)
+  ;   % cleanup
+      hash_file(Hash, compressed, File),
+      delete_file(File),
+      (   % Correct HTTP error status code
+          between(400, 599, Status)
+      ->  throw(error(http_error(status,Status),ll_download))
+      ;   % Incorrect HTTP status code
+          syntax_error(http_status(Status))
+      )
   ).
 
 download_stream(Hash, Uri, Out, MediaType, Status, FinalUri) :-
