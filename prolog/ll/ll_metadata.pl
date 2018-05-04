@@ -164,9 +164,6 @@ write_meta_entry(Hash1, Hash2) :-
 
 %! write_meta_error(+Hash:atom, +Error:compound) is det,
 
-% Oh no!
-write_meta_error(Hash, error(resource_error(stack),global)) :- !,
-  write_meta_quad(Hash, ll:error, error:'GlobalStack', graph:meta).
 % Archive errors.
 write_meta_error(Hash, error(archive_error(Code,Msg),_Context)) :- !,
   atom_number(Lex, Code),
@@ -222,6 +219,10 @@ write_meta_error(Hash, error(io_error(read,_Stream),_Context)) :- !,
 write_meta_error(Hash, error(no_encoding,_Context)) :-
   write_meta_error_(Hash, 'NoEncoding').
 
+% Resource error: global stack
+write_meta_error(Hash, error(resource_error(stack),global)) :- !,
+  write_meta_error_(Hash, 'GlobalStack').
+
 % Socket errors:
 %   - Connection refused
 %   - Connection reset by peer
@@ -235,6 +236,10 @@ write_meta_error(Hash, error(socket_error(Msg),_Context)) :- !,
   write_meta_error_(Hash, 'SocketError', write_error_6(Msg)).
 write_error_6(Msg, Out, O) :-
   rdf_write_quad(Out, O, ll:message, literal(type(xsd:string,Msg)), graph:meta).
+
+% SSL error: unexpected end of file
+write_meta_error(Hash, error(ssl_error('SSL_eof',ssl,negotiate,'Unexpected end-of-file'),_Context)) :- !,
+  write_meta_error_(Hash, 'SslUnexpectedEof').
 
 % Syntax error: HTTP parameter
 write_meta_error(Hash, error(syntax_error(http_parameter(Param)),_)) :- !,
