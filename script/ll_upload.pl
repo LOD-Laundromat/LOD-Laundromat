@@ -147,7 +147,10 @@ ll_upload_metadata :-
     ),
     close(Out)
   ),
-  dataset_upload(_, metadata, _{accessLevel: public, files: [TmpFile]}),
+  (   is_empty_file(TmpFile)
+  ->  true
+  ;   dataset_upload(_, metadata, _{accessLevel: public, files: [TmpFile]})
+  ),
   delete_file(TmpFile).
 
 
