@@ -30,7 +30,7 @@
     running_loop(+, 0).
 
 :- multifile
-    init_loop_hook/1.
+    ll:init_loop_hook/1.
 
 
 
@@ -56,7 +56,7 @@ start_loop(Pred, Sleep, Goal_0) :-
 
 
 init_loop(Pred) :-
-  init_loop_hook(Pred), !.
+  ll:init_loop_hook(Pred), !.
 init_loop(_).
 
 
