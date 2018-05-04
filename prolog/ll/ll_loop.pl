@@ -1,8 +1,7 @@
 :- module(
   ll_loop,
   [
-    run_loop/1, % :Goal_0
-    run_loop/2  % :Goal_0, +NumberOfThreads
+    run_loop/3  % :Goal_0, +Sleep, +NumberOfThreads
   ]
 ).
 
@@ -27,32 +26,39 @@
    flag(ll_parse, _, 1).
 
 :- meta_predicate
-    run_loop(0),
-    run_loop(0, +),
+    run_loop(0, +, +),
     running_loop(+, 0).
 
+:- multifile
+    init_loop_hook/1.
 
 
 
 
-%! run_loop(:Goal_0) is det.
-%! run_loop(:Goal_0, +NumberOfThreads:nonneg) is det.
 
-run_loop(Goal_0) :-
-  run_loop(Goal_0, 1).
+%! run_loop(:Goal_0, +Sleep:nonneg, +NumberOfThreads:nonneg) is det.
 
-
-run_loop(Goal_0, M) :-
+run_loop(Goal_0, Sleep, M) :-
   strip_module(Goal_0, _, Pred),
-  (debugging(ll(offline)) -> Sleep = 1 ; Sleep = 60),
   forall(
     between(1, M, _),
     (
       flag(Pred, N, N+1),
       format(atom(Alias), "~a-~D", [Pred,N]),
-      thread_create(running_loop(Sleep, Goal_0), _, [alias(Alias),detached(true)])
+      thread_create(start_loop(Pred, Sleep, Goal_0), _, [alias(Alias),detached(true)])
     )
   ).
+
+
+start_loop(Pred, Sleep, Goal_0) :-
+  init_loop(Pred),
+  running_loop(Sleep, Goal_0).
+
+
+init_loop(Pred) :-
+  init_loop_hook(Pred), !.
+init_loop(_).
+
 
 running_loop(Sleep, Goal_0) :-
   Goal_0, !,

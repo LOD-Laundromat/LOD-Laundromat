@@ -24,11 +24,6 @@
 :- multifile
     user:message_hook/3.
 
-% This is needed for `http://spraakbanken.gu.se/rdf/saldom.rdf' which
-% has 8M+ triples in one RDF/XML description.
-:- set_prolog_stack(global, limit(2*10**9)).
-:- set_prolog_stack(trail, limit(2*10**9)).
-
 :- setting(ll:authority, any, _,
            "URI scheme of the seedlist server location.").
 :- setting(ll:data_directory, any, _,
@@ -67,13 +62,15 @@ init_ll :-
   ),
   % workers
   (   debugging(ll(offline))
-  ->  Workers = _{download: 1, decompress: 1, recode: 1, parse: 1}
-  ;   Workers = Conf.workers
+  ->  Sleep = 1,
+      Workers = _{download: 1, decompress: 1, recode: 1, parse: 1}
+  ;   Sleep = Conf.sleep,
+      Workers = Conf.workers
   ),
-  run_loop(ll_download:ll_download, Workers.download),
-  run_loop(ll_decompress:ll_decompress, Workers.decompress),
-  run_loop(ll_recode:ll_recode, Workers.recode),
-  run_loop(ll_parse:ll_parse, Workers.parse),
+  run_loop(ll_download:ll_download, Sleep, Workers.download),
+  run_loop(ll_decompress:ll_decompress, Sleep, Workers.decompress),
+  run_loop(ll_recode:ll_recode, Sleep, Workers.recode),
+  run_loop(ll_parse:ll_parse, Sleep, Workers.parse),
   % log standard output
   directory_file_path(Conf.'data-directory', 'out.log', File),
   protocol(File).

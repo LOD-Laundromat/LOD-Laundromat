@@ -26,6 +26,16 @@
    set_setting(rdf_term:bnode_prefix_scheme, https),
    set_setting(rdf_term:bnode_prefix_authority, 'lodlaundromat.org').
 
+:- multifile
+    init_loop_hook/1.
+
+init_loop_hook(ll_parse) :-
+  gtrace,
+  % This is needed for `http://spraakbanken.gu.se/rdf/saldom.rdf'
+  % which has 8M+ triples in one RDF/XML description.
+  set_prolog_stack(global, limit(2*10**9)),
+  set_prolog_stack(trail, limit(2*10**9)).
+
 ll_parse :-
   % precondition
   with_mutex(ll_parse, (
