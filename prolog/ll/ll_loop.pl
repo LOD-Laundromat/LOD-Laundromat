@@ -29,9 +29,6 @@
     run_loop(0, +, +),
     running_loop(+, 0).
 
-:- multifile
-    ll:init_loop_hook/1.
-
 
 
 
@@ -45,20 +42,9 @@ run_loop(Goal_0, Sleep, M) :-
     (
       flag(Pred, N, N+1),
       format(atom(Alias), "~a-~D", [Pred,N]),
-      thread_create(start_loop(Pred, Sleep, Goal_0), _, [alias(Alias),detached(true)])
+      thread_create(running_loop(Sleep, Goal_0), _, [alias(Alias),detached(true)])
     )
   ).
-
-
-start_loop(Pred, Sleep, Goal_0) :-
-  init_loop(Pred),
-  running_loop(Sleep, Goal_0).
-
-
-init_loop(Pred) :-
-  ll:init_loop_hook(Pred), !.
-init_loop(_).
-
 
 running_loop(Sleep, Goal_0) :-
   Goal_0, !,
