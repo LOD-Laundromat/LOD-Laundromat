@@ -5,7 +5,7 @@
     ll_clear_datasets/0,
     ll_clear_users/0,
     ll_compile/1,        % +Base
-    ll_upload_data/1,    % ?Hash
+    ll_upload_data/0,
     ll_upload_metadata/0
   ]
 ).
@@ -107,32 +107,37 @@ rdf_source_file(Hash, Base, RdfFile) :-
 
 
 
-%! ll_upload_data(+Hash:atom) is det.
-%! ll_upload_data(-Hash:atom) is nondet.
+%! ll_upload_data is det.
 
-ll_upload_data(Hash) :-
-  find_hash(Hash, parsed), %NONDET
-  indent_debug(1, ll(upload), "> uploading ~a", [Hash]),
-  ll_upload_data_file(Hash),
-  indent_debug(-1, ll(upload), "< uploaded ~a", [Hash]).
-
-ll_upload_data_file(Hash) :-
-  maplist(hash_file(Hash), ['data.nq.gz','meta.nq.gz'], [DataFile,MetaFile]),
-  ignore(dataset_delete('lod-laundromat', Hash)),
-  dataset_upload('lod-laundromat', Hash, _{files: [DataFile,MetaFile]}).
+ll_upload_data :-
+  aggregate_all(set(Hash), find_hash(Hash, finished), L),
+  length(L, N),
+  Counter = counter(0,N),
+  forall(
+    member(Hash, L),
+    (
+      Counter = counter(N1,N),
+      N2 is N1 + 1,
+      format("~D/~D (~a)\n", [N2,N,Hash]),
+      find_hash_file(Hash, 'meta.nq.gz', MetaFile),
+      (find_hash_file(Hash, 'data.nq.gz', DataFile) -> T = [DataFile] ; T = []),
+      dataset_upload(_, Hash, _{accessLevel: public, files: [MetaFile|T]}),
+      nb_setarg(1, Counter, N2)
+    )
+  ).
 
 
 
 %! ll_upload_metadata is det.
 
 ll_upload_metadata :-
-  ToFile = 'meta.nq.gz',
+  TmpFile = 'meta.nq.gz',
   setup_call_cleanup(
-    gzopen(ToFile, write, Out),
+    gzopen(TmpFile, write, Out),
     forall(
       find_hash(Hash, finished),
       (
-        hash_file(Hash, ToFile, FromFile),
+        hash_file(Hash, TmpFile, FromFile),
         setup_call_cleanup(
           gzopen(FromFile, read, In),
           copy_stream_data(In, Out),
@@ -142,13 +147,8 @@ ll_upload_metadata :-
     ),
     close(Out)
   ),
-  ignore(dataset_delete(_, metadata)),
-  dataset_upload(
-    _,
-    metadata,
-    _{files: [ToFile], prefixes: [bnode,error,graph,http,id,ll]}
-  ),
-  delete_file(ToFile).
+  dataset_upload(_, metadata, _{accessLevel: public, files: [TmpFile]}),
+  delete_file(TmpFile).
 
 
 
