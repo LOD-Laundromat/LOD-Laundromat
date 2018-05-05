@@ -1,6 +1,7 @@
 :- use_module(library(debug)).
 :- use_module(library(thread_ext)).
 
+:- debug(ll(idle)).
 :- debug(ll(offline)).
 
 :- use_module(library(ll/ll_download)).

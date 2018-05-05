@@ -17,9 +17,12 @@
 
 ll_download :-
   % precondition
-  start_seed(Seed),
-  _{hash: Hash, url: Uri} :< Seed,
-  ll_download(Hash, Uri).
+  (   debugging(ll(offline))
+  ->  true
+  ;   start_seed(Seed),
+      _{hash: Hash, url: Uri} :< Seed,
+      ll_download(Hash, Uri)
+  ).
 
 ll_download(Uri) :-
   md5(Uri, Hash),
