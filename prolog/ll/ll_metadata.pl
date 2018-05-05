@@ -2,9 +2,10 @@
   ll_metadata,
   [
     close_metadata/3,                  % +Hash, +PLocal, +Stream
-    write_meta_archive/2,              % +Hash, +Metadata
+    write_meta_archive/2,              % +Hash, +Filters
     write_meta_encoding/4,             % +Hash, ?GuessEncoding, ?HttpEncoding, ?XmlEncoding
-    write_meta_entry/2,                % +Hash1, +Hash2
+    write_meta_entry/7,                % +ArchiveHash, +EntryHash, +Format, +MTime, +Name,
+                                       % +Permissions, +Size
     write_meta_error/2,                % +Hash, +Error
     write_meta_http/2,                 % +Hash, +Metadata
     write_meta_now/2,                  % +Hash, +PLocal
@@ -99,36 +100,27 @@ write_meta(Hash, Goal_1) :-
 
 
 
-%! write_meta_archive(+Hash:atom, +Metadata:list(dict)) is det.
+%! write_meta_archive(+Hash:atom, +Filters:list(atom)) is det.
 
 write_meta_archive(Hash, L) :-
   rdf_global_id(id:Hash, S),
-  write_meta(Hash, write_meta_archive_list_1(S, L)).
-write_meta_archive_list_1(S, L, Out) :-
+  write_meta(Hash, write_meta_archive_1(S, L)).
+write_meta_archive_1(S, L, Out) :-
   rdf_bnode_iri(O),
-  rdf_write_quad(Out, S, ll:archive, O, graph:meta),
-  write_meta_archive_list_2(O, L, Out).
-write_meta_archive_list_2(Node, [H|T], Out) :-
-  rdf_bnode_iri(First),
-  rdf_write_quad(Out, Node, rdf:first, First, graph:meta),
-  write_meta_archive_item(First, H, Out),
+  rdf_write_quad(Out, S, rdf:type, ll:'Archive', graph:meta),
+  (   L == []
+  ->  true
+  ;   rdf_write_quad(Out, S, ll:filter, O, graph:meta),
+      write_meta_archive_2(O, L, Out)
+  ).
+write_meta_archive_2(Node, [H|T], Out) :-
+  rdf_write_quad(Out, Node, rdf:first, literal(type(xsd:string,H)), graph:meta),
   (   T == []
   ->  rdf_equal(Next, rdf:nil)
   ;   rdf_bnode_iri(Next),
-      write_meta_archive_list_2(Next, T, Out)
+      write_meta_archive_2(Node, T, Out)
   ),
   rdf_write_quad(Out, Node, rdf:next, Next, graph:meta).
-
-write_meta_archive_item(Item, Meta, Out) :-
-  atomic_list_concat(Meta.filters, ' ', Filters),
-  maplist(atom_number, [Mtime,Permissions,Size], [Meta.mtime,Meta.permissions,Meta.size]),
-  rdf_write_quad(Out, Item, ll:filetype, literal(type(xsd:string,Meta.filetype)), graph:meta),
-  (Filters == '' -> true ; rdf_write_quad(Out, Item, ll:filter, literal(type(xsd:string,Filters)), graph:meta)),
-  rdf_write_quad(Out, Item, ll:format, literal(type(xsd:string,Meta.format)), graph:meta),
-  rdf_write_quad(Out, Item, ll:mtime, literal(type(xsd:float,Mtime)), graph:meta),
-  rdf_write_quad(Out, Item, ll:name, literal(type(xsd:string,Meta.name)), graph:meta),
-  rdf_write_quad(Out, Item, ll:permissions, literal(type(xsd:positiveInteger,Permissions)), graph:meta),
-  rdf_write_quad(Out, Item, ll:size, literal(type(xsd:float,Size)), graph:meta).
 
 
 
@@ -153,13 +145,21 @@ write_meta_encoding_(S, GuessEnc, HttpEnc, XmlEnc, Out) :-
 
 
 
-%! write_meta_entry(+Hash1:atom, +Hash2:atom) is det.
+%! write_meta_entry(+ArchiveHash:atom, +EntryHash:atom, +Format:atom,
+%!                  +MTime:between(0.0,inf), +Permissions:nonneg, +Size:nonneg) is det.
 
-write_meta_entry(Hash1, Hash2) :-
-  rdf_global_id(id:Hash1, O1),
-  rdf_global_id(id:Hash2, O2),
-  write_meta_quad(Hash1, ll:hasEntry, O2, graph:meta),
-  write_meta_quad(Hash2, ll:hasArchive, O1, graph:meta).
+write_meta_entry(Hash1, Hash2, Format, MTime0, Name, Permissions0, Size0) :-
+  rdf_global_id(id:Hash2, S2),
+  write_meta_quad(Hash1, ll:entry, S2, graph:meta),
+  maplist(atom_number, [MTime,Permissions,Size], [MTime0,Permissions0,Size0]),
+  write_meta(Hash2, write_meta_entry_(S2, Format, MTime, Name, Permissions, Size)).
+write_meta_entry_(S, Format, MTime, Name, Permissions, Size, Out) :-
+  rdf_write_quad(Out, S, rdf:type, ll:'Entry', graph:meta),
+  rdf_write_quad(Out, S, ll:format, literal(type(xsd:string,Format)), graph:meta),
+  rdf_write_quad(Out, S, ll:mtime, literal(type(xsd:float,MTime)), graph:meta),
+  rdf_write_quad(Out, S, ll:name, literal(type(xsd:string,Name)), graph:meta),
+  rdf_write_quad(Out, S, ll:permissions, literal(type(xsd:positiveInteger,Permissions)), graph:meta),
+  rdf_write_quad(Out, S, ll:size, literal(type(xsd:positiveInteger,Size)), graph:meta).
 
 
 

@@ -25,34 +25,35 @@ ll_decompress :-
   catch(decompress_file(Hash), E, true),
   % postcondition
   write_meta_now(Hash, decompressEnd),
-  (   var(E)
-  ->  % Check whether there is any data to recode, or whether all data
-      % is now stored under different hashes.
-      hash_file(Hash, compressed, TmpFile),
-      delete_file(TmpFile),
-      (   hash_file(Hash, dirty, DataFile),
-          exists_file(DataFile)
-      ->  end_task(Hash, decompressed)
-      ;   finish(Hash)
-      )
-  ;   write_meta_error(Hash, E),
-      finish(Hash)
-  ),
+  (var(E) -> true ; write_meta_error(Hash, E), finish(Hash)),
   indent_debug(-1, ll(_,decompress), "< decompressing ~a", [Hash]).
 
 
 
-% open dirty file
+%! decompress_file(+Hash:atom) is det.
+
 decompress_file(Hash) :-
-  hash_file(Hash, compressed, File),
+  hash_file(Hash, compressed, File1),
   setup_call_cleanup(
-    open(File, read, In),
-    decompress_stream(Hash, In),
+    open(File1, read, In),
+    decompress_file_stream(Hash, In),
     close_metadata(Hash, decompressRead, In)
+  ),
+  % Cleanup of the compressed file after decompression.
+  delete_file(File1),
+  % End this task from the perspective of the archive.  If there is no
+  % data, the hash is also finished.
+  (   hash_file(Hash, dirty, File2),
+      exists_file(File2)
+  ->  end_task(Hash, decompressed)
+  ;   finish(Hash)
   ).
 
-% open archive
-decompress_stream(Hash, In) :-
+
+
+%! decompress_file_stream(+Hash:atom, +In:stream) is det.
+
+decompress_file_stream(Hash, In) :-
   setup_call_cleanup(
     (
       archive_open(In, Arch),
@@ -65,44 +66,87 @@ decompress_stream(Hash, In) :-
     )
   ).
 
-% open entries
+
+
+%! decompress_archive(+Hash:atom, +Archive:blob) is det.
+
 decompress_archive(Hash, Arch) :-
+  archive_property(Arch, filter(Filters)),
+  write_meta_archive(Hash, Filters),
   forall(
-    archive_data_stream(Arch, In, [meta_data(ArchMetas)]),
     (
-      ArchMetas = [ArchMeta|_],
-      indent_debug(1, ll(_,decompress), "> ~w OPEN ENTRY ‘~a’ ~w", [Arch,ArchMeta.name,In]),
-      call_cleanup(
-        (
-          decompress_entry(Hash, ArchMeta.name, ArchMetas, In),
-          indent_debug(-1, ll(_,decompress), "< ~w CLOSE ENTRY ‘~a’ ~w", [Arch,ArchMeta.name,In])
-        ),
-        close(In)
-      )
+      repeat,
+      (archive_next_header(Arch, Name) -> true ; !, fail)
+    ),
+    (
+      findall(Prop, archive_header_property(Arch, Prop), Props),
+      decompress_entry(Hash, Arch, Name, Props)
     )
   ).
 
-decompress_entry(Hash1, Entry, ArchMetas, In) :-
-  decompress_entry_start(Entry, Hash1, ArchMetas, Hash2, Local),
-  hash_file(Hash2, Local, File),
+
+
+%! decompress_entry(+Hash:atom, +Archive:blob, +Name:atom, +Properties:list(compound)) is det.
+%! decompress_entry(+Hash:atom, +Archive:blob, +Name:atom, +Properties:list(compound),
+%!                  +Type:atom) is det.
+
+decompress_entry(Hash, Arch, Name, Props) :-
+  memberchk(filetype(Type), Props),
+  decompress_entry(Hash, Arch, Name, Props, Type).
+
+
+decompress_entry(Hash, Arch, Name, Props, file) :-
+  setup_call_cleanup(
+    (
+      archive_open_entry(Arch, In),
+      indent_debug(1, ll(_,decompress), "> ~w OPEN ENTRY ‘~a’ ~w", [Arch,Name,In])
+    ),
+    decompress_file_entry(Hash, Name, Props, In),
+    (
+      indent_debug(-1, ll(_,decompress), "< ~w CLOSE ENTRY ‘~a’ ~w", [Arch,Name,In]),
+      close(In)
+    )
+  ).
+decompress_entry(_, _, _, _, _).
+
+
+
+%! decompress_file_entry(+Hash:atom, +Name:atom, +Properties:list(compound), +In:stream) is det.
+%! decompress_file_entry(+Hash:atom, +Name:atom, +Properties:list(compound), +In:stream,
+%!                       +Format:atom) is det.
+
+decompress_file_entry(Hash, Name, Props, In) :-
+  memberchk(format(Format), Props),
+  decompress_file_entry(Hash, Name, Props, In, Format).
+
+
+% leaf node
+decompress_file_entry(Hash, data, _, In, raw) :- !,
+  decompress_file_entry_stream(Hash, In, dirty),
+  end_task(Hash, decompressed).
+% non-leaf node
+decompress_file_entry(Hash1, Name, Props, In, Format) :-
+  hash_entry_hash(Hash1, Name, Hash2),
+  decompress_file_entry_stream(Hash2, In, compressed),
+  % Copy task files for the decompressed entry.
+  copy_task_files(Hash1, Hash2),
+  % Store metadata.
+  memberchk(mtime(MTime), Props),
+  memberchk(permissions(Permissions), Props),
+  memberchk(size(Size), Props),
+  write_meta_entry(Hash1, Hash2, Format, MTime, Name, Permissions, Size),
+  % End this task from the perspective of the entry.
+  end_task(Hash2, downloaded).
+
+
+
+%! decompress_file_entry_stream(+Hash:atom, +In:stream,
+%!                              +Local:oneof([compressed,dirty])) is det.
+
+decompress_file_entry_stream(Hash, In, Local) :-
+  hash_file(Hash, Local, File),
   setup_call_cleanup(
     open(File, write, Out, [type(binary)]),
     copy_stream_data(In, Out),
-    close_metadata(Hash2, decompressWrite, Out)
-  ),
-  decompress_entry_end(Entry, Hash1, Hash2).
-
-% leaf node
-decompress_entry_start(data, Hash, ArchMetas, Hash, dirty) :- !,
-  write_meta_archive(Hash, ArchMetas).
-% non-leaf node
-decompress_entry_start(Entry, Hash1, _, Hash2, compressed) :-
-  hash_entry_hash(Hash1, Entry, Hash2).
-
-% leaf node
-decompress_entry_end(data, _, _) :- !.
-% non-leaf node
-decompress_entry_end(_, Hash1, Hash2) :-
-  copy_task_files(Hash1, Hash2),
-  write_meta_entry(Hash1, Hash2),
-  touch_hash_file(Hash2, downloaded).
+    close_metadata(Hash, decompressWrite, Out)
+  ).

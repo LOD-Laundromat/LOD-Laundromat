@@ -12,7 +12,6 @@
     hash_file/3,           % +Hash, +Local, -File
     read_task_memory/3,    % +Hash, +Local, -Term
     start_seed/1,          % -Seed
-    touch_hash_file/2,     % +Hash, +Local
     write_task_memory/3    % +Hash, +Local, +Term
   ]
 ).
@@ -67,7 +66,8 @@ task_file_local(http_media_type).
 %! end_task(+Hash:atom, +Local:atom) is det.
 
 end_task(Hash, Local) :-
-  touch_hash_file(Hash, Local).
+  hash_file(Hash, Local, File),
+  touch(File).
 
 
 
@@ -110,7 +110,7 @@ finish(Hash) :-
   hash_file(Hash, 'meta.nq', File),
   compress_file(File),
   delete_file(File),
-  touch_hash_file(Hash, finished),
+  end_task(Hash, finished),
   (   debugging(ll(offline))
   ->  true
   ;   seedlist_request([seed,processing], [hash(Hash)], true)
@@ -193,14 +193,6 @@ seed_(Seed, In) :-
     ),
     close(In)
   ).
-
-
-
-%! touch_hash_file(+Hash:atom, +Local:atom) is det.
-
-touch_hash_file(Hash, Local) :-
-  hash_file(Hash, Local, File),
-  touch(File).
 
 
 
