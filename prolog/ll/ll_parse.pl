@@ -87,12 +87,17 @@ bnode_prefix(Segments, BNodePrefix) :-
 clean_tuples(Meta, Out, BNodePrefix, Tuples, _) :-
   maplist(clean_tuple(Meta, Out, BNodePrefix), Tuples).
 
+% triple
 clean_tuple(Meta, Out, BNodePrefix, rdf(S0,P0,O0)) :- !,
   (   rdf_clean_triple(BNodePrefix, rdf(S0,P0,O0), rdf(S,P,O))
   ->  rdf_write_triple(Out, BNodePrefix, S, P, O),
       nb_increment_dict(Meta, number_of_triples)
   ;   true
   ).
+% quadruple with the default graph → actually a triple
+clean_tuple(Meta, Out, BNodePrefix, rdf(S,P,O,user)) :- !,
+  clean_tuple(Meta, Out, BNodePrefix, rdf(S,P,O)).
+% quadruple
 clean_tuple(Meta, Out, BNodePrefix, rdf(S0,P0,O0,G0)) :-
   (   rdf_clean_quad(BNodePrefix, rdf(S0,P0,O0,G0), rdf(S,P,O,G))
   ->  rdf_write_quad(Out, BNodePrefix, S, P, O, G),
