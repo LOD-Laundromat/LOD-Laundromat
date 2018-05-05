@@ -123,7 +123,8 @@ decompress_file_entry(Hash, Name, Props, In) :-
 % leaf node
 decompress_file_entry(Hash, data, _, In, raw) :- !,
   decompress_file_entry_stream(Hash, In, dirty),
-  end_task(Hash, decompressed).
+  end_task(Hash, decompressed),
+  write_meta_quad(Hash, rdf:type, ll:'Archive', graph:meta).
 % non-leaf node
 decompress_file_entry(Hash1, Name, Props, In, Format) :-
   hash_entry_hash(Hash1, Name, Hash2),

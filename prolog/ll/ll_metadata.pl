@@ -102,12 +102,12 @@ write_meta(Hash, Goal_1) :-
 
 %! write_meta_archive(+Hash:atom, +Filters:list(atom)) is det.
 
+write_meta_archive(_, []) :- !.
 write_meta_archive(Hash, L) :-
   rdf_global_id(id:Hash, S),
   write_meta(Hash, write_meta_archive_1(S, L)).
 write_meta_archive_1(S, L, Out) :-
   rdf_bnode_iri(O),
-  rdf_write_quad(Out, S, rdf:type, ll:'Archive', graph:meta),
   (   L == []
   ->  true
   ;   rdf_write_quad(Out, S, ll:filter, O, graph:meta),
