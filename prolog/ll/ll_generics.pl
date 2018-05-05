@@ -107,10 +107,10 @@ find_hash_file(Hash, Local, File) :-
 %! finish(+Hash:atom) is det.
 
 finish(Hash) :-
-  touch_hash_file(Hash, finished),
   hash_file(Hash, 'meta.nq', File),
   compress_file(File),
   delete_file(File),
+  touch_hash_file(Hash, finished),
   (   debugging(ll(offline))
   ->  true
   ;   seedlist_request([seed,processing], [hash(Hash)], true)
