@@ -9,6 +9,7 @@ ExecReload=/bin/kill -s HUP $MAINPID
 StartLimitInterval=60
 LimitNOFILE=1000
 WorkingDirectory=/home/wbeek/git/LOD-Laundromat
+User=wbeek
 ExecStart=/usr/bin/nice \
   /home/wbeek/bin/swipl \
   script/run_server.pl \
