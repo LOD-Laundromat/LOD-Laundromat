@@ -62,15 +62,14 @@ init_ll :-
   ),
   % workers
   (   debugging(ll(offline))
-  ->  Sleep = 1,
-      Workers = _{download: 1, decompress: 1, recode: 1, parse: 1}
-  ;   Sleep = Conf.sleep,
-      Workers = Conf.workers
+  ->  DebugConf = _{sleep: 1, threads: 1},
+      Workers = _{decompress: DebugConf, download: DebugConf, parse: DebugConf, recode: DebugConf}
+  ;   Workers = Conf.workers
   ),
-  run_loop(ll_download:ll_download, Sleep, Workers.download),
-  run_loop(ll_decompress:ll_decompress, Sleep, Workers.decompress),
-  run_loop(ll_recode:ll_recode, Sleep, Workers.recode),
-  run_loop(ll_parse:ll_parse, Sleep, Workers.parse),
+  run_loop(ll_decompress:ll_decompress, Workers.decompress.sleep, Workers.decompress.threads),
+  run_loop(ll_download:ll_download, Workers.download.sleep, Workers.download.threads),
+  run_loop(ll_parse:ll_parse, Workers.parse.sleep, Workers.parse.threads),
+  run_loop(ll_recode:ll_recode, Workers.recode.sleep, Workers.recode.threads),
   % log standard output
   directory_file_path(Conf.'data-directory', 'out.log', File),
   protocol(File).

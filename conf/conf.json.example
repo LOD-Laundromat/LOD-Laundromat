@@ -17,9 +17,21 @@
     }
   },
   "workers": {
-    "download": 1,
-    "decompress": 1,
-    "recode": 1,
-    "parse": 1
+    "decompress": {
+      "sleep": SECONDS,
+      "threads": THREADS
+    },
+    "download": {
+      "sleep": SECONDS,
+      "threads": THREADS
+    },
+    "parse": :{
+      "sleep": SECONDS,
+      "threads": THREADS
+    },
+    "recode": {
+      "sleep": SECONDS,
+      "threads": THREADS
+    }
   }
 }
