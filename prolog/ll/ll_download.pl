@@ -38,7 +38,7 @@ ll_download(Hash, Uri) :-
   thread_join(Id, Status),
   % postcondition
   write_meta_now(Hash, downloadEnd),
-  write_meta_status(Hash, Status),
+  handle_status(Hash, downloaded, Status),
   (debugging(ll(offline)) -> gtrace ; true),
   indent_debug(-1, ll(task,download), "< downloaded ~a ~a", [Hash,Uri]).
 
@@ -56,8 +56,7 @@ download_url(Hash, Uri) :-
       (   var(MediaType)
       ->  true
       ;   write_task_memory(Hash, http_media_type, MediaType)
-      ),
-      end_task(Hash, downloaded)
+      )
   ;   % cleanup
       hash_file(Hash, compressed, File),
       delete_file(File),

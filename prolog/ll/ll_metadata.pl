@@ -11,8 +11,7 @@
     write_meta_now/2,                  % +Hash, +PLocal
     write_meta_quad/4,                 % +Hash, +P, +O, +G
     write_meta_serialization_format/2, % +Hash, +MediaType
-    write_meta_statements/2,           % +Hash, +RdfMeta
-    write_meta_status/2                % +Hash, +Status
+    write_meta_statements/2            % +Hash, +RdfMeta
   ]
 ).
 
@@ -488,18 +487,6 @@ write_meta_statements(Hash, RdfMeta) :-
   ),
   write_meta_quad(Hash, ll:quadruples, literal(type(xsd:nonNegativeInteger,Lex1)), graph:meta),
   write_meta_quad(Hash, ll:triples, literal(type(xsd:nonNegativeInteger,Lex2)), graph:meta).
-
-
-
-%! write_meta_status(+Hash:atom, +Status:term) is det.
-
-write_meta_status(_, true) :- !.
-write_meta_status(Hash, exception(E)) :- !,
-  write_meta_error(Hash, E),
-  finish(Hash).
-write_meta_status(Hash, Status) :-
-  write_meta_error(Hash, Status),
-  finish(Hash).
 
 
 

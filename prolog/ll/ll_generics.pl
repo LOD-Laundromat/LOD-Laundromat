@@ -7,6 +7,7 @@
     find_hash_directory/2, % ?Hash, -Directory
     find_hash_file/3,      % ?Hash, +Local, -File
     finish/1,              % +Hash
+    handle_status/3,       % +Hash, +Local, +Status
     hash_directory/2,      % +Hash, -Directory
     hash_entry_hash/3,     % +Hash1, +Entry, -Hash2
     hash_file/3,           % +Hash, +Local, -File
@@ -117,6 +118,20 @@ finish(Hash) :-
   ->  seedlist_request([seed,processing], [hash(Hash)], true, [method(patch)])
   ;   true
   ).
+
+
+
+%! handle_status(+Hash:atom, +Local:atom, +Status:test) is det.
+
+handle_status(Hash, Local, true) :- !,
+  end_task(Hash, Local).
+handle_status(Hash, _, Status) :-
+  status_error(Status, E),
+  write_meta_error(Hash, E),
+  finish(Hash).
+
+status_error(exception(E), E) :- !.
+status_error(E, E).
 
 
 

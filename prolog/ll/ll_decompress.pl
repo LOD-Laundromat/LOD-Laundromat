@@ -24,9 +24,15 @@ ll_decompress :-
   write_meta_now(Hash, decompressBegin),
   % operation
   catch(decompress_file(Hash), E, true),
+  (var(E) -> true ; write_meta_error(Hash, E), finish(Hash)),
   % postcondition
   write_meta_now(Hash, decompressEnd),
-  (var(E) -> true ; write_meta_error(Hash, E), finish(Hash)),
+  (   hash_file(Hash, dirty, File),
+      exists_file(File)
+  ->  end_task(Hash, decompressed)
+  ;   % If there is no data, processing for this hash has finished.
+      finish(Hash)
+  ),
   indent_debug(-1, ll(task,decompress), "< decompressing ~a", [Hash]).
 
 
@@ -34,21 +40,14 @@ ll_decompress :-
 %! decompress_file(+Hash:atom) is det.
 
 decompress_file(Hash) :-
-  hash_file(Hash, compressed, File1),
+  hash_file(Hash, compressed, File),
   setup_call_cleanup(
-    open(File1, read, In),
+    open(File, read, In),
     decompress_file_stream(Hash, In),
     close_metadata(Hash, decompressRead, In)
   ),
   % Cleanup of the compressed file after decompression.
-  delete_file(File1),
-  % End this task from the perspective of the archive.  If there is no
-  % data, the hash is also finished.
-  (   hash_file(Hash, dirty, File2),
-      exists_file(File2)
-  ->  end_task(Hash, decompressed)
-  ;   finish(Hash)
-  ).
+  delete_file(File).
 
 
 
@@ -124,8 +123,8 @@ decompress_file_entry(Hash, Name, Props, In) :-
 % leaf node
 decompress_file_entry(Hash, data, _, In, raw) :- !,
   decompress_file_entry_stream(Hash, In, dirty),
-  end_task(Hash, decompressed),
-  write_meta_quad(Hash, rdf:type, ll:'Archive', graph:meta).
+  write_meta_quad(Hash, rdf:type, ll:'Archive', graph:meta),
+  end_task(Hash, decompressed).
 % non-leaf node
 decompress_file_entry(Hash1, Name, Props, In, Format) :-
   hash_entry_hash(Hash1, Name, Hash2),

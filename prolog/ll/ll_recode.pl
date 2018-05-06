@@ -32,11 +32,7 @@ ll_recode :-
   catch(recode_file(Hash), E, true),
   % postcondition
   write_meta_now(Hash, recodeEnd),
-  (   var(E)
-  ->  end_task(Hash, recoded)
-  ;   write_meta_error(Hash, E),
-      finish(Hash)
-  ),
+  handle_status(Hash, recoded, E),
   indent_debug(-1, ll(task,recode), "< recoding ~a", [Hash]).
 
 recode_file(Hash) :-
