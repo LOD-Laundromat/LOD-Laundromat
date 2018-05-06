@@ -32,7 +32,8 @@ ll_parse :-
     find_hash_file(Hash, recoded, TaskFile),
     delete_file(TaskFile)
   )),
-  indent_debug(1, ll(_,parse), "> parsing ~a", [Hash]),
+  (debugging(ll(task,parse,Hash)) -> gtrace ; true),
+  indent_debug(1, ll(task,parse), "> parsing ~a", [Hash]),
   write_meta_now(Hash, parseBegin),
   % operation
   thread_create(parse_file(Hash), Id, [alias(Hash)]),
@@ -40,7 +41,7 @@ ll_parse :-
   % postcondition
   write_meta_now(Hash, parseEnd),
   write_meta_status(Hash, Status),
-  indent_debug(-1, ll(_,parse), "< parsed ~a", [Hash]).
+  indent_debug(-1, ll(task,parse), "< parsed ~a", [Hash]).
 
 parse_file(Hash) :-
   % This is needed for `http://spraakbanken.gu.se/rdf/saldom.rdf'

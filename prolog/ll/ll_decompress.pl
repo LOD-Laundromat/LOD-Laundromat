@@ -19,14 +19,15 @@ ll_decompress :-
     find_hash_file(Hash, downloaded, TaskFile),
     delete_file(TaskFile)
   )),
-  indent_debug(1, ll(_,decompress), "> decompressing ~a", [Hash]),
+  (debugging(ll(task,decompress,Hash)) -> gtrace ; true),
+  indent_debug(1, ll(task,decompress), "> decompressing ~a", [Hash]),
   write_meta_now(Hash, decompressBegin),
   % operation
   catch(decompress_file(Hash), E, true),
   % postcondition
   write_meta_now(Hash, decompressEnd),
   (var(E) -> true ; write_meta_error(Hash, E), finish(Hash)),
-  indent_debug(-1, ll(_,decompress), "< decompressing ~a", [Hash]).
+  indent_debug(-1, ll(task,decompress), "< decompressing ~a", [Hash]).
 
 
 
@@ -57,11 +58,11 @@ decompress_file_stream(Hash, In) :-
   setup_call_cleanup(
     (
       archive_open(In, Arch),
-      indent_debug(1, ll(_,decompress), "> ~w OPEN ARCHIVE ~w", [In,Arch])
+      indent_debug(1, ll(task,decompress), "> ~w OPEN ARCHIVE ~w", [In,Arch])
     ),
     decompress_archive(Hash, Arch),
     (
-      indent_debug(-1, ll(_,decompress), "< ~w CLOSE ARCHIVE ~w", [In,Arch]),
+      indent_debug(-1, ll(task,decompress), "< ~w CLOSE ARCHIVE ~w", [In,Arch]),
       archive_close(Arch)
     )
   ).
@@ -99,11 +100,11 @@ decompress_entry(Hash, Arch, Name, Props, file) :-
   setup_call_cleanup(
     (
       archive_open_entry(Arch, In),
-      indent_debug(1, ll(_,decompress), "> ~w OPEN ENTRY ‘~a’ ~w", [Arch,Name,In])
+      indent_debug(1, ll(task,decompress), "> ~w OPEN ENTRY ‘~a’ ~w", [Arch,Name,In])
     ),
     decompress_file_entry(Hash, Name, Props, In),
     (
-      indent_debug(-1, ll(_,decompress), "< ~w CLOSE ENTRY ‘~a’ ~w", [Arch,Name,In]),
+      indent_debug(-1, ll(task,decompress), "< ~w CLOSE ENTRY ‘~a’ ~w", [Arch,Name,In]),
       close(In)
     )
   ).

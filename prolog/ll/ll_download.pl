@@ -30,7 +30,7 @@ ll_download(Uri) :-
 
 ll_download(Hash, Uri) :-
   % preparation
-  indent_debug(1, ll(_,download), "> downloading ~a ~a", [Hash,Uri]),
+  indent_debug(1, ll(task,download), "> downloading ~a ~a", [Hash,Uri]),
   write_meta_now(Hash, downloadBegin),
   write_meta_quad(Hash, ll:url, literal(type(xsd:anyURI,Uri)), graph:meta),
   % operation
@@ -39,7 +39,8 @@ ll_download(Hash, Uri) :-
   % postcondition
   write_meta_now(Hash, downloadEnd),
   write_meta_status(Hash, Status),
-  indent_debug(-1, ll(_,download), "< downloaded ~a ~a", [Hash,Uri]).
+  (debugging(ll(offline)) -> gtrace ; true),
+  indent_debug(-1, ll(task,download), "< downloaded ~a ~a", [Hash,Uri]).
 
 download_url(Hash, Uri) :-
   hash_file(Hash, compressed, File),

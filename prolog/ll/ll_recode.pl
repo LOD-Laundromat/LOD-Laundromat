@@ -25,7 +25,8 @@ ll_recode :-
     find_hash_file(Hash, decompressed, TaskFile),
     delete_file(TaskFile)
   )),
-  indent_debug(1, ll(_,recode), "> recoding ~a", [Hash]),
+  (debugging(ll(task,recode,Hash)) -> gtrace ; true),
+  indent_debug(1, ll(task,recode), "> recoding ~a", [Hash]),
   write_meta_now(Hash, recodeBegin),
   % operation
   catch(recode_file(Hash), E, true),
@@ -36,7 +37,7 @@ ll_recode :-
   ;   write_meta_error(Hash, E),
       finish(Hash)
   ),
-  indent_debug(-1, ll(_,recode), "< recoding ~a", [Hash]).
+  indent_debug(-1, ll(task,recode), "< recoding ~a", [Hash]).
 
 recode_file(Hash) :-
   hash_file(Hash, dirty, File),
