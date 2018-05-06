@@ -41,6 +41,8 @@ ll_parse :-
   % postcondition
   write_meta_now(Hash, parseEnd),
   handle_status(Hash, parsed, Status),
+  % This is the last task: finish if true.
+  (Status == true -> finish(Hash) ; true),
   indent_debug(-1, ll(task,parse), "< parsed ~a", [Hash]).
 
 parse_file(Hash) :-
