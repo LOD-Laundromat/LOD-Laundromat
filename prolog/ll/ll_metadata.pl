@@ -148,10 +148,14 @@ write_meta_encoding_(S, GuessEnc, HttpEnc, XmlEnc, Out) :-
 %!                  +MTime:between(0.0,inf), +Permissions:nonneg, +Size:nonneg) is det.
 
 write_meta_entry(Hash1, Hash2, Format, MTime0, Name, Permissions0, Size0) :-
+  rdf_global_id(id:Hash1, S1),
   rdf_global_id(id:Hash2, S2),
-  write_meta_quad(Hash1, ll:entry, S2, graph:meta),
+  write_meta(Hash1, write_meta_archive_(S1, S2)),
   maplist(atom_number, [MTime,Permissions,Size], [MTime0,Permissions0,Size0]),
   write_meta(Hash2, write_meta_entry_(S2, Format, MTime, Name, Permissions, Size)).
+write_meta_archive_(S1, S2, Out) :-
+  rdf_write_quad(Out, S1, rdf:type, ll:'Archive', graph:meta),
+  rdf_write_quad(Out, S1, ll:entry, S2, graph:meta).
 write_meta_entry_(S, Format, MTime, Name, Permissions, Size, Out) :-
   rdf_write_quad(Out, S, rdf:type, ll:'Entry', graph:meta),
   rdf_write_quad(Out, S, ll:format, literal(type(xsd:string,Format)), graph:meta),
