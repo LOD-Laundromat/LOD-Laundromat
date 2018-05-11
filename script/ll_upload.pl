@@ -5,6 +5,7 @@
     ll_clear_datasets/0,
     ll_clear_users/0,
     ll_compile/1,        % +Base
+    ll_compile/2,        % +NumberOfThreads, +Base
     ll_upload_data/0,
     ll_upload_metadata/0
   ]
@@ -43,6 +44,7 @@
    ]).
 
 :- setting(ll:data_directory, any, _, "").
+:- setting(ll:tmp_directory, any, _, "").
 
 
 
@@ -79,21 +81,20 @@ ll_clear_users :-
 
 
 %! ll_compile(+Base:oneof([data,meta])) is det.
+%! ll_compile(+NumberOfThreads:positive_integer, +Base:oneof([data,meta])) is det.
 
 ll_compile(Base) :-
-  aggregate_all(set(Hash-RdfFile), rdf_source_file(Hash, Base, RdfFile), Pairs),
-  length(Pairs, N),
-  Counter = count(0,N),
-  forall(
-    member(Hash-RdfFile, Pairs),
-    (
-      Counter = count(N1,N),
-      N2 is N1 + 1,
-      format("~D/~D (~a)\n", [N2,N,Hash]),
-      hdt_create(RdfFile),
-      nb_setarg(1, Counter, N2)
-    )
-  ).
+  ll_compile(10, Base).
+
+
+ll_compile(N, Base) :-
+  aggregate_all(
+    set(ll_compile_job(Hash,File)),
+    rdf_source_file(Hash, Base, File),
+    Jobs1
+  ),
+  add_indices(Jobs1, Jobs2),
+  concurrent(N, Jobs2, []).
 
 rdf_source_file(Hash, Base, RdfFile) :-
   find_hash(Hash, finished),
@@ -104,6 +105,10 @@ rdf_source_file(Hash, Base, RdfFile) :-
   \+ is_empty_file(RdfFile),
   hdt_file_name(RdfFile, HdtFile),
   \+ exists_file(HdtFile).
+
+ll_compile_job(N-Max, Hash, File) :-
+  format("~D/~D (~a)\n", [N,Max,Hash]),
+  hdt_create(File).
 
 
 
@@ -131,13 +136,16 @@ ll_upload_data :-
 %! ll_upload_metadata is det.
 
 ll_upload_metadata :-
-  TmpFile = 'meta.nq.gz',
+  setting(ll:tmp_directory, TmpDir),
+  Base = 'meta.nq.gz',
+  directory_file_path(TmpDir, Base, TmpFile),
   setup_call_cleanup(
     gzopen(TmpFile, write, Out),
     forall(
       find_hash(Hash, finished),
       (
-        hash_file(Hash, TmpFile, FromFile),
+        hash_file(Hash, Base, FromFile),
+        format("~a → ~a\n", [FromFile,TmpFile]),
         setup_call_cleanup(
           gzopen(FromFile, read, In),
           copy_stream_data(In, Out),
@@ -157,8 +165,31 @@ ll_upload_metadata :-
 
 
 
+% GENERICS %
+
+%! add_indices(+Compounds1:list(compound), -Compounds2:list(compound)) is det.
+
+add_indices(Compounds1, Compounds2) :-
+  length(Compounds1, Max),
+  add_indices(Compounds1, 1-Max, Compounds2).
+
+add_indices([], _, []) :- !.
+add_indices([H1|T1], N1-Max, [H2|T2]) :-
+  add_index(H1, N1-Max, H2),
+  N2 is N1 + 1,
+  add_indices(T1, N2-Max, T2).
+
+add_index(Compound1, N-Max, Compound2) :-
+  Compound1 =.. [Pred|Args],
+  Compound2 =.. [Pred,N-Max|Args].
+
+
+
+
+
 % INITIALIZATION %
 
 init_ll_upload :-
   conf_json(Conf),
-  set_setting(ll:data_directory, Conf.'data-directory').
+  set_setting(ll:data_directory, Conf.'data-directory'),
+  set_setting(ll:tmp_directory, Conf.'tmp-directory').
