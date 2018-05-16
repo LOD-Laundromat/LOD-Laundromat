@@ -6,6 +6,7 @@
     ll_clear_users/0,
     ll_compile/1,        % +Base
     ll_compile/2,        % +NumberOfThreads, +Base
+    ll_source_file/3,    % -Hash, +Base, -File
     ll_upload_data/0,
     ll_upload_metadata/0
   ]
@@ -90,13 +91,21 @@ ll_compile(Base) :-
 ll_compile(N, Base) :-
   aggregate_all(
     set(ll_compile_job(Hash,File)),
-    rdf_source_file(Hash, Base, File),
+    ll_source_file(Hash, Base, File),
     Jobs1
   ),
   add_indices(Jobs1, Jobs2),
   concurrent(N, Jobs2, []).
 
-rdf_source_file(Hash, Base, RdfFile) :-
+ll_compile_job(N-Max, Hash, File) :-
+  format("~D/~D (~a)\n", [N,Max,Hash]),
+  hdt_create(File).
+
+
+
+%! ll_source_file(-Hash:atom, +Base:oneof([data,meta]), -File:atom) is nondet.
+
+ll_source_file(Hash, Base, RdfFile) :-
   find_hash(Hash, finished),
   file_name_extension(Base, 'nq.gz', Local),
   hash_file(Hash, Local, RdfFile),
@@ -105,10 +114,6 @@ rdf_source_file(Hash, Base, RdfFile) :-
   \+ is_empty_file(RdfFile),
   hdt_file_name(RdfFile, HdtFile),
   \+ exists_file(HdtFile).
-
-ll_compile_job(N-Max, Hash, File) :-
-  format("~D/~D (~a)\n", [N,Max,Hash]),
-  hdt_create(File).
 
 
 
@@ -126,7 +131,7 @@ ll_upload_data :-
       format("~D/~D (~a)\n", [N2,N,Hash]),
       find_hash_file(Hash, 'meta.nq.gz', MetaFile),
       (find_hash_file(Hash, 'data.nq.gz', DataFile) -> T = [DataFile] ; T = []),
-      dataset_upload(_, Hash, _{accessLevel: public, files: [MetaFile|T]}),
+      dataset_upload('lod-cloud', Hash, _{accessLevel: public, files: [MetaFile|T]}),
       nb_setarg(1, Counter, N2)
     )
   ).
