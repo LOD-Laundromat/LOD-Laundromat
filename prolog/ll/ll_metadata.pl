@@ -230,6 +230,10 @@ write_meta_error(Hash, error(io_error(read,_Stream),_Context)) :- !,
 write_meta_error(Hash, error(no_encoding,_Context)) :-
   write_meta_error_(Hash, 'NoEncoding').
 
+% Representation error: Turtle character
+write_meta_error(Hash, error(representation_error(turtle_character),_)) :- !,
+  write_meta_error_(Hash, 'TurtleCharacter').
+
 % Resource error: global stack
 write_meta_error(Hash, error(resource_error(stack),global)) :- !,
   write_meta_error_(Hash, 'GlobalStack').
