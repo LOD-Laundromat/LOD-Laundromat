@@ -131,14 +131,12 @@ ll_upload_data :-
       format("~D/~D (~a)\n", [N2,N,Hash]),
       find_hash_file(Hash, 'meta.nq.gz', MetaFile),
       (find_hash_file(Hash, 'data.nq.gz', DataFile) -> T = [DataFile] ; T = []),
-      dataset_upload('lod-cloud', Hash, _{accessLevel: public, files: [MetaFile|T]}),
+      dataset_upload(_, Hash, _{accessLevel: public, files: [MetaFile|T]}),
       nb_setarg(1, Counter, N2)
     )
   ).
 
 
-
-%! ll_upload_metadata is det.
 
 ll_upload_metadata :-
   setting(ll:tmp_directory, TmpDir),
@@ -160,11 +158,19 @@ ll_upload_metadata :-
     ),
     close(Out)
   ),
-  (   is_empty_file(TmpFile)
-  ->  true
-  ;   dataset_upload(_, metadata, _{accessLevel: public, files: [TmpFile]})
-  ),
-  delete_file(TmpFile).
+  directory_file_path(Dir, 'split_meta.sh', Script),
+  process_create(path(sh), [file(Script)], [cwd(Dir)]),
+  %delete_file(TmpFile),
+  expand_file_name('x*.nq.gz', TmpFiles),
+  maplist(ll_upload_metadata_split, TmpFiles),
+  %maplist(delete_file, TmpFiles),
+  true.
+
+ll_upload_metadata_split(File) :-
+  file_base_name(Base, 'nq.gz', File),
+  atom_concat(x, Suffix, Base),
+  atomic_list_concat([metadata,Suffix], -, Name),
+  dataset_upload(_, Name, _{accessLevel: public, files: [File]}).
 
 
 
