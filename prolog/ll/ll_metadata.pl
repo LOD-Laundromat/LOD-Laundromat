@@ -173,8 +173,8 @@ write_meta_error(Hash, error(archive_error(Code,Msg),_Context)) :- !,
   atom_number(Lex, Code),
   write_meta_error_(Hash, 'ArchiveError', write_error_1(Lex, Msg)).
 write_error_1(Lex, Msg, Out, O) :-
-  rdf_write_quad(Out, O, ll:code, literal(type(xsd:positiveInteger,Lex)), graph:meta),
-  rdf_write_quad(Out, O, ll:message, literal(type(xsd:string,Msg)), graph:meta).
+  rdf_write_quad(Out, O, ll:code, literal(type(xsd:positiveInteger,Lex)), graph:error),
+  rdf_write_quad(Out, O, ll:message, literal(type(xsd:string,Msg)), graph:error).
 
 % HTTP error: ???
 write_meta_error(Hash, error(domain_error(http_encoding,identity),_Context)) :- !,
@@ -184,24 +184,24 @@ write_meta_error(Hash, error(domain_error(http_encoding,identity),_Context)) :- 
 write_meta_error(Hash, error(domain_error(set_cookie,Value),_Context)) :- !,
   write_meta_error_(Hash, 'SetCookieError', write_error_2(Value)).
 write_error_2(Value, Out, O) :-
-  rdf_write_quad(Out, O, ll:value, literal(type(xsd:string,Value)), graph:meta).
+  rdf_write_quad(Out, O, ll:value, literal(type(xsd:string,Value)), graph:error).
 
 write_meta_error(Hash, error(domain_error(url,Url),_Context)) :- !,
   write_meta_error_(Hash, 'InvalidUrl', write_error_3(Url)).
 write_error_3(Url, Out, O) :-
-  rdf_write_quad(Out, O, ll:value, literal(type(xsd:string,Url)), graph:meta).
+  rdf_write_quad(Out, O, ll:value, literal(type(xsd:string,Url)), graph:error).
 
 % Existence error: the HTTP reply is completely empty.
 write_meta_error(Hash, error(existence_error(http_reply,Url),_Context)) :- !,
   write_meta_error_(Hash, 'EmptyHttpReply', write_error_4(Url)).
 write_error_4(Url, Out, O) :-
-  rdf_write_quad(Out, O, ll:alias, literal(type(xsd:anyURI,Url)), graph:meta).
+  rdf_write_quad(Out, O, ll:alias, literal(type(xsd:anyURI,Url)), graph:error).
 
 % Existence error: Turtle prefix is not declared.
 write_meta_error(Hash, error(existence_error(turtle_prefix,Alias),_Stream)) :- !,
   write_meta_error_(Hash, 'MissingTurtlePrefixDeclaration', write_error_5(Alias)).
 write_error_5(Alias, Out, O) :-
-  rdf_write_quad(Out, O, ll:alias, literal(type(xsd:string,Alias)), graph:meta).
+  rdf_write_quad(Out, O, ll:alias, literal(type(xsd:string,Alias)), graph:error).
 
 % HTTP maximum redirection sequence length exceeded.
 write_meta_error(Hash, error(http_error(max_redirect,_Length,_Urls),_Context)) :- !,
@@ -220,7 +220,7 @@ write_meta_error(Hash, error(http_error(status,Status),_Context)) :- !,
   atom_number(Lex, Status),
   write_meta_error_(Hash, 'HttpErrorStatus', write_error_51(Lex)).
 write_error_51(Lex, Out, O) :-
-  rdf_write_quad(Out, O, ll:code, literal(type(xsd:positiveInteger,Lex)), graph:meta).
+  rdf_write_quad(Out, O, ll:code, literal(type(xsd:positiveInteger,Lex)), graph:error).
 
 % I/O error: ???
 write_meta_error(Hash, error(io_error(read,_Stream),_Context)) :- !,
@@ -250,7 +250,7 @@ write_meta_error(Hash, error(resource_error(stack),global)) :- !,
 write_meta_error(Hash, error(socket_error(Msg),_Context)) :- !,
   write_meta_error_(Hash, 'SocketError', write_error_6(Msg)).
 write_error_6(Msg, Out, O) :-
-  rdf_write_quad(Out, O, ll:message, literal(type(xsd:string,Msg)), graph:meta).
+  rdf_write_quad(Out, O, ll:message, literal(type(xsd:string,Msg)), graph:error).
 
 % SSL error: unexpected end of file
 write_meta_error(Hash, error(ssl_error('SSL_eof',ssl,negotiate,'Unexpected end-of-file'),_Context)) :- !,
@@ -260,13 +260,13 @@ write_meta_error(Hash, error(ssl_error('SSL_eof',ssl,negotiate,'Unexpected end-o
 write_meta_error(Hash, error(syntax_error(http_parameter(Param)),_)) :- !,
   write_meta_error_(Hash, 'HttpParameterParseError', write_error_7(Param)).
 write_error_7(Param, Out, O) :-
-  rdf_write_quad(Out, O, ll:parameter, literal(type(xsd:string,Param)), graph:meta).
+  rdf_write_quad(Out, O, ll:parameter, literal(type(xsd:string,Param)), graph:error).
 
 write_meta_error(Hash, error(syntax_error(http_status(Status)),_Context)) :- !,
   ensure_atom(Status, Lex),
   write_meta_error_(Hash, 'IncorrectHttpStatusCode', write_error_71(Lex)).
 write_error_71(Lex, Out, O) :-
-  rdf_write_quad(Out, O, ll:status, literal(type(xsd:string,Lex)), graph:meta).
+  rdf_write_quad(Out, O, ll:status, literal(type(xsd:string,Lex)), graph:error).
 
 % RDF syntax error:
 %   - end-of-line expected
@@ -304,7 +304,7 @@ write_syntax_error_1(Hash, Msg, Line, Column) :-
   maplist(atom_number, [Lex1,Lex2], [Line,Column]),
   write_meta_error_(Hash, 'RdfParseError', write_syntax_error_2(Msg, Lex1, Lex2)).
 write_syntax_error_2(Msg, Lex1, Lex2, Out, O) :-
-  rdf_write_quad(Out, O, ll:message, literal(type(xsd:string,Msg)), graph:meta),
+  rdf_write_quad(Out, O, ll:message, literal(type(xsd:string,Msg)), graph:error),
   write_error_stream(Lex1, Lex2, Out, O).
 
 write_meta_error(Hash, error(timeout_error(read,_Stream),_Context)) :- !,
@@ -316,8 +316,8 @@ write_meta_error(Hash, io_warning(Stream,'Illegal UTF-8 continuation')) :- !,
   maplist(atom_number, [Lex1,Lex2], [Line,Column]),
   write_meta_error_(Hash, 'IllegalUtf8Continuation', write_error_stream(Lex1, Lex2)).
 write_error_stream(Lex1, Lex2, Out, O) :-
-  rdf_write_quad(Out, O, ll:line, literal(type(xsd:nonNegativeInteger,Lex1)), graph:meta),
-  rdf_write_quad(Out, O, ll:column, literal(type(xsd:nonNegativeInteger,Lex2)), graph:meta).
+  rdf_write_quad(Out, O, ll:line, literal(type(xsd:nonNegativeInteger,Lex1)), graph:error),
+  rdf_write_quad(Out, O, ll:column, literal(type(xsd:nonNegativeInteger,Lex2)), graph:error).
 
 write_meta_error(Hash, io_warning(Stream,'Illegal UTF-8 start')) :- !,
   stream_line_column(Stream, Line, Column),
@@ -329,15 +329,15 @@ write_meta_error(Hash, io_warning(Stream,'Illegal UTF-8 start')) :- !,
 write_meta_error(Hash, rdf(incorrect_lexical_form(D,Lex))) :- !,
   write_meta_error_(Hash, 'CannotMapLexicalForm', write_error_8(D, Lex)).
 write_error_8(D, Lex, Out, O) :-
-  rdf_write_quad(Out, O, ll:datatype, D, graph:meta),
-  rdf_write_quad(Out, O, ll:lexicalForm, literal(type(xsd:string,Lex)), graph:meta).
+  rdf_write_quad(Out, O, ll:datatype, D, graph:error),
+  rdf_write_quad(Out, O, ll:lexicalForm, literal(type(xsd:string,Lex)), graph:error).
 
 % RDF syntax error: a language-tagged string where the language tag is
 % missing.
 write_meta_error(Hash, rdf(missing_language_tag(LTag))) :- !,
   write_meta_error_(Hash, 'MissingLanguageTag', write_error_9(LTag)).
 write_error_9(LTag, Out, O) :-
-  rdf_write_quad(Out, O, ll:languageTag, literal(type(xsd:string,LTag)), graph:meta).
+  rdf_write_quad(Out, O, ll:languageTag, literal(type(xsd:string,LTag)), graph:error).
 
 % RDF non-canonicity: a language-tagged string where the language tag is
 % not in canonical form.
@@ -346,44 +346,44 @@ write_meta_error(Hash, rdf(non_canonical_language_tag(LTag))) :- !,
   write_meta(Hash, write_error_10(S, LTag)).
 write_error_10(S, LTag, Out) :-
   rdf_bnode_iri(O),
-  rdf_write_quad(Out, S, ll:canonicity, O, graph:meta),
-  rdf_write_quad(Out, O, rdf:type, error:'NonCanonicalLanguageTag', graph:meta),
-  rdf_write_quad(Out, O, ll:languageTag, literal(type(xsd:string,LTag)), graph:meta).
+  rdf_write_quad(Out, S, ll:canonicity, O, graph:warning),
+  rdf_write_quad(Out, O, rdf:type, error:'NonCanonicalLanguageTag', graph:warning),
+  rdf_write_quad(Out, O, ll:languageTag, literal(type(xsd:string,LTag)), graph:warning).
 
 % RDF non-canonicicty: a lexical form that belongs to the lexical
 % space, but is not canonical.
 write_meta_error(Hash, rdf(non_canonical_lexical_form(D,Lex1,Lex2))) :- !,
   write_meta_error_(Hash, 'NonCanonicalLexicalForm', write_error_11(D, Lex1, Lex2)).
 write_error_11(D, Lex1, Lex2, Out, O) :-
-  rdf_write_quad(Out, O, ll:datatype, D, graph:meta),
-  rdf_write_quad(Out, O, ll:lexicalForm, literal(type(xsd:string,Lex1)), graph:meta),
-  rdf_write_quad(Out, O, ll:canonicalLexicalForm, literal(type(xsd:string,Lex2)), graph:meta).
+  rdf_write_quad(Out, O, ll:datatype, D, graph:error),
+  rdf_write_quad(Out, O, ll:lexicalForm, literal(type(xsd:string,Lex1)), graph:warning),
+  rdf_write_quad(Out, O, ll:canonicalLexicalForm, literal(type(xsd:string,Lex2)), graph:warning).
 
 % Not an RDF serialization format.
 write_meta_error(Hash, error(rdf(non_rdf_format,Str),_Context)) :- !,
   write_meta_error_(Hash, 'NonRdfFormat', write_error_12(Str)).
 write_error_12(Str, Out, O) :-
-  rdf_write_quad(Out, O, ll:content, literal(type(xsd:string,Str)), graph:meta).
+  rdf_write_quad(Out, O, ll:content, literal(type(xsd:string,Str)), graph:error).
 
 % RDF: redefined ID?
 write_meta_error(Hash, rdf(redefined_id(Term))) :- !,
   format(atom(Lex), "~w", [Term]),
   write_meta_error_(Hash, 'RdfRedefinedId', write_error_13(Lex)).
 write_error_13(Lex, Out, O) :-
-  rdf_write_quad(Out, O, ll:id, literal(type(xsd:string,Lex)), graph:meta).
+  rdf_write_quad(Out, O, ll:id, literal(type(xsd:string,Lex)), graph:error).
 
 % RDF/XML parser error: unexpected tag
 write_meta_error(Hash, rdf(unexpected(Tag,_Parser))) :- !,
   write_meta_error_(Hash, 'RdfXmlParseError', write_error_14(Tag)).
 write_error_14(Tag, Out, O) :-
-  rdf_write_quad(Out, O, ll:tag, literal(type(xsd:string,Tag)), graph:meta).
+  rdf_write_quad(Out, O, ll:tag, literal(type(xsd:string,Tag)), graph:error).
 
 % RDF/XML parser error: unparseable DOM.
 write_meta_error(Hash, rdf(unparsed(Dom))) :- !,
   write_meta_error_(Hash, 'RdfXmlParseError', write_error_15(Dom)).
 write_error_15(Dom, Out, O) :-
   rdf_literal_value(Literal, rdf:'XMLLiteral', Dom),
-  rdf_write_quad(Out, O, ll:dom, Literal, graph:meta).
+  rdf_write_quad(Out, O, ll:dom, Literal, graph:error).
 
 % JSON-LD serialization format is not yet supported.
 write_meta_error(Hash, rdf(unsupported_format(media(application/'ld+json',[]),_Content))) :- !,
@@ -394,13 +394,13 @@ write_meta_error(Hash, sgml(sgml_parser(_Parser),_File,Line,Msg)) :- !,
   atom_number(Lex, Line),
   write_meta_error_(Hash, 'RdfParseError', write_error_15(Lex, Msg)).
 write_error_15(Lex, Msg, Out, O) :-
-  rdf_write_quad(Out, O, ll:line, literal(type(xsd:nonNegativeInteger,Lex)), graph:meta),
-  rdf_write_quad(Out, O, ll:message, literal(type(xsd:string,Msg)), graph:meta).
+  rdf_write_quad(Out, O, ll:line, literal(type(xsd:nonNegativeInteger,Lex)), graph:error),
+  rdf_write_quad(Out, O, ll:message, literal(type(xsd:string,Msg)), graph:error).
 
 % TBD: Not yet handled.
 write_meta_error(Hash, E) :-
   format(atom(Lex), "~w", [E]),
-  write_meta_quad(Hash, ll:error, literal(type(xsd:string,Lex)), graph:meta).
+  write_meta_quad(Hash, ll:error, literal(type(xsd:string,Lex)), graph:error).
 
 write_meta_error_(Hash, CName) :-
   write_meta_error_(Hash, CName, true).
@@ -411,9 +411,9 @@ write_meta_error_(Hash, CName, Goal_2) :-
 
 write_meta_error_(S, CName, Goal_2, Out) :-
   rdf_bnode_iri(O),
-  rdf_write_quad(Out, S, ll:error, O, graph:meta),
+  rdf_write_quad(Out, S, ll:error, O, graph:error),
   rdf_global_id(error:CName, C),
-  rdf_write_quad(Out, O, rdf:type, C, graph:meta),
+  rdf_write_quad(Out, O, rdf:type, C, graph:error),
   call(Goal_2, Out, O).
 
 
