@@ -1,4 +1,4 @@
-:- module(ll_init, []).
+:- module(ll_init, [tmon/0]).
 
 /** <module> LOD Laundromat: Initialization
 
@@ -32,6 +32,9 @@
 :- setting(ll:scheme, oneof([http,https]), https,
            "URI scheme of the seedlist server location.").
 :- setting(ll:user, any, _, "").
+
+tmon :-
+  thread_monitor.
 
 user:message_hook(E, Kind, _) :-
   memberchk(Kind, [error,warning]),

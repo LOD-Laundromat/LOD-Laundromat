@@ -27,10 +27,10 @@
 :- use_module(library(conf_ext)).
 :- use_module(library(debug_ext)).
 :- use_module(library(file_ext)).
-:- use_module(library(http/tapir)).
 :- use_module(library(ll/ll_generics)).
-:- use_module(library(sw/hdt_db)).
+:- use_module(library(sw/hdt_api)).
 :- use_module(library(sw/rdf_prefix)).
+:- use_module(library(tapir/tapir_api)).
 
 :- initialization
    init_ll_upload.
