@@ -1,16 +1,17 @@
 :- module(
   ll_metadata,
   [
-    close_metadata/3,       % +Hash, +PLocal, +Stream
-    write_error/2,          % +Hash, +Error
-    write_meta_archive/2,   % +Hash, +Filters
-    write_meta_encoding/4,  % +Hash, ?GuessEncoding, ?HttpEncoding, ?XmlEncoding
-    write_meta_entry/5,     % +ArchiveHash, +EntryName, +EntryHash, +Format, +Props
-    write_meta_http/2,      % +Hash, +Metadata
-    write_meta_now/2,       % +Hash, +PLocal
-    write_meta_quad/3,      % +Hash, +PLocal, +Input
+    close_metadata/3,        % +Hash, +PLocal, +Stream
+    write_error/2,           % +Hash, +Error
+    write_meta_archive/2,    % +Hash, +Filters
+    write_meta_encoding/4,   % +Hash, ?GuessEncoding, ?HttpEncoding, ?XmlEncoding
+    write_meta_entry/5,      % +ArchiveHash, +EntryName, +EntryHash, +Format, +Props
+    write_meta_http/2,       % +Hash, +Metadata
+    write_meta_now/2,        % +Hash, +PLocal
+    write_meta_quad/3,       % +Hash, +PLocal, +Input
     write_meta_serialization_format/2, % +Hash, +MediaType
-    write_meta_statements/2 % +Hash, +RdfMeta
+    write_meta_statements/2, % +Hash, +RdfMeta
+    write_warning/2          % +Hash, +Warning
   ]
 ).
 
@@ -34,7 +35,8 @@
 :- use_module(library(semweb/rdf_term)).
 
 :- discontiguous
-    write_error/2.
+    write_error/2,
+    write_warning/2.
 
 :- maplist(rdf_register_prefix, [
      error-'https://lodlaundromat.org/error/def/',
@@ -384,22 +386,6 @@ write_error(Hash, rdf(missing_language_tag(LTag))) :- !,
 write_error_9(LTag, Out, O) :-
   rdf_write_(error, Out, O, ll:languageTag, str(LTag)).
 
-% RDF non-canonicity: a language-tagged string where the language tag is
-% not in canonical form.
-write_error(Hash, rdf(non_canonical_language_tag(LTag))) :- !,
-  write_warning_(Hash, 'NonCanonicalLanguageTag', write_warning_1(LTag)).
-write_warning_1(LTag, Out, O) :-
-  rdf_write_(warning, Out, O, ll:languageTag, str(LTag)).
-
-% RDF non-canonicicty: a lexical form that belongs to the lexical
-% space, but is not canonical.
-write_error(Hash, rdf(non_canonical_lexical_form(D,Lex1,Lex2))) :- !,
-  write_warning_(Hash, 'NonCanonicalLexicalForm', write_warning_2(D, Lex1, Lex2)).
-write_warning_2(D, Lex1, Lex2, Out, O) :-
-  rdf_write_(warning, Out, O, ll:datatype, D),
-  rdf_write_(warning, Out, O, ll:lexicalForm, str(Lex1)),
-  rdf_write_(warning, Out, O, ll:canonicalLexicalForm, str(Lex2)).
-
 % Not an RDF serialization format.
 write_error(Hash, error(rdf(non_rdf_format,Str),_Context)) :- !,
   write_error_(Hash, 'NonRdfFormat', write_error_12(Str)).
@@ -463,17 +449,6 @@ write_error_(S, CName, Goal_2, Out) :-
   rdf_write_(error, Out, S, ll:error, O),
   rdf_prefix_iri(error:CName, C),
   rdf_write_(error, Out, O, rdf:type, C),
-  call(Goal_2, Out, O).
-
-write_warning_(Hash, CName, Goal_2) :-
-  rdf_prefix_iri(id:Hash, S),
-  write_(warning, Hash, write_warning_(S, CName, Goal_2)).
-
-write_warning_(S, CName, Goal_2, Out) :-
-  rdf_bnode_iri(O),
-  rdf_write_(warning, Out, S, ll:warning, O),
-  rdf_prefix_iri(error:CName, C),
-  rdf_write_(warning, Out, O, rdf:type, C),
   call(Goal_2, Out, O).
 
 
@@ -550,6 +525,37 @@ write_meta_statements(Hash, Meta) :-
 write_meta_statements_(S, Meta, Out) :-
   rdf_write_(meta, Out, S, ll:quadruples, nonneg(Meta.number_of_quadruples)),
   rdf_write_(meta, Out, S, ll:triples, nonneg(Meta.number_of_triples)).
+
+
+
+%! write_warning(+Hash:atom, :Goal_1) is det.
+
+% RDF non-canonicity: a language-tagged string where the language tag is
+% not in canonical form.
+write_warning(Hash, rdf(non_canonical_language_tag(LTag))) :- !,
+  write_warning_(Hash, 'NonCanonicalLanguageTag', write_warning_1(LTag)).
+write_warning_1(LTag, Out, O) :-
+  rdf_write_(warning, Out, O, ll:languageTag, str(LTag)).
+
+% RDF non-canonicicty: a lexical form that belongs to the lexical
+% space, but is not canonical.
+write_warning(Hash, rdf(non_canonical_lexical_form(D,Lex1,Lex2))) :- !,
+  write_warning_(Hash, 'NonCanonicalLexicalForm', write_warning_2(D, Lex1, Lex2)).
+write_warning_2(D, Lex1, Lex2, Out, O) :-
+  rdf_write_(warning, Out, O, ll:datatype, D),
+  rdf_write_(warning, Out, O, ll:lexicalForm, str(Lex1)),
+  rdf_write_(warning, Out, O, ll:canonicalLexicalForm, str(Lex2)).
+
+write_warning_(Hash, CName, Goal_2) :-
+  rdf_prefix_iri(id:Hash, S),
+  write_(warning, Hash, write_warning_(S, CName, Goal_2)).
+
+write_warning_(S, CName, Goal_2, Out) :-
+  rdf_bnode_iri(O),
+  rdf_write_(warning, Out, S, ll:warning, O),
+  rdf_prefix_iri(error:CName, C),
+  rdf_write_(warning, Out, O, rdf:type, C),
+  call(Goal_2, Out, O).
 
 
 

@@ -36,10 +36,12 @@
 tmon :-
   thread_monitor.
 
-user:message_hook(E, Kind, _) :-
-  memberchk(Kind, [error,warning]),
+user:message_hook(E, error, _) :-
   thread_self_property(alias(Hash)),
   write_error(Hash, E).
+user:message_hook(E, warning, _) :-
+  thread_self_property(alias(Hash)),
+  write_warning(Hash, E).
 
 
 
