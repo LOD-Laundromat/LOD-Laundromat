@@ -50,8 +50,9 @@ user:message_hook(E, Kind, _) :-
 init_ll :-
   conf_json(Conf),
   % data directory
-  create_directory(Conf.'data-directory'),
-  set_setting(ll:data_directory, Conf.'data-directory'),
+  directory_file_path(Conf.'data-directory', ll, Dir),
+  create_directory(Dir),
+  set_setting(ll:data_directory, Dir),
   % seedlist
   maplist(
     set_setting,
@@ -74,5 +75,5 @@ init_ll :-
   run_loop(ll_parse:ll_parse, Workers.parse.sleep, Workers.parse.threads),
   run_loop(ll_recode:ll_recode, Workers.recode.sleep, Workers.recode.threads),
   % log standard output
-  directory_file_path(Conf.'data-directory', 'out.log', File),
+  directory_file_path(Dir, 'out.log', File),
   protocol(File).

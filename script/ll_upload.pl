@@ -196,5 +196,6 @@ add_index(Compound1, N-Max, Compound2) :-
 
 init_ll_upload :-
   conf_json(Conf),
-  set_setting(ll:data_directory, Conf.'data-directory'),
+  directory_file_path(Conf.'data-directory', ll, Dir),
+  set_setting(ll:data_directory, Dir),
   set_setting(ll:tmp_directory, Conf.'tmp-directory').
