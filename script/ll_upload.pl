@@ -144,27 +144,6 @@ ll_upload_metadata :-
   setting(ll:tmp_directory, TmpDir),
   Base = 'meta.nq.gz',
   directory_file_path(TmpDir, Base, TmpFile),
-  setup_call_cleanup(
-    gzopen(TmpFile, write, Out),
-    forall(
-      find_hash(Hash, finished),
-      (
-        hash_file(Hash, Base, FromFile),
-        format("~a → ~a\n", [FromFile,TmpFile]),
-        setup_call_cleanup(
-          gzopen(FromFile, read, In),
-          copy_stream_data(In, Out),
-          close(In)
-        )
-      )
-    ),
-    close(Out)
-  ),
-  (   is_empty_file(TmpFile)
-  ->  true
-  ;   dataset_upload(_, metadata, _{accessLevel: public, files: [TmpFile]})
-  ),
-  delete_file(TmpFile).
 
 
 

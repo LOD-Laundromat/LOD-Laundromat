@@ -192,13 +192,18 @@ write_meta_error(Hash, error(existence_error(http_reply,Url),_Context)) :- !,
 write_error_4(Url, Out, O) :-
   rdf_write_error(Out, O, ll:alias, uri(Url)).
 
+% Existence error: URI scheme is not registered with IANA.
+write_meta_error(Hash, error(existence_error(uri_scheme,Scheme),_Context)) :- !,
+  write_meta_error_(Hash, 'IllegalUriScheme', write_error_45(Scheme)).
+write_error_45(Scheme, Out, O) :-
+  rdf_write_error(Out, O, ll:scheme, str(Scheme)).
+
 % Existence error: Turtle prefix is not declared.
-write_meta_error(Hash, error(existence_error(turtle_prefix,Alias),stream(Line,Col,_))) :- !,
-  maplist(atom_number, [Lex1,Lex2], [Line,Col]),
-  write_meta_error_(Hash, 'MissingTurtlePrefixDeclaration', write_error_5(Alias, Lex1, Lex2)).
-write_error_5(Alias, Lex1, Lex2, Out, O) :-
+write_meta_error(Hash, error(existence_error(turtle_prefix,Alias),stream(Line,Column,_))) :- !,
+  write_meta_error_(Hash, 'MissingTurtlePrefixDeclaration', write_error_5(Alias, Line, Column)).
+write_error_5(Alias, Line, Column, Out, O) :-
   rdf_write_error(Out, O, ll:alias, str(Alias)),
-  write_error_stream(Lex1, Lex2, Out, O).
+  write_error_stream(Line, Column, Out, O).
 
 % HTTP maximum redirection sequence length exceeded.
 write_meta_error(Hash, error(http_error(max_redirect,_Length,_Urls),_Context)) :- !,
@@ -316,11 +321,10 @@ write_meta_error(Hash, error(syntax_error(Msg),Stream0)) :- !,
 write_meta_error(Hash, error(syntax_error(Msg),_Stream,Line,Column,_)) :- !,
   write_syntax_error_1(Hash, Msg, Line, Column).
 write_syntax_error_1(Hash, Msg, Line, Column) :-
-  maplist(atom_number, [Lex1,Lex2], [Line,Column]),
-  write_meta_error_(Hash, 'RdfParseError', write_syntax_error_2(Msg, Lex1, Lex2)).
-write_syntax_error_2(Msg, Lex1, Lex2, Out, O) :-
+  write_meta_error_(Hash, 'RdfParseError', write_syntax_error_2(Msg, Line, Column)).
+write_syntax_error_2(Msg, Line, Column, Out, O) :-
   rdf_write_error(Out, O, ll:message, str(Msg)),
-  write_error_stream(Lex1, Lex2, Out, O).
+  write_error_stream(Line, Column, Out, O).
 
 write_meta_error(Hash, error(timeout_error(read,_Stream),_Context)) :- !,
   write_meta_error_(Hash, 'HttpTimeout').
@@ -344,8 +348,7 @@ write_error_stream(Line, Column, Out, O) :-
 % Unicode something ???
 write_meta_error(Hash, io_warning(Stream,'Illegal UTF-8 start')) :- !,
   stream_line_column(Stream, Line, Column),
-  maplist(atom_number, [Lex1,Lex2], [Line,Column]),
-  write_meta_error_(Hash, 'IllegalUtf8Start', write_error_stream(Lex1, Lex2)).
+  write_meta_error_(Hash, 'IllegalUtf8Start', write_error_stream(Line, Column)).
 
 % RDF syntax error: the lexical form does not occur in the lexical
 % space of the indicated datatype.
@@ -365,14 +368,14 @@ write_error_9(LTag, Out, O) :-
 % RDF non-canonicity: a language-tagged string where the language tag is
 % not in canonical form.
 write_meta_error(Hash, rdf(non_canonical_language_tag(LTag))) :- !,
-  write_meta_warning_(Hash, 'NonCanonicalLanguageTag', write_warning_1(LTag)).
+  write_warning_(Hash, 'NonCanonicalLanguageTag', write_warning_1(LTag)).
 write_warning_1(LTag, Out, O) :-
   rdf_write_warning(Out, O, ll:languageTag, str(LTag)).
 
 % RDF non-canonicicty: a lexical form that belongs to the lexical
 % space, but is not canonical.
 write_meta_error(Hash, rdf(non_canonical_lexical_form(D,Lex1,Lex2))) :- !,
-  write_meta_warning_(Hash, 'NonCanonicalLexicalForm', write_warning_2(D, Lex1, Lex2)).
+  write_warning_(Hash, 'NonCanonicalLexicalForm', write_warning_2(D, Lex1, Lex2)).
 write_warning_2(D, Lex1, Lex2, Out, O) :-
   rdf_write_warning(Out, O, ll:datatype, D),
   rdf_write_warning(Out, O, ll:lexicalForm, str(Lex1)),
@@ -440,11 +443,11 @@ write_meta_error_(S, CName, Goal_2, Out) :-
   rdf_write_error(Out, O, rdf:type, C),
   call(Goal_2, Out, O).
 
-write_meta_warning_(Hash, CName, Goal_2) :-
+write_warning_(Hash, CName, Goal_2) :-
   rdf_prefix_iri(id:Hash, S),
-  write_meta(Hash, write_meta_warning_(S, CName, Goal_2)).
+  write_warning(Hash, write_warning_(S, CName, Goal_2)).
 
-write_meta_warning_(S, CName, Goal_2, Out) :-
+write_warning_(S, CName, Goal_2, Out) :-
   rdf_bnode_iri(O),
   rdf_write_warning(Out, S, ll:warning, O),
   rdf_prefix_iri(error:CName, C),
@@ -516,15 +519,15 @@ write_meta_quad(Hash, P, O) :-
 
 write_meta_serialization_format(Hash, MediaType) :-
   dcg_with_output_to(atom(Lex), media_type(MediaType)),
-  write_meta_meta(Hash, ll:serializationFormat, str(Lex)).
+  write_meta_quad(Hash, ll:serializationFormat, str(Lex)).
 
 
 
 %! write_meta_statements(+Hash:atom, +Meta:dict) is det.
 
 write_meta_statements(Hash, Meta) :-
-  write_meta_meta(Hash, ll:quadruples, nonneg(Meta.number_of_quadruples)),
-  write_meta_meta(Hash, ll:triples, nonneg(Meta.number_of_triples)).
+  write_meta_quad(Hash, ll:quadruples, nonneg(Meta.number_of_quadruples)),
+  write_meta_quad(Hash, ll:triples, nonneg(Meta.number_of_triples)).
 
 
 
@@ -543,18 +546,20 @@ ensure_atom(N, Atom) :-
 
 
 %! rdf_write_error(+Out:stream, +S:rdf_nonliteral, +P:iri, +O:term) is det.
+%! rdf_write_meta(+Out:stream, +S:rdf_nonliteral, +P:iri, +O:term) is det.
+%! rdf_write_warning(+Out:stream, +S:rdf_nonliteral, +P:iri, +O:term) is det.
 
 rdf_write_error(Out, S, P, O0) :-
   rdf_create_term(O0, O),
   rdf_write_quad(Out, S, P, O, graph:error).
 
-
-
-%! rdf_write_meta(+Out:stream, +S:rdf_nonliteral, +P:iri, +O:term) is det.
-
 rdf_write_meta(Out, S, P, O0) :-
   rdf_create_term(O0, O),
   rdf_write_quad(Out, S, P, O, graph:meta).
+
+rdf_write_warning(Out, S, P, O0) :-
+  rdf_create_term(O0, O),
+  rdf_write_quad(Out, S, P, O, graph:warning).
 
 
 
