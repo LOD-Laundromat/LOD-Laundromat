@@ -136,7 +136,7 @@ handle_status(Hash, Local, true) :- !,
   end_task(Hash, Local).
 handle_status(Hash, _, Status) :-
   status_error(Status, E),
-  write_error(Hash, E),
+  write_message(error, Hash, E),
   finish(Hash).
 
 status_error(exception(E), E) :- !.
