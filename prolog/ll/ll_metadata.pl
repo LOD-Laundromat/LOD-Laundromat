@@ -69,11 +69,11 @@ close_metadata(Hash, PLocal, Stream) :-
       stream_metadata(Stream, Meta),
       rdf_prefix_iri(id:Hash, S),
       rdf_prefix_iri(ll:PLocal, P),
-      write_meta(Hash, write_meta_stream_(S, P, Meta))
+      write_meta(Hash, close_metadata_(S, P, Meta))
     ),
     close(Stream)
   ).
-write_meta_stream_(S, P, Meta, Out) :-
+close_metadata_(S, P, Meta, Out) :-
   rdf_bnode_iri(O),
   rdf_write_meta(Out, S, P, O),
   rdf_write_meta(Out, O, ll:newline, str(Meta.newline)),

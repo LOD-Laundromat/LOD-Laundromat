@@ -120,25 +120,23 @@ decompress_file_entry(Hash, EntryName, Props, In) :-
 
 % leaf node: archive entry
 decompress_file_entry(EntryHash, data, _, In, raw) :- !,
-  decompress_file_entry_stream(EntryHash, In, dirty).
+  hash_file(EntryHash, dirty, File),
+  setup_call_cleanup(
+    open(File, write, Out, [type(binary)]),
+    copy_stream_data(In, Out),
+    close(Out)
+  ).
 % non-leaf node: archive
 decompress_file_entry(ArchHash, EntryName, Props, In, Format) :-
   hash_entry_hash(ArchHash, EntryName, EntryHash),
-  decompress_file_entry_stream(ArchHash, In, compressed),
+  hash_file(EntryHash, compressed, File),
+  setup_call_cleanup(
+    open(File, write, Out, [type(binary)]),
+    copy_stream_data(In, Out),
+    close_metadata(ArchHash, decompressWrite, Out)
+  ),
   % Copy task files for the decompressed entry.
   copy_task_files(ArchHash, EntryHash),
   write_meta_entry(ArchHash, EntryName, EntryHash, Format, Props),
   % End this task from the perspective of the entry.
   end_task(EntryHash, downloaded).
-
-
-
-%! decompress_file_entry_stream(+ArchiveHash:atom, +In:stream, +Local:oneof([compressed,dirty])) is det.
-
-decompress_file_entry_stream(ArchHash, In, Local) :-
-  hash_file(ArchHash, Local, File),
-  setup_call_cleanup(
-    open(File, write, Out, [type(binary)]),
-    copy_stream_data(In, Out),
-    close_metadata(ArchHash, decompressWrite, Out)
-  ).
