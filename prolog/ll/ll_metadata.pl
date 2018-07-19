@@ -134,15 +134,16 @@ write_meta_entry(ArchiveHash, EntryName, EntryHash, Format, Props) :-
   rdf_prefix_iri(id:ArchiveHash, Archive),
   rdf_prefix_iri(id:EntryHash, Entry),
   write_meta(ArchiveHash, write_meta_archive_(Archive, Entry)),
-  write_meta(EntryHash, write_meta_entry_(EntryName, Entry, Format, Props)).
+  write_meta(EntryHash, write_meta_entry_(Archive, EntryName, Entry, Format, Props)).
 write_meta_archive_(Archive, Entry, Out) :-
   rdf_write_meta(Out, Archive, rdf:type, ll:'Archive'),
   rdf_write_meta(Out, Archive, ll:entry, Entry).
-write_meta_entry_(EntryName, Entry, Format, Props, Out) :-
+write_meta_entry_(Archive, EntryName, Entry, Format, Props, Out) :-
   memberchk(mtime(MTime), Props),
   memberchk(permissions(Permissions), Props),
   memberchk(size(Size), Props),
   rdf_write_meta(Out, Entry, rdf:type, ll:'Entry'),
+  rdf_write_meta(Out, Entry, ll:archive, Archive),
   rdf_write_meta(Out, Entry, ll:format, str(Format)),
   rdf_write_meta(Out, Entry, ll:mtime, MTime),
   rdf_write_meta(Out, Entry, ll:name, str(EntryName)),
