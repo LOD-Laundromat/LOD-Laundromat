@@ -39,7 +39,7 @@ tmon :-
 user:message_hook(E, Kind, _) :-
   memberchk(Kind, [error,warning]),
   thread_self_property(alias(Hash)),
-  write_meta_error(Hash, E).
+  write_error(Hash, E).
 
 
 

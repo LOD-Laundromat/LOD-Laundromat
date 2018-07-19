@@ -24,7 +24,7 @@ ll_decompress :-
   write_meta_now(Hash, decompressBegin),
   % operation
   catch(decompress_file(Hash), E, true),
-  (var(E) -> true ; write_meta_error(Hash, E), finish(Hash)),
+  (var(E) -> true ; write_error(Hash, E), finish(Hash)),
   % postcondition
   write_meta_now(Hash, decompressEnd),
   (   hash_file(Hash, dirty, File),

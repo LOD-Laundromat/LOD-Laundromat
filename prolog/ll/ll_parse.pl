@@ -47,7 +47,7 @@ ll_parse :-
 
 parse_file(Hash) :-
   % This is needed for `http://spraakbanken.gu.se/rdf/saldom.rdf'
-  % which has 8M+ triples in one RDF/XML description.
+  % which has 8M+ triples in one single RDF/XML description.
   set_prolog_stack(global, limit(2*10**9)),
   set_prolog_stack(trail, limit(2*10**9)),
   maplist(hash_file(Hash), [dirty,'data.nq.gz'], [FromFile,ToFile]),
