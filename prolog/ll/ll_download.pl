@@ -13,7 +13,7 @@
 :- use_module(library(http/http_client2)).
 :- use_module(library(ll/ll_generics)).
 :- use_module(library(ll/ll_metadata)).
-:- use_module(library(sw/rdf_media_type)).
+:- use_module(library(semweb/rdf_media_type)).
 
 ll_download :-
   % precondition

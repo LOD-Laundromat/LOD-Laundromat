@@ -15,11 +15,11 @@
 :- use_module(library(file_ext)).
 :- use_module(library(ll/ll_generics)).
 :- use_module(library(ll/ll_metadata)).
-:- use_module(library(sw/rdf_clean)).
-:- use_module(library(sw/rdf_deref)).
-:- use_module(library(sw/rdf_export)).
-:- use_module(library(sw/rdf_guess)).
-:- use_module(library(sw/rdf_term)).
+:- use_module(library(semweb/rdf_clean)).
+:- use_module(library(semweb/rdf_deref)).
+:- use_module(library(semweb/rdf_export)).
+:- use_module(library(semweb/rdf_guess)).
+:- use_module(library(semweb/rdf_term)).
 :- use_module(library(uri_ext)).
 
 :- initialization

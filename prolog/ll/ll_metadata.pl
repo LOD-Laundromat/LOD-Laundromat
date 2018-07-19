@@ -30,21 +30,21 @@
 :- use_module(library(ll/ll_generics)).
 :- use_module(library(media_type)).
 :- use_module(library(stream_ext)).
-:- use_module(library(sw/rdf_export)).
-:- use_module(library(sw/rdf_prefix)).
-:- use_module(library(sw/rdf_term)).
+:- use_module(library(semweb/rdf_export)).
+:- use_module(library(semweb/rdf_prefix)).
+:- use_module(library(semweb/rdf_term)).
 
 :- discontiguous
     write_meta_error/2.
 
-:- maplist(rdf_assert_prefix, [
+:- maplist(rdf_register_prefix, [
      error-'https://lodlaundromat.org/error/def/',
      graph-'https://lodlaundromat.org/graph/',
      http-'https://lodlaundromat.org/http/def/',
      id-'https://lodlaundromat.org/id/',
      ll-'https://lodlaundromat.org/def/',
-     rdf-'http://www.w3.org/1999/02/22-rdf-syntax-ns#',
-     xsd-'http://www.w3.org/2001/XMLSchema#'
+     rdf,
+     xsd
    ]).
 
 :- meta_predicate
@@ -66,8 +66,8 @@ close_metadata(Hash, PLocal, Stream) :-
   call_cleanup(
     (
       stream_metadata(Stream, Meta),
-      rdf_global_id(id:Hash, S),
-      rdf_global_id(ll:PLocal, P),
+      rdf_prefix_iri(id:Hash, S),
+      rdf_prefix_iri(ll:PLocal, P),
       write_meta(Hash, write_meta_stream_(S, P, Meta))
     ),
     close(Stream)
@@ -103,7 +103,7 @@ write_meta(Hash, Goal_1) :-
 
 write_meta_archive(_, []) :- !.
 write_meta_archive(Hash, L) :-
-  rdf_global_id(id:Hash, S),
+  rdf_prefix_iri(id:Hash, S),
   write_meta(Hash, write_meta_archive_1(S, L)).
 write_meta_archive_1(S, L, Out) :-
   rdf_bnode_iri(O),
@@ -126,7 +126,7 @@ write_meta_archive_2(Node, [H|T], Out) :-
 %! write_meta_encoding(+Hash:atom, ?GuessEncoding:atom, ?HttpEncoding:atom, ?XmlEncoding:atom) is det.
 
 write_meta_encoding(Hash, GuessEnc, HttpEnc, XmlEnc) :-
-  rdf_global_id(id:Hash, S),
+  rdf_prefix_iri(id:Hash, S),
   write_meta(Hash, write_meta_encoding_(S, GuessEnc, HttpEnc, XmlEnc)).
 write_meta_encoding_(S, GuessEnc, HttpEnc, XmlEnc, Out) :-
   (   var(GuessEnc)
@@ -421,7 +421,7 @@ write_meta_error_(S, CName, Goal_2, Out) :-
 %! write_meta_http(+Hash:atom, +Metadata:list(dict)) is det,
 
 write_meta_http(Hash, L) :-
-  rdf_global_id(id:Hash, S),
+  rdf_prefix_iri(id:Hash, S),
   write_meta(Hash, write_meta_http_list1(S, L)).
 write_meta_http_list1(S, L, Out) :-
   rdf_bnode_iri(O),
@@ -448,7 +448,7 @@ write_meta_http_item(Item, Meta, Out) :-
   rdf_write_quad(Out, Item, ll:url, literal(type(xsd:anyURI,Meta.uri)), graph:meta).
 % TBD: Multiple values should emit a warning in `http/http_client2'.
 write_meta_http_header(Out, Item, PLocal-Lexs) :-
-  rdf_global_id(ll:PLocal, P),
+  rdf_prefix_iri(ll:PLocal, P),
   forall(
     member(Lex, Lexs),
     rdf_write_quad(Out, Item, P, literal(type(xsd:string,Lex)), graph:meta)
@@ -459,8 +459,8 @@ write_meta_http_header(Out, Item, PLocal-Lexs) :-
 %! write_meta_now(+Hash:atom, +PLocal:atom) is det.
 
 write_meta_now(Hash, PLocal) :-
-  rdf_global_id(id:Hash, S),
-  rdf_global_id(ll:PLocal, P),
+  rdf_prefix_iri(id:Hash, S),
+  rdf_prefix_iri(ll:PLocal, P),
   write_meta(Hash, write_meta_now_(S, P)).
 write_meta_now_(S, P, Out) :-
   get_time(Now),

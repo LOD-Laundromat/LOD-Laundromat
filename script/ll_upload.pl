@@ -28,14 +28,14 @@
 :- use_module(library(debug_ext)).
 :- use_module(library(file_ext)).
 :- use_module(library(ll/ll_generics)).
-:- use_module(library(sw/hdt_api)).
-:- use_module(library(sw/rdf_prefix)).
+:- use_module(library(semweb/hdt_api)).
+:- use_module(library(semweb/rdf_prefix)).
 :- use_module(library(tapir/tapir_api)).
 
 :- initialization
    init_ll_upload.
 
-:- maplist(rdf_assert_prefix, [
+:- maplist(rdf_register_prefix, [
      bnode-'https://lodlaundromat.org/.well-known/genid/',
      error-'https://lodlaundromat.org/error/def/',
      graph-'https://lodlaundromat.org/graph/',
