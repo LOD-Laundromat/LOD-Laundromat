@@ -32,7 +32,7 @@ ll_download(Hash, Uri) :-
   % preparation
   indent_debug(1, ll(task,download), "> downloading ~a ~a", [Hash,Uri]),
   write_meta_now(Hash, downloadBegin),
-  write_meta_quad(Hash, ll:url, literal(type(xsd:anyURI,Uri)), graph:meta),
+  write_meta_quad(Hash, ll:url, uri(Uri)),
   % operation
   thread_create(download_url(Hash, Uri), Id, [alias(Hash)]),
   thread_join(Id, Status),
