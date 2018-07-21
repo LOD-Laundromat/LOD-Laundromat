@@ -175,20 +175,22 @@ write_message(Kind, Hash, error(representation_error(turtle_character),_)) :- !,
 write_message(Kind, Hash, error(resource_error(stack),global)) :- !,
   write_message_(Kind, Hash, 'GlobalStack').
 
-% Socket errors:
-%   - Msg = 'Connection refused'
-%   - Msg = 'Connection reset by peer'
-%   - Msg = 'Connection timed out'
-%   - Msg = 'Host not found'
-%   - Msg = 'Network is unreachable'
-%   - Msg = 'No Data'
-%   - Msg = 'No Recovery'
-%   - Msg = 'No route to host'
-%   - Msg = 'Try Again'
+% Socket errors
 write_message(Kind, Hash, error(socket_error(Msg),_Context)) :- !,
-  write_message_(Kind, Hash, 'SocketError', write_message_9(Msg)).
+  message_class_name(Msg, CName),
+  write_message_(Kind, Hash, CName, write_message_9(Msg)).
 write_message_9(Msg, Kind, Out, O) :-
   rdf_write_(Kind, Out, O, ll:message, str(Msg)).
+
+message_class_name('Connection refused', 'ConnectionRefused').
+message_class_name('Connection reset by peer', 'ConnectionResetByPeer').
+message_class_name('Connection timed out', 'ConnectionTimedOut').
+message_class_name('Host not found', 'HostNotFound').
+message_class_name('Network is unreachable', 'NetworkIsUnreachable').
+message_class_name('No Data', 'NoData').
+message_class_name('No Recovery', 'NoRecovery').
+message_class_name('No route to host', 'NoRouteToHost').
+message_class_name('Try Again', 'TryAgain').
 
 % SSL error: unexpected end of file
 %
@@ -447,12 +449,12 @@ write_meta_encoding_(S, GuessEnc, HttpEnc, XmlEnc, Kind, Out) :-
 write_meta_entry(ArchiveHash, EntryName, EntryHash, Format, Props) :-
   rdf_prefix_iri(id:ArchiveHash, Archive),
   rdf_prefix_iri(id:EntryHash, Entry),
-  write_(meta, ArchiveHash, write_meta_archive_(Archive, Entry)),
-  write_(meta, EntryHash, write_meta_entry_(Archive, EntryName, Entry, Format, Props)).
-write_meta_archive_(Archive, Entry, Kind, Out) :-
+  write_(meta, ArchiveHash, write_meta_entry_archive_(Archive, Entry)),
+  write_(meta, EntryHash, write_meta_entry_entry_(Archive, EntryName, Entry, Format, Props)).
+write_meta_entry_archive_(Archive, Entry, Kind, Out) :-
   rdf_write_(Kind, Out, Archive, rdf:type, ll:'Archive'),
   rdf_write_(Kind, Out, Archive, ll:entry, Entry).
-write_meta_entry_(Archive, EntryName, Entry, Format, Props, Kind, Out) :-
+write_meta_entry_entry_(Archive, EntryName, Entry, Format, Props, Kind, Out) :-
   memberchk(mtime(MTime), Props),
   memberchk(permissions(Permissions), Props),
   memberchk(size(Size), Props),
@@ -518,7 +520,9 @@ write_meta_now(Hash, PLocal) :-
 write_meta_quad(Hash, PLocal, O) :-
   rdf_prefix_iri(id:Hash, S),
   rdf_prefix_iri(ll:PLocal, P),
-  write_(meta, Hash, {S,P,O}/[Kind,Out]>>rdf_write_(Kind, Out, S, P, O)).
+  write_(meta, Hash, write_meta_quad_(S, P, O)).
+write_meta_quad_(S, P, O, Kind, Out) :-
+  rdf_write_(Kind, Out, S, P, O).
 
 
 

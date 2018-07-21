@@ -90,11 +90,7 @@ decompress_archive(Hash, Arch) :-
 %! decompress_entry(+Hash:atom, +Archive:blob, +EntryName:atom, +Properties:list(compound), +Type:atom) is det.
 
 decompress_entry(Hash, Arch, EntryName, Props) :-
-  memberchk(filetype(Type), Props),
-  decompress_entry(Hash, Arch, EntryName, Props, Type).
-
-
-decompress_entry(Hash, Arch, EntryName, Props, file) :-
+  memberchk(filetype(file), Props), !,
   setup_call_cleanup(
     (
       archive_open_entry(Arch, In),
@@ -106,7 +102,7 @@ decompress_entry(Hash, Arch, EntryName, Props, file) :-
       close(In)
     )
   ).
-decompress_entry(_, _, _, _, _).
+decompress_entry(_, _, _, _).
 
 
 

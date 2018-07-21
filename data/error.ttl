@@ -1,0 +1,12 @@
+prefix error: <https://lodlaundromat.org/error/def/>
+prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+
+error:ConnectionRefused rdfs:subClassOf error:SocketError .
+error:ConnectionResetByPeer rdfs:subClassOf error:SocketError .
+error:ConnectionTimedOut rdfs:subClassOf error:SocketError .
+error:HostNotFound rdfs:subClassOf error:SocketError .
+error:NetworkIsUnreachable rdfs:subClassOf error:SocketError .
+error:NoData rdfs:subClassOf error:SocketError .
+error:NoRecovery rdfs:subClassOf error:SocketError .
+error:NoRouteToHost rdfs:subClassOf error:SocketError .
+error:TryAgain rdfs:subClassOf error:SocketError .

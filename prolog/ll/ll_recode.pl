@@ -37,7 +37,7 @@ ll_recode :-
 
 recode_file(Hash) :-
   hash_file(Hash, dirty, File),
-  ignore(guess_encoding_(File, GuessEnc)),
+  ignore(guess_encoding_(Hash, File, GuessEnc)),
   ignore((
     read_task_memory(Hash, http_media_type, MediaType),
     media_type_encoding(MediaType, HttpEnc)
@@ -48,7 +48,7 @@ recode_file(Hash) :-
   write_meta_quad(Hash, encoding, str(Enc)),
   recode_to_utf8(File, Enc).
 
-guess_encoding_(File, Enc2) :-
+guess_encoding_(Hash, File, Enc2) :-
   process_create(path(uchardet), [file(File)], [stdout(pipe(ProcOut))]),
   call_cleanup(
     (
@@ -56,7 +56,7 @@ guess_encoding_(File, Enc2) :-
       string_strip(String1, "\n", String2),
       atom_string(Enc1, String2)
     ),
-    close(ProcOut)
+    close_metadata(Hash, recodeWrite, ProcOut)
   ),
   clean_encoding(Enc1, Enc2),
   Enc2 \== unknown.

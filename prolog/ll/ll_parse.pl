@@ -26,6 +26,10 @@
    set_setting(rdf_term:bnode_prefix_scheme, https),
    set_setting(rdf_term:bnode_prefix_authority, 'lodlaundromat.org').
 
+% This is needed for `http://spraakbanken.gu.se/rdf/saldom.rdf' which
+% has 8M+ triples in one single RDF/XML description.
+:- set_prolog_flag(stack_limit, 2 000 000 000).
+
 ll_parse :-
   % precondition
   with_mutex(ll_parse, (
@@ -46,10 +50,6 @@ ll_parse :-
   indent_debug(-1, ll(task,parse), "< parsed ~a", [Hash]).
 
 parse_file(Hash) :-
-  % This is needed for `http://spraakbanken.gu.se/rdf/saldom.rdf'
-  % which has 8M+ triples in one single RDF/XML description.
-  set_prolog_stack(global, limit(2*10**9)),
-  set_prolog_stack(trail, limit(2*10**9)),
   maplist(hash_file(Hash), [dirty,'data.nq.gz'], [FromFile,ToFile]),
   % base URI
   read_task_memory(Hash, base_uri, BaseUri),
