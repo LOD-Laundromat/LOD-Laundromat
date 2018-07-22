@@ -1,4 +1,4 @@
-:- module(ll_init, []).
+:- module(ll_init, [tmon/0]).
 
 /** <module> LOD Laundromat: Initialization
 
@@ -33,10 +33,13 @@
            "URI scheme of the seedlist server location.").
 :- setting(ll:user, any, _, "").
 
+tmon :-
+  thread_monitor.
+
 user:message_hook(E, Kind, _) :-
   memberchk(Kind, [error,warning]),
   thread_self_property(alias(Hash)),
-  write_meta_error(Hash, E).
+  write_message(Kind, Hash, E).
 
 
 
@@ -47,8 +50,9 @@ user:message_hook(E, Kind, _) :-
 init_ll :-
   conf_json(Conf),
   % data directory
-  create_directory(Conf.'data-directory'),
-  set_setting(ll:data_directory, Conf.'data-directory'),
+  directory_file_path(Conf.'data-directory', ll, Dir),
+  create_directory(Dir),
+  set_setting(ll:data_directory, Dir),
   % seedlist
   maplist(
     set_setting,
@@ -63,7 +67,12 @@ init_ll :-
   % workers
   (   debugging(ll(offline))
   ->  DebugConf = _{sleep: 1, threads: 1},
-      Workers = _{decompress: DebugConf, download: DebugConf, parse: DebugConf, recode: DebugConf}
+      Workers = _{
+        decompress: DebugConf,
+        download: DebugConf,
+        parse: DebugConf,
+        recode: DebugConf
+      }
   ;   Workers = Conf.workers
   ),
   run_loop(ll_decompress:ll_decompress, Workers.decompress.sleep, Workers.decompress.threads),
@@ -71,5 +80,5 @@ init_ll :-
   run_loop(ll_parse:ll_parse, Workers.parse.sleep, Workers.parse.threads),
   run_loop(ll_recode:ll_recode, Workers.recode.sleep, Workers.recode.threads),
   % log standard output
-  directory_file_path(Conf.'data-directory', 'out.log', File),
+  directory_file_path(Dir, 'out.log', File),
   protocol(File).

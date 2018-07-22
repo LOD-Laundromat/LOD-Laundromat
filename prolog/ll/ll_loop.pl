@@ -1,6 +1,7 @@
 :- module(
   ll_loop,
   [
+    run_loop/2, % :Goal_0, +Sleep
     run_loop/3  % :Goal_0, +Sleep, +NumberOfThreads
   ]
 ).
@@ -26,6 +27,7 @@
    flag(ll_parse, _, 1).
 
 :- meta_predicate
+    run_loop(0, +),
     run_loop(0, +, +),
     running_loop(+, 0).
 
@@ -33,18 +35,25 @@
 
 
 
+%! run_loop(:Goal_0, +Sleep:nonneg) is det.
 %! run_loop(:Goal_0, +Sleep:nonneg, +NumberOfThreads:nonneg) is det.
+
+run_loop(Goal_0, Sleep) :-
+  run_loop(Goal_0, Sleep, 1).
+
 
 run_loop(Goal_0, Sleep, M) :-
   strip_module(Goal_0, _, Pred),
-  forall(
-    between(1, M, _),
-    (
-      flag(Pred, N, N+1),
-      format(atom(Alias), "~a-~D", [Pred,N]),
-      thread_create(running_loop(Sleep, Goal_0), _, [alias(Alias),detached(true)])
+  with_mutex(ll_loop, (
+    forall(
+      between(1, M, _),
+      (
+        flag(Pred, N, N+1),
+        format(atom(Alias), "~a-~D", [Pred,N]),
+        thread_create(running_loop(Sleep, Goal_0), _, [alias(Alias),detached(true)])
+      )
     )
-  ).
+  )).
 
 running_loop(Sleep, Goal_0) :-
   Goal_0, !,

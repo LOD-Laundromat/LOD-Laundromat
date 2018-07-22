@@ -108,15 +108,24 @@ find_hash_file(Hash, Local, File) :-
 %! finish(+Hash:atom) is det.
 
 finish(Hash) :-
-  hash_file(Hash, 'meta.nq', File),
-  compress_file(File),
-  delete_file(File),
-  end_task(Hash, finished),
-  (   debugging(ll(offline))
-  ->  true
-  ;   seedlist_request([seed,processing], [hash(Hash)], true)
-  ->  seedlist_request([seed,processing], [hash(Hash)], true, [method(patch)])
-  ;   true
+  forall(
+    (
+      member(Base, [data,error,meta,warning]),
+      file_name_extension(Base, nq, Local),
+      hash_file(Hash, Local, File),
+      exists_file(File)
+    ),
+    (
+      compress_file(File),
+      delete_file(File),
+      end_task(Hash, finished),
+      (   debugging(ll(offline))
+      ->  true
+      ;   seedlist_request([seed,processing], [hash(Hash)], true)
+      ->  seedlist_request([seed,processing], [hash(Hash)], true, [method(patch)])
+      ;   true
+      )
+    )
   ).
 
 
@@ -127,7 +136,7 @@ handle_status(Hash, Local, true) :- !,
   end_task(Hash, Local).
 handle_status(Hash, _, Status) :-
   status_error(Status, E),
-  write_meta_error(Hash, E),
+  write_message(error, Hash, E),
   finish(Hash).
 
 status_error(exception(E), E) :- !.

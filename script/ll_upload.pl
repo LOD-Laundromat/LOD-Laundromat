@@ -27,15 +27,15 @@
 :- use_module(library(conf_ext)).
 :- use_module(library(debug_ext)).
 :- use_module(library(file_ext)).
-:- use_module(library(http/tapir)).
 :- use_module(library(ll/ll_generics)).
-:- use_module(library(sw/hdt_db)).
-:- use_module(library(sw/rdf_prefix)).
+:- use_module(library(semweb/hdt_api)).
+:- use_module(library(semweb/rdf_prefix)).
+:- use_module(library(tapir/tapir_api)).
 
 :- initialization
    init_ll_upload.
 
-:- maplist(rdf_assert_prefix, [
+:- maplist(rdf_register_prefix, [
      bnode-'https://lodlaundromat.org/.well-known/genid/',
      error-'https://lodlaundromat.org/error/def/',
      graph-'https://lodlaundromat.org/graph/',
@@ -202,5 +202,6 @@ add_index(Compound1, N-Max, Compound2) :-
 
 init_ll_upload :-
   conf_json(Conf),
-  set_setting(ll:data_directory, Conf.'data-directory'),
+  directory_file_path(Conf.'data-directory', ll, Dir),
+  set_setting(ll:data_directory, Dir),
   set_setting(ll:tmp_directory, Conf.'tmp-directory').
