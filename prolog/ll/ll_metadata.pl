@@ -464,7 +464,7 @@ write_meta_entry_entry_(Archive, EntryName, Entry, Format, Props, Kind, Out) :-
   rdf_write_(Kind, Out, Entry, ll:mtime, MTime),
   rdf_write_(Kind, Out, Entry, ll:name, str(EntryName)),
   rdf_write_(Kind, Out, Entry, ll:permissions, positive_integer(Permissions)),
-  rdf_write_(Kind, Out, Entry, ll:size, positive_integer(Size)).
+  rdf_write_(Kind, Out, Entry, ll:size, nonneg(Size)).
 
 
 
