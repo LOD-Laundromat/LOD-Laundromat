@@ -70,7 +70,11 @@ download_url(Hash, Uri) :-
 
 download_stream(Hash, Uri, Out, MediaType, Status, FinalUri) :-
   findall(RdfMediaType, rdf_media_type(RdfMediaType), RdfMediaTypes),
-  http_open2(Uri, In, [accept(RdfMediaTypes),metadata(HttpMetas)]),
+  http_open2(
+    Uri,
+    In,
+    [accept(RdfMediaTypes),failure(_),metadata(HttpMetas),success(_)]
+  ),
   ignore(http_metadata_content_type(HttpMetas, MediaType)),
   write_meta_http(Hash, HttpMetas),
   http_metadata_final_uri(HttpMetas, FinalUri),
