@@ -20,6 +20,7 @@
 :- use_module(library(semweb/rdf_export)).
 :- use_module(library(semweb/rdf_guess)).
 :- use_module(library(semweb/rdf_term)).
+:- use_module(library(string_ext)).
 :- use_module(library(uri_ext)).
 
 :- initialization
@@ -55,9 +56,9 @@ parse_file(Hash) :-
   read_task_memory(Hash, base_uri, BaseUri),
   % blank node-replacing well-known IRI prefix
   bnode_prefix([Hash], BNodePrefix),
-  peek_file(FromFile, 10 000, Str),
+  peek_file(FromFile, 10 000, String),
   (   % RDF serialization format Media Type
-      rdf_guess_string(Str, MediaType)
+      rdf_guess_string(String, MediaType)
   ->  write_meta_serialization_format(Hash, MediaType),
       % counter
       RdfMeta = _{number_of_quadruples: 0, number_of_triples: 0},
@@ -79,7 +80,8 @@ parse_file(Hash) :-
       delete_file(FromFile),
       % metadata
       write_meta_statements(Hash, RdfMeta)
-  ;   throw(error(rdf(non_rdf_format,Str),ll_parse))
+  ;   string_truncate(String, 1 000, Truncated),
+      throw(error(rdf_error(non_rdf_format,Truncated),ll_parse))
   ).
 
 bnode_prefix(Segments, BNodePrefix) :-
