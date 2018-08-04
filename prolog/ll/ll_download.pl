@@ -64,7 +64,7 @@ download_url(Hash, Uri) :-
           between(400, 599, Status)
       ->  throw(error(http_error(status,Status),ll_download))
       ;   % Incorrect HTTP status code
-          syntax_error(http_status(Status))
+          type_error(http_status, Status)
       )
   ).
 

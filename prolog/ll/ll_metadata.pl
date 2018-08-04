@@ -92,40 +92,34 @@ close_metadata_(S, P, Meta, Kind, Out) :-
 %   - memberchk(Code, [22,25,1001])
 %     Msg = 'Truncated input file (needed INETEGER bytes, only INTEGER available)'
 %   - Msg = 'Can\'t parse line INTEGER'
-write_message(Kind, Hash, error(archive_error(Code,Msg),_Context)) :- !,
+write_message(Kind, Hash, error(archive_error(Code,Msg),_)) :- !,
   write_message_(Kind, Hash, 'ArchiveError', write_message_1(Code, Msg)).
 write_message_1(Code, Msg, Kind, Out, O) :-
   rdf_write_(Kind, Out, O, ll:code, positive_integer(Code)),
   rdf_write_(Kind, Out, O, ll:message, str(Msg)).
 
 % HTTP error: ???
-write_message(Kind, Hash, error(domain_error(http_encoding,identity),_Context)) :- !,
+write_message(Kind, Hash, error(domain_error(http_encoding,identity),_)) :- !,
   write_message_(Kind, Hash, 'HttpEncodingIdentity').
 
 % Set cookie error: ???
-write_message(Kind, Hash, error(domain_error(set_cookie,Value),_Context)) :- !,
+write_message(Kind, Hash, error(domain_error(set_cookie,Value),_)) :- !,
   write_message_(Kind, Hash, 'SetCookieError', write_message_2(Value)).
 write_message_2(Value, Kind, Out, O) :-
   rdf_write_(Kind, Out, O, ll:value, str(Value)).
 
 % Malformed URL
-write_message(Kind, Hash, error(domain_error(url,Url),_Context)) :- !,
+write_message(Kind, Hash, error(domain_error(url,Url),_)) :- !,
   write_message_(Kind, Hash, 'InvalidUrl', write_message_3(Url)).
 write_message_3(Url, Kind, Out, O) :-
   rdf_write_(Kind, Out, O, ll:value, uri(Url)).
 
 % Existence error: the HTTP reply is empty (no status line, no
 % headers, and no body).
-write_message(Kind, Hash, error(existence_error(http_reply,Url),_Context)) :- !,
+write_message(Kind, Hash, error(existence_error(http_reply,Url),_)) :- !,
   write_message_(Kind, Hash, 'EmptyHttpReply', write_message_4(Url)).
 write_message_4(Url, Kind, Out, O) :-
   rdf_write_(Kind, Out, O, ll:alias, uri(Url)).
-
-% Existence error: URI scheme is not registered with IANA.
-write_message(Kind, Hash, error(existence_error(uri_scheme,Scheme),_Context)) :- !,
-  write_message_(Kind, Hash, 'IllegalUriScheme', write_message_5(Scheme)).
-write_message_5(Scheme, Kind, Out, O) :-
-  rdf_write_(Kind, Out, O, ll:scheme, str(Scheme)).
 
 % Existence error: Turtle prefix is not declared.
 write_message(Kind, Hash, error(existence_error(turtle_prefix,Alias),stream(Line,Column,_))) :- !,
@@ -134,23 +128,36 @@ write_message_6(Alias, Line, Column, Kind, Out, O) :-
   rdf_write_(Kind, Out, O, ll:alias, str(Alias)),
   write_message_stream(Line, Column, Kind, Out, O).
 
+% Existence error: IRI scheme is not registered with IANA.
+write_message(Kind, Hash, error(existence_error(uri_scheme,Scheme),_)) :- !,
+  write_message_(Kind, Hash, 'IllegalUriScheme', write_message_5(Scheme)).
+write_message_5(Scheme, Kind, Out, O) :-
+  rdf_write_(Kind, Out, O, ll:scheme, str(Scheme)).
+
+write_message(Kind, Hash, error(http_error(cyclic_link_header,Uri),_)) :- !,
+  write_message_(Kind, Hash, 'CyclicLinkHeader', write_message_100(Uri)).
+write_message_100(Uri, Kind, Out, O) :-
+  write_message_(Kind, Out, O, ll:uri, uri(Uri)).
+
 % HTTP maximum redirection sequence length exceeded.
-write_message(Kind, Hash, error(http_error(max_redirect,_Length,_Urls),_Context)) :- !,
+write_message(Kind, Hash, error(http_error(max_redirect,_Length,_Urls),_)) :- !,
   write_message_(Kind, Hash, 'HttpMaxRedirect').
 
 % HTTP no content type header in reply.
-write_message(Kind, Hash, error(http_error(no_content_type,_Uri),_Context)) :- !,
+write_message(Kind, Hash, error(http_error(no_content_type,_Uri),_)) :- !,
   write_message_(Kind, Hash, 'HttpNoContentType').
 
 % HTTP redirection loop detected.
-write_message(Kind, Hash, error(http_error(redirect_loop,_Urls),_Context)) :- !,
+write_message(Kind, Hash, error(http_error(redirect_loop,_Urls),_)) :- !,
   write_message_(Kind, Hash, 'HttpRedirectLoop').
 
 % HTTP error status code
-write_message(Kind, Hash, error(http_error(status,Status),_Context)) :- !,
-  write_message_(Kind, Hash, 'HttpErrorStatus', write_message_7(Status)).
-write_message_7(Status, Kind, Out, O) :-
-  rdf_write_(Kind, Out, O, ll:code, positive_integer(Status)).
+write_message(Kind, Hash, error(http_error(status,Status,Body,Uri),_)) :- !,
+  write_message_(Kind, Hash, 'HttpErrorStatus', write_message_7(Status,Body,Uri)).
+write_message_7(Status, Body, Uri, Kind, Out, O) :-
+  rdf_write_(Kind, Out, O, ll:body, str(Body)),
+  rdf_write_(Kind, Out, O, ll:code, positive_integer(Status)),
+  rdf_write_(Kind, Out, O, ll:uri, uri(Uri)).
 
 % I/O error
 %
@@ -164,7 +171,7 @@ write_message_8(Msg, Kind, Out, O) :-
   rdf_write_(Kind, Out, O, ll:message, str(Msg)).
 
 % No non-binary encoding could be found.
-write_message(Kind, Hash, error(no_encoding,_Context)) :-
+write_message(Kind, Hash, error(no_encoding,_)) :-
   write_message_(Kind, Hash, 'NoEncoding').
 
 % Representation error: Turtle character
@@ -176,7 +183,7 @@ write_message(Kind, Hash, error(resource_error(stack),global)) :- !,
   write_message_(Kind, Hash, 'GlobalStack').
 
 % Socket errors
-write_message(Kind, Hash, error(socket_error(Msg),_Context)) :- !,
+write_message(Kind, Hash, error(socket_error(Msg),_)) :- !,
   message_class_name(Msg, CName),
   write_message_(Kind, Hash, CName, write_message_9(Msg)).
 write_message_9(Msg, Kind, Out, O) :-
@@ -199,7 +206,7 @@ message_class_name('Try Again', 'TryAgain').
 %     Library = ssl
 %     Function = negotiate
 %     Reason = 'Unexpected end-of-file'
-write_message(Kind, Hash, error(ssl_error(Code,Library,Function,Reason),_Context)) :- !,
+write_message(Kind, Hash, error(ssl_error(Code,Library,Function,Reason),_)) :- !,
   write_message_(Kind, Hash, 'SslUnexpectedEof', write_message_10(Code, Library, Function, Reason)).
 write_message_10(Code, Library, Function, Reason, Kind, Out, O) :-
   rdf_write_(Kind, Out, O, ll:code, str(Code)),
@@ -207,36 +214,20 @@ write_message_10(Code, Library, Function, Reason, Kind, Out, O) :-
   rdf_write_(Kind, Out, O, ll:function, str(Function)),
   rdf_write_(Kind, Out, O, ll:reason, str(Reason)).
 
-% Syntax error: HTTP parameter
-write_message(Kind, Hash, error(syntax_error(http_parameter(Param)),_)) :- !,
-  write_message_(Kind, Hash, 'HttpParameterParseError', write_message_11(Param)).
-write_message_11(Param, Kind, Out, O) :-
-  rdf_write_(Kind, Out, O, ll:parameter, str(Param)).
+% Syntax error (1/2)
+write_message(Kind, Hash, error(syntax_error(grammar(Language,Source)),_)) :- !,
+  write_message_(Kind, Hash, 'SyntaxError', write_message_11(Language,Source)).
+write_message_11(Language, Source, Kind, Out, O) :-
+  rdf_write_(Kind, Out, O, ll:language, str(Language)),
+  rdf_write_(Kind, Out, O, ll:string, str(Source)).
 
-% Syntax error: inccorrect HTTP status code
-write_message(Kind, Hash, error(syntax_error(http_status(Status)),_Context)) :- !,
-  ensure_atom(Status, Lex),
-  write_message_(Kind, Hash, 'IncorrectHttpStatusCode', write_message_12(Lex)).
-write_message_12(Lex, Kind, Out, O) :-
-  rdf_write_(Kind, Out, O, ll:status, str(Lex)).
-
-% Syntax error: incorrect URI authority component.
-write_message(Kind, Hash, error(syntax_error(uri_authority(Auth)),_Context)) :- !,
-  write_message_(Kind, Hash, 'IncorrectUriAuthority', write_message_13(Auth)).
-write_message_13(Auth, Kind, Out, O) :-
-  rdf_write_(Kind, Out, O, ll:authority, str(Auth)).
-
-% Syntax error: incorrect URI path component.
-write_message(Kind, Hash, error(syntax_error(uri_path(Path)),_Context)) :- !,
-  write_message_(Kind, Hash, 'IncorrectUriPath', write_message_14(Path)).
-write_message_14(Path, Kind, Out, O) :-
-  rdf_write_(Kind, Out, O, ll:path, str(Path)).
-
-% Syntax error: incorrect URI scheme component.
-write_message(Kind, Hash, error(syntax_error(uri_scheme(Scheme)),_Context)) :- !,
-  write_message_(Kind, Hash, 'IncorrectUriScheme', write_message_15(Scheme)).
-write_message_15(Scheme, Kind, Out, O) :-
-  rdf_write_(Kind, Out, O, ll:scheme, str(Scheme)).
+% Syntax error (2/2)
+write_message(Kind, Hash, error(syntax_error(grammar(Language,Expr,Source)),_)) :- !,
+  write_message_(Kind, Hash, 'SyntaxError', write_message_13(Language,Expr,Source)).
+write_message_13(Language, Expr, Source, Kind, Out, O) :-
+  rdf_write_(Kind, Out, O, ll:language, str(Language)),
+  rdf_write_(Kind, Out, O, ll:expression, str(Expr)),
+  rdf_write_(Kind, Out, O, ll:string, str(Source)).
 
 % RDF syntax error:
 %   - Mag = 'end-of-line expected'
@@ -264,11 +255,13 @@ write_message_15(Scheme, Kind, Out, O) :-
 %   - Mag = 'Unexpected "." (missing object)'
 %   - Mag = 'Unexpected newline in short string'
 %   - Mag = 'LANGTAG expected'
-write_message(Kind, Hash, error(syntax_error(Msg),Stream0)) :- !,
+write_message(Kind, Hash, error(syntax_error(Msg),Stream0)) :-
+  atom(Msg), !,
   (Stream0 = stream(Stream,_,_,_) -> true ; Stream = Stream0),
   stream_line_column(Stream, Line, Column),
   write_message_16(Kind, Hash, Msg, Line, Column).
-write_message(Kind, Hash, error(syntax_error(Msg),_Stream,Line,Column,_)) :- !,
+write_message(Kind, Hash, error(syntax_error(Msg),_Stream,Line,Column,_)) :-
+  atom(Msg), !,
   write_message_16(Kind, Hash, Msg, Line, Column).
 write_message_16(Kind, Hash, Msg, Line, Column) :-
   write_message_(Kind, Hash, 'RdfParseError', write_message_17(Msg, Line, Column)).
@@ -276,7 +269,14 @@ write_message_17(Msg, Line, Column, Kind, Out, O) :-
   rdf_write_(Kind, Out, O, ll:message, str(Msg)),
   write_message_stream(Line, Column, Kind, Out, O).
 
-write_message(Kind, Hash, error(timeout_error(read,_Stream),_Context)) :- !,
+% Syntax error: incorrect HTTP status code
+write_message(Kind, Hash, error(type_error(http_status,Status),_)) :- !,
+  ensure_atom(Status, Lex),
+  write_message_(Kind, Hash, 'IncorrectHttpStatusCode', write_message_12(Lex)).
+write_message_12(Lex, Kind, Out, O) :-
+  rdf_write_(Kind, Out, O, ll:status, str(Lex)).
+
+write_message(Kind, Hash, error(timeout_error(read,_Stream),_)) :- !,
   write_message_(Kind, Hash, 'HttpTimeout').
 
 % RDF/XML and RDFa: Cannot parse as XML DOM
@@ -296,27 +296,6 @@ write_message(Kind, Hash, io_warning(Stream,'Illegal UTF-8 continuation')) :- !,
 write_message(Kind, Hash, io_warning(Stream,'Illegal UTF-8 start')) :- !,
   stream_line_column(Stream, Line, Column),
   write_message_(Kind, Hash, 'IllegalUtf8Start', write_message_stream(Line, Column)).
-
-% RDF syntax error: the lexical form does not occur in the lexical
-% space of the indicated datatype.
-write_message(Kind, Hash, rdf(incorrect_lexical_form(D,Lex))) :- !,
-  write_message_(Kind, Hash, 'CannotMapLexicalForm', write_message_20(D, Lex)).
-write_message_20(D, Lex, Kind, Out, O) :-
-  rdf_write_(Kind, Out, O, ll:datatype, D),
-  rdf_write_(Kind, Out, O, ll:lexicalForm, str(Lex)).
-
-% RDF syntax error: a language-tagged string where the language tag is
-% missing.
-write_message(Kind, Hash, rdf(missing_language_tag(LTag))) :- !,
-  write_message_(Kind, Hash, 'MissingLanguageTag', write_message_21(LTag)).
-write_message_21(LTag, Kind, Out, O) :-
-  rdf_write_(Kind, Out, O, ll:languageTag, str(LTag)).
-
-% Not an RDF serialization format.
-write_message(Kind, Hash, error(rdf(non_rdf_format,Str),_Context)) :- !,
-  write_message_(Kind, Hash, 'NonRdfFormat', write_message_22(Str)).
-write_message_22(Str, Kind, Out, O) :-
-  rdf_write_(Kind, Out, O, ll:content, str(Str)).
 
 % RDF/XML: name
 write_message(Kind, Hash, rdf(not_a_name(Name))) :- !,
@@ -345,8 +324,41 @@ write_message_26(Dom, Kind, Out, O) :-
   rdf_write_(Kind, Out, O, ll:dom, Literal).
 
 % JSON-LD serialization format is not yet supported.
-write_message(Kind, Hash, rdf(unsupported_format(media(application/'ld+json',[]),_Content))) :- !,
+write_message(
+  Kind,
+  Hash,
+  error(rdf_error(unsupported_format,media(application/'ld+json',[])),_)
+) :- !,
   write_message_(Kind, Hash, 'JsonldNotYetSupported').
+
+% RDF syntax error: a language-tagged string where the language tag is
+% missing.
+write_message(Kind, Hash, error(rdf_error(missing_language_tag,Lex),_)) :- !,
+  write_message_(Kind, Hash, 'MissingLanguageTag', write_message_21(Lex)).
+write_message_21(Lex, Kind, Out, O) :-
+  rdf_write_(Kind, Out, O, ll:lexicalFrom, str(Lex)).
+
+% Not an RDF serialization format.
+write_message(Kind, Hash, error(rdf_error(non_rdf_format,Format),_)) :- !,
+  write_message_(Kind, Hash, 'NonRdfFormat', write_message_22(Format)).
+write_message_22(Format, Kind, Out, O) :-
+  rdf_write_(Kind, Out, O, ll:content, str(Format)).
+
+% RDF non-canonicity: a language-tagged string where the language tag is
+% not in canonical form.
+write_message(Kind, Hash, error(rdf_error(non_canonical_language_tag,LTag),_)) :- !,
+  write_message_(Kind, Hash, 'NonCanonicalLanguageTag', write_message_28(LTag)).
+write_message_28(LTag, Kind, Out, O) :-
+  rdf_write_(Kind, Out, O, ll:languageTag, str(LTag)).
+
+% RDF non-canonicicty: a lexical form that belongs to the lexical
+% space, but is not canonical.
+write_message(Kind, Hash, error(rdf_error(non_canonical_lexical_form,D,Lex1,Lex2),_)) :- !,
+  write_message_(Kind, Hash, 'NonCanonicalLexicalForm', write_message_29(D, Lex1, Lex2)).
+write_message_29(D, Lex1, Lex2, Kind, Out, O) :-
+  rdf_write_(Kind, Out, O, ll:datatype, D),
+  rdf_write_(Kind, Out, O, ll:lexicalForm, str(Lex1)),
+  rdf_write_(Kind, Out, O, ll:canonicalLexicalForm, str(Lex2)).
 
 % RDF/XML parse error.
 write_message(Kind, Hash, sgml(sgml_parser(_Parser),_File,Line,Msg)) :- !,
@@ -354,22 +366,6 @@ write_message(Kind, Hash, sgml(sgml_parser(_Parser),_File,Line,Msg)) :- !,
 write_message_27(Line, Msg, Kind, Out, O) :-
   rdf_write_(Kind, Out, O, ll:line, nonneg(Line)),
   rdf_write_(Kind, Out, O, ll:message, str(Msg)).
-
-% RDF non-canonicity: a language-tagged string where the language tag is
-% not in canonical form.
-write_message(Kind, Hash, rdf(non_canonical_language_tag(LTag))) :- !,
-  write_message_(Kind, Hash, 'NonCanonicalLanguageTag', write_message_28(LTag)).
-write_message_28(LTag, Kind, Out, O) :-
-  rdf_write_(Kind, Out, O, ll:languageTag, str(LTag)).
-
-% RDF non-canonicicty: a lexical form that belongs to the lexical
-% space, but is not canonical.
-write_message(Kind, Hash, rdf(non_canonical_lexical_form(D,Lex1,Lex2))) :- !,
-  write_message_(Kind, Hash, 'NonCanonicalLexicalForm', write_message_29(D, Lex1, Lex2)).
-write_message_29(D, Lex1, Lex2, Kind, Out, O) :-
-  rdf_write_(Kind, Out, O, ll:datatype, D),
-  rdf_write_(Kind, Out, O, ll:lexicalForm, str(Lex1)),
-  rdf_write_(Kind, Out, O, ll:canonicalLexicalForm, str(Lex2)).
 
 % TBD: Not yet handled.
 write_message(Kind, Hash, E) :-
