@@ -41,7 +41,7 @@
      graph-'https://lodlaundromat.org/graph/',
      http-'https://lodlaundromat.org/http/def/',
      id-'https://lodlaundromat.org/id/',
-     ll-'https://lodlaundromat.org/def/',
+     ll,
      rdf,
      xsd
    ]).
