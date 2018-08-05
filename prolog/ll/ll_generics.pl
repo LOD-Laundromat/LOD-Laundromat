@@ -196,10 +196,25 @@ seedlist_request(Segments, Query, Goal_1, Options) :-
   setting(ll:scheme, Scheme),
   setting(ll:user, User),
   uri_comps(Uri, uri(Scheme,Auth,Segments,Query,_)),
-  http_call(
-    Uri,
-    Goal_1,
-    [accept(json),authorization(basic(User,Password)),failure(404)|Options]
+  Counter = counter(1),
+  repeat,
+  catch(
+    http_call(
+      Uri,
+      Goal_1,
+      [accept(json),authorization(basic(User,Password)),failure(404)|Options]
+    ),
+    E,
+    true
+  ),
+  (   var(E)
+  ->  !
+  ;   Counter = counter(N1),
+      debug(ll(connectivity), "Trouble connecting to seedlist (attempt ~D).", [N1]),
+      N2 is N1 + 1,
+      nb_setarg(1, Counter, N2),
+      sleep(60),
+      fail
   ).
 
 
