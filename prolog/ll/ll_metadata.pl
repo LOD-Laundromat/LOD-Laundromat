@@ -185,9 +185,7 @@ write_message(Kind, Hash, error(resource_error(stack),global)) :- !,
 % Socket errors
 write_message(Kind, Hash, error(socket_error(Msg),_)) :- !,
   message_class_name(Msg, CName),
-  write_message_(Kind, Hash, CName, write_message_9(Msg)).
-write_message_9(Msg, Kind, Out, O) :-
-  rdf_write_(Kind, Out, O, ll:message, str(Msg)).
+  write_message_(Kind, Hash, CName, true).
 
 message_class_name('Connection refused', 'ConnectionRefused').
 message_class_name('Connection reset by peer', 'ConnectionResetByPeer').
