@@ -36,9 +36,6 @@
 :- use_module(library(ll/ll_metadata)).
 :- use_module(library(uri_ext)).
 
-:- dynamic
-    ll:debug/2.
-
 :- meta_predicate
     seedlist_request(+, ?, 1),
     seedlist_request(+, ?, 1, +).
