@@ -555,9 +555,8 @@ ensure_atom(N, Atom) :-
 
 %! rdf_write_(+Kind:oneof([error,meta,warning]), +Out:stream, +S:rdf_nonliteral, +P:iri, +O:term) is det.
 
-rdf_write_(Kind, Out, S, P, O0) :-
+rdf_write_(Kind, Out, S, P, O) :-
   rdf_prefix_iri(graph:Kind, G),
-  rdf_create_term(O0, O),
   rdf_write_quad(Out, S, P, O, G).
 
 
