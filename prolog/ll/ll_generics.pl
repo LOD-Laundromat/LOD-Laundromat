@@ -114,15 +114,15 @@ finish(Hash) :-
     ),
     (
       compress_file(File),
-      delete_file(File),
-      end_task(Hash, finished),
-      (   debugging(ll(offline))
-      ->  true
-      ;   seedlist_request([seed,processing], [hash(Hash)], true)
-      ->  seedlist_request([seed,processing], [hash(Hash)], true, [method(patch)])
-      ;   true
-      )
+      delete_file(File)
     )
+  ),
+  end_task(Hash, finished),
+  (   debugging(ll(offline))
+  ->  true
+  ;   seedlist_request([seed,processing], [hash(Hash)], true)
+  ->  seedlist_request([seed,processing], [hash(Hash)], true, [method(patch)])
+  ;   true
   ).
 
 
