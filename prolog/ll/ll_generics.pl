@@ -120,8 +120,8 @@ finish(Hash) :-
   end_task(Hash, finished),
   (   debugging(ll(offline))
   ->  true
-  ;   seedlist_request([seed,processing], [hash(Hash)], true)
-  ->  seedlist_request([seed,processing], [hash(Hash)], true, [method(patch)])
+  ;   seedlist_request(processing, [hash(Hash)], true)
+  ->  seedlist_request(processing, [hash(Hash)], true, [method(patch)])
   ;   true
   ).
 
@@ -179,20 +179,19 @@ read_task_memory(Hash, Local, Term) :-
 
 
 
-%! seedlist_request(+Segments:list(atom), ?Query:list(compound), :Goal_1) is semidet.
-%! seedlist_request(+Segments:list(atom), ?Query:list(compound), :Goal_1,
-%!                  +Options:list(compound)) is semidet.
+%! seedlist_request(+Status:atom, ?Query:list(compound), :Goal_1) is semidet.
+%! seedlist_request(+Status:atom, ?Query:list(compound), :Goal_1, +Options:list(compound)) is semidet.
 
-seedlist_request(Segments, Query, Goal_1) :-
-  seedlist_request(Segments, Query, Goal_1, []).
+seedlist_request(Status, Query, Goal_1) :-
+  seedlist_request(Status, Query, Goal_1, []).
 
 
-seedlist_request(Segments, Query, Goal_1, Options) :-
+seedlist_request(Status, Query, Goal_1, Options) :-
   setting(ll:authority, Auth),
   setting(ll:password, Password),
   setting(ll:scheme, Scheme),
   setting(ll:user, User),
-  uri_comps(Uri, uri(Scheme,Auth,Segments,Query,_)),
+  uri_comps(Uri, uri(Scheme,Auth,[seed,Status],Query,_)),
   Counter = counter(1),
   repeat,
   catch(
@@ -219,7 +218,7 @@ seedlist_request(Segments, Query, Goal_1, Options) :-
 %! start_seed(-Seed:dict) is semidet.
 
 start_seed(Seed) :-
-  seedlist_request([seed,stale], _, seed_(Seed), [method(patch)]).
+  seedlist_request(stale, _, seed_(Seed), [method(patch)]).
 
 seed_(Seed, In) :-
   call_cleanup(
