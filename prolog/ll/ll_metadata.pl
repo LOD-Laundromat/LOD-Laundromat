@@ -122,11 +122,12 @@ write_message_4(Url, Kind, Out, O) :-
   rdf_write_(Kind, Out, O, ll:alias, uri(Url)).
 
 % Existence error: Turtle prefix is not declared.
-write_message(Kind, Hash, error(existence_error(turtle_prefix,Alias),stream(Line,Column,_))) :- !,
+write_message(Kind, Hash, error(existence_error(turtle_prefix,Alias),Stream)) :- !,
+  stream_line_column_(Stream, Line, Column),
   write_message_(Kind, Hash, 'MissingTurtlePrefixDeclaration', write_message_6(Alias, Line, Column)).
 write_message_6(Alias, Line, Column, Kind, Out, O) :-
   rdf_write_(Kind, Out, O, ll:alias, str(Alias)),
-  write_message_stream(Line, Column, Kind, Out, O).
+  write_message_stream_(Line, Column, Kind, Out, O).
 
 % Existence error: IRI scheme is not registered with IANA.
 write_message(Kind, Hash, error(existence_error(uri_scheme,Scheme),_)) :- !,
@@ -253,19 +254,18 @@ write_message_13(Language, Expr, Source, Kind, Out, O) :-
 %   - Mag = 'Unexpected "." (missing object)'
 %   - Mag = 'Unexpected newline in short string'
 %   - Mag = 'LANGTAG expected'
-write_message(Kind, Hash, error(syntax_error(Msg),Stream0)) :-
+write_message(Kind, Hash, error(syntax_error(Msg),Stream)) :-
   atom(Msg), !,
-  (Stream0 = stream(Stream,_,_,_) -> true ; Stream = Stream0),
-  stream_line_column(Stream, Line, Column),
+  stream_line_column_(Stream, Line, Column),
   write_message_16(Kind, Hash, Msg, Line, Column).
-write_message(Kind, Hash, error(syntax_error(Msg),_Stream,Line,Column,_)) :-
+write_message(Kind, Hash, error(syntax_error(Msg),_,Line,Column,_)) :-
   atom(Msg), !,
   write_message_16(Kind, Hash, Msg, Line, Column).
 write_message_16(Kind, Hash, Msg, Line, Column) :-
   write_message_(Kind, Hash, 'RdfParseError', write_message_17(Msg, Line, Column)).
 write_message_17(Msg, Line, Column, Kind, Out, O) :-
   rdf_write_(Kind, Out, O, ll:message, str(Msg)),
-  write_message_stream(Line, Column, Kind, Out, O).
+  write_message_stream_(Line, Column, Kind, Out, O).
 
 % Syntax error: incorrect HTTP status code
 write_message(Kind, Hash, error(type_error(http_status,Status),_)) :- !,
@@ -287,13 +287,13 @@ write_message_18(Dom, Kind, Out, O) :-
 % Illegal Unicode character ???
 write_message(Kind, Hash, io_warning(Stream,'Illegal UTF-8 continuation')) :- !,
   write_message_(Kind, Hash, 'IllegalUtf8Continuation'),
-  stream_line_column(Stream, Line, Column),
-  write_message_(Kind, Hash, 'IllegalUtf8Continuation', write_message_stream(Line, Column)).
+  stream_line_column_(Stream, Line, Column),
+  write_message_(Kind, Hash, 'IllegalUtf8Continuation', write_message_stream_(Line, Column)).
 
 % Unicode something ???
 write_message(Kind, Hash, io_warning(Stream,'Illegal UTF-8 start')) :- !,
-  stream_line_column(Stream, Line, Column),
-  write_message_(Kind, Hash, 'IllegalUtf8Start', write_message_stream(Line, Column)).
+  stream_line_column_(Stream, Line, Column),
+  write_message_(Kind, Hash, 'IllegalUtf8Start', write_message_stream_(Line, Column)).
 
 % RDF/XML: name
 write_message(Kind, Hash, rdf(not_a_name(Name))) :- !,
@@ -373,6 +373,10 @@ write_message(Kind, Hash, E) :-
 write_message_30(S, String, Kind, Out) :-
   rdf_write_(Kind, Out, S, ll:error, str(String)).
 
+stream_line_column_(stream(_,Line,Column,_), Line, Column) :- !.
+stream_line_column_(Stream, Line, Column) :-
+  stream_line_column(Stream, Line, Column).
+
 write_message_(Kind, Hash, CName) :-
   write_message_(Kind, Hash, CName, true).
 
@@ -387,7 +391,7 @@ write_message_(S, CName, Goal_3, Kind, Out) :-
   rdf_write_(Kind, Out, O, rdf:type, C),
   call(Goal_3, Kind, Out, O).
 
-write_message_stream(Line, Column, Kind, Out, O) :-
+write_message_stream_(Line, Column, Kind, Out, O) :-
   rdf_write_(Kind, Out, O, ll:line, nonneg(Line)),
   rdf_write_(Kind, Out, O, ll:column, nonneg(Column)).
 
