@@ -70,12 +70,22 @@ download_url(Hash, Uri) :-
 
 download_stream(Hash, Uri, Out, MediaType, Status, FinalUri) :-
   findall(RdfMediaType, rdf_media_type(RdfMediaType), RdfMediaTypes),
-  http_open2(Uri, In, [accept(RdfMediaTypes),failure(_),metadata(HttpMetas)]),
+  Options = [accept(RdfMediaTypes),
+             final_uri(FinalUri),
+             maximum_number_of_hops(10),
+             metadata(HttpMetas),
+             status(Status)],
+  http_open2(Uri, In, Options),
   ignore(http_metadata_content_type(HttpMetas, MediaType)),
   write_meta_http(Hash, HttpMetas),
-  http_metadata_final_uri(HttpMetas, FinalUri),
-  http_metadata_status(HttpMetas, Status),
-  call_cleanup(
-    copy_stream_data(In, Out),
-    close_metadata(Hash, downloadRead, In)
+  (   between(200, 299, Status)
+  ->  call_cleanup(
+        copy_stream_data(In, Out),
+        close_metadata(Hash, downloadRead, In)
+      )
+  ;   call_cleanup(
+        read_string(In, 1 000, Body),
+        close(In)
+      ),
+      throw(error(http_error(status,Status,Body,FinalUri),download_stream/6))
   ).
