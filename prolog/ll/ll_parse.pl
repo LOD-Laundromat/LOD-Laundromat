@@ -28,8 +28,8 @@
    set_setting(rdf_term:bnode_prefix_authority, 'lodlaundromat.org').
 
 % This is needed for `http://spraakbanken.gu.se/rdf/saldom.rdf' which
-% has 8M+ triples in one single RDF/XML description.
-:- set_prolog_flag(stack_limit, 2 000 000 000).
+% has >8M triples in one single RDF/XML description.
+:- set_prolog_flag(stack_limit, 3 000 000 000).
 
 ll_parse :-
   % precondition

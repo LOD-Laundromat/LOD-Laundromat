@@ -66,7 +66,7 @@ init_ll :-
   ),
   % workers
   (   debugging(ll(offline))
-  ->  DebugConf = _{sleep: 1, threads: 1},
+  ->  DebugConf = _{sleep: 30, threads: 1},
       Workers = _{
         decompress: DebugConf,
         download: DebugConf,
