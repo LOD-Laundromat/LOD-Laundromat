@@ -15,6 +15,7 @@
 :- use_module(library(file_ext)).
 :- use_module(library(ll/ll_generics)).
 :- use_module(library(ll/ll_metadata)).
+:- use_module(library(semweb/ldfs)).
 :- use_module(library(semweb/rdf_clean)).
 :- use_module(library(semweb/rdf_deref)).
 :- use_module(library(semweb/rdf_export)).
