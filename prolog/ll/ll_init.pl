@@ -57,7 +57,7 @@ user:message_hook(E, Kind, _) :-
 add_thread(Type) :-
   must_be(oneof([download,decompress,recode,parse]), Type),
   atom_concat(ll_, Type, Atom),
-  run_loop(Atom:Atom, 120, 1).
+  run_loop(Atom:Atom, 60, 1).
 
 
 

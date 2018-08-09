@@ -91,10 +91,13 @@ finish(Hash) :-
   (   debugging(ll(offline))
   ->  true
   ;   get_time(Begin),
-      seedlist_request(processing, [hash(Hash)], true, [method(patch)]),
-      get_time(End),
+      % This succeeds for original seedpoints and fails for archive
+      % entries.
+      seedlist_request(processing, [hash(Hash)], true, [method(patch)])
+  ->  get_time(End),
       Delta is End - Begin,
       debug(ll(seedlist), "PATCH /processing ~2f ~a", [Delta,Hash])
+  ;   true
   ).
 
 
