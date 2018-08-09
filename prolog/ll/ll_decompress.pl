@@ -17,7 +17,7 @@
 ll_decompress :-
   % precondition
   with_mutex(ll_decompress, (
-    ldfs_file(Hash, false, downloaded, TaskFile),
+    ldfs_file('', false, _, Hash, downloaded, TaskFile),
     delete_file(TaskFile)
   )),
   (debugging(ll(task,decompress,Hash)) -> gtrace ; true),

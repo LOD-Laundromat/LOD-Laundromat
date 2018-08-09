@@ -35,7 +35,7 @@
 ll_parse :-
   % precondition
   with_mutex(ll_parse, (
-    ldfs_file(Hash, false, recoded, TaskFile),
+    ldfs_file('', false, _, Hash, recoded, TaskFile),
     delete_file(TaskFile)
   )),
   (debugging(ll(task,parse,Hash)) -> gtrace ; true),

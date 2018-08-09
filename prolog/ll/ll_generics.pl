@@ -52,7 +52,7 @@ Debug flags:
 copy_task_files(Hash1, Hash2) :-
   forall(
     task_file_local(Local),
-    (   ldfs_file(Hash1, false, Local, File1)
+    (   ldfs_file(Hash1, false, _, Hash1, Local, File1)
     ->  hash_file(Hash2, Local, File2),
         copy_file(File1, File2)
     ;   true
@@ -131,7 +131,7 @@ hash_file(Hash, Local, File) :-
 %! read_task_memory(+Hash:atom, +Local:atom, -Term:term) is semidet.
 
 read_task_memory(Hash, Local, Term) :-
-  ldfs_file(Hash, false, Local, File),
+  ldfs_file(Hash, false, _, Hash, Local, File),
   read_from_file(
     File,
     {Term}/[In]>>(
