@@ -42,9 +42,8 @@ Debug flags:
 :- use_module(library(hash_ext)).
 :- use_module(library(http/http_client2)).
 :- use_module(library(ll/ll_metadata)).
+:- use_module(library(semweb/ldfs)).
 :- use_module(library(uri_ext)).
-
-:- debug(ll(seedlist)).
 
 :- meta_predicate
     seedlist_request(+, ?, 1),
@@ -91,7 +90,7 @@ find_hash(Hash, Local) :-
 %! find_hash_directory(-Hash:atom, -Directory:atom) is nondet.
 
 find_hash_directory(Hash, Dir2) :-
-  setting(ll:data_directory, Root),
+  ldfs_root(Root),
   (   var(Hash)
   ->  directory_subdirectory(Root, Hash1, Dir1),
       directory_subdirectory(Dir1, Hash2, Dir2),
@@ -130,9 +129,11 @@ finish(Hash) :-
   end_task(Hash, finished),
   (   debugging(ll(offline))
   ->  true
-  ;   seedlist_request(processing, [hash(Hash)], true)
-  ->  seedlist_request(processing, [hash(Hash)], true, [method(patch)])
-  ;   true
+  ;   get_time(Begin),
+      seedlist_request(processing, [hash(Hash)], true, [method(patch)]),
+      get_time(End),
+      Delta is End - Begin,
+      debug(ll(seedlist), "PATCH /processing ~2f ~a", [Delta,Hash])
   ).
 
 
@@ -154,7 +155,7 @@ status_error(E, E).
 %! hash_directory(+Hash:atom, -Directory:atom) is det.
 
 hash_directory(Hash, Dir) :-
-  setting(ll:data_directory, Root),
+  ldfs_root(Root),
   hash_directory(Root, Hash, Dir).
 
 
@@ -169,8 +170,8 @@ hash_entry_hash(Hash1, Entry, Hash2) :-
 %! hash_file(+Hash:atom, +Local:atom, -File:atom) is det.
 
 hash_file(Hash, Local, File) :-
-  setting(ll:data_directory, Dir),
-  hash_file(Dir, Hash, Local, File).
+  ldfs_root(Root),
+  hash_file(Root, Hash, Local, File).
 
 
 
@@ -202,7 +203,6 @@ seedlist_request(Status, Query, Goal_1, Options) :-
   setting(ll:scheme, Scheme),
   setting(ll:user, User),
   uri_comps(Uri, uri(Scheme,Auth,[seed,Status],Query,_)),
-  debug(ll(seedlist), "~a", [Uri]),
   Counter = counter(1),
   repeat,
   (   catch(
@@ -231,7 +231,12 @@ seedlist_request(Status, Query, Goal_1, Options) :-
 %! start_seed(-Seed:dict) is semidet.
 
 start_seed(Seed) :-
-  seedlist_request(stale, _, seed_(Seed), [method(patch)]).
+  get_time(Begin),
+  seedlist_request(stale, _, seed_(Seed), [method(patch)]),
+  get_time(End),
+  Delta is End - Begin,
+  _{hash: Hash, url: Uri} :< Seed,
+  debug(ll(seedlist), "PATCH /stale ~2f ~a ~a", [Delta,Hash,Uri]).
 
 seed_(Seed, In) :-
   call_cleanup(

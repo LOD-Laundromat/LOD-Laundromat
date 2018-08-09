@@ -4,3 +4,5 @@
 
 :- debug(ll(connectivity)).
 :- debug(ll(idle)).
+:- debug(ll(loop)).
+:- debug(ll(omg)).

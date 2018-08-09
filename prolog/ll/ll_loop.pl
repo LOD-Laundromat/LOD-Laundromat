@@ -50,7 +50,8 @@ run_loop(Goal_0, Sleep, M) :-
       (
         flag(Pred, N, N+1),
         format(atom(Alias), "~a-~D", [Pred,N]),
-        thread_create(running_loop(Sleep, Goal_0), _, [alias(Alias),detached(true)])
+        thread_create(running_loop(Sleep, Goal_0), _, [alias(Alias),detached(true)]),
+        debug(ll(loop), "Thread ~a ~D started.", [Pred,N])
       )
     )
   )).

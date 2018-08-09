@@ -37,9 +37,7 @@
     write_message/3.
 
 :- maplist(rdf_register_prefix, [
-     error-'https://lodlaundromat.org/error/def/',
      graph-'https://lodlaundromat.org/graph/',
-     http-'https://lodlaundromat.org/http/def/',
      id-'https://lodlaundromat.org/id/',
      ll,
      rdf,
@@ -85,17 +83,21 @@ close_metadata_(S, P, Meta, Kind, Out) :-
 
 % Archive errors.
 %
+% | *Code* | *Message*             |
+% |--------+-----------------------|
+% | 0      | Damaged 7-Zip archive |
+%
 % Observes instances:
 %   - Msg = 'Invalid central directory signature'
 %   - Msg = 'Missing type keyword in mtree specification'
 %   - Msg = 'Unrecognized archive format'
 %   - memberchk(Code, [22,25,1001])
-%     Msg = 'Truncated input file (needed INETEGER bytes, only INTEGER available)'
-%   - Msg = 'Can\'t parse line INTEGER'
+%     Msg = 'Truncated input file (needed $(INT) bytes, only $(INT) available)'
+%   - Msg = 'Can\'t parse line $(INT)'
 write_message(Kind, Hash, error(archive_error(Code,Msg),_)) :- !,
   write_message_(Kind, Hash, 'ArchiveError', write_message_1(Code, Msg)).
 write_message_1(Code, Msg, Kind, Out, O) :-
-  rdf_write_(Kind, Out, O, ll:code, positive_integer(Code)),
+  rdf_write_(Kind, Out, O, ll:code, nonneg(Code)),
   rdf_write_(Kind, Out, O, ll:message, str(Msg)).
 
 % HTTP error: ???
@@ -387,7 +389,7 @@ write_message_(Kind, Hash, CName, Goal_3) :-
 write_message_(S, CName, Goal_3, Kind, Out) :-
   rdf_bnode_iri(O),
   rdf_write_(Kind, Out, S, ll:error, O),
-  rdf_prefix_iri(error:CName, C),
+  rdf_prefix_iri(ll:CName, C),
   rdf_write_(Kind, Out, O, rdf:type, C),
   call(Goal_3, Kind, Out, O).
 
@@ -470,36 +472,45 @@ write_meta_entry_entry_(Archive, EntryName, Entry, Format, Props, Kind, Out) :-
 
 write_meta_http(Hash, L) :-
   rdf_prefix_iri(id:Hash, S),
-  write_(meta, Hash, write_meta_http_list1(S, L)).
-write_meta_http_list1(S, L, Kind, Out) :-
+  write_(meta, Hash, write_meta_http_list_1(S, L)).
+
+write_meta_http_list_1(S, L, Kind, Out) :-
   rdf_bnode_iri(O),
-  rdf_write_(Kind, Out, S, ll:http, O),
-  write_meta_http_list2(O, L, Kind, Out).
-write_meta_http_list2(Node, [H|T], Kind, Out) :-
+  rdf_write_(Kind, Out, S, ll:http_replies, O),
+  write_meta_http_list_2(O, L, Kind, Out).
+
+write_meta_http_list_2(Node, [H|T], Kind, Out) :-
   rdf_bnode_iri(First),
   rdf_write_(Kind, Out, Node, rdf:first, First),
-  write_meta_http_item(First, H, Kind, Out),
+  write_meta_http_item_(First, H, Kind, Out),
   (   T == []
   ->  rdf_equal(Next, rdf:nil)
   ;   rdf_bnode_iri(Next),
-      write_meta_http_list2(Next, T, Kind, Out)
+      write_meta_http_list_2(Next, T, Kind, Out)
   ),
   rdf_write_(Kind, Out, Node, rdf:next, Next).
-write_meta_http_item(Item, Meta, Kind, Out) :-
+
+write_meta_http_item_(Item, Meta, Kind, Out) :-
   dict_pairs(Meta.headers, Pairs),
-  maplist(write_meta_http_header(Out, Item, Kind), Pairs),
+  (   Pairs == []
+  ->  true
+  ;   rdf_bnode_iri(Headers),
+      rdf_write_(Kind, Out, Item, ll:headers, Headers),
+      maplist(write_meta_http_header_(Kind, Out, Headers), Pairs)
+  ),
   % Some servers emit non-numeric status codes, so we cannot use
   % `xsd:positiveInteger' here.
   Status = Meta.status,
   (atom(Status) -> Lex = Status ; atom_number(Lex, Status)),
   rdf_write_(Kind, Out, Item, ll:status, str(Lex)),
   rdf_write_(Kind, Out, Item, ll:url, uri(Meta.uri)).
+
 % TBD: Multiple values should emit a warning in `http/http_client2'.
-write_meta_http_header(Out, Item, Kind, PLocal-Lexs) :-
+write_meta_http_header_(Kind, Out, Headers, PLocal-Lexs) :-
   rdf_prefix_iri(ll:PLocal, P),
   forall(
     member(Lex, Lexs),
-    rdf_write_(Kind, Out, Item, P, str(Lex))
+    rdf_write_(Kind, Out, Headers, P, str(Lex))
   ).
 
 
@@ -561,7 +572,12 @@ ensure_atom(N, Atom) :-
 
 rdf_write_(Kind, Out, S, P, O) :-
   rdf_prefix_iri(graph:Kind, G),
-  rdf_write_quad(Out, S, P, O, G).
+  catch(rdf_write_quad(Out, S, P, O, G), E, true),
+  (   var(E)
+  ->  true
+  ;   debug(ll(omg), "~w ~w", [S,P]),
+      rdf_write_quad(Out, S, P, str('OMG!'), G)
+  ).
 
 
 

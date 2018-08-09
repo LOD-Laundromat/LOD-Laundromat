@@ -13,6 +13,7 @@
 :- use_module(library(file_ext)).
 :- use_module(library(ll/ll_loop)).
 :- use_module(library(ll/ll_metadata)).
+:- use_module(library(semweb/ldfs)).
 :- use_module(library(thread_ext)).
 
 :- dynamic
@@ -26,8 +27,6 @@
 
 :- setting(ll:authority, any, _,
            "URI scheme of the seedlist server location.").
-:- setting(ll:data_directory, any, _,
-           "The directory where clean data is stored and where logs are kept.").
 :- setting(ll:password, any, _, "").
 :- setting(ll:scheme, oneof([http,https]), https,
            "URI scheme of the seedlist server location.").
@@ -49,10 +48,6 @@ user:message_hook(E, Kind, _) :-
 
 init_ll :-
   conf_json(Conf),
-  % data directory
-  directory_file_path(Conf.'data-directory', ll, Dir),
-  create_directory(Dir),
-  set_setting(ll:data_directory, Dir),
   % seedlist
   maplist(
     set_setting,
@@ -80,5 +75,6 @@ init_ll :-
   run_loop(ll_parse:ll_parse, Workers.parse.sleep, Workers.parse.threads),
   run_loop(ll_recode:ll_recode, Workers.recode.sleep, Workers.recode.threads),
   % log standard output
-  directory_file_path(Dir, 'out.log', File),
+  ldfs_root(Root),
+  directory_file_path(Root, 'out.log', File),
   protocol(File).
