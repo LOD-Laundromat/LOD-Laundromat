@@ -22,7 +22,7 @@
 ll_recode :-
   % precondition
   with_mutex(ll_recode, (
-    find_hash_file(Hash, decompressed, TaskFile),
+    ldfs_file(Hash, false, decompressed, TaskFile),
     delete_file(TaskFile)
   )),
   (debugging(ll(task,recode,Hash)) -> gtrace ; true),

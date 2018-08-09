@@ -3,12 +3,8 @@
   [
     copy_task_files/2,     % +FromHash, +ToHash
     end_task/2,            % +Hash, +Local
-    find_hash/2,           % ?Hash, +Local
-    find_hash_directory/2, % ?Hash, -Directory
-    find_hash_file/3,      % ?Hash, +Local, -File
     finish/1,              % +Hash
     handle_status/3,       % +Hash, +Local, +Status
-    hash_directory/2,      % +Hash, -Directory
     hash_entry_hash/3,     % +Hash1, +Entry, -Hash2
     hash_file/3,           % +Hash, +Local, -File
     read_task_memory/3,    % +Hash, +Local, -Term
@@ -31,11 +27,10 @@ Debug flags:
 @version 2017-2018
 */
 
-:- use_module(library(apply)).
 :- use_module(library(debug)).
-:- use_module(library(error)).
 :- use_module(library(http/json)).
 :- use_module(library(lists)).
+:- use_module(library(yall)).
 
 :- use_module(library(call_ext)).
 :- use_module(library(file_ext)).
@@ -46,7 +41,6 @@ Debug flags:
 :- use_module(library(uri_ext)).
 
 :- meta_predicate
-    seedlist_request(+, ?, 1),
     seedlist_request(+, ?, 1, +).
 
 
@@ -58,7 +52,7 @@ Debug flags:
 copy_task_files(Hash1, Hash2) :-
   forall(
     task_file_local(Local),
-    (   find_hash_file(Hash1, Local, File1)
+    (   ldfs_file(Hash1, false, Local, File1)
     ->  hash_file(Hash2, Local, File2),
         copy_file(File1, File2)
     ;   true
@@ -75,39 +69,6 @@ task_file_local(http_media_type).
 end_task(Hash, Local) :-
   hash_file(Hash, Local, File),
   touch(File).
-
-
-
-%! find_hash(+Hash:atom, +Local:atom) is semidet.
-%! find_hash(-Hash:atom, +Local:atom) is nondet.
-
-find_hash(Hash, Local) :-
-  find_hash_file(Hash, Local, _).
-
-
-
-%! find_hash_directory(+Hash:atom, -Directory:atom) is semidet.
-%! find_hash_directory(-Hash:atom, -Directory:atom) is nondet.
-
-find_hash_directory(Hash, Dir2) :-
-  ldfs_root(Root),
-  (   var(Hash)
-  ->  directory_subdirectory(Root, Hash1, Dir1),
-      directory_subdirectory(Dir1, Hash2, Dir2),
-      atom_concat(Hash1, Hash2, Hash)
-  ;   hash_directory(Hash, Dir2),
-      exists_directory(Dir2)
-  ).
-
-
-
-%! find_hash_file(+Hash:atom, +Local:atom, -File:atom) is semidet.
-%! find_hash_file(-Hash:atom, +Local:atom, -File:atom) is nondet.
-
-find_hash_file(Hash, Local, File) :-
-  find_hash_directory(Hash, Dir),
-  directory_file_path(Dir, Local, File),
-  exists_file(File).
 
 
 
@@ -152,14 +113,6 @@ status_error(E, E).
 
 
 
-%! hash_directory(+Hash:atom, -Directory:atom) is det.
-
-hash_directory(Hash, Dir) :-
-  ldfs_root(Root),
-  hash_directory(Root, Hash, Dir).
-
-
-
 %! hash_entry_hash(+Hash1:atom, +Entry:atom, -Hash2:atom) is det.
 
 hash_entry_hash(Hash1, Entry, Hash2) :-
@@ -178,24 +131,18 @@ hash_file(Hash, Local, File) :-
 %! read_task_memory(+Hash:atom, +Local:atom, -Term:term) is semidet.
 
 read_task_memory(Hash, Local, Term) :-
-  find_hash_file(Hash, Local, File),
-  setup_call_cleanup(
-    open(File, read, In),
-    (
+  ldfs_file(Hash, false, Local, File),
+  read_from_file(
+    File,
+    {Term}/[In]>>(
       read_line_to_string(In, Line),
       read_term_from_atom(Line, Term, [])
-    ),
-    close(In)
+    )
   ).
 
 
 
-%! seedlist_request(+Status:atom, ?Query:list(compound), :Goal_1) is semidet.
 %! seedlist_request(+Status:atom, ?Query:list(compound), :Goal_1, +Options:list(compound)) is semidet.
-
-seedlist_request(Status, Query, Goal_1) :-
-  seedlist_request(Status, Query, Goal_1, []).
-
 
 seedlist_request(Status, Query, Goal_1, Options) :-
   setting(ll:authority, Auth),
