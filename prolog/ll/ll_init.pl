@@ -12,6 +12,7 @@
 :- use_module(library(settings)).
 
 :- use_module(library(conf_ext)).
+:- use_module(library(date_time)).
 :- use_module(library(file_ext)).
 :- use_module(library(ll/ll_decompress)).
 :- use_module(library(ll/ll_download)).
@@ -124,6 +125,11 @@ running_loop_(Goal_0, Sleep) :-
   Goal_0, !,
   running_loop_(Goal_0, Sleep).
 running_loop_(Goal_0, Sleep) :-
-  (debugging(ll(idle)) -> debug(ll(idle), "💤 ~w", [Goal_0]) ; true),
+  (   debugging(ll(idle))
+  ->  now(Dt),
+      dt_label(Dt, DtLabel),
+      debug(ll(idle), "[~a] 💤 ~w", [DtLabel,Goal_0])
+  ;   true
+  ),
   sleep(Sleep),
   running_loop_(Goal_0, Sleep).
