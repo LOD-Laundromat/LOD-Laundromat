@@ -12,27 +12,23 @@
 :- use_module(library(debug_ext)).
 :- use_module(library(ll/ll_generics)).
 :- use_module(library(ll/ll_metadata)).
-:- use_module(library(semweb/ldfs)).
 
 ll_decompress :-
   % precondition
-  with_mutex(ll_decompress, (
-    ldfs_file('', false, _, Hash, downloaded, TaskFile),
-    delete_file(TaskFile)
-  )),
+  start_task(downloaded, Hash, State),
   (debugging(ll(task,decompress,Hash)) -> gtrace ; true),
   indent_debug(1, ll(task,decompress), "> decompressing ~a", [Hash]),
   write_meta_now(Hash, decompressBegin),
   % operation
   catch(decompress_file(Hash), E, true),
-  (var(E) -> true ; write_message(error, Hash, E), finish(Hash)),
   % postcondition
   write_meta_now(Hash, decompressEnd),
+  (var(E) -> true ; write_message(error, Hash, E)),
   (   hash_file(Hash, dirty, File),
       exists_file(File)
-  ->  end_task(Hash, decompressed)
+  ->  end_task(Hash, decompressed, State)
   ;   % If there is no data, processing for this hash has finished.
-      finish(Hash)
+      finish(Hash, State)
   ),
   indent_debug(-1, ll(task,decompress), "< decompressing ~a", [Hash]).
 
@@ -123,7 +119,8 @@ decompress_file_entry(EntryHash, data, _, In, raw) :- !,
     copy_stream_data(In, Out),
     close(Out)
   ).
-% non-leaf node: archive
+% non-leaf node: archive, similar to a file that was just
+% `downloaded'.
 decompress_file_entry(ArchHash, EntryName, Props, In, Format) :-
   hash_entry_hash(ArchHash, EntryName, EntryHash),
   hash_file(EntryHash, compressed, File),
@@ -133,7 +130,6 @@ decompress_file_entry(ArchHash, EntryName, Props, In, Format) :-
     close_metadata(ArchHash, decompressWrite, Out)
   ),
   % Copy task files for the decompressed entry.
-  copy_task_files(ArchHash, EntryHash),
   write_meta_entry(ArchHash, EntryName, EntryHash, Format, Props),
   % End this task from the perspective of the entry.
-  end_task(EntryHash, downloaded).
+  end_task(EntryHash, downloaded, _{file: File}).

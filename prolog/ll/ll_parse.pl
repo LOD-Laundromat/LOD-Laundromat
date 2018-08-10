@@ -15,7 +15,6 @@
 :- use_module(library(file_ext)).
 :- use_module(library(ll/ll_generics)).
 :- use_module(library(ll/ll_metadata)).
-:- use_module(library(semweb/ldfs)).
 :- use_module(library(semweb/rdf_clean)).
 :- use_module(library(semweb/rdf_deref)).
 :- use_module(library(semweb/rdf_export)).
@@ -34,27 +33,20 @@
 
 ll_parse :-
   % precondition
-  with_mutex(ll_parse, (
-    ldfs_file('', false, _, Hash, recoded, TaskFile),
-    delete_file(TaskFile)
-  )),
+  start_task(recoded, Hash, State),
   (debugging(ll(task,parse,Hash)) -> gtrace ; true),
   indent_debug(1, ll(task,parse), "> parsing ~a", [Hash]),
   write_meta_now(Hash, parseBegin),
   % operation
-  thread_create(parse_file(Hash), Id, [alias(Hash)]),
+  thread_create(parse_file(Hash, State), Id, [alias(Hash)]),
   thread_join(Id, Status),
   % postcondition
   write_meta_now(Hash, parseEnd),
-  handle_status(Hash, parsed, Status),
-  % This is the last task: finish if true.
-  (Status == true -> finish(Hash) ; true),
+  handle_status(Hash, Status, seeds, State),
   indent_debug(-1, ll(task,parse), "< parsed ~a", [Hash]).
 
-parse_file(Hash) :-
+parse_file(Hash, State) :-
   maplist(hash_file(Hash), [dirty,'data.nq.gz'], [FromFile,ToFile]),
-  % base URI
-  read_task_memory(Hash, base_uri, BaseUri),
   % blank node-replacing well-known IRI prefix
   bnode_prefix([Hash], BNodePrefix),
   peek_file(FromFile, 10 000, String),
@@ -70,10 +62,10 @@ parse_file(Hash) :-
           gzopen(ToFile, write, Out)
         ),
         rdf_deref_stream(
-          BaseUri,
+          State.base_uri,
           In,
           clean_tuples(RdfMeta, Out),
-          [base_uri(BaseUri),bnode_prefix(BNodePrefix),media_type(MediaType)]
+          [base_uri(State.base_uri),bnode_prefix(BNodePrefix),media_type(MediaType)]
         ),
         maplist(close_metadata(Hash), [parseRead,parseWritten], [In,Out])
       ),

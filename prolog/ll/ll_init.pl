@@ -1,4 +1,12 @@
-:- module(ll_init, [add_thread/1]).
+:- module(
+  ll_init,
+  [
+    add_thread/1,
+    populate_seedlist/0,
+    update_seedlist/0
+  ]
+).
+:- reexport(library(rocks_ext)).
 
 /** <module> LOD Laundromat: Initialization
 
@@ -9,18 +17,23 @@
 :- use_module(library(apply)).
 :- use_module(library(debug)).
 :- use_module(library(error)).
-:- use_module(library(settings)).
 
 :- use_module(library(conf_ext)).
 :- use_module(library(date_time)).
-:- use_module(library(file_ext)).
+:- use_module(library(dict)).
+:- use_module(library(hash_ext)).
 :- use_module(library(ll/ll_decompress)).
 :- use_module(library(ll/ll_download)).
 :- use_module(library(ll/ll_metadata)).
 :- use_module(library(ll/ll_parse)).
 :- use_module(library(ll/ll_recode)).
 :- use_module(library(semweb/ldfs)).
+:- use_module(library(semweb/rdf_prefix)).
+:- use_module(library(semweb/rdf_term)).
+:- use_module(library(tapir/tapir_api)).
 :- use_module(library(thread_ext)).
+
+:- at_halt(maplist(rocks_close, [seeds,stale,downloaded,decompressed,recoded])).
 
 :- dynamic
     user:message_hook/3.
@@ -36,17 +49,12 @@
 :- multifile
     user:message_hook/3.
 
-:- setting(ll:authority, any, _,
-           "URI scheme of the seedlist server location.").
-:- setting(ll:password, any, _, "").
-:- setting(ll:scheme, oneof([http,https]), https,
-           "URI scheme of the seedlist server location.").
-:- setting(ll:user, any, _, "").
-
 user:message_hook(E, Kind, _) :-
   memberchk(Kind, [error,warning]),
   thread_self_property(alias(Hash)),
   write_message(Kind, Hash, E).
+
+:- rdf_register_prefix(ldm).
 
 
 
@@ -61,23 +69,58 @@ add_thread(Type) :-
 
 
 
+%! populate_seedlist is det.
+
+populate_seedlist :-
+  current_user(User),
+  forall(
+    statement(_, User, index, _, ldm:downloadLocation, Literal),
+    (
+      rdf_literal_value(Literal, Uri),
+      md5(Uri, Hash),
+      % Interval is set to 100 days (in seconds).
+      rocks_put(seeds, Hash, _{interval: 8640000.0, processed: 0.0, uri: Uri})
+    )
+  ).
 
 
-% INITIALIZATION %
+
+%! update_seedlist is det.
+
+update_seedlist :-
+  get_time(Now),
+  forall(
+    rocks_enum(seeds, Hash, State),
+    (
+      _{interval: Interval, processed: Old} :< State,
+      Stale is Old + Interval,
+      (   Stale =< Now
+      ->  format("."),
+          rocks_delete(seeds, Hash, State),
+          rocks_put(stale, Hash, State)
+      ;   true
+      )
+    )
+  ).
+
+
+
+
+
+% INITIALIZATION
+
+state_store_init(Alias) :-
+  rocks_init(Alias, [key(atom),merge(ll_init:merge_dicts),value(term)]).
+
+merge_dicts(partial, _, New, In, Out) :-
+  merge_dicts(New, In, Out).
+merge_dicts(full, _, Initial, Additions, Out) :-
+  merge_dicts([Initial|Additions], Out).
 
 init_ll :-
   conf_json(Conf),
-  % seedlist
-  maplist(
-    set_setting,
-    [ll:authority,ll:password,ll:scheme,ll:user],
-    [
-      Conf.seedlist.authority,
-      Conf.seedlist.password,
-      Conf.seedlist.scheme,
-      Conf.seedlist.user
-    ]
-  ),
+  % state store
+  maplist(state_store_init, [seeds,stale,downloaded,decompressed,recoded]),
   % workers
   (   debugging(ll(offline))
   ->  DebugConf = _{sleep: 30, threads: 1},

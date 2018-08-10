@@ -118,10 +118,10 @@ write_message_3(Url, Kind, Out, O) :-
 
 % Existence error: the HTTP reply is empty (no status line, no
 % headers, and no body).
-write_message(Kind, Hash, error(existence_error(http_reply,Url),_)) :- !,
-  write_message_(Kind, Hash, 'EmptyHttpReply', write_message_4(Url)).
-write_message_4(Url, Kind, Out, O) :-
-  rdf_write_(Kind, Out, O, ll:alias, uri(Url)).
+write_message(Kind, Hash, error(existence_error(http_reply,Uri),_)) :- !,
+  write_message_(Kind, Hash, 'EmptyHttpReply', write_message_4(Uri)).
+write_message_4(Uri, Kind, Out, O) :-
+  rdf_write_(Kind, Out, O, ll:alias, uri(Uri)).
 
 % Existence error: Turtle prefix is not declared.
 write_message(Kind, Hash, error(existence_error(turtle_prefix,Alias),Stream)) :- !,
@@ -143,7 +143,7 @@ write_message_100(Uri, Kind, Out, O) :-
   write_message_(Kind, Out, O, ll:uri, uri(Uri)).
 
 % HTTP maximum redirection sequence length exceeded.
-write_message(Kind, Hash, error(http_error(max_redirect,_Length,_Urls),_)) :- !,
+write_message(Kind, Hash, error(http_error(max_redirect,_Length,_Uris),_)) :- !,
   write_message_(Kind, Hash, 'HttpMaxRedirect').
 
 % HTTP no content type header in reply.
@@ -151,7 +151,7 @@ write_message(Kind, Hash, error(http_error(no_content_type,_Uri),_)) :- !,
   write_message_(Kind, Hash, 'HttpNoContentType').
 
 % HTTP redirection loop detected.
-write_message(Kind, Hash, error(http_error(redirect_loop,_Urls),_)) :- !,
+write_message(Kind, Hash, error(http_error(redirect_loop,_Uris),_)) :- !,
   write_message_(Kind, Hash, 'HttpRedirectLoop').
 
 % HTTP error status code
@@ -503,7 +503,7 @@ write_meta_http_item_(Item, Meta, Kind, Out) :-
   Status = Meta.status,
   (atom(Status) -> Lex = Status ; atom_number(Lex, Status)),
   rdf_write_(Kind, Out, Item, ll:status, str(Lex)),
-  rdf_write_(Kind, Out, Item, ll:url, uri(Meta.uri)).
+  rdf_write_(Kind, Out, Item, ll:uri, uri(Meta.uri)).
 
 % TBD: Multiple values should emit a warning in `http/http_client2'.
 write_meta_http_header_(Kind, Out, Headers, PLocal-Lexs) :-
