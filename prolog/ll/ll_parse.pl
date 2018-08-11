@@ -19,7 +19,7 @@
 :- use_module(library(semweb/rdf_deref)).
 :- use_module(library(semweb/rdf_export)).
 :- use_module(library(semweb/rdf_guess)).
-:- use_module(library(semweb/rdf_term)).
+:- use_module(library(semweb/rdf_term), []).
 :- use_module(library(string_ext)).
 :- use_module(library(uri_ext)).
 
@@ -34,7 +34,7 @@
 ll_parse :-
   % precondition
   start_task(recoded, Hash, State),
-  (debugging(ll(task,parse,Hash)) -> gtrace ; true),
+  (debugging(ll(offline)) -> gtrace ; true),
   indent_debug(1, ll(task,parse), "> parsing ~a", [Hash]),
   write_meta_now(Hash, parseBegin),
   % operation

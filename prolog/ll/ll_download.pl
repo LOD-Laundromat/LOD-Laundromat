@@ -26,22 +26,27 @@ ll_download :-
 
 ll_download(Uri) :-
   md5(Uri, Hash),
-  ll_download(Hash, Uri, _{}).
+  ll_download(Hash, Uri, _{uri: Uri}).
 
-ll_download(Hash, Uri, State1) :-
+ll_download(Hash, Uri, State) :-
+  (debugging(ll(offline)) -> gtrace ; true),
   % preparation
   indent_debug(1, ll(task,download), "> downloading ~a ~a", [Hash,Uri]),
   write_meta_now(Hash, downloadBegin),
   write_meta_quad(Hash, uri, uri(Uri)),
   % operation
-  catch(download_uri(Hash, Uri, State1-State2), E, true),
+  %
+  % We need to run this in a thread, since we want to store warnings
+  % as metadata.  Unfortunately, we cannot share variables with a
+  % thread, so the threads has to change the state store (RocksDB).
+  thread_create(download_uri(Hash, Uri, State), Id, [alias(Hash)]),
+  thread_join(Id, Status),
   % postcondition
   write_meta_now(Hash, downloadEnd),
-  handle_status(Hash, E, downloaded, State2),
-  (debugging(ll(offline)) -> gtrace ; true),
+  handle_status(Hash, Status, downloaded, State),
   indent_debug(-1, ll(task,download), "< downloaded ~a ~a", [Hash,Uri]).
 
-download_uri(Hash, Uri, State1-State3) :-
+download_uri(Hash, Uri, State1) :-
   hash_file(Hash, compressed, File),
   setup_call_cleanup(
     open(File, write, Out, [type(binary)]),
@@ -55,7 +60,8 @@ download_uri(Hash, Uri, State1-State3) :-
       (   var(MediaType)
       ->  State3 = State2
       ;   dict_put(media_type, State2, MediaType, State3)
-      )
+      ),
+      thread_exit(State3)
   ;   % cleanup
       hash_file(Hash, compressed, File),
       delete_file(File),
@@ -64,8 +70,7 @@ download_uri(Hash, Uri, State1-State3) :-
       ->  throw(error(http_error(status,Status),ll_download))
       ;   % Incorrect HTTP status code
           type_error(http_status, Status)
-      ),
-      State3 = State1
+      )
   ).
 
 download_stream(Hash, Uri, Out, MediaType, Status, FinalUri) :-
@@ -84,8 +89,8 @@ download_stream(Hash, Uri, Out, MediaType, Status, FinalUri) :-
         close_metadata(Hash, downloadRead, In)
       )
   ;   call_cleanup(
-        read_string(In, 1 000, Body),
+        read_string(In, 1 000, Content),
         close(In)
       ),
-      throw(error(http_error(status,Status,Body,FinalUri),download_stream/6))
+      write_meta_quad(Hash, content, Content)
   ).

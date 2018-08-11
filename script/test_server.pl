@@ -2,7 +2,5 @@
 
 :- use_module(library(ll/ll_init)).
 
-:- debug(ll(connectivity)).
-:- debug(ll(idle)).
-:- debug(ll(loop)).
-:- debug(ll(omg)).
+:- debug(ll(debug)).
+:- debug(ll(thread)).

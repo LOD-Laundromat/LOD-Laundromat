@@ -56,14 +56,22 @@ finish(Hash, State) :-
 
 
 
-%! handle_status(+Hash:atom, +Status:test, +Alias:atom, +State:dict) is det.
+%! handle_status(+Hash:atom, +Status, +Alias:atom, +State:dict) is det.
 
-% Successfully parsed means the job is done.
-handle_status(Hash, true, seeds, State) :- !,
-  finish(Hash, State).
-% Successfully ended an intermediate task.
+% Successfully parsed means the job is done.  Status may be
+% uninstantiated, e.g., when coming from `catch(some_task, Status,
+% true)'.
 handle_status(Hash, true, Alias, State) :- !,
-  end_task(Hash, Alias, State).
+  (   % The last task has completed successfully.  The state is added
+      % to the seedlist.
+      Alias == seeds
+  ->  finish(Hash, State)
+  ;   % A non-last task has completed successfully.
+      end_task(Hash, Alias, State)
+  ).
+% Use the state returned by thread_exit/1 if available.
+handle_status(Hash, exited(State), Alias, _) :- !,
+  handle_status(Hash, true, Alias, State).
 % Unsuccessfully ended the last task menas the job is over.
 handle_status(Hash, Status, _, State) :-
   status_error(Status, E),

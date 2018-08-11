@@ -32,6 +32,7 @@
 :- use_module(library(semweb/rdf_export)).
 :- use_module(library(semweb/rdf_prefix)).
 :- use_module(library(semweb/rdf_term)).
+:- use_module(library(xsd/xsd)).
 
 :- discontiguous
     write_message/3.
@@ -137,30 +138,24 @@ write_message(Kind, Hash, error(existence_error(uri_scheme,Scheme),_)) :- !,
 write_message_5(Scheme, Kind, Out, O) :-
   rdf_write_(Kind, Out, O, ll:scheme, str(Scheme)).
 
-write_message(Kind, Hash, error(http_error(cyclic_link_header,Uri),_)) :- !,
-  write_message_(Kind, Hash, 'CyclicLinkHeader', write_message_100(Uri)).
-write_message_100(Uri, Kind, Out, O) :-
-  write_message_(Kind, Out, O, ll:uri, uri(Uri)).
+write_message(Kind, Hash, error(http_error(cyclic_link_header,_),_)) :- !,
+  write_message_(Kind, Hash, 'CyclicLinkHeader').
 
 % HTTP maximum redirection sequence length exceeded.
-write_message(Kind, Hash, error(http_error(max_redirect,_Length,_Uris),_)) :- !,
+write_message(Kind, Hash, error(http_error(max_redirect,_,_),_)) :- !,
   write_message_(Kind, Hash, 'HttpMaxRedirect').
 
 % HTTP no content type header in reply.
-write_message(Kind, Hash, error(http_error(no_content_type,_Uri),_)) :- !,
+write_message(Kind, Hash, error(http_error(no_content_type,_),_)) :- !,
   write_message_(Kind, Hash, 'HttpNoContentType').
 
 % HTTP redirection loop detected.
-write_message(Kind, Hash, error(http_error(redirect_loop,_Uris),_)) :- !,
+write_message(Kind, Hash, error(http_error(redirect_loop,_),_)) :- !,
   write_message_(Kind, Hash, 'HttpRedirectLoop').
 
 % HTTP error status code
-write_message(Kind, Hash, error(http_error(status,Status,Body,Uri),_)) :- !,
-  write_message_(Kind, Hash, 'HttpErrorStatus', write_message_7(Status,Body,Uri)).
-write_message_7(Status, Body, Uri, Kind, Out, O) :-
-  rdf_write_(Kind, Out, O, ll:body, str(Body)),
-  rdf_write_(Kind, Out, O, ll:code, positive_integer(Status)),
-  rdf_write_(Kind, Out, O, ll:uri, uri(Uri)).
+write_message(Kind, Hash, error(http_error(status,_),_)) :- !,
+  write_message_(Kind, Hash, 'HttpErrorStatus').
 
 % I/O error
 %
@@ -339,10 +334,11 @@ write_message_21(Lex, Kind, Out, O) :-
   rdf_write_(Kind, Out, O, ll:lexicalFrom, str(Lex)).
 
 % Not an RDF serialization format.
-write_message(Kind, Hash, error(rdf_error(non_rdf_format,Format),_)) :- !,
-  write_message_(Kind, Hash, 'NonRdfFormat', write_message_22(Format)).
-write_message_22(Format, Kind, Out, O) :-
-  rdf_write_(Kind, Out, O, ll:content, str(Format)).
+write_message(Kind, Hash, error(rdf_error(non_rdf_format,Content),_)) :- !,
+  write_message_(Kind, Hash, 'NonRdfFormat', write_message_22(Content)).
+write_message_22(Content, Kind, Out, O) :-
+  string_phrase(xsd_encode_string, Content, EncodedContent),
+  rdf_write_(Kind, Out, O, ll:content, str(EncodedContent)).
 
 % RDF non-canonicity: a language-tagged string where the language tag is
 % not in canonical form.
@@ -573,9 +569,11 @@ ensure_atom(N, Atom) :-
 rdf_write_(Kind, Out, S, P, O) :-
   rdf_prefix_iri(graph:Kind, G),
   catch(rdf_write_quad(Out, S, P, O, G), E, true),
+  % TBD: Some metadata cannot be written, e.g., strange PDF file
+  % content peeked as non-RDF content.
   (   var(E)
   ->  true
-  ;   debug(ll(omg), "~w ~w", [S,P]),
+  ;   debug(ll(debug), "~w ~w", [S,P]),
       rdf_write_quad(Out, S, P, str('OMG!'), G)
   ).
 

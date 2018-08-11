@@ -1,3 +1,4 @@
+:- encoding(utf8).
 :- module(
   ll_init,
   [
@@ -79,9 +80,11 @@ populate_seedlist :-
       rdf_literal_value(Literal, Uri),
       md5(Uri, Hash),
       % Interval is set to 100 days (in seconds).
-      rocks_put(seeds, Hash, _{interval: 8640000.0, processed: 0.0, uri: Uri})
+      rocks_put(seeds, Hash, _{interval: 8640000.0, processed: 0.0, uri: Uri}),
+      format("⦿")
     )
-  ).
+  ),
+  update_seedlist.
 
 
 
@@ -123,7 +126,7 @@ init_ll :-
   maplist(state_store_init, [seeds,stale,downloaded,decompressed,recoded]),
   % workers
   (   debugging(ll(offline))
-  ->  DebugConf = _{sleep: 30, threads: 1},
+  ->  DebugConf = _{sleep: 1, threads: 1},
       Workers = _{
         decompress: DebugConf,
         download: DebugConf,
@@ -162,7 +165,7 @@ start_loop_(Goal_0, Sleep) :-
   flag(Pred, N, N+1),
   format(atom(Alias), "~a-~D", [Pred,N]),
   thread_create(running_loop_(Goal_0, Sleep), _, [alias(Alias),detached(true)]),
-  debug(ll(loop), "Thread ~a ~D started.", [Pred,N]).
+  debug(ll(thread), "Thread ~a ~D started.", [Pred,N]).
 
 running_loop_(Goal_0, Sleep) :-
   Goal_0, !,

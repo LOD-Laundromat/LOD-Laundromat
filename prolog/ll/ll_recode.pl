@@ -6,10 +6,6 @@
 @version 2017-2018
 */
 
-:- use_module(library(apply)).
-:- use_module(library(ordsets)).
-:- use_module(library(yall)).
-
 :- use_module(library(debug_ext)).
 :- use_module(library(dict)).
 :- use_module(library(file_ext)).
@@ -23,7 +19,7 @@
 ll_recode :-
   % precondition
   start_task(decompressed, Hash, State),
-  (debugging(ll(task,recode,Hash)) -> gtrace ; true),
+  (debugging(ll(offline)) -> gtrace ; true),
   indent_debug(1, ll(task,recode), "> recoding ~a", [Hash]),
   write_meta_now(Hash, recodeBegin),
   % operation
