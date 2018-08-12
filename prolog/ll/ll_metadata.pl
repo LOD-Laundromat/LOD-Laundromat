@@ -73,6 +73,7 @@ close_metadata(Hash, PLocal, Stream) :-
 close_metadata_(S, P, Meta, Kind, Out) :-
   rdf_bnode_iri(O),
   rdf_write_(Kind, Out, S, P, O),
+  rdf_write_(Kind, Out, O, rdf:type, 'StreamProperties'),
   rdf_write_(Kind, Out, O, ll:newline, str(Meta.newline)),
   rdf_write_(Kind, Out, O, ll:bytes, nonneg(Meta.bytes)),
   rdf_write_(Kind, Out, O, ll:characters, nonneg(Meta.characters)),
@@ -84,17 +85,13 @@ close_metadata_(S, P, Meta, Kind, Out) :-
 
 % Archive errors.
 %
-% | *Code* | *Message*             |
-% |--------+-----------------------|
-% | 0      | Damaged 7-Zip archive |
-%
-% Observes instances:
-%   - Msg = 'Invalid central directory signature'
-%   - Msg = 'Missing type keyword in mtree specification'
-%   - Msg = 'Unrecognized archive format'
-%   - memberchk(Code, [22,25,1001])
-%     Msg = 'Truncated input file (needed $(INT) bytes, only $(INT) available)'
-%   - Msg = 'Can\'t parse line $(INT)'
+% | *Code* | *Message*                                                         |
+% |--------+-------------------------------------------------------------------|
+% | 0      | Damaged 7-Zip archive                                             |
+% | 25     | Invalid central directory signature                               |
+% | ???    | Unrecognized archive format                                       |
+% | ???    | Truncated input file (needed $(INT) bytes, only $(INT) available) |
+% | ???    | Can\'t parse line $(INT)                                          |
 write_message(Kind, Hash, error(archive_error(Code,Msg),_)) :- !,
   write_message_(Kind, Hash, 'ArchiveError', write_message_1(Code, Msg)).
 write_message_1(Code, Msg, Kind, Out, O) :-
@@ -267,9 +264,7 @@ write_message_17(Msg, Line, Column, Kind, Out, O) :-
 % Syntax error: incorrect HTTP status code
 write_message(Kind, Hash, error(type_error(http_status,Status),_)) :- !,
   ensure_atom(Status, Lex),
-  write_message_(Kind, Hash, 'IncorrectHttpStatusCode', write_message_12(Lex)).
-write_message_12(Lex, Kind, Out, O) :-
-  rdf_write_(Kind, Out, O, ll:status, str(Lex)).
+  write_message_(Kind, Hash, 'IncorrectHttpStatusCode').
 
 write_message(Kind, Hash, error(timeout_error(read,_Stream),_)) :- !,
   write_message_(Kind, Hash, 'HttpTimeout').
@@ -398,22 +393,23 @@ write_message_stream_(Line, Column, Kind, Out, O) :-
 %! write_meta_archive(+Hash:atom, +Filters:list(atom)) is det.
 
 write_meta_archive(_, []) :- !.
-write_meta_archive(Hash, L) :-
+write_meta_archive(Hash, Filters) :-
   rdf_prefix_iri(id:Hash, S),
-  write_(meta, Hash, write_meta_archive_1(S, L)).
-write_meta_archive_1(S, L, Kind, Out) :-
+  write_(meta, Hash, write_meta_archive_1(S, Filters)).
+write_meta_archive_1(S, Filters, Kind, Out) :-
   rdf_bnode_iri(O),
-  (   L == []
+  (   Filters == []
   ->  true
   ;   rdf_write_(Kind, Out, S, ll:filter, O),
-      write_meta_archive_2(O, L, Kind, Out)
+      rdf_write_(Kind, Out, O, rdf:type, ll:'Filters'),
+      write_meta_archive_2(O, Filters, Kind, Out)
   ).
-write_meta_archive_2(Node, [H|T], Kind, Out) :-
-  rdf_write_(Kind, Out, Node, rdf:first, str(H)),
-  (   T == []
+write_meta_archive_2(Node, [Filter|Filters], Kind, Out) :-
+  rdf_write_(Kind, Out, Node, rdf:first, str(Filter)),
+  (   Filters == []
   ->  rdf_equal(Next, rdf:nil)
   ;   rdf_bnode_iri(Next),
-      write_meta_archive_2(Node, T, Kind, Out)
+      write_meta_archive_2(Node, Filters, Kind, Out)
   ),
   rdf_write_(Kind, Out, Node, rdf:next, Next).
 
@@ -473,11 +469,13 @@ write_meta_http(Hash, L) :-
 write_meta_http_list_1(S, L, Kind, Out) :-
   rdf_bnode_iri(O),
   rdf_write_(Kind, Out, S, ll:http_replies, O),
+  rdf_write_(Kind, Out, O, rdf:type, ll:'HttpReplySequence'),
   write_meta_http_list_2(O, L, Kind, Out).
 
 write_meta_http_list_2(Node, [H|T], Kind, Out) :-
   rdf_bnode_iri(First),
   rdf_write_(Kind, Out, Node, rdf:first, First),
+  rdf_write_(Kind, Out, First, rdf:type, ll:'HttpReply'),
   write_meta_http_item_(First, H, Kind, Out),
   (   T == []
   ->  rdf_equal(Next, rdf:nil)
@@ -492,6 +490,7 @@ write_meta_http_item_(Item, Meta, Kind, Out) :-
   ->  true
   ;   rdf_bnode_iri(Headers),
       rdf_write_(Kind, Out, Item, ll:headers, Headers),
+      rdf_write_(Kind, Out, Headers, rdf:type, ll:'HttpHeaders'),
       maplist(write_meta_http_header_(Kind, Out, Headers), Pairs)
   ),
   % Some servers emit non-numeric status codes, so we cannot use
