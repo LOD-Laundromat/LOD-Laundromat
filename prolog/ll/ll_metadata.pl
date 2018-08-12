@@ -262,8 +262,7 @@ write_message_17(Msg, Line, Column, Kind, Out, O) :-
   write_message_stream_(Line, Column, Kind, Out, O).
 
 % Syntax error: incorrect HTTP status code
-write_message(Kind, Hash, error(type_error(http_status,Status),_)) :- !,
-  ensure_atom(Status, Lex),
+write_message(Kind, Hash, error(type_error(http_status,_),_)) :- !,
   write_message_(Kind, Hash, 'IncorrectHttpStatusCode').
 
 write_message(Kind, Hash, error(timeout_error(read,_Stream),_)) :- !,
@@ -496,7 +495,7 @@ write_meta_http_item_(Item, Meta, Kind, Out) :-
   % Some servers emit non-numeric status codes, so we cannot use
   % `xsd:positiveInteger' here.
   Status = Meta.status,
-  (atom(Status) -> Lex = Status ; atom_number(Lex, Status)),
+  ensure_atom(Status, Lex),
   rdf_write_(Kind, Out, Item, ll:status, str(Lex)),
   rdf_write_(Kind, Out, Item, ll:uri, uri(Meta.uri)).
 
@@ -553,13 +552,12 @@ write_meta_statements_(S, Meta, Kind, Out) :-
 
 % HELPERS %
 
-%! ensure_atom(+Term:term, -Atom:atom) is det.
+%! ensure_atom(+Atomic:atomic, -Atom:atom) is det.
 
-ensure_atom(Atom, Atom) :-
-  atom(Atom), !.
 ensure_atom(N, Atom) :-
   number(N), !,
   atom_number(Atom, N).
+ensure_atom(Atom, Atom).
 
 
 
