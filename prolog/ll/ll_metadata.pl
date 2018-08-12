@@ -22,6 +22,7 @@
 
 :- use_module(library(apply)).
 :- use_module(library(yall)).
+:- use_module(library(zlib)).
 
 :- use_module(library(call_ext)).
 :- use_module(library(dcg)).
@@ -579,10 +580,10 @@ rdf_write_(Kind, Out, S, P, O) :-
 %! write_(+Kind:oneof([error,meta,warning]), +Hash:atom, :Goal_2) is det.
 
 write_(Kind, Hash, Goal_2) :-
-  file_name_extension(Kind, nq, Local),
+  file_name_extension(Kind, 'nq.gz', Local),
   hash_file(Hash, Local, File),
   setup_call_cleanup(
-    open(File, append, Out),
+    gzopen(File, append, Out),
     call(Goal_2, Kind, Out),
     close(Out)
   ).

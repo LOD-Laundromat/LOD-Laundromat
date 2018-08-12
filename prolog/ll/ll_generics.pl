@@ -38,18 +38,6 @@ end_task(Hash, Alias, State) :-
 %! finish(+Hash:atom, +State:dict) is det.
 
 finish(Hash, State) :-
-  forall(
-    (
-      member(Base, [data,error,meta,warning]),
-      file_name_extension(Base, nq, Local),
-      hash_file(Hash, Local, File),
-      exists_file(File)
-    ),
-    (
-      compress_file(File),
-      delete_file(File)
-    )
-  ),
   hash_file(Hash, finished, File),
   touch(File),
   rocks_put(seeds, Hash, State).
