@@ -12,8 +12,6 @@
 :- use_module(library(ll/ll_generics)).
 :- use_module(library(ll/ll_metadata)).
 :- use_module(library(media_type)).
-:- use_module(library(stream_ext)).
-:- use_module(library(string_ext)).
 :- use_module(library(xml_ext)).
 
 ll_recode :-
