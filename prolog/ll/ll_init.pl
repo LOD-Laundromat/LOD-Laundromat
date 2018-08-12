@@ -164,7 +164,7 @@ start_loop_(Goal_0, Sleep) :-
   strip_module(Goal_0, _, Pred),
   flag(Pred, N, N+1),
   format(atom(Alias), "~a-~D", [Pred,N]),
-  thread_create(running_loop_(Goal_0, Sleep), _, [alias(Alias),detached(true)]),
+  create_detached_thread(Alias, running_loop_(Goal_0, Sleep)),
   debug(ll(thread), "Thread ~a ~D started.", [Pred,N]).
 
 running_loop_(Goal_0, Sleep) :-

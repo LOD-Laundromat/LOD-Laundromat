@@ -46,7 +46,7 @@ ll_parse :-
   indent_debug(-1, ll(task,parse), "< parsed ~a", [Hash]).
 
 parse_file(Hash, State) :-
-  maplist(hash_file(Hash), [dirty,'data.nq.gz'], [FromFile,ToFile]),
+  maplist(hash_file(Hash), ['dirty.gz','data.nq.gz'], [FromFile,ToFile]),
   % blank node-replacing well-known IRI prefix
   bnode_prefix([Hash], BNodePrefix),
   peek_file(FromFile, 10 000, String),
@@ -57,10 +57,7 @@ parse_file(Hash, State) :-
       RdfMeta = _{number_of_quadruples: 0, number_of_triples: 0},
       % Reserialize the RDF statements.
       setup_call_cleanup(
-        (
-          open(FromFile, read, In),
-          gzopen(ToFile, write, Out)
-        ),
+        maplist(gzopen, [FromFile,ToFile], [read,write], [In,Out]),
         rdf_deref_stream(
           State.base_uri,
           In,

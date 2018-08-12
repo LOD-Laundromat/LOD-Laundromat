@@ -11,6 +11,7 @@
 :- use_module(library(archive_ext)).
 :- use_module(library(debug_ext)).
 :- use_module(library(dict)).
+:- use_module(library(file_ext)).
 :- use_module(library(ll/ll_generics)).
 :- use_module(library(ll/ll_metadata)).
 
@@ -25,7 +26,7 @@ ll_decompress :-
   % postcondition
   write_meta_now(Hash, decompressEnd),
   (var(E) -> true ; write_message(error, Hash, E)),
-  (   hash_file(Hash, dirty, File),
+  (   hash_file(Hash, 'dirty.gz', File),
       exists_file(File)
   ->  end_task(Hash, decompressed, State)
   ;   % If there is no data, processing for this hash has finished.
@@ -115,12 +116,8 @@ decompress_file_entry(Hash, EntryName, Props, In, State1) :-
   (   EntryName == data,
       Format == raw
   ->  % leaf node: archive entry
-      hash_file(Hash, dirty, File),
-      setup_call_cleanup(
-        open(File, write, Out, [type(binary)]),
-        copy_stream_data(In, Out),
-        close(Out)
-      )
+      hash_file(Hash, 'dirty.gz', File),
+      write_to_file(File, copy_stream_data(In), [type(binary)])
   ;   % non-leaf node: archive, similar to a file that was just
       % `downloaded'.
       hash_entry_hash(Hash, EntryName, EntryHash),

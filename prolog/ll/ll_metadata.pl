@@ -73,7 +73,7 @@ close_metadata(Hash, PLocal, Stream) :-
 close_metadata_(S, P, Meta, Kind, Out) :-
   rdf_bnode_iri(O),
   rdf_write_(Kind, Out, S, P, O),
-  rdf_write_(Kind, Out, O, rdf:type, 'StreamProperties'),
+  rdf_write_(Kind, Out, O, rdf:type, ll:'StreamProperties'),
   rdf_write_(Kind, Out, O, ll:newline, str(Meta.newline)),
   rdf_write_(Kind, Out, O, ll:bytes, nonneg(Meta.bytes)),
   rdf_write_(Kind, Out, O, ll:characters, nonneg(Meta.characters)),
