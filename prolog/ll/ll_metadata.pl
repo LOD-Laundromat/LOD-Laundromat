@@ -351,6 +351,20 @@ write_message_29(D, Lex1, Lex2, Kind, Out, O) :-
   rdf_write_(Kind, Out, O, ll:lexicalForm, str(Lex1)),
   rdf_write_(Kind, Out, O, ll:canonicalLexicalForm, str(Lex2)).
 
+% RDF lexical-to-value and value-to-lexical mappings.
+write_message(Kind, Hash, error(unimplemented_lex2val(D,Lex),_)) :- !,
+  write_message_(Kind, Hash, 'Lexical2ValueError', write_message_l2v(D, Lex)).
+write_message(Kind, Hash, error(unimplemented_val2lex(D,Value),_)) :- !,
+  write_message_(Kind, Hash, 'Value2LexicalError', write_message_v2l(D, Value)).
+write_message_l2v(D, Lex, Kind, Out, O) :-
+  rdf_write_(Kind, Out, O, ll:datatypeIri, uri(D)),
+  rdf_write_(Kind, Out, O, ll:lexicalForm, str(Lex)).
+write_message_v2l(D, Value, Kind, Out, O) :-
+  rdf_write_(Kind, Out, O, ll:datatypeIri, uri(D)),
+  format(atom(Atom), "~k", [Value]),
+  string_phrase(xsd_encode_string, Atom, EncodedAtom),
+  rdf_write_(Kind, Out, O, ll:value, str(EncodedAtom)).
+
 % RDF/XML parse error.
 write_message(Kind, Hash, sgml(sgml_parser(_Parser),_File,Line,Msg)) :- !,
   write_message_(Kind, Hash, 'RdfParseError', write_message_27(Line, Msg)).

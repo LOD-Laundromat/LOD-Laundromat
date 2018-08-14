@@ -17,7 +17,7 @@
 ll_recode :-
   % precondition
   start_task(decompressed, Hash, State),
-  (debugging(ll(offline)) -> gtrace ; true),
+  (debugging(ll(offline,Hash)) -> gtrace ; true),
   indent_debug(1, ll(task,recode), "> recoding ~a", [Hash]),
   write_meta_now(Hash, recodeBegin),
   % operation

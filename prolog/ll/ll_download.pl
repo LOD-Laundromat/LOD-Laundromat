@@ -29,7 +29,7 @@ ll_download(Uri) :-
   ll_download(Hash, Uri, _{uri: Uri}).
 
 ll_download(Hash, Uri, State) :-
-  (debugging(ll(offline)) -> gtrace ; true),
+  (debugging(ll(offline,Hash)) -> gtrace ; true),
   % preparation
   indent_debug(1, ll(task,download), "> downloading ~a ~a", [Hash,Uri]),
   write_meta_now(Hash, downloadBegin),

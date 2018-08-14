@@ -18,7 +18,7 @@
 ll_decompress :-
   % precondition
   start_task(downloaded, Hash, State),
-  (debugging(ll(offline)) -> gtrace ; true),
+  (debugging(ll(offline,Hash)) -> gtrace ; true),
   indent_debug(1, ll(task,decompress), "> decompressing ~a", [Hash]),
   write_meta_now(Hash, decompressBegin),
   % operation

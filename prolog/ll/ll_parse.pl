@@ -34,7 +34,7 @@
 ll_parse :-
   % precondition
   start_task(recoded, Hash, State),
-  (debugging(ll(offline)) -> gtrace ; true),
+  (debugging(ll(offline,Hash)) -> gtrace ; true),
   indent_debug(1, ll(task,parse), "> parsing ~a", [Hash]),
   write_meta_now(Hash, parseBegin),
   % operation
@@ -54,7 +54,11 @@ parse_file(Hash, State) :-
       rdf_guess_string(String, MediaType)
   ->  write_meta_serialization_format(Hash, MediaType),
       % counter
-      RdfMeta = _{number_of_quadruples: 0, number_of_triples: 0},
+      RdfMeta = _{
+        number_of_errors: 0,
+        number_of_quadruples: 0,
+        number_of_triples: 0
+      },
       % Reserialize the RDF statements.
       setup_call_cleanup(
         maplist(gzopen, [FromFile,ToFile], [read,write], [In,Out]),
@@ -62,14 +66,23 @@ parse_file(Hash, State) :-
           State.base_uri,
           In,
           clean_tuples(RdfMeta, Out),
-          [base_uri(State.base_uri),bnode_prefix(BNodePrefix),media_type(MediaType)]
+          [
+            base_uri(State.base_uri),
+            bnode_prefix(BNodePrefix),
+            media_type(MediaType)
+          ]
         ),
         maplist(close_metadata(Hash), [parseRead,parseWritten], [In,Out])
       ),
       % cleanup
       delete_file(FromFile),
       % metadata
-      write_meta_statements(Hash, RdfMeta)
+      write_meta_statements(Hash, RdfMeta),
+      (   debugging(ll(parse))
+      ->  Statements is RdfMeta.number_of_quadruples + RdfMeta.number_of_triples,
+          debug(ll(parse), "+~D", [Statements])
+      ;   true
+      )
   ;   string_truncate(String, 1 000, Truncated),
       throw(error(rdf_error(non_rdf_format,Truncated),ll_parse))
   ).
@@ -87,7 +100,7 @@ clean_tuple(Meta, Out, BNodePrefix, rdf(S0,P0,O0)) :- !,
   (   rdf_clean_triple(BNodePrefix, rdf(S0,P0,O0), rdf(S,P,O))
   ->  rdf_write_triple(Out, BNodePrefix, S, P, O),
       nb_increment_dict(Meta, number_of_triples)
-  ;   true
+  ;   nb_increment_dict(Meta, number_of_errors)
   ).
 % quadruple with the default graph → actually a triple
 clean_tuple(Meta, Out, BNodePrefix, rdf(S,P,O,user)) :- !,
@@ -97,5 +110,5 @@ clean_tuple(Meta, Out, BNodePrefix, rdf(S0,P0,O0,G0)) :-
   (   rdf_clean_quad(BNodePrefix, rdf(S0,P0,O0,G0), rdf(S,P,O,G))
   ->  rdf_write_quad(Out, BNodePrefix, S, P, O, G),
       nb_increment_dict(Meta, number_of_quadruples)
-  ;   true
+  ;   nb_increment_dict(Meta, number_of_errors)
   ).
