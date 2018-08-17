@@ -25,11 +25,10 @@
 
 :- initialization
    set_setting(rdf_term:bnode_prefix_scheme, https),
-   set_setting(rdf_term:bnode_prefix_authority, 'lodlaundromat.org').
-
-% This is needed for `http://spraakbanken.gu.se/rdf/saldom.rdf' which
-% has >8M triples in one single RDF/XML description.
-:- set_prolog_flag(stack_limit, 3 000 000 000).
+   set_setting(rdf_term:bnode_prefix_authority, 'lodlaundromat.org'),
+   % This is needed for `http://spraakbanken.gu.se/rdf/saldom.rdf'
+   % which has >8M triples in one single RDF/XML description.
+   set_prolog_flag(stack_limit, 4 000 000 000).
 
 ll_parse :-
   % precondition
@@ -46,9 +45,10 @@ ll_parse :-
   indent_debug(-1, ll(task,parse), "< parsed ~a", [Hash]).
 
 parse_file(Hash, State) :-
+  debug(ll(parse), "[BEGIN] ~a", [Hash]),
   maplist(hash_file(Hash), ['dirty.gz','data.nq.gz'], [FromFile,ToFile]),
   % blank node-replacing well-known IRI prefix
-  bnode_prefix([Hash], BNodePrefix),
+  rdf_bnode_iri(Hash, bnode, BNodePrefix),
   peek_file(FromFile, 10 000, String),
   (   % RDF serialization format Media Type
       rdf_guess_string(String, MediaType)
@@ -85,12 +85,8 @@ parse_file(Hash, State) :-
       )
   ;   string_truncate(String, 1 000, Truncated),
       throw(error(rdf_error(non_rdf_format,Truncated),ll_parse))
-  ).
-
-bnode_prefix(Segments, BNodePrefix) :-
-  setting(rdf_term:bnode_prefix_scheme, Scheme),
-  setting(rdf_term:bnode_prefix_authority, Auth),
-  uri_comps(BNodePrefix, uri(Scheme,Auth,['.well-known',genid|Segments],_,_)).
+  ),
+  debug(ll(parse), "[END] ~a", [Hash]).
 
 clean_tuples(Meta, Out, BNodePrefix, Tuples, _) :-
   maplist(clean_tuple(Meta, Out, BNodePrefix), Tuples).
