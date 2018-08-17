@@ -49,7 +49,7 @@ choose_encoding(_, HttpEnc, _, HttpEnc) :-
 % 3. Guessed encoding
 choose_encoding(GuessEnc, _, _, GuessEnc) :-
   ground(GuessEnc),
-  GuessEnc \== octet.
+  GuessEnc \== octet, !.
 % 4. No encoding or binary (`octet').
 choose_encoding(_, _, _, _) :-
   throw(error(no_encoding,ll_recode)).
