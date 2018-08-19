@@ -21,7 +21,6 @@
 */
 
 :- use_module(library(apply)).
-:- use_module(library(yall)).
 :- use_module(library(zlib)).
 
 :- use_module(library(call_ext)).
@@ -33,6 +32,7 @@
 :- use_module(library(semweb/rdf_export)).
 :- use_module(library(semweb/rdf_prefix)).
 :- use_module(library(semweb/rdf_term)).
+:- use_module(library(term_ext)).
 :- use_module(library(xsd/xsd)).
 
 :- discontiguous
@@ -276,6 +276,19 @@ write_message_18(Dom, Kind, Out, O) :-
   rdf_literal_value(Literal, rdf:'XMLLiteral', Dom),
   rdf_write_(Kind, Out, O, ll:dom, Literal).
 
+% URI parse error
+write_message(Kind, Hash, error(uri_error(Code,Uri),_)) :- !,
+  write_message_(Kind, Hash, 'UriError', write_message_19(Code, Uri)).
+write_message_19(Code, Uri, Kind, Out, O) :-
+  rdf_write_(Kind, Out, O, ll:code, nonneg(Code)),
+  rdf_write_(Kind, Out, O, ll:content, str(Uri)).
+write_message(Kind, Hash, error(uri_error(Code,Uri,Pos),_)) :- !,
+  write_message_(Kind, Hash, 'UriSyntaxError', write_message_20(Code, Uri, Pos)).
+write_message_20(Code, Uri, Pos, Kind, Out, O) :-
+  rdf_write_(Kind, Out, O, ll:code, nonneg(Code)),
+  rdf_write_(Kind, Out, O, ll:content, str(Uri)),
+  rdf_write_(Kind, Out, O, ll:position, nonneg(Pos)).
+
 % Illegal Unicode character ???
 write_message(Kind, Hash, io_warning(Stream,'Illegal UTF-8 continuation')) :- !,
   write_message_(Kind, Hash, 'IllegalUtf8Continuation'),
@@ -303,7 +316,7 @@ write_message_24(Iri, Kind, Out, O) :-
 write_message(Kind, Hash, rdf(unexpected(Tag,_Parser))) :- !,
   write_message_(Kind, Hash, 'RdfXmlParseError', write_message_25(Tag)).
 write_message_25(Tag, Kind, Out, O) :-
-  format(string(String), "~k", [Tag]),
+  with_output_to(string(String), write_term(Tag)),
   rdf_write_(Kind, Out, O, ll:tag, String).
 
 % RDF/XML parser error: unparseable DOM.
@@ -361,9 +374,9 @@ write_message_l2v(D, Lex, Kind, Out, O) :-
   rdf_write_(Kind, Out, O, ll:lexicalForm, str(Lex)).
 write_message_v2l(D, Value, Kind, Out, O) :-
   rdf_write_(Kind, Out, O, ll:datatypeIri, uri(D)),
-  format(atom(Atom), "~k", [Value]),
-  string_phrase(xsd_encode_string, Atom, EncodedAtom),
-  rdf_write_(Kind, Out, O, ll:value, str(EncodedAtom)).
+  format(string(String), write_term(Value)),
+  string_phrase(xsd_encode_string, String, EncodedString),
+  rdf_write_(Kind, Out, O, ll:value, EncodedString).
 
 % RDF/XML parse error.
 write_message(Kind, Hash, sgml(sgml_parser(_Parser),_File,Line,Msg)) :- !,
@@ -375,10 +388,10 @@ write_message_27(Line, Msg, Kind, Out, O) :-
 % TBD: Not yet handled.
 write_message(Kind, Hash, E) :-
   rdf_prefix_iri(id:Hash, S),
-  format(string(String), "~k", [E]),
+  with_output_to(string(String), write_term(E)),
   write_(Kind, Hash, write_message_30(S, String)).
 write_message_30(S, String, Kind, Out) :-
-  rdf_write_(Kind, Out, S, ll:error, str(String)).
+  rdf_write_(Kind, Out, S, ll:error, String).
 
 stream_line_column_(stream(_,Line,Column,_), Line, Column) :- !.
 stream_line_column_(Stream, Line, Column) :-
@@ -548,7 +561,7 @@ write_meta_quad_(S, P, O, Kind, Out) :-
 
 write_meta_serialization_format(Hash, MediaType) :-
   dcg_with_output_to(string(String), media_type(MediaType)),
-  write_meta_quad(Hash, serializationFormat, str(String)).
+  write_meta_quad(Hash, serializationFormat, String).
 
 
 

@@ -1,16 +1,12 @@
-:- module(
-  debug_seed,
-  [
-    run/1, % +Uri
-    run/2  % +Uri, +EntryName
-  ]
-).
+:- module(debug_seed, [run/0]).
 
 :- use_module(library(apply)).
+:- use_module(library(debug)).
 :- use_module(library(settings)).
 :- use_module(library(zlib)).
 
 :- use_module(library(archive_ext)).
+:- use_module(library(conf_ext)).
 :- use_module(library(file_ext)).
 :- use_module(library(hash_ext)).
 :- use_module(library(http/http_client2)).
@@ -23,12 +19,21 @@
 :- use_module(library(semweb/rdf_term)).
 :- use_module(library(xml_ext)).
 
+:- debug(error).
+%:- debug(warning).
+
 :- initialization
    set_setting(rdf_term:bnode_prefix_scheme, https),
    set_setting(rdf_term:bnode_prefix_authority, 'lodlaundromat.org'),
    % This is needed for `http://spraakbanken.gu.se/rdf/saldom.rdf'
    % which has >8M triples in one single RDF/XML description.
    set_prolog_flag(stack_limit, 4 000 000 000).
+
+:- multifile
+    user:message_hook/3.
+
+user:message_hook(E, Kind, _) :-
+  debug(Kind, "~w", [E]).
 
 seed('http://download.bio2rdf.org/files/release/4/pubmed/medline15n0647.nq.gz').
 seed('http://download.bio2rdf.org/files/release/4/pubmed/medline15n1131.nq.gz').
@@ -55,14 +60,26 @@ seed('http://www.anc.org/MASC/download/MASC-1.0.3.zip', 'MASC-1.0.3/data/spoken/
 seed('http://www.anc.org/MASC/download/MASC-1.0.3.zip', 'MASC-1.0.3/original-annotations/mpqa_opinion/sw2014-UTF16-ms98-a-trans/.svn/entries').
 seed('http://www.anc.org/MASC/download/MASC-1.0.3.zip', 'MASC-1.0.3/original-annotations/mpqa_opinion/110CYL067/gateman.mpqa.lre.2.0').
 seed('http://compling.hss.ntu.edu.sg/omw/wns/bul+xml.zip', 'bul/wn-bul-lmf.xml').
+seed(Uri, data) :-
+  seed(Uri).
 
-run(Uri) :-
-  (ground(Uri) -> true ; seed(Uri)),
-  run(Uri, data).
-
-run(Uri, EntryName) :-
-  (ground(Uri-EntryName) -> true ; seed(Uri, EntryName)),
-  download(Uri, EntryName).
+run :-
+  findall(
+    Id,
+    (
+      seed(Uri, EntryName),
+      format(atom(Alias), "~a ~a", [Uri,EntryName]),
+      thread_create(download(Uri, EntryName), Id, [alias(Alias)])
+    ),
+    Ids
+  ),
+  forall(
+    member(Id, Ids),
+    (
+      thread_join(Id, Status),
+      format("~w ~w\n", [Id,Status])
+    )
+  ).
 
 download(Uri, EntryName) :-
   findall(RdfMediaType, rdf_media_type(RdfMediaType), RdfMediaTypes),
@@ -91,8 +108,10 @@ decompress_archive(Arch, FinalUri, EntryName, HttpMediaType) :-
   archive_next_header(Arch, EntryName0),
   (EntryName == EntryName0 -> ! ; fail),
   md5(FinalUri-EntryName, Hash),
+  conf_json(Conf),
+  directory_file_path(Conf.'data-directory', Hash, File),
   setup_call_cleanup(
-    open(Hash, write, Out),
+    open(File, write, Out),
     setup_call_cleanup(
       archive_open_entry(Arch, In),
       copy_stream_data(In, Out),
@@ -100,7 +119,7 @@ decompress_archive(Arch, FinalUri, EntryName, HttpMediaType) :-
     ),
     close(Out)
   ),
-  recode(Hash, FinalUri, HttpMediaType).
+  recode(File, FinalUri, HttpMediaType).
 
 recode(FromFile, FinalUri, HttpMediaType) :-
   ignore(guess_file_encoding(FromFile, GuessEnc)),

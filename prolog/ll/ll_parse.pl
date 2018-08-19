@@ -19,7 +19,7 @@
 :- use_module(library(semweb/rdf_deref)).
 :- use_module(library(semweb/rdf_export)).
 :- use_module(library(semweb/rdf_guess)).
-:- use_module(library(semweb/rdf_term), []).
+:- use_module(library(semweb/rdf_term)).
 :- use_module(library(string_ext)).
 :- use_module(library(uri_ext)).
 
