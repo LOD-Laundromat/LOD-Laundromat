@@ -1,4 +1,4 @@
-:- module(debug_seed, [run/0]).
+:- module(debug_seed, [run/0,run/1,run/2]).
 
 :- use_module(library(apply)).
 :- use_module(library(debug)).
@@ -80,6 +80,12 @@ run :-
       format("~w ~w\n", [Id,Status])
     )
   ).
+
+run(Uri) :-
+  run(Uri, data).
+
+run(Uri, EntryName) :-
+  download(Uri, EntryName).
 
 download(Uri, EntryName) :-
   findall(RdfMediaType, rdf_media_type(RdfMediaType), RdfMediaTypes),
