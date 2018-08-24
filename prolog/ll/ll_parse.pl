@@ -45,7 +45,6 @@ ll_parse :-
   indent_debug(-1, ll(task,parse), "< parsed ~a", [Hash]).
 
 parse_file(Hash, State) :-
-  debug(ll(parse), "[BEGIN] ~a", [Hash]),
   maplist(hash_file(Hash), ['dirty.gz','data.nq.gz'], [FromFile,ToFile]),
   % blank node-replacing well-known IRI prefix
   rdf_bnode_iri(Hash, bnode, BNodePrefix),
@@ -85,8 +84,7 @@ parse_file(Hash, State) :-
       )
   ;   string_truncate(String, 1 000, Truncated),
       throw(error(rdf_error(non_rdf_format,Truncated),ll_parse))
-  ),
-  debug(ll(parse), "[END] ~a", [Hash]).
+  ).
 
 clean_tuples(Meta, Out, BNodePrefix, Tuples, _) :-
   maplist(clean_tuple(Meta, Out, BNodePrefix), Tuples).

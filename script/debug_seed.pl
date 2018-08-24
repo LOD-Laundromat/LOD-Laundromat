@@ -1,8 +1,10 @@
-:- module(debug_seed, [run/0]).
+:- module(debug_seed, [parse_unfinished/0,run/0]).
 
 :- use_module(library(apply)).
 :- use_module(library(debug)).
+:- use_module(library(pairs)).
 :- use_module(library(settings)).
+:- use_module(library(yall)).
 :- use_module(library(zlib)).
 
 :- use_module(library(archive_ext)).
@@ -11,6 +13,7 @@
 :- use_module(library(hash_ext)).
 :- use_module(library(http/http_client2)).
 :- use_module(library(media_type)).
+:- use_module(library(semweb/ldfs)).
 :- use_module(library(semweb/rdf_clean)).
 :- use_module(library(semweb/rdf_deref)).
 :- use_module(library(semweb/rdf_export)).
@@ -62,6 +65,31 @@ seed('http://www.anc.org/MASC/download/MASC-1.0.3.zip', 'MASC-1.0.3/original-ann
 seed('http://compling.hss.ntu.edu.sg/omw/wns/bul+xml.zip', 'bul/wn-bul-lmf.xml').
 seed(Uri, data) :-
   seed(Uri).
+
+parse_unfinished :-
+  findall(
+    Size-Hash,
+    (
+      ldfs_file('', false, Dir, Hash, 'data.nq.gz', _),
+      ldfs_file('', false, Dir, Hash, 'dirty.gz', File),
+      size_file(File, Size)
+    ),
+    Pairs1
+  ),
+  sort(1, @=<, Pairs1, Pairs2),
+  pairs_values(Pairs2, Hashes),
+  maplist(
+    [Hash]>>(
+      format("[BEGIN] ~a\n", [Hash]),
+      ldfs_file('', false, _, Hash, 'dirty.gz', File),
+      parse(File),
+      delete_file(File),
+      format("[END] ~a\n", [Hash])
+    ),
+    Hashes
+  ),
+  delete_file(File),
+  format("done!\n").
 
 run :-
   findall(
@@ -127,6 +155,12 @@ recode(FromFile, FinalUri, HttpMediaType) :-
   ignore(xml_file_encoding(FromFile, XmlEnc)),
   choose_encoding(GuessEnc, HttpEnc, XmlEnc, Enc),
   recode_file(Enc, FromFile),
+  parse(FromFile, FinalUri).
+
+parse(FromFile) :-
+  parse(FromFile, 'https://example.com/').
+
+parse(FromFile, FinalUri) :-
   peek_file(FromFile, 10 000, Content),
   (   rdf_guess_string(Content, MediaType)
   ->  parse(FromFile, FinalUri, MediaType)
