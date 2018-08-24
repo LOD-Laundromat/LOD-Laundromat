@@ -109,6 +109,12 @@ run :-
     )
   ).
 
+run(Uri) :-
+  run(Uri, data).
+
+run(Uri, EntryName) :-
+  download(Uri, EntryName).
+
 download(Uri, EntryName) :-
   findall(RdfMediaType, rdf_media_type(RdfMediaType), RdfMediaTypes),
   Options = [accept(RdfMediaTypes),
