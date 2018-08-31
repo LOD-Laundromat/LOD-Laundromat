@@ -91,5 +91,5 @@ hash_file(Hash, Local, File) :-
 start_task(Alias, Hash, State) :-
   with_mutex(ll_generics, (
     rocks_enum(Alias, Hash, State),
-    rocks_delete(Alias, Hash, _)
+    rocks_delete(Alias, Hash)
   )).

@@ -18,6 +18,7 @@
 :- use_module(library(apply)).
 :- use_module(library(debug)).
 :- use_module(library(error)).
+:- use_module(library(filesex)).
 
 :- use_module(library(conf_ext)).
 :- use_module(library(date_time)).
@@ -28,6 +29,7 @@
 :- use_module(library(ll/ll_metadata)).
 :- use_module(library(ll/ll_parse)).
 :- use_module(library(ll/ll_recode)).
+:- use_module(library(rocks_ext)).
 :- use_module(library(semweb/ldfs)).
 :- use_module(library(semweb/rdf_prefix)).
 :- use_module(library(semweb/rdf_term)).
@@ -80,8 +82,7 @@ populate_seedlist :-
       rdf_literal_value(Literal, Uri),
       md5(Uri, Hash),
       % Interval is set to 100 days (in seconds).
-      rocks_put(seeds, Hash, _{interval: 8640000.0, processed: 0.0, uri: Uri}),
-      format("⦿")
+      rocks_put(seeds, Hash, _{interval: 8640000.0, processed: 0.0, uri: Uri})
     )
   ),
   update_seedlist.
@@ -98,8 +99,7 @@ update_seedlist :-
       _{interval: Interval, processed: Old} :< State,
       Stale is Old + Interval,
       (   Stale =< Now
-      ->  format("."),
-          rocks_delete(seeds, Hash, State),
+      ->  rocks_delete(seeds, Hash, State),
           rocks_put(stale, Hash, State)
       ;   true
       )
@@ -124,6 +124,10 @@ init_ll :-
   conf_json(Conf),
   % state store
   maplist(state_store_init, [seeds,stale,downloaded,decompressed,recoded]),
+  % state store reset
+  maplist(ll_reset, [downloaded,decompressed,recoded]),
+  % disk reset
+  ll_reset,
   % workers
   (   debugging(ll(offline))
   ->  DebugConf = _{sleep: 1, threads: 1},
@@ -151,6 +155,23 @@ init_ll :-
   ldfs_root(Root),
   directory_file_path(Root, 'out.log', File),
   protocol(File).
+
+ll_reset :-
+  forall(
+    ldfs_directory('', false, Dir),
+    delete_directory_and_contents(Dir)
+  ).
+
+ll_reset(Alias) :-
+  forall(
+    rocks_enum(Alias, Hash, State1),
+    (
+      _{interval: Interval, uri: Uri} :< State1,
+      State2 = _{interval: Interval, processed: 0.0, uri: Uri},
+      rocks_put(stale, Hash, State2),
+      rocks_delete(Alias, Hash, State1)
+    )
+  ).
 
 run_loop(Goal_0, Sleep, M) :-
   with_mutex(ll_loop,
