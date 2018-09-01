@@ -9,6 +9,7 @@
 
 :- use_module(library(archive_ext)).
 :- use_module(library(conf_ext)).
+:- use_module(library(dict)).
 :- use_module(library(file_ext)).
 :- use_module(library(hash_ext)).
 :- use_module(library(http/http_client2)).
@@ -23,6 +24,7 @@
 :- use_module(library(xml_ext)).
 
 :- debug(error).
+%:- debug(stats).
 %:- debug(warning).
 
 :- initialization
@@ -38,31 +40,9 @@
 user:message_hook(E, Kind, _) :-
   debug(Kind, "~w", [E]).
 
-seed('http://download.bio2rdf.org/files/release/4/pubmed/medline15n0647.nq.gz').
-seed('http://download.bio2rdf.org/files/release/4/pubmed/medline15n1131.nq.gz').
-seed('http://download.bio2rdf.org/files/release/4/pubmed/medline15n0497.nq.gz').
+seed('http://www.gutenberg.org/feeds/catalog.rdf.bz2').
 
-seed('http://compling.hss.ntu.edu.sg/omw/all+xml.zip', 'wns/wikt/wn-wikt-ems.tab').
-seed('http://compling.hss.ntu.edu.sg/omw/all+xml.zip', 'wns/dan/LICENSE').
-seed('https://github.com/UniversalDependencies/UD_English/archive/master.zip', 'UD_English-EWT-master/not-to-release/sources/answers/20111107233110AAmgsVx_ans.xml.conllu').
-seed('https://github.com/UniversalDependencies/UD_English/archive/master.zip', 'UD_English-EWT-master/not-to-release/sources/answers/20111108103957AAcF3iZ_ans.xml.conllu').
-seed('https://github.com/UniversalDependencies/UD_English/archive/master.zip', 'UD_English-EWT-master/not-to-release/sources/reviews/245928.xml.conllu').
-seed('https://github.com/UniversalDependencies/UD_English/archive/master.zip', 'UD_English-EWT-master/not-to-release/sources/reviews/334388.xml.conllu').
-seed('https://github.com/UniversalDependencies/UD_English/archive/master.zip', 'UD_English-EWT-master/not-to-release/sources/answers/20111108103158AARnMLC_ans.xml.conllu').
-seed('https://github.com/UniversalDependencies/UD_English/archive/master.zip', 'UD_English-EWT-master/not-to-release/sources/reviews/173758.xml.conllu').
-seed('https://opendata.oorlogsbronnen.nl/dataset/5f9cca9d-ffaf-401f-a12c-1c1593e06328/resource/5bac0f31-d546-4e8d-82de-3aae2faafd6e/download/data.tar.gz', 'data/output_87001.xml').
-seed('https://opendata.oorlogsbronnen.nl/dataset/5f9cca9d-ffaf-401f-a12c-1c1593e06328/resource/5bac0f31-d546-4e8d-82de-3aae2faafd6e/download/data.tar.gz', 'data/output_63001.xml').
-seed('http://www.anc.org/MASC/download/MASC-3.0.0.tgz', 'MASC-3.0.0/data/written/email/spam/ucb15.hdr').
-seed('http://www.anc.org/MASC/download/MASC-3.0.0.tgz', 'MASC-3.0.0/data/written/email/spam/ucb20-nc.xml').
-seed('http://www.anc.org/MASC/download/MASC-3.0.0.tgz', 'MASC-3.0.0/data/written/email/w3c/lists-034-10082707-s.xml').
-seed('http://www.anc.org/MASC/download/MASC-3.0.0.tgz', 'MASC-3.0.0/data/written/newspaper/wsj/wsj_0173-mpqa.xml').
-seed('http://www.anc.org/MASC/download/MASC-3.0.0.tgz', 'MASC-3.0.0/data/written/email/spam/ucb54-s.xml').
-seed('http://www.anc.org/MASC/download/MASC-3.0.0.tgz', 'MASC-3.0.0/data/written/email/enron/211401-vc.xml').
-seed('http://www.anc.org/MASC/download/MASC-1.0.3.zip', 'MASC-1.0.3/original-annotations/mpqa_opinion/20000815_AFP_ARB.0084.IBM-HA-NEW/gatesentences.mpqa.2.0').
-seed('http://www.anc.org/MASC/download/MASC-1.0.3.zip', 'MASC-1.0.3/data/spoken/sw2071-ms98-a-trans.anc').
-seed('http://www.anc.org/MASC/download/MASC-1.0.3.zip', 'MASC-1.0.3/original-annotations/mpqa_opinion/sw2014-UTF16-ms98-a-trans/.svn/entries').
-seed('http://www.anc.org/MASC/download/MASC-1.0.3.zip', 'MASC-1.0.3/original-annotations/mpqa_opinion/110CYL067/gateman.mpqa.lre.2.0').
-seed('http://compling.hss.ntu.edu.sg/omw/wns/bul+xml.zip', 'bul/wn-bul-lmf.xml').
+%seed('http://compling.hss.ntu.edu.sg/omw/all+xml.zip', 'wns/wikt/wn-wikt-ems.tab').
 seed(Uri, data) :-
   seed(Uri).
 
@@ -176,16 +156,21 @@ parse(FromFile, FinalUri) :-
 parse(FromFile, FinalUri, MediaType) :-
   md5(FinalUri, Hash),
   rdf_bnode_iri(Hash, bnode, BNodePrefix),
-  Options = [base_uri(FinalUri),bnode_prefix(BNodePrefix),media_type(MediaType)],
+  Options = [base_uri(FinalUri),
+             bnode_prefix(BNodePrefix),
+             media_type(MediaType)],
   file_name_extension(FromFile, gz, ToFile),
+  State = _{number_of_quadruples: 0, number_of_triples: 0},
   setup_call_cleanup(
     (
       open(FromFile, read, In),
       gzopen(ToFile, write, Out)
     ),
-    rdf_deref_stream(FinalUri, In, clean_tuples(Out), Options),
+    rdf_deref_stream(FinalUri, In, clean_tuples(State, Out), Options),
     maplist(close, [In,Out])
-  ).
+  ),
+  _{number_of_quadruples: Quads, number_of_triples: Triples} :< State,
+  debug(stats, "~D quadruples & ~D triples", [Quads,Triples]).
 
 % 1. XML header
 choose_encoding(_, _, XmlEnc, XmlEnc) :-
@@ -201,18 +186,25 @@ choose_encoding(GuessEnc, _, _, GuessEnc) :-
 choose_encoding(_, _, _, _) :-
   throw(error(no_encoding,ll_recode)).
 
-clean_tuples(Out, BNodePrefix, Tuples, _) :-
-  maplist(clean_tuple(Out, BNodePrefix), Tuples).
+clean_tuples(State, Out, BNodePrefix, Tuples, _) :-
+  maplist(clean_tuple(State, Out, BNodePrefix), Tuples).
 
-clean_tuple(Out, BNodePrefix, rdf(S0,P0,O0)) :- !,
+% triple
+clean_tuple(State, Out, BNodePrefix, rdf(S0,P0,O0)) :- !,
   (   rdf_clean_triple(BNodePrefix, rdf(S0,P0,O0), rdf(S,P,O))
   ->  rdf_write_triple(Out, BNodePrefix, S, P, O)
   ;   print_message(warning, rdf(S0,P0,O0))
-  ).
-clean_tuple(Out, BNodePrefix, rdf(S,P,O,user)) :- !,
-  clean_tuple(Out, BNodePrefix, rdf(S,P,O)).
-clean_tuple(Out, BNodePrefix, rdf(S0,P0,O0,G0)) :-
+  ),
+  nb_increment_dict(State, number_of_triples, N),
+  debug(stats, "~D triples", [N]).
+% triple (legacy)
+clean_tuple(State, Out, BNodePrefix, rdf(S,P,O,user)) :- !,
+  clean_tuple(State, Out, BNodePrefix, rdf(S,P,O)).
+% quadruple
+clean_tuple(State, Out, BNodePrefix, rdf(S0,P0,O0,G0)) :-
   (   rdf_clean_quad(BNodePrefix, rdf(S0,P0,O0,G0), rdf(S,P,O,G))
   ->  rdf_write_quad(Out, BNodePrefix, S, P, O, G)
   ;   print_message(warning, rdf(S0,P0,O0,G0))
-  ).
+  ),
+  nb_increment_dict(State, number_of_quadruples, N),
+  debug(stats, "~D quadruples", [N]).
