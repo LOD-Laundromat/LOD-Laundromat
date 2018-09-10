@@ -9,7 +9,7 @@
 ).
 :- reexport(library(rocks_ext)).
 
-/** <module> LOD Laundromat: Initialization
+/** <module> LOD Laundromat initialization
 
 @author Wouter Beek
 @version 2018
@@ -126,8 +126,6 @@ init_ll :-
   maplist(state_store_init, [seeds,stale,downloaded,decompressed,recoded]),
   % state store reset
   maplist(ll_reset, [downloaded,decompressed,recoded]),
-  % disk reset
-  ll_reset,
   % workers
   (   debugging(ll(offline))
   ->  DebugConf = _{sleep: 1, threads: 1},
@@ -156,12 +154,6 @@ init_ll :-
   directory_file_path(Root, 'out.log', File),
   protocol(File).
 
-ll_reset :-
-  forall(
-    ldfs_directory('', false, Dir),
-    delete_directory_and_contents(Dir)
-  ).
-
 ll_reset(Alias) :-
   forall(
     rocks_enum(Alias, Hash, State1),
@@ -169,7 +161,9 @@ ll_reset(Alias) :-
       _{interval: Interval, uri: Uri} :< State1,
       State2 = _{interval: Interval, processed: 0.0, uri: Uri},
       rocks_put(stale, Hash, State2),
-      rocks_delete(Alias, Hash, State1)
+      rocks_delete(Alias, Hash, State1),
+      assertion(ldfs_directory(Hash, false, Dir)),
+      delete_directory_and_contents(Dir)
     )
   ).
 

@@ -38,7 +38,7 @@ ll_download(Hash, Uri, State) :-
   %
   % We need to run this in a thread, since we want to store warnings
   % as metadata.  Unfortunately, we cannot share variables with a
-  % thread, so the threads has to change the state store (RocksDB).
+  % thread, so the threads also have to change the state store.
   thread_create(download_uri(Hash, Uri, State), Id, [alias(Hash)]),
   thread_join(Id, Status),
   % postcondition
