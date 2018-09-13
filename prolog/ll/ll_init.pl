@@ -4,10 +4,7 @@
   [
     add_thread/1,
     continue/0,
-    start/0,
-  % INTERNAL
-    end_task/3,  % +Hash, +Aliases, +State
-    start_task/3 % +Alias, -Hash, State
+    start/0
   ]
 ).
 :- reexport(library(rocks_ext)).
@@ -21,15 +18,15 @@
 :- use_module(library(apply)).
 :- use_module(library(debug)).
 :- use_module(library(error)).
-:- use_module(library(filesex)).
-:- use_module(library(persistency)).
 
 :- use_module(library(conf_ext)).
 :- use_module(library(date_time)).
 :- use_module(library(dict)).
+:- use_module(library(file_ext)).
 :- use_module(library(hash_ext)).
 :- use_module(library(ll/ll_decompress)).
 :- use_module(library(ll/ll_download)).
+:- use_module(library(ll/ll_generics)).
 :- use_module(library(ll/ll_metadata)).
 :- use_module(library(ll/ll_parse)).
 :- use_module(library(ll/ll_recode)).
@@ -58,9 +55,6 @@ user:message_hook(E, Kind, _) :-
   thread_self_property(alias(Hash)),
   write_message(Kind, Hash, E).
 
-:- persistent
-   processing(hash:atom).
-
 :- rdf_register_prefix(ldm).
 
 
@@ -76,7 +70,17 @@ add_thread(Type) :-
 
 
 
+%! continue is det.
+
 continue :-
+  forall(
+    processing_file(Hash, File),
+    (
+      ldfs_directory(Hash, false, Dir),
+      delete_directory_and_contents(Dir),
+      delete_file(File)
+    )
+  ),
   conf_json(Conf),
   % state store
   maplist(state_store_init, [seeds,stale,downloaded,decompressed,recoded]),
@@ -108,7 +112,7 @@ continue :-
   directory_file_path(Root, 'out.log', File1),
   protocol(File1),
   % Persist the currently processing hashes.
-  directory_file_path(Root, 'processing.pl', File2),
+  directory_file_path(Root, ll_init, File2),
   db_attach(File2, []).
 
 state_store_init(Alias) :-
@@ -149,15 +153,6 @@ running_loop_(Goal_0, Sleep) :-
 
 
 
-%! end_task(+Hash:atom, +Aliase:atom, +State:dict) is det.
-
-end_task(Hash, Alias, State) :-
-  retractall_processing(Hash),
-  rocks_put(Alias, Hash, State),
-  debug(ll(task), "[END] ~a ~a", [Alias,Hash]).
-
-
-
 %! start is det.
 
 start :-
@@ -191,15 +186,3 @@ update_seedlist :-
       )
     )
   ).
-
-
-
-%! start_task(+Alias:atom, -Hash:atom, -State:dict) is det.
-
-start_task(Alias, Hash, State) :-
-  with_mutex(ll_generics, (
-    rocks_enum(Alias, Hash, State),
-    rocks_delete(Alias, Hash)
-  )),
-  assert_processing(Hash),
-  debug(ll(task), "[START] ~a ~a", [Alias,Hash]).

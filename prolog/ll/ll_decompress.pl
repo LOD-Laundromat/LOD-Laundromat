@@ -12,7 +12,6 @@
 :- use_module(library(debug_ext)).
 :- use_module(library(dict)).
 :- use_module(library(file_ext)).
-:- use_module(library(ll/ll_init)).
 :- use_module(library(ll/ll_generics)).
 :- use_module(library(ll/ll_metadata)).
 

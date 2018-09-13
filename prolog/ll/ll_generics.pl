@@ -1,10 +1,13 @@
 :- module(
   ll_generics,
   [
+    end_task/3,        % +Hash, +Alias, +State
     finish/2,          % +Hash, +State
     handle_status/4,   % +Hash, +Status, +Alias, +State
     hash_entry_hash/3, % +Hash1, +Entry, -Hash2
-    hash_file/3        % +Hash, +Local, -File
+    hash_file/3,       % +Hash, +Local, -File
+    processing_file/2, % ?Hash, -File
+    start_task/3       % +Alias, -Hash, -State
   ]
 ).
 
@@ -18,7 +21,6 @@
 
 :- use_module(library(file_ext)).
 :- use_module(library(hash_ext)).
-:- use_module(library(ll/ll_init)).
 :- use_module(library(ll/ll_metadata)).
 :- use_module(library(rocks_ext)).
 :- use_module(library(semweb/ldfs)).
@@ -27,12 +29,22 @@
 
 
 
+%! end_task(+Hash:atom, +Alias:atom, +State:dict) is det.
+
+end_task(Hash, Alias, State) :-
+  rocks_put(Alias, Hash, State),
+  processing_file(Hash, File),
+  delete_file(File),
+  debug(ll(task), "[END] ~a ~a", [Alias,Hash]).
+
+
+
 %! finish(+Hash:atom, +State:dict) is det.
 
 finish(Hash, State) :-
   hash_file(Hash, finished, File),
   touch(File),
-  rocks_put(seeds, Hash, State).
+  end_task(Hash, seeds, State).
 
 
 
@@ -75,3 +87,27 @@ hash_entry_hash(Hash1, Entry, Hash2) :-
 hash_file(Hash, Local, File) :-
   ldfs_root(Root),
   hash_file(Root, Hash, Local, File).
+
+
+
+%! processing_file(+Hash:atom, -File:atom) is det.
+%! processing_file(-Hash:atom, -File:atom) is nondet.
+
+processing_file(Hash, File) :-
+  ldfs_root(Root),
+  directory_file_path(Root, processing, Dir),
+  create_directory(Dir),
+  directory_file_path2(Dir, Hash, File).
+
+
+
+%! start_task(+Alias:atom, -Hash:atom, -State:dict) is det.
+
+start_task(Alias, Hash, State) :-
+  with_mutex(ll_generics, (
+    rocks_enum(Alias, Hash, State),
+    rocks_delete(Alias, Hash)
+  )),
+  processing_file(Hash, File),
+  touch(File),
+  debug(ll(task), "[START] ~a ~a", [Alias,Hash]).
