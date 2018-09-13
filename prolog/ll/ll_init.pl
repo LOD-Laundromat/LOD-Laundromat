@@ -3,8 +3,11 @@
   ll_init,
   [
     add_thread/1,
-    populate_seedlist/0,
-    update_seedlist/0
+    continue/0,
+    start/0,
+  % INTERNAL
+    end_task/3,  % +Hash, +Aliases, +State
+    start_task/3 % +Alias, -Hash, State
   ]
 ).
 :- reexport(library(rocks_ext)).
@@ -19,6 +22,7 @@
 :- use_module(library(debug)).
 :- use_module(library(error)).
 :- use_module(library(filesex)).
+:- use_module(library(persistency)).
 
 :- use_module(library(conf_ext)).
 :- use_module(library(date_time)).
@@ -41,9 +45,6 @@
 :- dynamic
     user:message_hook/3.
 
-:- initialization
-   init_ll.
-
 :- meta_predicate
     run_loop(0, +, +),
     running_loop_(0, +),
@@ -56,6 +57,9 @@ user:message_hook(E, Kind, _) :-
   memberchk(Kind, [error,warning]),
   thread_self_property(alias(Hash)),
   write_message(Kind, Hash, E).
+
+:- persistent
+   processing(hash:atom).
 
 :- rdf_register_prefix(ldm).
 
@@ -72,60 +76,10 @@ add_thread(Type) :-
 
 
 
-%! populate_seedlist is det.
-
-populate_seedlist :-
-  current_user(User),
-  forall(
-    statement(_, User, index, _, ldm:downloadLocation, Literal),
-    (
-      rdf_literal_value(Literal, Uri),
-      md5(Uri, Hash),
-      % Interval is set to 100 days (in seconds).
-      rocks_put(seeds, Hash, _{interval: 8640000.0, processed: 0.0, uri: Uri})
-    )
-  ),
-  update_seedlist.
-
-
-
-%! update_seedlist is det.
-
-update_seedlist :-
-  get_time(Now),
-  forall(
-    rocks_enum(seeds, Hash, State),
-    (
-      _{interval: Interval, processed: Old} :< State,
-      Stale is Old + Interval,
-      (   Stale =< Now
-      ->  rocks_delete(seeds, Hash, State),
-          rocks_put(stale, Hash, State)
-      ;   true
-      )
-    )
-  ).
-
-
-
-
-
-% INITIALIZATION
-
-state_store_init(Alias) :-
-  rocks_init(Alias, [key(atom),merge(ll_init:merge_dicts),value(term)]).
-
-merge_dicts(partial, _, New, In, Out) :-
-  merge_dicts(New, In, Out).
-merge_dicts(full, _, Initial, Additions, Out) :-
-  merge_dicts([Initial|Additions], Out).
-
-init_ll :-
+continue :-
   conf_json(Conf),
   % state store
   maplist(state_store_init, [seeds,stale,downloaded,decompressed,recoded]),
-  % state store reset
-  maplist(ll_reset, [downloaded,decompressed,recoded]),
   % workers
   (   debugging(ll(offline))
   ->  DebugConf = _{sleep: 1, threads: 1},
@@ -137,36 +91,33 @@ init_ll :-
       }
   ;   Workers = Conf.workers
   ),
-  % download workers
+  % Start download workers.
   flag(ll_download, _, 1),
   run_loop(ll_download, Workers.download.sleep, Workers.download.threads),
-  % decompression workers
+  % Start decompression workers.
   flag(ll_decompress, _, 1),
   run_loop(ll_decompress, Workers.decompress.sleep, Workers.decompress.threads),
-  % recode workers
+  % Start recode workers.
   flag(ll_recode, _, 1),
   run_loop(ll_recode, Workers.recode.sleep, Workers.recode.threads),
-  % parse workers
+  % Start parse workers.
   flag(ll_parse, _, 1),
   run_loop(ll_parse, Workers.parse.sleep, Workers.parse.threads),
-  % log standard output
+  % Log standard output to file.
   ldfs_root(Root),
-  directory_file_path(Root, 'out.log', File),
-  protocol(File).
+  directory_file_path(Root, 'out.log', File1),
+  protocol(File1),
+  % Persist the currently processing hashes.
+  directory_file_path(Root, 'processing.pl', File2),
+  db_attach(File2, []).
 
-ll_reset(Alias) :-
-  forall(
-    rocks_enum(Alias, Hash, State1),
-    (
-      _{interval: Interval, uri: Uri} :< State1,
-      State2 = _{interval: Interval, processed: 0.0, uri: Uri},
-      rocks_put(stale, Hash, State2),
-      rocks_delete(Alias, Hash, State1),
-      ldfs_directory(Hash, Fin, Dir),
-      assertion(Fin == false),
-      delete_directory_and_contents(Dir)
-    )
-  ).
+state_store_init(Alias) :-
+  rocks_init(Alias, [key(atom),merge(ll_init:merge_dicts),value(term)]).
+
+merge_dicts(partial, _, New, In, Out) :-
+  merge_dicts(New, In, Out).
+merge_dicts(full, _, Initial, Additions, Out) :-
+  merge_dicts([Initial|Additions], Out).
 
 run_loop(Goal_0, Sleep, M) :-
   with_mutex(ll_loop,
@@ -195,3 +146,60 @@ running_loop_(Goal_0, Sleep) :-
   ),
   sleep(Sleep),
   running_loop_(Goal_0, Sleep).
+
+
+
+%! end_task(+Hash:atom, +Aliase:atom, +State:dict) is det.
+
+end_task(Hash, Alias, State) :-
+  retractall_processing(Hash),
+  rocks_put(Alias, Hash, State),
+  debug(ll(task), "[END] ~a ~a", [Alias,Hash]).
+
+
+
+%! start is det.
+
+start :-
+  continue,
+  populate_seedlist.
+
+populate_seedlist :-
+  current_user(User),
+  forall(
+    statement(_, User, index, _, ldm:downloadLocation, Literal),
+    (
+      rdf_literal_value(Literal, Uri),
+      md5(Uri, Hash),
+      % Interval is set to 100 days (in seconds).
+      rocks_put(seeds, Hash, _{interval: 8640000.0, processed: 0.0, uri: Uri})
+    )
+  ),
+  update_seedlist.
+
+update_seedlist :-
+  get_time(Now),
+  forall(
+    rocks_enum(seeds, Hash, State),
+    (
+      _{interval: Interval, processed: Old} :< State,
+      Stale is Old + Interval,
+      (   Stale =< Now
+      ->  rocks_delete(seeds, Hash, State),
+          rocks_put(stale, Hash, State)
+      ;   true
+      )
+    )
+  ).
+
+
+
+%! start_task(+Alias:atom, -Hash:atom, -State:dict) is det.
+
+start_task(Alias, Hash, State) :-
+  with_mutex(ll_generics, (
+    rocks_enum(Alias, Hash, State),
+    rocks_delete(Alias, Hash)
+  )),
+  assert_processing(Hash),
+  debug(ll(task), "[START] ~a ~a", [Alias,Hash]).

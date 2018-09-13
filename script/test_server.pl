@@ -5,4 +5,5 @@
 :- debug(ll(debug)).
 :- debug(ll(parse)).
 :- debug(ll(reset)).
+%:- debug(ll(task)).
 :- debug(ll(thread)).
