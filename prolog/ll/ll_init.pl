@@ -162,7 +162,8 @@ ll_reset(Alias) :-
       State2 = _{interval: Interval, processed: 0.0, uri: Uri},
       rocks_put(stale, Hash, State2),
       rocks_delete(Alias, Hash, State1),
-      assertion(ldfs_directory(Hash, false, Dir)),
+      ldfs_directory(Hash, Fin, Dir),
+      assertion(Fin == false),
       delete_directory_and_contents(Dir)
     )
   ).
