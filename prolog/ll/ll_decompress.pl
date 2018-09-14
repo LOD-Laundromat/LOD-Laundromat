@@ -17,7 +17,7 @@
 
 ll_decompress :-
   % precondition
-  start_task(download-decompress, Hash, State),
+  start_task(download, Hash, State),
   (debugging(ll(offline,Hash)) -> gtrace ; true),
   indent_debug(1, ll(task,decompress), "> decompressing ~a", [Hash]),
   write_meta_now(Hash, decompressBegin),
@@ -28,12 +28,11 @@ ll_decompress :-
   (var(E) -> true ; write_message(error, Hash, E)),
   (   hash_file(Hash, 'dirty.gz', File),
       exists_file(File)
-  ->  end_task(Hash, decompressed, State)
+  ->  end_task(Hash, true, decompress, State)
   ;   % If there is no data, processing for this hash has finished.
-      finish(Hash, State)
+      finish_task(Hash, State)
   ),
-  indent_debug(-1, ll(task,decompress), "< decompressing ~a", [Hash]),
-  end_processing(decompress, Hash).
+  indent_debug(-1, ll(task,decompress), "< decompressing ~a", [Hash]).
 
 
 
@@ -132,5 +131,5 @@ decompress_file_entry(Hash, EntryName, Props, In, State1) :-
       write_meta_entry(Hash, EntryName, EntryHash, Format, Props),
       % End this task from the perspective of the entry.
       dict_put(entry, State1, EntryName, State2),
-      end_task(EntryHash, downloaded, State2)
+      end_task(EntryHash, true, download, State2)
   ).

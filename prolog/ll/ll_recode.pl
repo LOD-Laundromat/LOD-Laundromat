@@ -16,8 +16,7 @@
 
 ll_recode :-
   % precondition
-  start_task(decompressed, Hash, State),
-  start_processing(recode, Hash),
+  start_task(decompress, Hash, State),
   (debugging(ll(offline,Hash)) -> gtrace ; true),
   indent_debug(1, ll(task,recode), "> recoding ~a", [Hash]),
   write_meta_now(Hash, recodeBegin),
@@ -25,9 +24,8 @@ ll_recode :-
   catch(ll_recode(Hash, State), E, true),
   % postcondition
   write_meta_now(Hash, recodeEnd),
-  handle_status(Hash, E, recoded, State),
-  indent_debug(-1, ll(task,recode), "< recoding ~a", [Hash]),
-  end_processing(recode, Hash).
+  end_task(Hash, E, recode, State),
+  indent_debug(-1, ll(task,recode), "< recoding ~a", [Hash]).
 
 ll_recode(Hash, State) :-
   hash_file(Hash, 'dirty.gz', File),

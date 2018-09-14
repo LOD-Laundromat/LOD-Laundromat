@@ -32,8 +32,7 @@
 
 ll_parse :-
   % precondition
-  start_task(recoded, Hash, State),
-  start_processing(parse, Hash),
+  start_task(recode, Hash, State),
   (debugging(ll(offline,Hash)) -> gtrace ; true),
   indent_debug(1, ll(task,parse), "> parsing ~a", [Hash]),
   write_meta_now(Hash, parseBegin),
@@ -42,9 +41,8 @@ ll_parse :-
   thread_join(Id, Status),
   % postcondition
   write_meta_now(Hash, parseEnd),
-  handle_status(Hash, Status, seeds, State),
-  indent_debug(-1, ll(task,parse), "< parsed ~a", [Hash]),
-  end_processing(parse, Hash).
+  end_task(Hash, Status, seed, State),
+  indent_debug(-1, ll(task,parse), "< parsed ~a", [Hash]).
 
 parse_file(Hash, State) :-
   maplist(hash_file(Hash), ['dirty.gz','data.nq.gz'], [FromFile,ToFile]),
