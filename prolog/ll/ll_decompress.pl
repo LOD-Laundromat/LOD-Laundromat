@@ -18,7 +18,6 @@
 ll_decompress :-
   % precondition
   begin_task(download, Hash, State),
-  indent_debug(1, ll(task,decompress), "> decompressing ~a", [Hash]),
   write_meta_now(Hash, decompressBegin),
   % operation
   catch(decompress_file(Hash, State), E, true),

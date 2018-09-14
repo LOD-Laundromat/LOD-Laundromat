@@ -1,7 +1,7 @@
 :- module(
   ll_generics,
   [
-    begin_task/3       % +Alias, -Hash, -State
+    begin_task/3,      % +Alias, -Hash, -State
     end_task/3,        % +Hash, +Alias, +State
     end_task/4,        % +Hash, +Status, +Alias, +State
     finish_task/2,     % +Hash, +State
@@ -48,14 +48,20 @@ begin_task(Alias, Hash, State) :-
       processing_file(Alias, Hash, File),
       json_save(File, State)
   ),
-  (debugging(ll(offline,Hash)) -> gtrace ; true).
+  (debugging(ll(offline,Hash)) -> gtrace ; true),
+  indent_debug(1, ll(task,Alias), "> ~a ~a", [Alias,Hash]).
 
 
 
 %! end_task(+Hash:atom, +Alias:oneof([download,decompress,recode,parse]), +State:dict) is det.
+%
+% Ends a task of type `Alias'.
 
 end_task(Hash, Alias, State) :-
-  rocks_put(Alias, Hash, State),
+  % Move the state to the state store that corresponds to the next
+  % task type.
+  next_task(Alias, Next),
+  rocks_put(Next, Hash, State),
   processing_file(Alias, Hash, File),
   delete_file(File),
   debug(ll(task), "[END] ~a: ~a", [Alias,Hash]).
@@ -93,7 +99,10 @@ status_error(E, E).
 finish_task(Hash, State) :-
   hash_file(Hash, finish, File),
   touch(File),
-  rocks_put(seed, Hash, State).
+  rocks_put(seed, Hash, State),
+  processing_file(Alias, Hash, File),
+  delete_file(File),
+  debug(ll(finish), "~a ~a", [Alias,Hash]).
 
 
 

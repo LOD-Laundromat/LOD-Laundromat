@@ -33,14 +33,13 @@
 ll_parse :-
   % precondition
   begin_task(recode, Hash, State),
-  indent_debug(1, ll(task,parse), "> parsing ~a", [Hash]),
   write_meta_now(Hash, parseBegin),
   % operation
   thread_create(parse_file(Hash, State), Id, [alias(Hash)]),
   thread_join(Id, Status),
   % postcondition
   write_meta_now(Hash, parseEnd),
-  end_task(Hash, Status, seed, State),
+  end_task(Hash, Status, parse, State),
   indent_debug(-1, ll(task,parse), "< parsed ~a", [Hash]).
 
 parse_file(Hash, State) :-

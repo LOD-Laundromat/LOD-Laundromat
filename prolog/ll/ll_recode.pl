@@ -17,7 +17,6 @@
 ll_recode :-
   % precondition
   begin_task(decompress, Hash, State),
-  indent_debug(1, ll(task,recode), "> recoding ~a", [Hash]),
   write_meta_now(Hash, recodeBegin),
   % operation
   catch(ll_recode(Hash, State), E, true),
