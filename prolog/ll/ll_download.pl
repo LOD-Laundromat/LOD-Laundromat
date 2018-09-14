@@ -20,7 +20,7 @@ ll_download :-
   % precondition
   (   debugging(ll(offline))
   ->  true
-  ;   start_task(stale, Hash, State),
+  ;   start_task(stale-download, Hash, State),
       ll_download(Hash, State.uri, State)
   ).
 
@@ -43,7 +43,7 @@ ll_download(Hash, Uri, State) :-
   thread_join(Id, Status),
   % postcondition
   write_meta_now(Hash, downloadEnd),
-  handle_status(Hash, Status, downloaded, State),
+  handle_status(Hash, Status, download, State),
   indent_debug(-1, ll(task,download), "< downloaded ~a ~a", [Hash,Uri]).
 
 download_uri(Hash, Uri, State1) :-

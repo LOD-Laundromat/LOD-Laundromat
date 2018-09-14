@@ -17,6 +17,7 @@
 ll_recode :-
   % precondition
   start_task(decompressed, Hash, State),
+  start_processing(recode, Hash),
   (debugging(ll(offline,Hash)) -> gtrace ; true),
   indent_debug(1, ll(task,recode), "> recoding ~a", [Hash]),
   write_meta_now(Hash, recodeBegin),
@@ -25,11 +26,12 @@ ll_recode :-
   % postcondition
   write_meta_now(Hash, recodeEnd),
   handle_status(Hash, E, recoded, State),
-  indent_debug(-1, ll(task,recode), "< recoding ~a", [Hash]).
+  indent_debug(-1, ll(task,recode), "< recoding ~a", [Hash]),
+  end_processing(recode, Hash).
 
 ll_recode(Hash, State) :-
   hash_file(Hash, 'dirty.gz', File),
-  ignore(guess_file_encoding(File, GuessEnc)),
+  ignore(guess_file_encoding_(File, GuessEnc)),
   ignore((
     dict_get(media_type, State, MediaType),
     media_type_encoding(MediaType, HttpEnc)
@@ -39,6 +41,11 @@ ll_recode(Hash, State) :-
   choose_encoding(GuessEnc, HttpEnc, XmlEnc, Enc),
   write_meta_quad(Hash, encoding, str(Enc)),
   recode_file(Enc, File).
+
+% Fail on `octet' encoding.
+guess_file_encoding_(File, Enc) :-
+  guess_file_encoding(File, Enc),
+  Enc \== octet.
 
 % 1. XML header
 choose_encoding(_, _, XmlEnc, XmlEnc) :-

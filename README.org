@@ -1,6 +1,13 @@
 #+TITLE: LOD-Laundromat: Cleaning other people's dirty data
 #+AUTHOR: Wouter Beek
 
+seed
+stale -> downloaded
+downloaded -> decompressed
+decompressed -> recoded
+recoded -> parsed
+finished
+
 LOD Laundromat is a standard-compliant implementation for crawling and
 cleaning Linked Open Data (LOD).  Since data cleaning is often
 reported as comprising 80% of a data analist's workload, it would be

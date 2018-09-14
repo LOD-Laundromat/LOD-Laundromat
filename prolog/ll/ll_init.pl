@@ -73,14 +73,6 @@ add_thread(Type) :-
 %! continue is det.
 
 continue :-
-  forall(
-    processing_file(Hash, File),
-    (
-      ldfs_directory(Hash, false, Dir),
-      delete_directory_and_contents(Dir),
-      delete_file(File)
-    )
-  ),
   conf_json(Conf),
   % state store
   maplist(state_store_init, [seeds,stale,downloaded,decompressed,recoded]),
@@ -109,11 +101,8 @@ continue :-
   run_loop(ll_parse, Workers.parse.sleep, Workers.parse.threads),
   % Log standard output to file.
   ldfs_root(Root),
-  directory_file_path(Root, 'out.log', File1),
-  protocol(File1),
-  % Persist the currently processing hashes.
-  directory_file_path(Root, ll_init, File2),
-  db_attach(File2, []).
+  directory_file_path(Root, 'out.log', File),
+  protocol(File).
 
 state_store_init(Alias) :-
   rocks_init(Alias, [key(atom),merge(ll_init:merge_dicts),value(term)]).

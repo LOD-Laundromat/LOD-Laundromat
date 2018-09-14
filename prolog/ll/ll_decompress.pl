@@ -17,7 +17,7 @@
 
 ll_decompress :-
   % precondition
-  start_task(downloaded, Hash, State),
+  start_task(download-decompress, Hash, State),
   (debugging(ll(offline,Hash)) -> gtrace ; true),
   indent_debug(1, ll(task,decompress), "> decompressing ~a", [Hash]),
   write_meta_now(Hash, decompressBegin),
@@ -32,7 +32,8 @@ ll_decompress :-
   ;   % If there is no data, processing for this hash has finished.
       finish(Hash, State)
   ),
-  indent_debug(-1, ll(task,decompress), "< decompressing ~a", [Hash]).
+  indent_debug(-1, ll(task,decompress), "< decompressing ~a", [Hash]),
+  end_processing(decompress, Hash).
 
 
 
