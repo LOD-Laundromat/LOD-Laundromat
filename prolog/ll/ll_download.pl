@@ -16,20 +16,20 @@
 :- use_module(library(ll/ll_metadata)).
 :- use_module(library(semweb/rdf_media_type)).
 
+% In debug mode, we want to download specific URIs that we specify
+% ourselves.
+ll_download :-
+  debugging(ll(offline)), !.
 ll_download :-
   % precondition
-  (   debugging(ll(offline))
-  ->  true
-  ;   start_task(stale, Hash, State),
-      ll_download(Hash, State.uri, State)
-  ).
+  begin_task(stale, Hash, State),
+  ll_download(Hash, State.uri, State).
 
 ll_download(Uri) :-
   md5(Uri, Hash),
   ll_download(Hash, Uri, _{uri: Uri}).
 
 ll_download(Hash, Uri, State) :-
-  (debugging(ll(offline,Hash)) -> gtrace ; true),
   % preparation
   indent_debug(1, ll(task,download), "> downloading ~a ~a", [Hash,Uri]),
   write_meta_now(Hash, downloadBegin),

@@ -32,8 +32,7 @@
 
 ll_parse :-
   % precondition
-  start_task(recode, Hash, State),
-  (debugging(ll(offline,Hash)) -> gtrace ; true),
+  begin_task(recode, Hash, State),
   indent_debug(1, ll(task,parse), "> parsing ~a", [Hash]),
   write_meta_now(Hash, parseBegin),
   % operation

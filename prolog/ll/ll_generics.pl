@@ -1,12 +1,12 @@
 :- module(
   ll_generics,
   [
+    begin_task/3       % +Alias, -Hash, -State
     end_task/3,        % +Hash, +Alias, +State
     end_task/4,        % +Hash, +Status, +Alias, +State
     finish_task/2,     % +Hash, +State
     hash_entry_hash/3, % +Hash1, +Entry, -Hash2
-    hash_file/3,       % +Hash, +Local, -File
-    start_task/3       % +Alias, -Hash, -State
+    hash_file/3        % +Hash, +Local, -File
   ]
 ).
 
@@ -27,6 +27,28 @@
 :- use_module(library(semweb/ldfs)).
 
 
+
+
+
+%! begin_task(+Alias:oneof([download,decompress,recode,parse]), -Hash:atom, -State:dict) is det.
+%
+% We are going to begin a task of type `Alias'.
+
+begin_task(Alias, Hash, State) :-
+  (   % We can find a task of type `Alias' which was started earlier,
+      % but did not complete during a previous run.
+      processing_file(Alias, Hash, File)
+  ->  json_load(File, State),
+      debug(ll(reset), "~a: ~a", [Alias,Hash])
+  ;   % We can find a record in the state store that was not run before.
+      with_mutex(ll_generics, (
+        rocks_enum(Alias, Hash, State),
+        rocks_delete(Alias, Hash)
+      )),
+      processing_file(Alias, Hash, File),
+      json_save(File, State)
+  ),
+  (debugging(ll(offline,Hash)) -> gtrace ; true).
 
 
 
@@ -87,27 +109,6 @@ hash_entry_hash(Hash1, Entry, Hash2) :-
 hash_file(Hash, Local, File) :-
   ldfs_root(Root),
   hash_file(Root, Hash, Local, File).
-
-
-
-%! start_task(+Alias:oneof([download,decompress,recode,parse]), -Hash:atom, -State:dict) is det.
-%
-% We are going to start a task of type `Alias'.
-
-% We can find a task of type `Alias' which was started but did not
-% complete during a previous run.
-start_task(Alias, Hash, State) :-
-  processing_file(Alias, Hash, File), !,
-  json_load(File, State),
-  debug(ll(reset), "~a: ~a", [Alias,Hash]).
-% We can find a record in the state store that was not run before.
-start_task(Alias, Hash, State) :-
-  with_mutex(ll_generics, (
-    rocks_enum(Alias, Hash, State),
-    rocks_delete(Alias, Hash)
-  )),
-  processing_file(Alias, Hash, File),
-  json_save(File, State).
 
 
 
