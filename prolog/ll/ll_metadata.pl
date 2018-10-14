@@ -75,7 +75,7 @@ close_metadata_(S, P, Meta, Kind, Out) :-
   rdf_bnode_iri(O),
   rdf_write_(Kind, Out, S, P, O),
   rdf_write_(Kind, Out, O, rdf:type, ll:'StreamProperties'),
-  rdf_write_(Kind, Out, O, ll:newline, str(Meta.newline)),
+  rdf_write_(Kind, Out, O, ll:newline, string(Meta.newline)),
   rdf_write_(Kind, Out, O, ll:bytes, nonneg(Meta.bytes)),
   rdf_write_(Kind, Out, O, ll:characters, nonneg(Meta.characters)),
   rdf_write_(Kind, Out, O, ll:lines, nonneg(Meta.lines)).
@@ -97,7 +97,7 @@ write_message(Kind, Hash, error(archive_error(Code,Msg),_)) :- !,
   write_message_(Kind, Hash, 'ArchiveError', write_message_1(Code, Msg)).
 write_message_1(Code, Msg, Kind, Out, O) :-
   rdf_write_(Kind, Out, O, ll:code, nonneg(Code)),
-  rdf_write_(Kind, Out, O, ll:message, str(Msg)).
+  rdf_write_(Kind, Out, O, ll:message, string(Msg)).
 
 % HTTP error: ???
 write_message(Kind, Hash, error(domain_error(http_encoding,identity),_)) :- !,
@@ -107,7 +107,7 @@ write_message(Kind, Hash, error(domain_error(http_encoding,identity),_)) :- !,
 write_message(Kind, Hash, error(domain_error(set_cookie,Value),_)) :- !,
   write_message_(Kind, Hash, 'SetCookieError', write_message_2(Value)).
 write_message_2(Value, Kind, Out, O) :-
-  rdf_write_(Kind, Out, O, ll:value, str(Value)).
+  rdf_write_(Kind, Out, O, ll:value, string(Value)).
 
 % Malformed URL
 write_message(Kind, Hash, error(domain_error(url,Url),_)) :- !,
@@ -127,14 +127,14 @@ write_message(Kind, Hash, error(existence_error(turtle_prefix,Alias),Stream)) :-
   stream_line_column_(Stream, Line, Column),
   write_message_(Kind, Hash, 'MissingTurtlePrefixDeclaration', write_message_6(Alias, Line, Column)).
 write_message_6(Alias, Line, Column, Kind, Out, O) :-
-  rdf_write_(Kind, Out, O, ll:alias, str(Alias)),
+  rdf_write_(Kind, Out, O, ll:alias, string(Alias)),
   write_message_stream_(Line, Column, Kind, Out, O).
 
 % Existence error: IRI scheme is not registered with IANA.
 write_message(Kind, Hash, error(existence_error(uri_scheme,Scheme),_)) :- !,
   write_message_(Kind, Hash, 'IllegalUriScheme', write_message_5(Scheme)).
 write_message_5(Scheme, Kind, Out, O) :-
-  rdf_write_(Kind, Out, O, ll:scheme, str(Scheme)).
+  rdf_write_(Kind, Out, O, ll:scheme, string(Scheme)).
 
 write_message(Kind, Hash, error(http_error(cyclic_link_header,_),_)) :- !,
   write_message_(Kind, Hash, 'CyclicLinkHeader').
@@ -164,7 +164,7 @@ write_message(Kind, Hash, error(http_error(status,_),_)) :- !,
 write_message(Kind, Hash, error(io_error(read,_Stream),context(_,Msg))) :- !,
   write_message_(Kind, Hash, 'ReadStreamError', write_message_8(Msg)).
 write_message_8(Msg, Kind, Out, O) :-
-  rdf_write_(Kind, Out, O, ll:message, str(Msg)).
+  rdf_write_(Kind, Out, O, ll:message, string(Msg)).
 
 % No non-binary encoding could be found.
 write_message(Kind, Hash, error(no_encoding,_)) :-
@@ -203,25 +203,25 @@ message_class_name('Try Again', 'TryAgain').
 write_message(Kind, Hash, error(ssl_error(Code,Library,Function,Reason),_)) :- !,
   write_message_(Kind, Hash, 'SslUnexpectedEof', write_message_10(Code, Library, Function, Reason)).
 write_message_10(Code, Library, Function, Reason, Kind, Out, O) :-
-  rdf_write_(Kind, Out, O, ll:code, str(Code)),
-  rdf_write_(Kind, Out, O, ll:library, str(Library)),
-  rdf_write_(Kind, Out, O, ll:function, str(Function)),
-  rdf_write_(Kind, Out, O, ll:reason, str(Reason)).
+  rdf_write_(Kind, Out, O, ll:code, string(Code)),
+  rdf_write_(Kind, Out, O, ll:library, string(Library)),
+  rdf_write_(Kind, Out, O, ll:function, string(Function)),
+  rdf_write_(Kind, Out, O, ll:reason, string(Reason)).
 
 % Syntax error (1/2)
 write_message(Kind, Hash, error(syntax_error(grammar(Language,Source)),_)) :- !,
   write_message_(Kind, Hash, 'SyntaxError', write_message_11(Language,Source)).
 write_message_11(Language, Source, Kind, Out, O) :-
-  rdf_write_(Kind, Out, O, ll:language, str(Language)),
-  rdf_write_(Kind, Out, O, ll:string, str(Source)).
+  rdf_write_(Kind, Out, O, ll:language, string(Language)),
+  rdf_write_(Kind, Out, O, ll:string, string(Source)).
 
 % Syntax error (2/2)
 write_message(Kind, Hash, error(syntax_error(grammar(Language,Expr,Source)),_)) :- !,
   write_message_(Kind, Hash, 'SyntaxError', write_message_13(Language,Expr,Source)).
 write_message_13(Language, Expr, Source, Kind, Out, O) :-
-  rdf_write_(Kind, Out, O, ll:language, str(Language)),
-  rdf_write_(Kind, Out, O, ll:expression, str(Expr)),
-  rdf_write_(Kind, Out, O, ll:string, str(Source)).
+  rdf_write_(Kind, Out, O, ll:language, string(Language)),
+  rdf_write_(Kind, Out, O, ll:expression, string(Expr)),
+  rdf_write_(Kind, Out, O, ll:string, string(Source)).
 
 % RDF syntax error:
 %   - Mag = 'end-of-line expected'
@@ -259,7 +259,7 @@ write_message(Kind, Hash, error(syntax_error(Msg),_,Line,Column,_)) :-
 write_message_16(Kind, Hash, Msg, Line, Column) :-
   write_message_(Kind, Hash, 'RdfParseError', write_message_17(Msg, Line, Column)).
 write_message_17(Msg, Line, Column, Kind, Out, O) :-
-  rdf_write_(Kind, Out, O, ll:message, str(Msg)),
+  rdf_write_(Kind, Out, O, ll:message, string(Msg)),
   write_message_stream_(Line, Column, Kind, Out, O).
 
 % Syntax error: incorrect HTTP status code
@@ -281,12 +281,12 @@ write_message(Kind, Hash, error(uri_error(Code,Uri),_)) :- !,
   write_message_(Kind, Hash, 'UriError', write_message_19(Code, Uri)).
 write_message_19(Code, Uri, Kind, Out, O) :-
   rdf_write_(Kind, Out, O, ll:code, nonneg(Code)),
-  rdf_write_(Kind, Out, O, ll:content, str(Uri)).
+  rdf_write_(Kind, Out, O, ll:content, string(Uri)).
 write_message(Kind, Hash, error(uri_error(Code,Uri,Pos),_)) :- !,
   write_message_(Kind, Hash, 'UriSyntaxError', write_message_20(Code, Uri, Pos)).
 write_message_20(Code, Uri, Pos, Kind, Out, O) :-
   rdf_write_(Kind, Out, O, ll:code, nonneg(Code)),
-  rdf_write_(Kind, Out, O, ll:content, str(Uri)),
+  rdf_write_(Kind, Out, O, ll:content, string(Uri)),
   rdf_write_(Kind, Out, O, ll:position, nonneg(Pos)).
 
 % Illegal Unicode character ???
@@ -304,13 +304,13 @@ write_message(Kind, Hash, io_warning(Stream,'Illegal UTF-8 start')) :- !,
 write_message(Kind, Hash, rdf(not_a_name(Name))) :- !,
   write_message_(Kind, Hash, 'NotAnXmlName', write_message_23(Name)).
 write_message_23(Name, Kind, Out, O) :-
-  rdf_write_(Kind, Out, O, ll:name, str(Name)).
+  rdf_write_(Kind, Out, O, ll:name, string(Name)).
 
 % RDF/XML: multiple definitions ???
 write_message(Kind, Hash, rdf(redefined_id(Iri))) :- !,
   write_message_(Kind, Hash, 'RdfRedefinedId', write_message_24(Iri)).
 write_message_24(Iri, Kind, Out, O) :-
-  rdf_write_(Kind, Out, O, ll:id, str(Iri)).
+  rdf_write_(Kind, Out, O, ll:id, string(Iri)).
 
 % RDF/XML parser error: unexpected tag
 write_message(Kind, Hash, rdf(unexpected(Tag,_Parser))) :- !,
@@ -339,21 +339,21 @@ write_message(
 write_message(Kind, Hash, error(rdf_error(missing_language_tag,Lex),_)) :- !,
   write_message_(Kind, Hash, 'MissingLanguageTag', write_message_21(Lex)).
 write_message_21(Lex, Kind, Out, O) :-
-  rdf_write_(Kind, Out, O, ll:lexicalFrom, str(Lex)).
+  rdf_write_(Kind, Out, O, ll:lexicalFrom, string(Lex)).
 
 % Not an RDF serialization format.
 write_message(Kind, Hash, error(rdf_error(non_rdf_format,Content),_)) :- !,
   write_message_(Kind, Hash, 'NonRdfFormat', write_message_22(Content)).
 write_message_22(Content, Kind, Out, O) :-
   string_phrase(xsd_encode_string, Content, EncodedContent),
-  rdf_write_(Kind, Out, O, ll:content, str(EncodedContent)).
+  rdf_write_(Kind, Out, O, ll:content, string(EncodedContent)).
 
 % RDF non-canonicity: a language-tagged string where the language tag is
 % not in canonical form.
 write_message(Kind, Hash, error(rdf_error(non_canonical_language_tag,LTag),_)) :- !,
   write_message_(Kind, Hash, 'NonCanonicalLanguageTag', write_message_28(LTag)).
 write_message_28(LTag, Kind, Out, O) :-
-  rdf_write_(Kind, Out, O, ll:languageTag, str(LTag)).
+  rdf_write_(Kind, Out, O, ll:languageTag, string(LTag)).
 
 % RDF non-canonicicty: a lexical form that belongs to the lexical
 % space, but is not canonical.
@@ -361,8 +361,8 @@ write_message(Kind, Hash, error(rdf_error(non_canonical_lexical_form,D,Lex1,Lex2
   write_message_(Kind, Hash, 'NonCanonicalLexicalForm', write_message_29(D, Lex1, Lex2)).
 write_message_29(D, Lex1, Lex2, Kind, Out, O) :-
   rdf_write_(Kind, Out, O, ll:datatype, D),
-  rdf_write_(Kind, Out, O, ll:lexicalForm, str(Lex1)),
-  rdf_write_(Kind, Out, O, ll:canonicalLexicalForm, str(Lex2)).
+  rdf_write_(Kind, Out, O, ll:lexicalForm, string(Lex1)),
+  rdf_write_(Kind, Out, O, ll:canonicalLexicalForm, string(Lex2)).
 
 % RDF lexical-to-value and value-to-lexical mappings.
 write_message(Kind, Hash, error(unimplemented_lex2val(D,Lex),_)) :- !,
@@ -371,7 +371,7 @@ write_message(Kind, Hash, error(unimplemented_val2lex(D,Value),_)) :- !,
   write_message_(Kind, Hash, 'Value2LexicalError', write_message_v2l(D, Value)).
 write_message_l2v(D, Lex, Kind, Out, O) :-
   rdf_write_(Kind, Out, O, ll:datatypeIri, uri(D)),
-  rdf_write_(Kind, Out, O, ll:lexicalForm, str(Lex)).
+  rdf_write_(Kind, Out, O, ll:lexicalForm, string(Lex)).
 write_message_v2l(D, Value, Kind, Out, O) :-
   rdf_write_(Kind, Out, O, ll:datatypeIri, uri(D)),
   format(string(String), write_term(Value)),
@@ -383,7 +383,7 @@ write_message(Kind, Hash, sgml(sgml_parser(_Parser),_File,Line,Msg)) :- !,
   write_message_(Kind, Hash, 'RdfParseError', write_message_27(Line, Msg)).
 write_message_27(Line, Msg, Kind, Out, O) :-
   rdf_write_(Kind, Out, O, ll:line, nonneg(Line)),
-  rdf_write_(Kind, Out, O, ll:message, str(Msg)).
+  rdf_write_(Kind, Out, O, ll:message, string(Msg)).
 
 % TBD: Not yet handled.
 write_message(Kind, Hash, E) :-
@@ -432,7 +432,7 @@ write_meta_archive_1(S, Filters, Kind, Out) :-
       write_meta_archive_2(O, Filters, Kind, Out)
   ).
 write_meta_archive_2(Node, [Filter|Filters], Kind, Out) :-
-  rdf_write_(Kind, Out, Node, rdf:first, str(Filter)),
+  rdf_write_(Kind, Out, Node, rdf:first, string(Filter)),
   (   Filters == []
   ->  rdf_equal(Next, rdf:nil)
   ;   rdf_bnode_iri(Next),
@@ -450,15 +450,15 @@ write_meta_encoding(Hash, GuessEnc, HttpEnc, XmlEnc) :-
 write_meta_encoding_(S, GuessEnc, HttpEnc, XmlEnc, Kind, Out) :-
   (   var(GuessEnc)
   ->  true
-  ;   rdf_write_(Kind, Out, S, ll:uchardet, str(GuessEnc))
+  ;   rdf_write_(Kind, Out, S, ll:uchardet, string(GuessEnc))
   ),
   (   var(HttpEnc)
   ->  true
-  ;   rdf_write_(Kind, Out, S, ll:httpEncoding, str(HttpEnc))
+  ;   rdf_write_(Kind, Out, S, ll:httpEncoding, string(HttpEnc))
   ),
   (   var(XmlEnc)
   ->  true
-  ;   rdf_write_(Kind, Out, S, ll:xmlEncoding, str(XmlEnc))
+  ;   rdf_write_(Kind, Out, S, ll:xmlEncoding, string(XmlEnc))
   ).
 
 
@@ -479,9 +479,9 @@ write_meta_entry_entry_(Archive, EntryName, Entry, Format, Props, Kind, Out) :-
   memberchk(size(Size), Props),
   rdf_write_(Kind, Out, Entry, rdf:type, ll:'Entry'),
   rdf_write_(Kind, Out, Entry, ll:archive, Archive),
-  rdf_write_(Kind, Out, Entry, ll:format, str(Format)),
+  rdf_write_(Kind, Out, Entry, ll:format, string(Format)),
   rdf_write_(Kind, Out, Entry, ll:mtime, MTime),
-  rdf_write_(Kind, Out, Entry, ll:name, str(EntryName)),
+  rdf_write_(Kind, Out, Entry, ll:name, string(EntryName)),
   rdf_write_(Kind, Out, Entry, ll:permissions, positive_integer(Permissions)),
   rdf_write_(Kind, Out, Entry, ll:size, nonneg(Size)).
 
@@ -524,7 +524,7 @@ write_meta_http_item_(Item, Meta, Kind, Out) :-
   % `xsd:positiveInteger' here.
   Status = Meta.status,
   ensure_atom(Status, Lex),
-  rdf_write_(Kind, Out, Item, ll:status, str(Lex)),
+  rdf_write_(Kind, Out, Item, ll:status, string(Lex)),
   rdf_write_(Kind, Out, Item, ll:uri, uri(Meta.uri)).
 
 % TBD: Multiple values should emit a warning in `http/http_client2'.
@@ -532,7 +532,7 @@ write_meta_http_header_(Kind, Out, Headers, PLocal-Lexs) :-
   rdf_prefix_iri(ll:PLocal, P),
   forall(
     member(Lex, Lexs),
-    rdf_write_(Kind, Out, Headers, P, str(Lex))
+    rdf_write_(Kind, Out, Headers, P, string(Lex))
   ).
 
 
@@ -599,7 +599,7 @@ rdf_write_(Kind, Out, S, P, O) :-
   (   var(E)
   ->  true
   ;   debug(ll(debug), "~w ~w", [S,P]),
-      rdf_write_quad(Out, S, P, str('OMG!'), G)
+      rdf_write_quad(Out, S, P, string('OMG!'), G)
   ).
 
 
