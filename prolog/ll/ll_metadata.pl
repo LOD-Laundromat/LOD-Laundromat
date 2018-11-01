@@ -599,7 +599,7 @@ rdf_write_(Kind, Out, S, P, O) :-
   (   var(E)
   ->  true
   ;   debug(ll(debug), "~w ~w", [S,P]),
-      rdf_write_quad(Out, S, P, string('OMG!'), G)
+      rdf_write_quad(Out, S, P, "OMG!", G)
   ).
 
 

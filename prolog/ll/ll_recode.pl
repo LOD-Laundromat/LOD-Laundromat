@@ -36,7 +36,7 @@ ll_recode(Hash, State) :-
   write_meta_encoding(Hash, GuessEnc, HttpEnc, XmlEnc),
   choose_encoding(GuessEnc, HttpEnc, XmlEnc, Enc),
   write_meta_quad(Hash, encoding, str(Enc)),
-  recode_file(Enc, File).
+  recode_file(File, Enc).
 
 % Fail on `octet' encoding.
 guess_file_encoding_(File, Enc) :-

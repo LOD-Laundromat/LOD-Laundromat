@@ -140,7 +140,7 @@ recode(FromFile, FinalUri, HttpMediaType) :-
   ignore(media_type_encoding(HttpMediaType, HttpEnc)),
   ignore(xml_file_encoding(FromFile, XmlEnc)),
   choose_encoding(GuessEnc, HttpEnc, XmlEnc, Enc),
-  recode_file(Enc, FromFile),
+  recode_file(FromFile, Enc),
   parse(FromFile, FinalUri).
 
 parse(FromFile) :-
