@@ -1,3 +1,4 @@
+:- encoding(utf8).
 :- module(ll_decompress, [ll_decompress/0]).
 
 /** <module> LOD Laundromat: Decompress

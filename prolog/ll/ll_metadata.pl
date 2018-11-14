@@ -560,7 +560,7 @@ write_meta_quad_(S, P, O, Kind, Out) :-
 %! write_meta_serialization_format(+Hash:atom, +MediaType:compound) is det.
 
 write_meta_serialization_format(Hash, MediaType) :-
-  dcg_with_output_to(string(String), media_type(MediaType)),
+  string_phrase(media_type(MediaType), String),
   write_meta_quad(Hash, serializationFormat, String).
 
 
