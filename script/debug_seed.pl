@@ -122,8 +122,7 @@ decompress_archive(Arch, FinalUri, EntryName, HttpMediaType) :-
   archive_next_header(Arch, EntryName0),
   (EntryName == EntryName0 -> ! ; fail),
   md5(FinalUri-EntryName, Hash),
-  conf_json(Conf),
-  directory_file_path(Conf.'data-directory', Hash, File),
+  absolute_file_name(Hash, File, [access(read)]),
   setup_call_cleanup(
     open(File, write, Out),
     setup_call_cleanup(
@@ -144,7 +143,7 @@ recode(FromFile, FinalUri, HttpMediaType) :-
   parse(FromFile, FinalUri).
 
 parse(FromFile) :-
-  parse(FromFile, 'https://example.com/').
+  parse(FromFile, 'https://example.org/').
 
 parse(FromFile, FinalUri) :-
   peek_file(FromFile, 10 000, Content),
@@ -154,8 +153,7 @@ parse(FromFile, FinalUri) :-
   ).
 
 parse(FromFile, FinalUri, MediaType) :-
-  md5(FinalUri, Hash),
-  rdf_bnode_iri(Hash, bnode, BNodePrefix),
+  rdf_bnode_iri(FinalUri, BNodePrefix),
   Options = [base_uri(FinalUri),
              bnode_prefix(BNodePrefix),
              media_type(MediaType)],
@@ -186,24 +184,24 @@ choose_encoding(GuessEnc, _, _, GuessEnc) :-
 choose_encoding(_, _, _, _) :-
   throw(error(no_encoding,ll_recode)).
 
-clean_tuples(State, Out, BNodePrefix, Tuples, _) :-
-  maplist(clean_tuple(State, Out, BNodePrefix), Tuples).
+clean_tuples(State, Out, Site, Tuples, _) :-
+  maplist(clean_tuple(State, Out, Site), Tuples).
 
 % triple
-clean_tuple(State, Out, BNodePrefix, rdf(S0,P0,O0)) :- !,
-  (   rdf_clean_triple(BNodePrefix, rdf(S0,P0,O0), rdf(S,P,O))
-  ->  rdf_write_triple(Out, BNodePrefix, S, P, O)
+clean_tuple(State, Out, Site, rdf(S0,P0,O0)) :- !,
+  (   rdf_clean_triple(Site, rdf(S0,P0,O0), rdf(S,P,O))
+  ->  rdf_write_triple(Out, S, P, O)
   ;   print_message(warning, rdf(S0,P0,O0))
   ),
   nb_increment_dict(State, number_of_triples, N),
   debug(stats, "~D triples", [N]).
 % triple (legacy)
-clean_tuple(State, Out, BNodePrefix, rdf(S,P,O,user)) :- !,
-  clean_tuple(State, Out, BNodePrefix, rdf(S,P,O)).
+clean_tuple(State, Out, Site, rdf(S,P,O,user)) :- !,
+  clean_tuple(State, Out, Site, rdf(S,P,O)).
 % quadruple
-clean_tuple(State, Out, BNodePrefix, rdf(S0,P0,O0,G0)) :-
-  (   rdf_clean_quad(BNodePrefix, rdf(S0,P0,O0,G0), rdf(S,P,O,G))
-  ->  rdf_write_quad(Out, BNodePrefix, S, P, O, G)
+clean_tuple(State, Out, Site, rdf(S0,P0,O0,G0)) :-
+  (   rdf_clean_quad(Site, rdf(S0,P0,O0,G0), rdf(S,P,O,G))
+  ->  rdf_write_quad(Out, S, P, O, G)
   ;   print_message(warning, rdf(S0,P0,O0,G0))
   ),
   nb_increment_dict(State, number_of_quadruples, N),

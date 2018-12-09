@@ -589,7 +589,7 @@ ensure_atom(Atom, Atom).
 
 
 
-%! rdf_write_(+Kind:oneof([error,meta,warning]), +Out:stream, +S:rdf_nonliteral, +P:iri, +O:term) is det.
+%! rdf_write_(+Kind:oneof([error,meta,warning]), +Out:stream, +S:rdf_subject, +P:rdf_predicate, +O:rdf_object) is det.
 
 rdf_write_(Kind, Out, S, P, O) :-
   rdf_prefix_iri(graph:Kind, G),

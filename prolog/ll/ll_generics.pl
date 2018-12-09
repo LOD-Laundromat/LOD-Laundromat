@@ -23,7 +23,7 @@
 :- use_module(library(hash_ext)).
 :- use_module(library(json_ext)).
 :- use_module(library(ll/ll_metadata)).
-:- use_module(library(rocks_ext)).
+:- use_module(library(rocksdb)).
 :- use_module(library(semweb/ldfs)).
 
 

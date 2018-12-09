@@ -7,7 +7,7 @@
     start/0
   ]
 ).
-:- reexport(library(rocks_ext)).
+:- reexport(library(rocksdb)).
 
 /** <module> LOD Laundromat initialization
 
@@ -30,7 +30,7 @@
 :- use_module(library(ll/ll_metadata)).
 :- use_module(library(ll/ll_parse)).
 :- use_module(library(ll/ll_recode)).
-:- use_module(library(rocks_ext)).
+:- use_module(library(rocksdb)).
 :- use_module(library(semweb/ldfs)).
 :- use_module(library(semweb/rdf_prefix)).
 :- use_module(library(semweb/rdf_term)).
