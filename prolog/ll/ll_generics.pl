@@ -14,7 +14,7 @@
 /** <module> LOD Laundromat: Generics
 
 @author Wouter Beek
-@version 2017-2018
+@version 2017-2019
 */
 
 :- use_module(library(lists)).
@@ -22,7 +22,7 @@
 :- use_module(library(file_ext)).
 :- use_module(library(hash_ext)).
 :- use_module(library(ll/ll_metadata)).
-:- use_module(library(rocks_ext)).
+:- use_module(library(rocksdb)).
 :- use_module(library(semweb/ldfs)).
 
 
