@@ -6,6 +6,7 @@
 @version 2017-2018
 */
 
+:- use_module(library(aggregate)).
 :- use_module(library(error)).
 
 :- use_module(library(debug_ext)).
@@ -14,7 +15,6 @@
 :- use_module(library(http/http_client2)).
 :- use_module(library(ll/ll_generics)).
 :- use_module(library(ll/ll_metadata)).
-:- use_module(library(semweb/rdf_media_type)).
 
 ll_download :-
   % precondition
@@ -63,7 +63,6 @@ download_uri(Hash, Uri, State1) :-
       ),
       thread_exit(State3)
   ;   % cleanup
-      hash_file(Hash, compressed, File),
       delete_file(File),
       (   % Correct HTTP error status code
           between(400, 599, Status)
@@ -74,8 +73,8 @@ download_uri(Hash, Uri, State1) :-
   ).
 
 download_stream(Hash, Uri, Out, MediaType, Status, FinalUri) :-
-  findall(RdfMediaType, rdf_media_type(RdfMediaType), RdfMediaTypes),
-  Options = [accept(RdfMediaTypes),
+  aggregate_all(set(MediaType0), media_type_family(MediaType0, rdf), MediaTypes),
+  Options = [accept(MediaTypes),
              final_uri(FinalUri),
              maximum_number_of_hops(10),
              metadata(HttpMetas),

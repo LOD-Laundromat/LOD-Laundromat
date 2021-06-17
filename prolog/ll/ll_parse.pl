@@ -62,14 +62,12 @@ parse_file(Hash, State) :-
       setup_call_cleanup(
         maplist(gzopen, [FromFile,ToFile], [read,write], [In,Out]),
         rdf_deref_stream(
-          State.base_uri,
+          State.base_iri,
           In,
           clean_tuples(RdfMeta, Out),
-          [
-            base_uri(State.base_uri),
-            bnode_prefix(BNodePrefix),
-            media_type(MediaType)
-          ]
+          [base_iri(State.base_iri),
+           bnode_prefix(BNodePrefix),
+           media_type(MediaType)]
         ),
         maplist(close_metadata(Hash), [parseRead,parseWritten], [In,Out])
       ),
@@ -92,7 +90,7 @@ clean_tuples(Meta, Out, BNodePrefix, Tuples, _) :-
 % triple
 clean_tuple(Meta, Out, BNodePrefix, rdf(S0,P0,O0)) :- !,
   (   rdf_clean_triple(BNodePrefix, rdf(S0,P0,O0), rdf(S,P,O))
-  ->  rdf_write_triple(Out, BNodePrefix, S, P, O),
+  ->  rdf_write_triple(Out, BNodePrefix, tp(S,P,O)),
       nb_increment_dict(Meta, number_of_triples)
   ;   nb_increment_dict(Meta, number_of_errors)
   ).
@@ -102,7 +100,7 @@ clean_tuple(Meta, Out, BNodePrefix, rdf(S,P,O,user)) :- !,
 % quadruple
 clean_tuple(Meta, Out, BNodePrefix, rdf(S0,P0,O0,G0)) :-
   (   rdf_clean_quad(BNodePrefix, rdf(S0,P0,O0,G0), rdf(S,P,O,G))
-  ->  rdf_write_quad(Out, BNodePrefix, S, P, O, G),
+  ->  rdf_write_quad(Out, BNodePrefix, tp(S,P,O,G)),
       nb_increment_dict(Meta, number_of_quadruples)
   ;   nb_increment_dict(Meta, number_of_errors)
   ).

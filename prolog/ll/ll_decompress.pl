@@ -50,7 +50,7 @@ decompress_file(Hash, State) :-
 
 
 
-%! decompress_file_stream(+Hash:atom, +In:stream, +State:dict) is det.
+%! decompress_file_stream(+Hash:atom, +In:istream, +State:dict) is det.
 
 decompress_file_stream(Hash, In, State) :-
   setup_call_cleanup(
@@ -108,8 +108,11 @@ decompress_entry(Hash, Arch, EntryName, Props, State) :-
 
 
 
-%! decompress_file_entry(+Hash:atom, +EntryName:atom, Properties:list(compound),
-%!                       +In:stream, +State:dict) is det.
+%! decompress_file_entry(+Hash:atom,
+%!                       +EntryName:atom,
+%!                       +Properties:list(compound),
+%!                       +In:istream,
+%!                       +State:dict) is det.
 
 decompress_file_entry(Hash, EntryName, Props, In, State1) :-
   memberchk(format(Format), Props),

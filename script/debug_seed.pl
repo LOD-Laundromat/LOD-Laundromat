@@ -1,5 +1,12 @@
-:- module(debug_seed, [parse_unfinished/0,run/0]).
+:- module(
+  debug_seed,
+  [
+    parse_unfinished/0,
+    run/0
+  ]
+).
 
+:- use_module(library(aggregate)).
 :- use_module(library(apply)).
 :- use_module(library(debug)).
 :- use_module(library(pairs)).
@@ -19,7 +26,6 @@
 :- use_module(library(semweb/rdf_deref)).
 :- use_module(library(semweb/rdf_export)).
 :- use_module(library(semweb/rdf_guess)).
-:- use_module(library(semweb/rdf_media_type)).
 :- use_module(library(semweb/rdf_term)).
 :- use_module(library(xml_ext)).
 
@@ -59,12 +65,12 @@ parse_unfinished :-
   sort(1, @=<, Pairs1, Pairs2),
   pairs_values(Pairs2, Hashes),
   maplist(
-    [Hash]>>(
-      format("[BEGIN] ~a\n", [Hash]),
-      ldfs_file('', false, _, Hash, 'dirty.gz', File),
+    [Hash0]>>(
+      format("[BEGIN] ~a\n", [Hash0]),
+      ldfs_file('', false, _, Hash0, 'dirty.gz', File),
       parse(File),
       delete_file(File),
-      format("[END] ~a\n", [Hash])
+      format("[END] ~a\n", [Hash0])
     ),
     Hashes
   ),
@@ -96,8 +102,8 @@ run(Uri, EntryName) :-
   download(Uri, EntryName).
 
 download(Uri, EntryName) :-
-  findall(RdfMediaType, rdf_media_type(RdfMediaType), RdfMediaTypes),
-  Options = [accept(RdfMediaTypes),
+  aggregate_all(set(MediaType0), media_type_family(MediaType0, rdf), MediaTypes),
+  Options = [accept(MediaTypes),
              final_uri(FinalUri),
              maximum_number_of_hops(10),
              metadata(HttpMetas),
@@ -156,7 +162,7 @@ parse(FromFile, FinalUri) :-
 parse(FromFile, FinalUri, MediaType) :-
   md5(FinalUri, Hash),
   rdf_bnode_iri(Hash, bnode, BNodePrefix),
-  Options = [base_uri(FinalUri),
+  Options = [base_iri(FinalUri),
              bnode_prefix(BNodePrefix),
              media_type(MediaType)],
   file_name_extension(FromFile, gz, ToFile),
@@ -192,7 +198,7 @@ clean_tuples(State, Out, BNodePrefix, Tuples, _) :-
 % triple
 clean_tuple(State, Out, BNodePrefix, rdf(S0,P0,O0)) :- !,
   (   rdf_clean_triple(BNodePrefix, rdf(S0,P0,O0), rdf(S,P,O))
-  ->  rdf_write_triple(Out, BNodePrefix, S, P, O)
+  ->  rdf_write_triple(Out, BNodePrefix, tp(S,P,O))
   ;   print_message(warning, rdf(S0,P0,O0))
   ),
   nb_increment_dict(State, number_of_triples, N),

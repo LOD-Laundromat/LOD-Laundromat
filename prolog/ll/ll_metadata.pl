@@ -557,7 +557,7 @@ write_meta_quad_(S, P, O, Kind, Out) :-
 
 
 
-%! write_meta_serialization_format(+Hash:atom, +MediaType:compound) is det.
+%! write_meta_serialization_format(+Hash:atom, +MediaType:media_type) is det.
 
 write_meta_serialization_format(Hash, MediaType) :-
   dcg_with_output_to(string(String), media_type(MediaType)),
@@ -589,7 +589,11 @@ ensure_atom(Atom, Atom).
 
 
 
-%! rdf_write_(+Kind:oneof([error,meta,warning]), +Out:stream, +S:rdf_nonliteral, +P:iri, +O:term) is det.
+%! rdf_write_(+Kind:oneof([error,meta,warning]),
+%!            +Out:ostream,
+%!            +S:rdf_nonliteral,
+%!            +P:iri,
+%!            +O:rdf_node) is det.
 
 rdf_write_(Kind, Out, S, P, O) :-
   rdf_prefix_iri(graph:Kind, G),
